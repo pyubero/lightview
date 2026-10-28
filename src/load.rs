@@ -11,6 +11,7 @@ use std::time::Duration;
 
 pub const EXTENSIONS: [&str; 6] = ["jpg", "jpeg", "png", "gif", "webp", "bmp"];
 
+#[derive(Clone)]
 pub struct Frame {
     pub w: u32,
     pub h: u32,
@@ -33,6 +34,8 @@ pub enum Msg {
     Preview(PathBuf, Frame),
     Full(PathBuf, Loaded),
     Error(PathBuf, String),
+    /// A Save As finished (successfully or not) writing this path.
+    Saved(PathBuf, Result<(), String>),
 }
 
 /// Sends messages to the UI and wakes it up. The context is set once eframe has created it;
@@ -162,21 +165,8 @@ fn to_frame(img: DynamicImage, delay: Duration) -> Frame {
 /// The JPEG thumbnail in IFD1 of an EXIF (TIFF) block, if any. The file is untrusted:
 /// every read is bounds-checked and anything malformed returns `None`.
 fn exif_thumbnail(tiff: &[u8]) -> Option<&[u8]> {
-    let le = match tiff.get(0..4)? {
-        [b'I', b'I', 42, 0] => true,
-        [b'M', b'M', 0, 42] => false,
-        _ => return None,
-    };
-    let u16_at = |o: usize| {
-        let b = tiff.get(o..o.checked_add(2)?)?;
-        Some(if le { u16::from_le_bytes([b[0], b[1]]) } else { u16::from_be_bytes([b[0], b[1]]) } as usize)
-    };
-    let u32_at = |o: usize| {
-        let b: [u8; 4] = tiff.get(o..o.checked_add(4)?)?.try_into().ok()?;
-        Some(if le { u32::from_le_bytes(b) } else { u32::from_be_bytes(b) } as usize)
-    };
-    let ifd0 = u32_at(4)?;
-    let ifd1 = u32_at(ifd0 + 2 + u16_at(ifd0)? * 12)?;
+    let (u16_at, u32_at) = tiff_readers(tiff)?;
+    let ifd1 = u32_at(next_ifd_ptr(tiff)?)?;
     if ifd1 == 0 {
         return None;
     }
@@ -191,6 +181,41 @@ fn exif_thumbnail(tiff: &[u8]) -> Option<&[u8]> {
     }
     let offset = offset?;
     tiff.get(offset..offset.checked_add(len?)?)
+}
+
+type Reader<'a> = Box<dyn Fn(usize) -> Option<usize> + 'a>;
+
+/// Bounds-checked u16 and u32 readers in the TIFF block's byte order.
+fn tiff_readers(tiff: &[u8]) -> Option<(Reader<'_>, Reader<'_>)> {
+    let le = match tiff.get(0..4)? {
+        [b'I', b'I', 42, 0] => true,
+        [b'M', b'M', 0, 42] => false,
+        _ => return None,
+    };
+    let u16_at = move |o: usize| {
+        let b = tiff.get(o..o.checked_add(2)?)?;
+        Some(if le { u16::from_le_bytes([b[0], b[1]]) } else { u16::from_be_bytes([b[0], b[1]]) } as usize)
+    };
+    let u32_at = move |o: usize| {
+        let b: [u8; 4] = tiff.get(o..o.checked_add(4)?)?.try_into().ok()?;
+        Some(if le { u32::from_le_bytes(b) } else { u32::from_be_bytes(b) } as usize)
+    };
+    Some((Box::new(u16_at), Box::new(u32_at)))
+}
+
+/// Offset of IFD0's "next IFD" pointer, which points at IFD1 (the thumbnail), if it's in bounds.
+fn next_ifd_ptr(tiff: &[u8]) -> Option<usize> {
+    let (u16_at, u32_at) = tiff_readers(tiff)?;
+    let ifd0 = u32_at(4)?;
+    let ptr = ifd0 + 2 + u16_at(ifd0)? * 12;
+    u32_at(ptr).map(|_| ptr)
+}
+
+/// Unlinks the EXIF thumbnail, for when the pixels no longer match it (e.g. after rotating).
+pub fn drop_exif_thumbnail(tiff: &mut [u8]) {
+    if let Some(ptr) = next_ifd_ptr(tiff) {
+        tiff[ptr..ptr + 4].fill(0);
+    }
 }
 
 /// The supported images in `path`'s folder: by name in file-manager order, or oldest first.
@@ -290,6 +315,19 @@ mod tests {
     fn exif_thumbnail_found() {
         assert_eq!(exif_thumbnail(&tiff(true, b"JPEGDATA")), Some(&b"JPEGDATA"[..]));
         assert_eq!(exif_thumbnail(&tiff(false, b"JPEGDATA")), Some(&b"JPEGDATA"[..]));
+    }
+
+    #[test]
+    fn drop_thumbnail() {
+        for le in [true, false] {
+            let mut t = tiff(le, b"JPEGDATA");
+            drop_exif_thumbnail(&mut t);
+            assert_eq!(exif_thumbnail(&t), None);
+        }
+        // Malformed input is left alone without panicking.
+        let mut junk = b"II\x2a\0\xff\xff\xff\xff".to_vec();
+        drop_exif_thumbnail(&mut junk);
+        assert_eq!(junk, b"II\x2a\0\xff\xff\xff\xff");
     }
 
     #[test]

@@ -41,6 +41,7 @@ Format: `YYYY-MM-DD — decision — reason`
 - 2026-10-28 — M3: File → Close closes the window (Ctrl+W); Info = name/folder/dimensions/size/type; menus hidden in fullscreen; Open Recent lists only explicit opens; file dialog via `rfd` (XDG portal, pure Rust), run on its own thread.
 - 2026-10-28 — M4: rotate/flip is a `view::Transform` applied to the small resized output (not the decoded image), so it's cheap and zoom/pan work in rotated coordinates; it resets on image change and resets zoom to Fit.
 - 2026-10-28 — M5: GPU scaling uploads the whole frame once (mipmaps for Bilinear) and draws a mesh whose UVs carry the rotate/flip; images over `max_texture_side` stay on the CPU path. With GPU on, Bicubic/Lanczos3 fall back to Bilinear. Date sort is oldest first.
+- 2026-10-28 — M6 (user's choices): one Save As (format by extension, no Export); overwrite allowed after the system dialog's confirmation; JPEG quality fixed at 90; EXIF kept with orientation reset + thumbnail unlinked; atomic write via temp file + rename; animated images not saveable yet.
 
 ## Self-Update Rule
 Before finishing your turn:

@@ -1,4 +1,5 @@
 use crate::load::{self, Frame, Loaded, Loader, Msg, Notify};
+use crate::save;
 use crate::settings::{self, Interpolation, Settings};
 use crate::view::{self, Transform, View};
 use eframe::egui::{self, Color32, ColorImage, Key, KeyboardShortcut, Modifiers, Pos2, Rect, Sense, TextureFilter, TextureHandle, TextureOptions, Vec2, ViewportCommand};
@@ -13,6 +14,7 @@ const RECENT_MAX: usize = 10;
 #[derive(Clone, PartialEq)]
 enum Action {
     Open,
+    SaveAs,
     OpenRecent(PathBuf),
     Close,
     Info,
@@ -33,8 +35,9 @@ const fn ctrl(key: Key) -> KeyboardShortcut {
 }
 
 /// Keyboard shortcuts, also shown in the menus. Ctrl+Plus is an alias for Ctrl+=.
-const SHORTCUTS: [(KeyboardShortcut, Action); 11] = [
+const SHORTCUTS: [(KeyboardShortcut, Action); 12] = [
     (ctrl(Key::O), Action::Open),
+    (KeyboardShortcut::new(Modifiers { shift: true, ..Modifiers::COMMAND }, Key::S), Action::SaveAs),
     (ctrl(Key::W), Action::Close),
     (ctrl(Key::I), Action::Info),
     (ctrl(Key::Equals), Action::ZoomIn),
@@ -94,6 +97,8 @@ pub struct App {
     full_reported: bool,
     nav_start: Option<Instant>,
     close_next: bool,
+    /// A short message shown at the bottom (e.g. "Saved …"), with when it appeared.
+    status: Option<(String, Instant)>,
 }
 
 impl App {
@@ -111,7 +116,7 @@ impl App {
             files: start.into_iter().collect(), index: 0,
             cache: HashMap::new(), preview: None, error: None, view: View::Fit,
             texture: None, tex_key: None, generation: 0, anim_frame: 0, anim_due: None, transform: Transform::default(), title: String::new(),
-            window_reported: false, preview_reported: false, full_reported: false, nav_start: None, close_next: false,
+            window_reported: false, preview_reported: false, full_reported: false, nav_start: None, close_next: false, status: None,
         }
     }
 
@@ -162,6 +167,23 @@ impl App {
             Msg::Error(path, e) => {
                 if self.current() == Some(&path) {
                     self.error = Some(e);
+                }
+            }
+            Msg::Saved(path, result) => {
+                let name = path.file_name().unwrap_or_default().to_string_lossy().into_owned();
+                self.status = Some((match &result {
+                    Ok(()) => format!("Saved {name}"),
+                    Err(e) => format!("Couldn't save {name}: {e}"),
+                }, Instant::now()));
+                let (Ok(()), Ok(path), Some(current)) = (result, std::fs::canonicalize(&path), self.current().cloned()) else { return };
+                if path == current {
+                    // Overwrote the image on screen: show the saved version.
+                    self.cache.remove(&path);
+                    self.reset_shown();
+                    self.request_decodes();
+                }
+                if path.parent() == current.parent() {
+                    load::relist(&current, self.settings.sort, &self.notify);
                 }
             }
         }
@@ -219,8 +241,37 @@ impl App {
         });
     }
 
+    /// Asks where to save the current image (with its rotate/flip), then saves on that thread.
+    fn save_dialog(&self) {
+        let Some((path, l)) = self.current().and_then(|p| Some((p, self.cache.get(p)?))) else { return };
+        if l.frames.len() != 1 {
+            return;
+        }
+        let (frame, transform, source) = (l.frames[0].clone(), self.transform, path.clone());
+        let mut dialog = rfd::FileDialog::new()
+            .set_file_name(path.file_name().unwrap_or_default().to_string_lossy())
+            .add_filter("JPEG", &["jpg", "jpeg"])
+            .add_filter("PNG", &["png"])
+            .add_filter("WebP", &["webp"])
+            .add_filter("BMP", &["bmp"]);
+        if let Some(dir) = path.parent() {
+            dialog = dialog.set_directory(dir);
+        }
+        let notify = self.notify.clone();
+        // The system dialog asks before replacing an existing file.
+        std::thread::spawn(move || {
+            if let Some(dest) = dialog.save_file() {
+                let result = save::save(&frame, transform, &source, &dest);
+                notify.send(Msg::Saved(dest, result));
+            }
+        });
+    }
+
     fn menu_bar(&self, ui: &mut egui::Ui, actions: &mut Vec<Action>) {
-        let has_image = self.current().is_some_and(|p| self.cache.contains_key(p));
+        let loaded = self.current().and_then(|p| self.cache.get(p));
+        let has_image = loaded.is_some();
+        // shortcut: animated images can't be saved; add GIF re-encoding if it's wanted.
+        let can_save = loaded.is_some_and(|l| l.frames.len() == 1);
         fn item(ui: &mut egui::Ui, label: &str, action: Action, enabled: bool, actions: &mut Vec<Action>) {
             let mut button = egui::Button::new(label);
             if let Some((sc, _)) = SHORTCUTS.iter().find(|(_, a)| *a == action) {
@@ -244,6 +295,7 @@ impl App {
                         }
                     }
                 });
+                item(ui, "Save As…", Action::SaveAs, can_save, actions);
                 item(ui, "Close", Action::Close, true, actions);
                 item(ui, "Info", Action::Info, has_image, actions);
             });
@@ -363,6 +415,7 @@ impl eframe::App for App {
         for action in &actions {
             match action {
                 Action::Open => self.open_dialog(),
+                Action::SaveAs => self.save_dialog(),
                 Action::OpenRecent(path) => self.open(path.clone()),
                 Action::Close => ctx.send_viewport_cmd(ViewportCommand::Close),
                 Action::Info => self.show_info = true,
@@ -500,6 +553,20 @@ impl eframe::App for App {
             }
         } else if let Some(e) = &self.error {
             ui.painter().text(viewport.center(), egui::Align2::CENTER_CENTER, format!("Can't open this image:\n{e}"), egui::FontId::proportional(14.0), Color32::GRAY);
+        }
+
+        if let Some((text, at)) = &self.status {
+            const SHOWN: std::time::Duration = std::time::Duration::from_secs(4);
+            if at.elapsed() < SHOWN {
+                let painter = ui.painter();
+                let galley = painter.layout_no_wrap(text.clone(), egui::FontId::proportional(14.0), Color32::WHITE);
+                let rect = Rect::from_center_size(Pos2::new(viewport.center().x, viewport.bottom() - 24.0), galley.size() + Vec2::new(16.0, 8.0));
+                painter.rect_filled(rect, 4.0, Color32::from_black_alpha(190));
+                painter.galley(rect.min + Vec2::new(8.0, 4.0), galley, Color32::WHITE);
+                ctx.request_repaint_after(SHOWN - at.elapsed());
+            } else {
+                self.status = None;
+            }
         }
 
         self.info_dialog(&ctx);

@@ -1,5 +1,6 @@
 mod app;
 mod load;
+mod save;
 mod settings;
 mod view;
 

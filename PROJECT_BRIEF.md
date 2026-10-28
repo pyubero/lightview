@@ -16,7 +16,6 @@ A simple, very fast image viewer written fully in Rust. It becomes the default i
 - AVIF, HEIC, SVG and camera RAW formats
 - Flatpak, Snap, AUR or any other packaging
 - Windows builds (the code shouldn't block them, but they aren't tested yet)
-- Saving changes: Save As and Export come in a later version
 - Draw and EXIF editing: a separate, later phase
 
 ## Target platform
@@ -94,7 +93,7 @@ Binary size and memory aren't goals for now; we'll optimize them if they become 
 3. **Integration** ✅ (2026-10-28; checked by the user). Menu bar (File: Open, Open Recent, Close, Info; View: zoom/fit/actual size/fullscreen), hidden in fullscreen. `lightview.desktop` and `install.sh` make it the default viewer. Recent = files opened explicitly, last 10, saved between runs.
 4. **Light editing** ✅ (2026-10-28; checked by the user). Edit menu: Rotate Left (Ctrl+L), Rotate Right (Ctrl+R), Flip Horizontally, Flip Vertically. View only; resets when you switch images.
 5. **Settings dialog** ✅ (2026-10-28; checked by the user). Settings button in the menu bar; every setting in the table above; saved between runs. Changes apply right away, except the window size, which applies at the next start.
-6. *(Later)* Save As and Export. 
+6. **Save As** ✅ (2026-10-28). One File → Save As… (Ctrl+Shift+S), no separate Export. The format follows the extension (JPEG at quality 90, PNG, lossless WebP, BMP). EXIF is kept, with the orientation reset and the old thumbnail unlinked. Overwriting needs the system dialog's confirmation. Writes through a temporary file. Animated images can't be saved yet.
 7. *(Later still)* Draw and EXIF editing.
 
 ## Decided
