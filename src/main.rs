@@ -1,5 +1,6 @@
 mod app;
 mod load;
+mod settings;
 mod view;
 
 use eframe::egui;
@@ -22,22 +23,24 @@ fn main() -> eframe::Result {
         std::process::exit(1);
     }));
 
+    let settings = settings::load();
+
     // Decoding starts before the window exists so it overlaps OpenGL/eframe setup.
     let (tx, rx) = mpsc::channel();
     let notify = Notify { tx, ctx: Arc::new(OnceLock::new()) };
     let loader = Loader::new(notify.clone(), 3);
     if let Some(path) = &path {
-        load::start(path, &loader, &notify);
+        load::start(path, settings.sort, &loader, &notify);
     }
 
     let options = eframe::NativeOptions {
-        viewport: egui::ViewportBuilder::default().with_inner_size([1280.0, 720.0]),
+        viewport: egui::ViewportBuilder::default().with_inner_size(settings.window_size),
         // Always open at the default size (brief); persistence is only for app data.
         persist_window: false,
         ..Default::default()
     };
     eframe::run_native("lightview", options, Box::new(move |cc| {
         let _ = notify.ctx.set(cc.egui_ctx.clone());
-        Ok(Box::new(app::App::new(cc, t0, timings, bench, rx, loader, notify, path)))
+        Ok(Box::new(app::App::new(cc, t0, timings, bench, rx, loader, notify, settings, path)))
     }))
 }

@@ -1,7 +1,8 @@
 use crate::load::{self, Frame, Loaded, Loader, Msg, Notify};
+use crate::settings::{self, Interpolation, Settings};
 use crate::view::{self, Transform, View};
-use eframe::egui::{self, Color32, ColorImage, Key, KeyboardShortcut, Modifiers, Pos2, Rect, Sense, TextureHandle, TextureOptions, Vec2, ViewportCommand};
-use fast_image_resize::{FilterType, PixelType, ResizeAlg, ResizeOptions, Resizer, images::{Image, ImageRef}};
+use eframe::egui::{self, Color32, ColorImage, Key, KeyboardShortcut, Modifiers, Pos2, Rect, Sense, TextureFilter, TextureHandle, TextureOptions, Vec2, ViewportCommand};
+use fast_image_resize::{PixelType, ResizeOptions, Resizer, images::{Image, ImageRef}};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::mpsc;
@@ -15,6 +16,7 @@ enum Action {
     OpenRecent(PathBuf),
     Close,
     Info,
+    Settings,
     ZoomIn,
     ZoomOut,
     Fit,
@@ -45,8 +47,18 @@ const SHORTCUTS: [(KeyboardShortcut, Action); 11] = [
     (ctrl(Key::R), Action::RotateRight),
 ];
 
-/// What the current texture shows: (generation, animation frame, transform, source crop, size in px).
-type TexKey = (u64, usize, Transform, [f32; 4], [u32; 2]);
+/// What the current texture holds; it's rebuilt when this changes.
+#[derive(Clone, Copy, PartialEq)]
+struct TexKey {
+    generation: u64,
+    anim_frame: usize,
+    /// GPU scaling uploads the whole frame, so transform/crop/size don't matter then.
+    gpu: bool,
+    interpolation: Interpolation,
+    transform: Transform,
+    crop: [f32; 4],
+    size: [u32; 2],
+}
 
 pub struct App {
     t0: Instant,
@@ -57,7 +69,9 @@ pub struct App {
     notify: Notify,
     /// Explicitly opened files, newest first. Saved between runs.
     recent: Vec<PathBuf>,
+    settings: Settings,
     show_info: bool,
+    show_settings: bool,
     files: Vec<PathBuf>,
     index: usize,
     /// Decoded images for current ±1 only.
@@ -85,7 +99,7 @@ pub struct App {
 impl App {
     /// `start` is already being decoded (see `load::start` in main).
     #[allow(clippy::too_many_arguments)]
-    pub fn new(cc: &eframe::CreationContext, t0: Instant, timings: bool, bench: bool, rx: mpsc::Receiver<Msg>, loader: Loader, notify: Notify, start: Option<PathBuf>) -> Self {
+    pub fn new(cc: &eframe::CreationContext, t0: Instant, timings: bool, bench: bool, rx: mpsc::Receiver<Msg>, loader: Loader, notify: Notify, settings: Settings, start: Option<PathBuf>) -> Self {
         // Otherwise egui's own Ctrl +/− scales the whole UI.
         cc.egui_ctx.options_mut(|o| o.zoom_with_keyboard = false);
         let mut recent: Vec<PathBuf> = cc.storage.and_then(|s| s.get_string("recent")).unwrap_or_default().lines().map(PathBuf::from).collect();
@@ -93,7 +107,7 @@ impl App {
             push_recent(&mut recent, path);
         }
         App {
-            t0, timings, bench, rx, loader, notify, recent, show_info: false,
+            t0, timings, bench, rx, loader, notify, recent, settings, show_info: false, show_settings: false,
             files: start.into_iter().collect(), index: 0,
             cache: HashMap::new(), preview: None, error: None, view: View::Fit,
             texture: None, tex_key: None, generation: 0, anim_frame: 0, anim_due: None, transform: Transform::default(), title: String::new(),
@@ -160,7 +174,7 @@ impl App {
         match std::fs::canonicalize(&path) {
             Ok(path) => {
                 push_recent(&mut self.recent, &path);
-                load::start(&path, &self.loader, &self.notify);
+                load::start(&path, self.settings.sort, &self.loader, &self.notify);
                 self.files = vec![path];
             }
             Err(e) => {
@@ -247,7 +261,29 @@ impl App {
                 ui.separator();
                 item(ui, "Fullscreen", Action::Fullscreen, true, actions);
             });
+            if ui.button("Settings").clicked() {
+                actions.push(Action::Settings);
+            }
         });
+    }
+
+    fn settings_dialog(&mut self, ctx: &egui::Context) {
+        if !self.show_settings {
+            return;
+        }
+        let sort = self.settings.sort;
+        let modal = egui::Modal::new(egui::Id::unique("settings")).show(ctx, |ui| {
+            ui.heading("Settings");
+            settings::ui(ui, &mut self.settings);
+            ui.add_space(8.0);
+            ui.button("Close").clicked()
+        });
+        if modal.inner || modal.should_close() {
+            self.show_settings = false;
+        }
+        if self.settings.sort != sort && let Some(path) = self.current() {
+            load::relist(path, self.settings.sort, &self.notify);
+        }
     }
 
     fn info_dialog(&mut self, ctx: &egui::Context) {
@@ -292,6 +328,7 @@ impl eframe::App for App {
     fn save(&mut self, storage: &mut dyn eframe::Storage) {
         let recent: Vec<String> = self.recent.iter().map(|p| p.display().to_string()).collect();
         storage.set_string("recent", recent.join("\n"));
+        eframe::set_value(storage, settings::KEY, &self.settings);
     }
 
     fn persist_egui_memory(&self) -> bool {
@@ -299,7 +336,8 @@ impl eframe::App for App {
     }
 
     fn clear_color(&self, _visuals: &egui::Visuals) -> [f32; 4] {
-        Color32::BLACK.to_normalized_gamma_f32()
+        let [r, g, b] = self.settings.background;
+        Color32::from_rgb(r, g, b).to_normalized_gamma_f32()
     }
 
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
@@ -328,6 +366,7 @@ impl eframe::App for App {
                 Action::OpenRecent(path) => self.open(path.clone()),
                 Action::Close => ctx.send_viewport_cmd(ViewportCommand::Close),
                 Action::Info => self.show_info = true,
+                Action::Settings => self.show_settings = true,
                 Action::RotateLeft | Action::RotateRight | Action::FlipHorizontal | Action::FlipVertical => {
                     self.transform = match action {
                         Action::RotateLeft => self.transform.rotate_left(),
@@ -396,20 +435,51 @@ impl eframe::App for App {
         if let Some(frame) = frame {
             let frame_size = Vec2::new(frame.w as f32, frame.h as f32);
             let (dest, crop) = view::layout(view, self.transform.size(frame_size), viewport, ppp);
-            let crop = self.transform.to_source(crop, frame_size);
-            let size = [(dest.width() * ppp).round().max(1.0) as u32, (dest.height() * ppp).round().max(1.0) as u32];
-            let key = (self.generation, self.anim_frame, self.transform, [crop.min.x, crop.min.y, crop.width(), crop.height()], size);
+            let interpolation = self.settings.interpolation();
+            // Images bigger than the GPU's texture limit always take the CPU path.
+            let gpu = self.settings.gpu_scaling && frame.w.max(frame.h) as usize <= ctx.input(|i| i.max_texture_side);
+            let key = if gpu {
+                TexKey { generation: self.generation, anim_frame: self.anim_frame, gpu, interpolation, transform: Transform::default(), crop: [0.0; 4], size: [frame.w, frame.h] }
+            } else {
+                let src = self.transform.to_source(crop, frame_size);
+                let size = [(dest.width() * ppp).round().max(1.0) as u32, (dest.height() * ppp).round().max(1.0) as u32];
+                TexKey { generation: self.generation, anim_frame: self.anim_frame, gpu, interpolation, transform: self.transform, crop: [src.min.x, src.min.y, src.width(), src.height()], size }
+            };
             if self.tex_key != Some(key) {
-                // shortcut: resize runs on the UI thread every pan/zoom frame; the GPU scaling setting (M5) is the smooth path.
-                let image = resize(frame, crop, size, self.transform);
+                let (image, options) = if gpu {
+                    let options = match interpolation {
+                        Interpolation::Nearest => TextureOptions::NEAREST,
+                        // Mipmaps keep big images from aliasing when shrunk.
+                        _ => TextureOptions { mipmap_mode: Some(TextureFilter::Linear), ..TextureOptions::LINEAR },
+                    };
+                    (to_color_image(frame.alpha, [frame.w as usize, frame.h as usize], &frame.pixels), options)
+                } else {
+                    // shortcut: resize runs on the UI thread every pan/zoom frame; GPU scaling is the smooth path.
+                    let [x, y, w, h] = key.crop;
+                    (resize(frame, Rect::from_min_size(Pos2::new(x, y), Vec2::new(w, h)), key.size, self.transform, interpolation), TextureOptions::LINEAR)
+                };
                 match &mut self.texture {
-                    Some(t) => t.set(image, TextureOptions::LINEAR),
-                    None => self.texture = Some(ctx.load_texture("image", image, TextureOptions::LINEAR)),
+                    Some(t) => t.set(image, options),
+                    None => self.texture = Some(ctx.load_texture("image", image, options)),
                 }
                 self.tex_key = Some(key);
             }
-            let uv = Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0));
-            ui.painter().image(self.texture.as_ref().unwrap().id(), dest, uv, Color32::WHITE);
+            let texture = self.texture.as_ref().unwrap().id();
+            if gpu {
+                // Each screen corner samples the source point the transform maps it from.
+                let mut mesh = egui::Mesh::with_texture(texture);
+                let shown = [crop.left_top(), crop.right_top(), crop.right_bottom(), crop.left_bottom()];
+                let screen = [dest.left_top(), dest.right_top(), dest.right_bottom(), dest.left_bottom()];
+                for (pos, p) in screen.into_iter().zip(shown) {
+                    let uv = (self.transform.source_point(p, frame_size).to_vec2() / frame_size).to_pos2();
+                    mesh.vertices.push(egui::epaint::Vertex { pos, uv, color: Color32::WHITE });
+                }
+                mesh.add_triangle(0, 1, 2);
+                mesh.add_triangle(0, 2, 3);
+                ui.painter().add(mesh);
+            } else {
+                ui.painter().image(texture, dest, Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)), Color32::WHITE);
+            }
 
             if self.timings {
                 if full.is_none() && !self.preview_reported {
@@ -433,6 +503,7 @@ impl eframe::App for App {
         }
 
         self.info_dialog(&ctx);
+        self.settings_dialog(&ctx);
 
         let title = self.make_title();
         if title != self.title {
@@ -444,13 +515,13 @@ impl eframe::App for App {
 
 /// Resizes the `crop` part of `frame` so that, after `transform`, it's `size` px.
 /// Transforming the small resized output instead of the full image keeps rotating cheap.
-fn resize(frame: &Frame, crop: Rect, size: [u32; 2], transform: Transform) -> ColorImage {
+fn resize(frame: &Frame, crop: Rect, size: [u32; 2], transform: Transform, interpolation: Interpolation) -> ColorImage {
     let pixel_type = if frame.alpha { PixelType::U8x4 } else { PixelType::U8x3 };
     let src = ImageRef::new(frame.w, frame.h, &frame.pixels, pixel_type).unwrap();
     let [w, h] = if transform.rot % 2 == 1 { [size[1], size[0]] } else { size };
     let mut dst = Image::new(w, h, pixel_type);
     let opts = ResizeOptions::new()
-        .resize_alg(ResizeAlg::Convolution(FilterType::Bilinear))
+        .resize_alg(interpolation.cpu())
         .crop(crop.min.x.into(), crop.min.y.into(), crop.width().into(), crop.height().into());
     Resizer::new().resize(&src, &mut dst, &opts).unwrap();
     let size = [size[0] as usize, size[1] as usize];
@@ -464,7 +535,11 @@ fn resize(frame: &Frame, crop: Rect, size: [u32; 2], transform: Transform) -> Co
         };
         transform.apply(img).into_bytes()
     };
-    if frame.alpha { ColorImage::from_rgba_unmultiplied(size, &pixels) } else { ColorImage::from_rgb(size, &pixels) }
+    to_color_image(frame.alpha, size, &pixels)
+}
+
+fn to_color_image(alpha: bool, size: [usize; 2], pixels: &[u8]) -> ColorImage {
+    if alpha { ColorImage::from_rgba_unmultiplied(size, pixels) } else { ColorImage::from_rgb(size, pixels) }
 }
 
 /// Moves `path` to the front of `recent`, keeping at most `RECENT_MAX`.
@@ -493,7 +568,7 @@ mod tests {
         let frame = Frame { w: 3, h: 2, pixels, alpha: false, delay: std::time::Duration::ZERO };
         let t = Transform::default().rotate_right();
         let crop = t.to_source(Rect::from_min_size(Pos2::ZERO, Vec2::new(2.0, 3.0)), Vec2::new(3.0, 2.0));
-        let out = resize(&frame, crop, [2, 3], t);
+        let out = resize(&frame, crop, [2, 3], t, Interpolation::Bilinear);
         assert_eq!(out.size, [2, 3]);
         // Rotated right, the top row reads bottom-left then top-left of the source: 3, 0.
         let red: Vec<u8> = out.pixels.iter().map(|p| p.r()).collect();

@@ -1,3 +1,4 @@
+use crate::settings::SortOrder;
 use eframe::egui;
 use image::codecs::{gif::GifDecoder, webp::WebPDecoder};
 use image::{AnimationDecoder, DynamicImage, ImageDecoder, ImageFormat, ImageReader};
@@ -96,10 +97,15 @@ impl Loader {
 }
 
 /// Starts decoding `path` and listing its folder.
-pub fn start(path: &Path, loader: &Loader, notify: &Notify) {
+pub fn start(path: &Path, sort: SortOrder, loader: &Loader, notify: &Notify) {
     loader.want(vec![path.to_path_buf()]);
+    relist(path, sort, notify);
+}
+
+/// Lists `path`'s folder on another thread and sends it as `Msg::Folder`.
+pub fn relist(path: &Path, sort: SortOrder, notify: &Notify) {
     let (path, notify) = (path.to_path_buf(), notify.clone());
-    std::thread::spawn(move || notify.send(Msg::Folder(list_folder(&path))));
+    std::thread::spawn(move || notify.send(Msg::Folder(list_folder(&path, sort))));
 }
 
 /// Decodes a file. For JPEGs with an EXIF thumbnail, `on_preview` gets it first.
@@ -187,8 +193,8 @@ fn exif_thumbnail(tiff: &[u8]) -> Option<&[u8]> {
     tiff.get(offset..offset.checked_add(len?)?)
 }
 
-/// The supported images in `path`'s folder, in file-manager order.
-pub fn list_folder(path: &Path) -> Vec<PathBuf> {
+/// The supported images in `path`'s folder: by name in file-manager order, or oldest first.
+fn list_folder(path: &Path, sort: SortOrder) -> Vec<PathBuf> {
     let dir = path.parent().unwrap_or(Path::new("."));
     let Ok(entries) = std::fs::read_dir(dir) else { return vec![path.to_path_buf()] };
     let mut files: Vec<PathBuf> = entries
@@ -196,10 +202,19 @@ pub fn list_folder(path: &Path) -> Vec<PathBuf> {
         .filter(|p| p.extension().and_then(|e| e.to_str()).is_some_and(|e| EXTENSIONS.contains(&e.to_ascii_lowercase().as_str())))
         .collect();
     let name = |p: &PathBuf| p.file_name().unwrap_or_default().to_string_lossy().into_owned();
-    files.sort_by(|a, b| {
+    let by_name = |a: &PathBuf, b: &PathBuf| {
         let (a, b) = (name(a), name(b));
         natural_cmp(&a, &b).then_with(|| a.cmp(&b))
-    });
+    };
+    match sort {
+        SortOrder::Name => files.sort_by(by_name),
+        SortOrder::DateModified => {
+            let modified = |p: &PathBuf| std::fs::metadata(p).and_then(|m| m.modified()).ok();
+            let mut dated: Vec<_> = files.into_iter().map(|p| (modified(&p), p)).collect();
+            dated.sort_by(|(ta, a), (tb, b)| ta.cmp(tb).then_with(|| by_name(a, b)));
+            files = dated.into_iter().map(|(_, p)| p).collect();
+        }
+    }
     files
 }
 
@@ -317,8 +332,17 @@ mod tests {
         for f in ["b10.JPG", "b2.png", "a.webp", "notes.txt", "clip.mp4", "photo.heic"] {
             std::fs::write(dir.join(f), b"").unwrap();
         }
-        let names: Vec<String> = list_folder(&dir.join("a.webp")).iter().map(|p| p.file_name().unwrap().to_string_lossy().into_owned()).collect();
+        // Oldest: b2.png, then a.webp, then b10.JPG.
+        let base = std::time::SystemTime::UNIX_EPOCH + Duration::from_secs(1_700_000_000);
+        for (f, secs) in [("b2.png", 0), ("a.webp", 10), ("b10.JPG", 20)] {
+            std::fs::File::options().write(true).open(dir.join(f)).unwrap().set_modified(base + Duration::from_secs(secs)).unwrap();
+        }
+        let names = |sort| -> Vec<String> {
+            list_folder(&dir.join("a.webp"), sort).iter().map(|p| p.file_name().unwrap().to_string_lossy().into_owned()).collect()
+        };
+        let (by_name, by_date) = (names(SortOrder::Name), names(SortOrder::DateModified));
         std::fs::remove_dir_all(&dir).unwrap();
-        assert_eq!(names, ["a.webp", "b2.png", "b10.JPG"]);
+        assert_eq!(by_name, ["a.webp", "b2.png", "b10.JPG"]);
+        assert_eq!(by_date, ["b2.png", "a.webp", "b10.JPG"]);
     }
 }

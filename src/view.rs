@@ -97,18 +97,20 @@ impl Transform {
         if self.rot % 2 == 1 { Vec2::new(size.y, size.x) } else { size }
     }
 
-    /// The source-image rect that ends up at `rect` (in transformed coordinates) for a `src`-sized image.
+    /// The source-image point that ends up at `p` (in transformed coordinates) for a `src`-sized image.
+    pub fn source_point(self, mut p: Pos2, src: Vec2) -> Pos2 {
+        let mut dims = self.size(src);
+        for _ in 0..self.rot {
+            // Undo one clockwise turn: (x, y) in (w, h) came from (y, w − x) in (h, w).
+            p = Pos2::new(p.y, dims.x - p.x);
+            dims = Vec2::new(dims.y, dims.x);
+        }
+        if self.flip { Pos2::new(src.x - p.x, p.y) } else { p }
+    }
+
+    /// The source-image rect that ends up at `rect` (in transformed coordinates).
     pub fn to_source(self, rect: Rect, src: Vec2) -> Rect {
-        let point = |mut p: Pos2| {
-            let mut dims = self.size(src);
-            for _ in 0..self.rot {
-                // Undo one clockwise turn: (x, y) in (w, h) came from (y, w − x) in (h, w).
-                p = Pos2::new(p.y, dims.x - p.x);
-                dims = Vec2::new(dims.y, dims.x);
-            }
-            if self.flip { Pos2::new(src.x - p.x, p.y) } else { p }
-        };
-        Rect::from_two_pos(point(rect.min), point(rect.max))
+        Rect::from_two_pos(self.source_point(rect.min, src), self.source_point(rect.max, src))
     }
 
     pub fn apply(self, mut img: image::DynamicImage) -> image::DynamicImage {

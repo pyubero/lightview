@@ -1154,6 +1154,8 @@ dependencies = [
  "fast_image_resize",
  "image",
  "rfd",
+ "ron",
+ "serde",
 ]
 
 [[package]]
