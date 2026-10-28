@@ -81,15 +81,16 @@ The later phases add File → Save As and Export, and Edit → Draw and Edit EXI
 ## Performance targets (each one gets measured)
 | # | Target | How we check it |
 |---|--------|-----------------|
-| P1 | First image on screen in **under 100 ms** from launch, for a 12 MP JPEG on a cold start | Time from process start to the first frame that shows the image, logged with a `--bench` flag or similar |
+| P1a | Window on screen in **under 200 ms** from launch | `--bench` timing from process start to the first frame |
+| P1b | A 12 MP JPEG on screen **as fast as decoding allows**. A preview shows first when the photo has one (see milestone 2), and the sharp image replaces it once decoding finishes. | `--bench` breakdown: decode / resize / first image frame |
 | P2 | Next/previous image **in under 16 ms** (one frame) when the image was already decoded ahead | The same logging |
 | P3 | The UI never freezes during decoding | Decoding never runs on the UI thread |
 
 Binary size and memory aren't goals for now; we'll optimize them if they become a problem.
 
 ## Milestones
-1. **Spike:** an eframe window that shows one JPEG passed on the command line. Measure P1 right away, since this is the riskiest assumption (see Q1).
-2. **Viewer:** navigating, zoom and pan, fit and 1:1, fullscreen, the title bar, animation.
+1. **Spike** ✅ (2026-10-28): an eframe window that shows one JPEG passed on the command line. Result: eframe takes 115–200 ms to the first frame and a 12 MP JPEG takes ~360–410 ms to decode, so the image appears at ~420 ms. The original 100 ms target was split into P1a and P1b.
+2. **Viewer** ✅ (2026-10-28; checked by hand by the user). Measured with `--bench` on a 4000×2252 Samsung photo: window 121 ms (P1a ✅), preview 124 ms, full image 243 ms (medians of 10). Also applies EXIF orientation. Menus move to milestone 3. The plan was to: show the small preview built into the JPEG's EXIF data straight away, then replace it with the sharp image. Also navigating, zoom and pan, fit and 1:1, fullscreen, the title bar, animation.
 3. **Integration:** the `.desktop` file, setting lightview as the default app, Open and Open Recent.
 4. **Light editing:** rotate and flip, view only.
 5. **Settings dialog**, with the settings saved between runs.
@@ -98,7 +99,7 @@ Binary size and memory aren't goals for now; we'll optimize them if they become 
 
 ## Decided
 - **GPU checkbox (Q1):** it's called *GPU image scaling* and controls only how the image gets scaled. The UI always draws with OpenGL.
-- **Startup (Q2):** milestone 1 measures P1 first. If it misses, we either accept a slightly higher number or show the window first and fill in the image a moment later.
+- **Startup (Q2):** milestone 1 missed 100 ms because decoding is the bottleneck, not egui. We keep egui and split P1 into P1a (window) and P1b (image). The EXIF preview comes in milestone 2.
 - **Editing (Q3):** v1 is view only. Saving comes later, and Draw and EXIF editing after that.
 - **Interpolation (Q4):** the four common modes listed in the Settings table.
 - **Preferences (Q5):** the settings in the Settings table. Wrapping, zoom mode, enlarging small images and window size are fixed behaviours, not settings.
