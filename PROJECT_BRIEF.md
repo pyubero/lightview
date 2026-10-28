@@ -16,7 +16,7 @@ A simple, very fast image viewer written fully in Rust. It becomes the default i
 - AVIF, HEIC, SVG and camera RAW formats
 - Flatpak, Snap, AUR or any other packaging
 - Windows builds (the code shouldn't block them, but they aren't tested yet)
-- Draw and EXIF editing: a separate, later phase
+- Draw: a separate, later phase
 
 ## Target platform
 - **Now:** Kubuntu (KDE Plasma, Wayland, plus X11 as a fallback)
@@ -94,7 +94,8 @@ Binary size and memory aren't goals for now; we'll optimize them if they become 
 4. **Light editing** ✅ (2026-10-28; checked by the user). Edit menu: Rotate Left (Ctrl+L), Rotate Right (Ctrl+R), Flip Horizontally, Flip Vertically. View only; resets when you switch images.
 5. **Settings dialog** ✅ (2026-10-28; checked by the user). Settings button in the menu bar; every setting in the table above; saved between runs. Changes apply right away, except the window size, which applies at the next start.
 6. **Save As** ✅ (2026-10-28). One File → Save As… (Ctrl+Shift+S), no separate Export. The format follows the extension (JPEG at quality 90, PNG, lossless WebP, BMP). EXIF is kept, with the orientation reset and the old thumbnail unlinked. Overwriting needs the system dialog's confirmation. Writes through a temporary file. Animated images can't be saved yet.
-7. *(Later still)* Draw and EXIF editing.
+7. **EXIF editing** ✅ (2026-10-29). Tools → Edit EXIF… (JPEG only). Editable: Description, Artist, Copyright, Date taken, camera Make and Model; the location can be removed. All other tags are shown read-only. Always saved to a copy (the original is never modified). Only the EXIF block is rewritten, never the pixels. MakerNote is dropped.
+8. *(Later)* Draw.
 
 ## Decided
 - **GPU checkbox (Q1):** it's called *GPU image scaling* and controls only how the image gets scaled. The UI always draws with OpenGL.

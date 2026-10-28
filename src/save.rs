@@ -3,6 +3,7 @@ use crate::view::Transform;
 use image::codecs::{bmp::BmpEncoder, jpeg::JpegEncoder, png::PngEncoder, webp::WebPEncoder};
 use image::metadata::Orientation;
 use image::{DynamicImage, ImageDecoder, ImageEncoder, ImageReader};
+use std::fs::File;
 use std::io::{BufWriter, Write};
 use std::path::Path;
 
@@ -25,10 +26,17 @@ pub fn save(frame: &Frame, transform: Transform, source: &Path, dest: &Path) -> 
     let img = transform.apply(img);
     let exif = source_exif(source);
 
+    write_atomic(dest, |out| encode(&img, &ext, exif, out).map_err(|e| e.to_string()))
+}
+
+/// Writes `dest` through a temporary file next to it and renames it into place,
+/// so a failure never leaves `dest` half-written.
+pub fn write_atomic(dest: &Path, write: impl FnOnce(&mut BufWriter<File>) -> Result<(), String>) -> Result<(), String> {
+    let ext = dest.extension().and_then(|e| e.to_str()).unwrap_or_default();
     let tmp = dest.with_extension(format!("{ext}.lightview-tmp"));
     let result = (|| {
-        let mut out = BufWriter::new(std::fs::File::create(&tmp).map_err(|e| e.to_string())?);
-        encode(&img, &ext, exif, &mut out).map_err(|e| e.to_string())?;
+        let mut out = BufWriter::new(File::create(&tmp).map_err(|e| e.to_string())?);
+        write(&mut out)?;
         out.into_inner().map_err(|e| e.to_string())?.sync_all().map_err(|e| e.to_string())?;
         std::fs::rename(&tmp, dest).map_err(|e| e.to_string())
     })();

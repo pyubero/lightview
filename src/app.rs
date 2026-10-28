@@ -1,3 +1,4 @@
+use crate::exif_edit;
 use crate::load::{self, Frame, Loaded, Loader, Msg, Notify};
 use crate::save;
 use crate::settings::{self, Interpolation, Settings};
@@ -18,6 +19,7 @@ enum Action {
     OpenRecent(PathBuf),
     Close,
     Info,
+    EditExif,
     Settings,
     ZoomIn,
     ZoomOut,
@@ -75,6 +77,7 @@ pub struct App {
     settings: Settings,
     show_info: bool,
     show_settings: bool,
+    exif_dialog: Option<exif_edit::Dialog>,
     files: Vec<PathBuf>,
     index: usize,
     /// Decoded images for current ±1 only.
@@ -112,7 +115,7 @@ impl App {
             push_recent(&mut recent, path);
         }
         App {
-            t0, timings, bench, rx, loader, notify, recent, settings, show_info: false, show_settings: false,
+            t0, timings, bench, rx, loader, notify, recent, settings, show_info: false, show_settings: false, exif_dialog: None,
             files: start.into_iter().collect(), index: 0,
             cache: HashMap::new(), preview: None, error: None, view: View::Fit,
             texture: None, tex_key: None, generation: 0, anim_frame: 0, anim_due: None, transform: Transform::default(), title: String::new(),
@@ -313,6 +316,10 @@ impl App {
                 ui.separator();
                 item(ui, "Fullscreen", Action::Fullscreen, true, actions);
             });
+            ui.menu_button("Tools", |ui| {
+                let jpeg = self.current().and_then(|p| p.extension()).is_some_and(|e| e.eq_ignore_ascii_case("jpg") || e.eq_ignore_ascii_case("jpeg"));
+                item(ui, "Edit EXIF…", Action::EditExif, has_image && jpeg, actions);
+            });
             if ui.button("Settings").clicked() {
                 actions.push(Action::Settings);
             }
@@ -335,6 +342,31 @@ impl App {
         }
         if self.settings.sort != sort && let Some(path) = self.current() {
             load::relist(path, self.settings.sort, &self.notify);
+        }
+    }
+
+    fn exif_dialog(&mut self, ctx: &egui::Context) {
+        let Some(dialog) = &mut self.exif_dialog else { return };
+        let modal = egui::Modal::new(egui::Id::unique("exif")).show(ctx, |ui| exif_edit::ui(ui, dialog));
+        match modal.inner {
+            Some(exif_edit::Choice::Save) => {
+                let Some(d) = self.exif_dialog.take() else { return };
+                let stem = d.path.file_stem().unwrap_or_default().to_string_lossy();
+                let mut file_dialog = rfd::FileDialog::new().set_file_name(format!("{stem}-edited.jpg")).add_filter("JPEG", &["jpg", "jpeg"]);
+                if let Some(dir) = d.path.parent() {
+                    file_dialog = file_dialog.set_directory(dir);
+                }
+                let notify = self.notify.clone();
+                std::thread::spawn(move || {
+                    if let Some(dest) = file_dialog.save_file() {
+                        let result = exif_edit::write_copy(&d.path, &dest, &d.original, &d.values, d.remove_gps);
+                        notify.send(Msg::Saved(dest, result));
+                    }
+                });
+            }
+            Some(exif_edit::Choice::Cancel) => self.exif_dialog = None,
+            None if modal.should_close() => self.exif_dialog = None,
+            None => {}
         }
     }
 
@@ -420,6 +452,11 @@ impl eframe::App for App {
                 Action::Close => ctx.send_viewport_cmd(ViewportCommand::Close),
                 Action::Info => self.show_info = true,
                 Action::Settings => self.show_settings = true,
+                Action::EditExif => match self.current().map(|p| exif_edit::read(p)) {
+                    Some(Ok(dialog)) => self.exif_dialog = Some(dialog),
+                    Some(Err(e)) => self.status = Some((format!("Can't edit EXIF: {e}"), Instant::now())),
+                    None => {}
+                },
                 Action::RotateLeft | Action::RotateRight | Action::FlipHorizontal | Action::FlipVertical => {
                     self.transform = match action {
                         Action::RotateLeft => self.transform.rotate_left(),
@@ -571,6 +608,7 @@ impl eframe::App for App {
 
         self.info_dialog(&ctx);
         self.settings_dialog(&ctx);
+        self.exif_dialog(&ctx);
 
         let title = self.make_title();
         if title != self.title {

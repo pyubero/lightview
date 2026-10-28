@@ -5,6 +5,7 @@
 set -eu
 cd "$(dirname "$0")"
 
+echo "Building (can take about a minute after code changes)…"
 cargo build --release
 install -Dm755 target/release/lightview "$HOME/.local/bin/lightview"
 # Absolute Exec path: ~/.local/bin isn't always on the PATH the desktop session uses.

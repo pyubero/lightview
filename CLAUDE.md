@@ -21,6 +21,7 @@
 - Modules: `main.rs` startup, `app.rs` UI/state/input, `load.rs` decode pool + EXIF + folder listing, `view.rs` zoom/pan math.
 - Install / set as default viewer: `./install.sh` (binary → `~/.local/bin`, desktop file → `~/.local/share/applications`, `xdg-mime default`).
 - Saved data: eframe persistence in `~/.local/share/lightview/app.ron` (keys `recent` and `settings`). `settings::load()` reads that file directly in `main`, so the saved window size applies before the window exists. Keep `persist_window: false` and `persist_egui_memory() = false`, so the window always opens at 1280×720.
+- little_exif gotchas: it panics on unexpected input (wrap with `catch_unwind`), returns *empty* metadata when it can't decode (writing that back wipes EXIF), and trims the NUL padding off fixed-size strings (harmless).
 - Screenshots: `spectacle -b -n -a` captures the *active* window, and KDE often doesn't focus lightview, so it can capture the user's other windows. Don't use it for checks.
 - Resize opaque images as RGB (U8x3), not RGBA: 9 ms vs 66 ms for 12 MP → 480×360.
 - M1 result (2026-10-28): eframe alone takes 115–200 ms to the first frame; a 12 MP JPEG takes ~360–410 ms to decode in a fresh process (~190 ms warm) → P1 is ~420 ms, so the 100 ms target is missed.
@@ -42,6 +43,7 @@ Format: `YYYY-MM-DD — decision — reason`
 - 2026-10-28 — M4: rotate/flip is a `view::Transform` applied to the small resized output (not the decoded image), so it's cheap and zoom/pan work in rotated coordinates; it resets on image change and resets zoom to Fit.
 - 2026-10-28 — M5: GPU scaling uploads the whole frame once (mipmaps for Bilinear) and draws a mesh whose UVs carry the rotate/flip; images over `max_texture_side` stay on the CPU path. With GPU on, Bicubic/Lanczos3 fall back to Bilinear. Date sort is oldest first.
 - 2026-10-28 — M6 (user's choices): one Save As (format by extension, no Export); overwrite allowed after the system dialog's confirmation; JPEG quality fixed at 90; EXIF kept with orientation reset + thumbnail unlinked; atomic write via temp file + rename; animated images not saveable yet.
+- 2026-10-29 — M7 EXIF editing (user's choices): Tools menu; `little_exif` (pure Rust) rewrites only the JPEG's EXIF block; JPEG only; always a copy, never the original; MakerNote dropped; little_exif calls wrapped in catch_unwind, refuse when it reads existing EXIF as empty, and verify the written buffer before writing it.
 
 ## Self-Update Rule
 Before finishing your turn:
