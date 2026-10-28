@@ -1,5 +1,5 @@
 use crate::load::{self, Frame, Loaded, Loader, Msg, Notify};
-use crate::view::{self, View};
+use crate::view::{self, Transform, View};
 use eframe::egui::{self, Color32, ColorImage, Key, KeyboardShortcut, Modifiers, Pos2, Rect, Sense, TextureHandle, TextureOptions, Vec2, ViewportCommand};
 use fast_image_resize::{FilterType, PixelType, ResizeAlg, ResizeOptions, Resizer, images::{Image, ImageRef}};
 use std::collections::HashMap;
@@ -20,6 +20,10 @@ enum Action {
     Fit,
     ActualSize,
     Fullscreen,
+    RotateLeft,
+    RotateRight,
+    FlipHorizontal,
+    FlipVertical,
 }
 
 const fn ctrl(key: Key) -> KeyboardShortcut {
@@ -27,7 +31,7 @@ const fn ctrl(key: Key) -> KeyboardShortcut {
 }
 
 /// Keyboard shortcuts, also shown in the menus. Ctrl+Plus is an alias for Ctrl+=.
-const SHORTCUTS: [(KeyboardShortcut, Action); 9] = [
+const SHORTCUTS: [(KeyboardShortcut, Action); 11] = [
     (ctrl(Key::O), Action::Open),
     (ctrl(Key::W), Action::Close),
     (ctrl(Key::I), Action::Info),
@@ -37,10 +41,12 @@ const SHORTCUTS: [(KeyboardShortcut, Action); 9] = [
     (ctrl(Key::Num0), Action::Fit),
     (ctrl(Key::Num1), Action::ActualSize),
     (KeyboardShortcut::new(Modifiers::NONE, Key::F11), Action::Fullscreen),
+    (ctrl(Key::L), Action::RotateLeft),
+    (ctrl(Key::R), Action::RotateRight),
 ];
 
-/// What the current texture shows: (generation, animation frame, source crop, size in px).
-type TexKey = (u64, usize, [f32; 4], [u32; 2]);
+/// What the current texture shows: (generation, animation frame, transform, source crop, size in px).
+type TexKey = (u64, usize, Transform, [f32; 4], [u32; 2]);
 
 pub struct App {
     t0: Instant,
@@ -65,6 +71,8 @@ pub struct App {
     generation: u64,
     anim_frame: usize,
     anim_due: Option<Instant>,
+    /// View-only rotate/flip of the current image; never written to the file.
+    transform: Transform,
     title: String,
     // --timings bookkeeping.
     window_reported: bool,
@@ -88,7 +96,7 @@ impl App {
             t0, timings, bench, rx, loader, notify, recent, show_info: false,
             files: start.into_iter().collect(), index: 0,
             cache: HashMap::new(), preview: None, error: None, view: View::Fit,
-            texture: None, tex_key: None, generation: 0, anim_frame: 0, anim_due: None, title: String::new(),
+            texture: None, tex_key: None, generation: 0, anim_frame: 0, anim_due: None, transform: Transform::default(), title: String::new(),
             window_reported: false, preview_reported: false, full_reported: false, nav_start: None, close_next: false,
         }
     }
@@ -175,6 +183,7 @@ impl App {
     /// Clears what's shown, before switching to another image.
     fn reset_shown(&mut self) {
         self.view = View::Fit;
+        self.transform = Transform::default();
         self.preview = None;
         self.error = None;
         self.generation += 1;
@@ -223,6 +232,12 @@ impl App {
                 });
                 item(ui, "Close", Action::Close, true, actions);
                 item(ui, "Info", Action::Info, has_image, actions);
+            });
+            ui.menu_button("Edit", |ui| {
+                item(ui, "Rotate Left", Action::RotateLeft, has_image, actions);
+                item(ui, "Rotate Right", Action::RotateRight, has_image, actions);
+                item(ui, "Flip Horizontally", Action::FlipHorizontal, has_image, actions);
+                item(ui, "Flip Vertically", Action::FlipVertical, has_image, actions);
             });
             ui.menu_button("View", |ui| {
                 item(ui, "Zoom In", Action::ZoomIn, has_image, actions);
@@ -313,6 +328,15 @@ impl eframe::App for App {
                 Action::OpenRecent(path) => self.open(path.clone()),
                 Action::Close => ctx.send_viewport_cmd(ViewportCommand::Close),
                 Action::Info => self.show_info = true,
+                Action::RotateLeft | Action::RotateRight | Action::FlipHorizontal | Action::FlipVertical => {
+                    self.transform = match action {
+                        Action::RotateLeft => self.transform.rotate_left(),
+                        Action::RotateRight => self.transform.rotate_right(),
+                        Action::FlipHorizontal => self.transform.flip_horizontal(),
+                        _ => self.transform.flip_vertical(),
+                    };
+                    self.view = View::Fit;
+                }
                 Action::Fullscreen => ctx.send_viewport_cmd(ViewportCommand::Fullscreen(!fullscreen)),
                 _ => {} // zoom actions are applied below, once the image size is known
             }
@@ -333,7 +357,7 @@ impl eframe::App for App {
 
         // Zoom and pan only once the full image is in (the preview has different pixel sizes).
         if let Some(l) = full {
-            let img = Vec2::new(l.frames[0].w as f32, l.frames[0].h as f32);
+            let img = self.transform.size(Vec2::new(l.frames[0].w as f32, l.frames[0].h as f32));
             let drag = ui.interact(viewport, ui.scope_id().with("image"), Sense::drag());
             if drag.dragged() {
                 self.view = view::pan(self.view, drag.drag_delta(), img, viewport, ppp);
@@ -370,12 +394,14 @@ impl eframe::App for App {
             None => (self.preview.as_ref(), View::Fit),
         };
         if let Some(frame) = frame {
-            let (dest, crop) = view::layout(view, Vec2::new(frame.w as f32, frame.h as f32), viewport, ppp);
+            let frame_size = Vec2::new(frame.w as f32, frame.h as f32);
+            let (dest, crop) = view::layout(view, self.transform.size(frame_size), viewport, ppp);
+            let crop = self.transform.to_source(crop, frame_size);
             let size = [(dest.width() * ppp).round().max(1.0) as u32, (dest.height() * ppp).round().max(1.0) as u32];
-            let key = (self.generation, self.anim_frame, [crop.min.x, crop.min.y, crop.width(), crop.height()], size);
+            let key = (self.generation, self.anim_frame, self.transform, [crop.min.x, crop.min.y, crop.width(), crop.height()], size);
             if self.tex_key != Some(key) {
                 // shortcut: resize runs on the UI thread every pan/zoom frame; the GPU scaling setting (M5) is the smooth path.
-                let image = resize(frame, crop, size);
+                let image = resize(frame, crop, size, self.transform);
                 match &mut self.texture {
                     Some(t) => t.set(image, TextureOptions::LINEAR),
                     None => self.texture = Some(ctx.load_texture("image", image, TextureOptions::LINEAR)),
@@ -416,17 +442,29 @@ impl eframe::App for App {
     }
 }
 
-/// Resizes the `crop` part of `frame` to `size` px.
-fn resize(frame: &Frame, crop: Rect, size: [u32; 2]) -> ColorImage {
+/// Resizes the `crop` part of `frame` so that, after `transform`, it's `size` px.
+/// Transforming the small resized output instead of the full image keeps rotating cheap.
+fn resize(frame: &Frame, crop: Rect, size: [u32; 2], transform: Transform) -> ColorImage {
     let pixel_type = if frame.alpha { PixelType::U8x4 } else { PixelType::U8x3 };
     let src = ImageRef::new(frame.w, frame.h, &frame.pixels, pixel_type).unwrap();
-    let mut dst = Image::new(size[0], size[1], pixel_type);
+    let [w, h] = if transform.rot % 2 == 1 { [size[1], size[0]] } else { size };
+    let mut dst = Image::new(w, h, pixel_type);
     let opts = ResizeOptions::new()
         .resize_alg(ResizeAlg::Convolution(FilterType::Bilinear))
         .crop(crop.min.x.into(), crop.min.y.into(), crop.width().into(), crop.height().into());
     Resizer::new().resize(&src, &mut dst, &opts).unwrap();
     let size = [size[0] as usize, size[1] as usize];
-    if frame.alpha { ColorImage::from_rgba_unmultiplied(size, dst.buffer()) } else { ColorImage::from_rgb(size, dst.buffer()) }
+    let pixels = if transform == Transform::default() {
+        dst.into_vec()
+    } else {
+        let img = if frame.alpha {
+            image::DynamicImage::ImageRgba8(image::RgbaImage::from_raw(w, h, dst.into_vec()).unwrap())
+        } else {
+            image::DynamicImage::ImageRgb8(image::RgbImage::from_raw(w, h, dst.into_vec()).unwrap())
+        };
+        transform.apply(img).into_bytes()
+    };
+    if frame.alpha { ColorImage::from_rgba_unmultiplied(size, &pixels) } else { ColorImage::from_rgb(size, &pixels) }
 }
 
 /// Moves `path` to the front of `recent`, keeping at most `RECENT_MAX`.
@@ -447,6 +485,20 @@ pub fn ms(t: Instant) -> f64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn resize_with_transform() {
+        // 3×2 RGB frame, red channel = pixel index.
+        let pixels: Vec<u8> = (0..6u8).flat_map(|i| [i, 0, 0]).collect();
+        let frame = Frame { w: 3, h: 2, pixels, alpha: false, delay: std::time::Duration::ZERO };
+        let t = Transform::default().rotate_right();
+        let crop = t.to_source(Rect::from_min_size(Pos2::ZERO, Vec2::new(2.0, 3.0)), Vec2::new(3.0, 2.0));
+        let out = resize(&frame, crop, [2, 3], t);
+        assert_eq!(out.size, [2, 3]);
+        // Rotated right, the top row reads bottom-left then top-left of the source: 3, 0.
+        let red: Vec<u8> = out.pixels.iter().map(|p| p.r()).collect();
+        assert_eq!(red, [3, 0, 4, 1, 5, 2]);
+    }
 
     #[test]
     fn recent_list() {

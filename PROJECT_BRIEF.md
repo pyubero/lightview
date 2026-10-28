@@ -92,7 +92,7 @@ Binary size and memory aren't goals for now; we'll optimize them if they become 
 1. **Spike** ✅ (2026-10-28): an eframe window that shows one JPEG passed on the command line. Result: eframe takes 115–200 ms to the first frame and a 12 MP JPEG takes ~360–410 ms to decode, so the image appears at ~420 ms. The original 100 ms target was split into P1a and P1b.
 2. **Viewer** ✅ (2026-10-28; checked by hand by the user). Measured with `--bench` on a 4000×2252 Samsung photo: window 121 ms (P1a ✅), preview 124 ms, full image 243 ms (medians of 10). Also applies EXIF orientation. Menus move to milestone 3. The plan was to: show the small preview built into the JPEG's EXIF data straight away, then replace it with the sharp image. Also navigating, zoom and pan, fit and 1:1, fullscreen, the title bar, animation.
 3. **Integration** ✅ (2026-10-28; checked by the user). Menu bar (File: Open, Open Recent, Close, Info; View: zoom/fit/actual size/fullscreen), hidden in fullscreen. `lightview.desktop` and `install.sh` make it the default viewer. Recent = files opened explicitly, last 10, saved between runs.
-4. **Light editing:** rotate and flip, view only.
+4. **Light editing** ✅ (2026-10-28; checked by the user). Edit menu: Rotate Left (Ctrl+L), Rotate Right (Ctrl+R), Flip Horizontally, Flip Vertically. View only; resets when you switch images.
 5. **Settings dialog**, with the settings saved between runs.
 6. *(Later)* Save As and Export. 
 7. *(Later still)* Draw and EXIF editing.

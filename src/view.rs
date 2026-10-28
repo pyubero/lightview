@@ -66,6 +66,64 @@ pub fn pan(view: View, delta: Vec2, img: Vec2, viewport: Rect, ppp: f32) -> View
     }
 }
 
+/// The user's view-only rotate/flip: flip horizontally first (if `flip`), then rotate `rot` quarter turns clockwise.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct Transform {
+    pub rot: u8,
+    pub flip: bool,
+}
+
+impl Transform {
+    pub fn rotate_right(self) -> Self {
+        Transform { rot: (self.rot + 1) % 4, ..self }
+    }
+
+    pub fn rotate_left(self) -> Self {
+        Transform { rot: (self.rot + 3) % 4, ..self }
+    }
+
+    /// Flips what's on screen: H·R^r·F^f = R^(−r)·F^(f+1).
+    pub fn flip_horizontal(self) -> Self {
+        Transform { rot: (4 - self.rot) % 4, flip: !self.flip }
+    }
+
+    /// V = R²·H, so V·R^r·F^f = R^(2−r)·F^(f+1).
+    pub fn flip_vertical(self) -> Self {
+        Transform { rot: (6 - self.rot) % 4, flip: !self.flip }
+    }
+
+    /// Size after the transform (quarter turns swap width and height).
+    pub fn size(self, size: Vec2) -> Vec2 {
+        if self.rot % 2 == 1 { Vec2::new(size.y, size.x) } else { size }
+    }
+
+    /// The source-image rect that ends up at `rect` (in transformed coordinates) for a `src`-sized image.
+    pub fn to_source(self, rect: Rect, src: Vec2) -> Rect {
+        let point = |mut p: Pos2| {
+            let mut dims = self.size(src);
+            for _ in 0..self.rot {
+                // Undo one clockwise turn: (x, y) in (w, h) came from (y, w − x) in (h, w).
+                p = Pos2::new(p.y, dims.x - p.x);
+                dims = Vec2::new(dims.y, dims.x);
+            }
+            if self.flip { Pos2::new(src.x - p.x, p.y) } else { p }
+        };
+        Rect::from_two_pos(point(rect.min), point(rect.max))
+    }
+
+    pub fn apply(self, mut img: image::DynamicImage) -> image::DynamicImage {
+        if self.flip {
+            img = img.fliph();
+        }
+        match self.rot {
+            1 => img.rotate90(),
+            2 => img.rotate180(),
+            3 => img.rotate270(),
+            _ => img,
+        }
+    }
+}
+
 /// 1:1 pixels, centred.
 pub fn actual_size(img: Vec2) -> View {
     View::Manual { scale: 1.0, center: (img / 2.0).to_pos2() }
@@ -117,6 +175,54 @@ mod tests {
                 for view in [View::Fit, actual_size(img), zoom_at(View::Fit, 3.7, Pos2::new(vw * 0.9, vh * 0.1), img, vp, ppp)] {
                     let (_, crop) = layout(view, img, vp, ppp);
                     assert!(bounds(img).contains_rect(crop), "{img:?} {vp:?} {ppp} {view:?} → {crop:?}");
+                }
+            }
+        }
+    }
+
+    /// A 3×2 image with distinct pixels, so any transform gives a distinct result.
+    fn sample() -> image::DynamicImage {
+        image::DynamicImage::ImageLuma8(image::GrayImage::from_fn(3, 2, |x, y| image::Luma([(y * 3 + x) as u8])))
+    }
+
+    #[test]
+    fn transform_ops_match_image_ops() {
+        type Op = (fn(Transform) -> Transform, fn(&image::DynamicImage) -> image::DynamicImage);
+        let ops: [Op; 4] = [
+            (Transform::rotate_right, |i| i.rotate90()),
+            (Transform::rotate_left, |i| i.rotate270()),
+            (Transform::flip_horizontal, |i| i.fliph()),
+            (Transform::flip_vertical, |i| i.flipv()),
+        ];
+        // Every sequence of 3 operations: the composed transform equals applying the ops one by one.
+        for a in 0..4 {
+            for b in 0..4 {
+                for c in 0..4 {
+                    let (mut t, mut expected) = (Transform::default(), sample());
+                    for i in [a, b, c] {
+                        t = ops[i].0(t);
+                        expected = ops[i].1(&expected);
+                    }
+                    assert_eq!(t.apply(sample()), expected, "ops {a} {b} {c} → {t:?}");
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn to_source_maps_pixels() {
+        let src = sample();
+        let size = Vec2::new(3.0, 2.0);
+        for rot in 0..4 {
+            for flip in [false, true] {
+                let t = Transform { rot, flip };
+                let shown = t.apply(src.clone()).to_luma8();
+                assert_eq!(t.size(size), Vec2::new(shown.width() as f32, shown.height() as f32));
+                // Each displayed pixel's rect maps back to the source pixel with the same value.
+                for (x, y, px) in shown.enumerate_pixels() {
+                    let r = t.to_source(Rect::from_min_size(Pos2::new(x as f32, y as f32), Vec2::splat(1.0)), size);
+                    assert_eq!(r.size(), Vec2::splat(1.0));
+                    assert_eq!(src.to_luma8().get_pixel(r.min.x as u32, r.min.y as u32), px, "{t:?} at ({x}, {y})");
                 }
             }
         }

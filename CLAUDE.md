@@ -39,6 +39,7 @@ Format: `YYYY-MM-DD — decision — reason`
 - 2026-10-28 — keep egui after M1 missed 100 ms; split P1 into P1a (window <200 ms) and P1b (image as fast as decode allows), and show the EXIF preview first in M2 — decoding, not egui, is the bottleneck.
 - 2026-10-28 — M2: apply EXIF orientation (phone photos are often rotated); hand-written bounds-checked EXIF thumbnail reader instead of an EXIF crate; 3-thread decode pool with a replaceable wanted list; menus moved to M3.
 - 2026-10-28 — M3: File → Close closes the window (Ctrl+W); Info = name/folder/dimensions/size/type; menus hidden in fullscreen; Open Recent lists only explicit opens; file dialog via `rfd` (XDG portal, pure Rust), run on its own thread.
+- 2026-10-28 — M4: rotate/flip is a `view::Transform` applied to the small resized output (not the decoded image), so it's cheap and zoom/pan work in rotated coordinates; it resets on image change and resets zoom to Fit.
 
 ## Self-Update Rule
 Before finishing your turn:
