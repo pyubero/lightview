@@ -8,7 +8,7 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, Condvar, Mutex, OnceLock, mpsc};
 use std::time::Duration;
 
-const EXTENSIONS: [&str; 6] = ["jpg", "jpeg", "png", "gif", "webp", "bmp"];
+pub const EXTENSIONS: [&str; 6] = ["jpg", "jpeg", "png", "gif", "webp", "bmp"];
 
 pub struct Frame {
     pub w: u32,
@@ -26,6 +26,8 @@ pub struct Loaded {
 }
 
 pub enum Msg {
+    /// A file picked in the Open dialog.
+    Open(PathBuf),
     Folder(Vec<PathBuf>),
     Preview(PathBuf, Frame),
     Full(PathBuf, Loaded),
@@ -91,6 +93,13 @@ impl Loader {
         q.wanted = paths.into_iter().filter(|p| !q.busy.contains(p)).collect();
         self.queue.1.notify_all();
     }
+}
+
+/// Starts decoding `path` and listing its folder.
+pub fn start(path: &Path, loader: &Loader, notify: &Notify) {
+    loader.want(vec![path.to_path_buf()]);
+    let (path, notify) = (path.to_path_buf(), notify.clone());
+    std::thread::spawn(move || notify.send(Msg::Folder(list_folder(&path))));
 }
 
 /// Decodes a file. For JPEGs with an EXIF thumbnail, `on_preview` gets it first.

@@ -3,7 +3,7 @@ mod load;
 mod view;
 
 use eframe::egui;
-use load::{Loader, Msg, Notify};
+use load::{Loader, Notify};
 use std::sync::{Arc, OnceLock, mpsc};
 use std::time::Instant;
 
@@ -27,17 +27,17 @@ fn main() -> eframe::Result {
     let notify = Notify { tx, ctx: Arc::new(OnceLock::new()) };
     let loader = Loader::new(notify.clone(), 3);
     if let Some(path) = &path {
-        loader.want(vec![path.clone()]);
-        let (path, notify) = (path.clone(), notify.clone());
-        std::thread::spawn(move || notify.send(Msg::Folder(load::list_folder(&path))));
+        load::start(path, &loader, &notify);
     }
 
     let options = eframe::NativeOptions {
-        viewport: egui::ViewportBuilder::default().with_inner_size([480.0, 360.0]),
+        viewport: egui::ViewportBuilder::default().with_inner_size([1280.0, 720.0]),
+        // Always open at the default size (brief); persistence is only for app data.
+        persist_window: false,
         ..Default::default()
     };
     eframe::run_native("lightview", options, Box::new(move |cc| {
         let _ = notify.ctx.set(cc.egui_ctx.clone());
-        Ok(Box::new(app::App::new(cc, t0, timings, bench, rx, loader, path)))
+        Ok(Box::new(app::App::new(cc, t0, timings, bench, rx, loader, notify, path)))
     }))
 }

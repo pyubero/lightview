@@ -1,11 +1,43 @@
-use crate::load::{Frame, Loaded, Loader, Msg};
+use crate::load::{self, Frame, Loaded, Loader, Msg, Notify};
 use crate::view::{self, View};
-use eframe::egui::{self, Color32, ColorImage, Key, Modifiers, Pos2, Rect, Sense, TextureHandle, TextureOptions, Vec2, ViewportCommand};
+use eframe::egui::{self, Color32, ColorImage, Key, KeyboardShortcut, Modifiers, Pos2, Rect, Sense, TextureHandle, TextureOptions, Vec2, ViewportCommand};
 use fast_image_resize::{FilterType, PixelType, ResizeAlg, ResizeOptions, Resizer, images::{Image, ImageRef}};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::mpsc;
 use std::time::Instant;
+
+const RECENT_MAX: usize = 10;
+
+#[derive(Clone, PartialEq)]
+enum Action {
+    Open,
+    OpenRecent(PathBuf),
+    Close,
+    Info,
+    ZoomIn,
+    ZoomOut,
+    Fit,
+    ActualSize,
+    Fullscreen,
+}
+
+const fn ctrl(key: Key) -> KeyboardShortcut {
+    KeyboardShortcut::new(Modifiers::COMMAND, key)
+}
+
+/// Keyboard shortcuts, also shown in the menus. Ctrl+Plus is an alias for Ctrl+=.
+const SHORTCUTS: [(KeyboardShortcut, Action); 9] = [
+    (ctrl(Key::O), Action::Open),
+    (ctrl(Key::W), Action::Close),
+    (ctrl(Key::I), Action::Info),
+    (ctrl(Key::Equals), Action::ZoomIn),
+    (ctrl(Key::Plus), Action::ZoomIn),
+    (ctrl(Key::Minus), Action::ZoomOut),
+    (ctrl(Key::Num0), Action::Fit),
+    (ctrl(Key::Num1), Action::ActualSize),
+    (KeyboardShortcut::new(Modifiers::NONE, Key::F11), Action::Fullscreen),
+];
 
 /// What the current texture shows: (generation, animation frame, source crop, size in px).
 type TexKey = (u64, usize, [f32; 4], [u32; 2]);
@@ -16,6 +48,10 @@ pub struct App {
     bench: bool,
     rx: mpsc::Receiver<Msg>,
     loader: Loader,
+    notify: Notify,
+    /// Explicitly opened files, newest first. Saved between runs.
+    recent: Vec<PathBuf>,
+    show_info: bool,
     files: Vec<PathBuf>,
     index: usize,
     /// Decoded images for current ±1 only.
@@ -39,11 +75,17 @@ pub struct App {
 }
 
 impl App {
-    pub fn new(cc: &eframe::CreationContext, t0: Instant, timings: bool, bench: bool, rx: mpsc::Receiver<Msg>, loader: Loader, start: Option<PathBuf>) -> Self {
+    /// `start` is already being decoded (see `load::start` in main).
+    #[allow(clippy::too_many_arguments)]
+    pub fn new(cc: &eframe::CreationContext, t0: Instant, timings: bool, bench: bool, rx: mpsc::Receiver<Msg>, loader: Loader, notify: Notify, start: Option<PathBuf>) -> Self {
         // Otherwise egui's own Ctrl +/− scales the whole UI.
         cc.egui_ctx.options_mut(|o| o.zoom_with_keyboard = false);
+        let mut recent: Vec<PathBuf> = cc.storage.and_then(|s| s.get_string("recent")).unwrap_or_default().lines().map(PathBuf::from).collect();
+        if let Some(path) = &start {
+            push_recent(&mut recent, path);
+        }
         App {
-            t0, timings, bench, rx, loader,
+            t0, timings, bench, rx, loader, notify, recent, show_info: false,
             files: start.into_iter().collect(), index: 0,
             cache: HashMap::new(), preview: None, error: None, view: View::Fit,
             texture: None, tex_key: None, generation: 0, anim_frame: 0, anim_due: None, title: String::new(),
@@ -72,6 +114,7 @@ impl App {
 
     fn handle(&mut self, msg: Msg) {
         match msg {
+            Msg::Open(path) => self.open(path),
             Msg::Folder(files) => {
                 if let Some(i) = self.current().and_then(|cur| files.iter().position(|p| p == cur)) {
                     self.files = files;
@@ -102,18 +145,122 @@ impl App {
         }
     }
 
+    /// Opens `path` as if passed on the command line.
+    fn open(&mut self, path: PathBuf) {
+        self.cache.clear();
+        self.reset_shown();
+        match std::fs::canonicalize(&path) {
+            Ok(path) => {
+                push_recent(&mut self.recent, &path);
+                load::start(&path, &self.loader, &self.notify);
+                self.files = vec![path];
+            }
+            Err(e) => {
+                self.files.clear();
+                self.error = Some(format!("{}: {e}", path.display()));
+            }
+        }
+        self.index = 0;
+    }
+
     /// Moves by `delta` in the folder, stopping at the ends.
     fn navigate(&mut self, delta: isize) {
         let Some(index) = self.index.checked_add_signed(delta).filter(|&i| i < self.files.len()) else { return };
         self.index = index;
+        self.reset_shown();
+        self.nav_start = Some(Instant::now());
+        self.request_decodes();
+    }
+
+    /// Clears what's shown, before switching to another image.
+    fn reset_shown(&mut self) {
         self.view = View::Fit;
         self.preview = None;
         self.error = None;
         self.generation += 1;
         self.anim_frame = 0;
         self.anim_due = None;
-        self.nav_start = Some(Instant::now());
-        self.request_decodes();
+    }
+
+    fn open_dialog(&self) {
+        let mut dialog = rfd::FileDialog::new().add_filter("Images", &load::EXTENSIONS);
+        if let Some(dir) = self.current().and_then(|p| p.parent()) {
+            dialog = dialog.set_directory(dir);
+        }
+        // On its own thread so the window keeps repainting while the dialog is open.
+        let notify = self.notify.clone();
+        std::thread::spawn(move || {
+            if let Some(path) = dialog.pick_file() {
+                notify.send(Msg::Open(path));
+            }
+        });
+    }
+
+    fn menu_bar(&self, ui: &mut egui::Ui, actions: &mut Vec<Action>) {
+        let has_image = self.current().is_some_and(|p| self.cache.contains_key(p));
+        fn item(ui: &mut egui::Ui, label: &str, action: Action, enabled: bool, actions: &mut Vec<Action>) {
+            let mut button = egui::Button::new(label);
+            if let Some((sc, _)) = SHORTCUTS.iter().find(|(_, a)| *a == action) {
+                button = button.shortcut_text(ui.ctx().format_shortcut(sc));
+            }
+            if ui.add_enabled(enabled, button).clicked() {
+                actions.push(action);
+            }
+        }
+        egui::MenuBar::new().ui(ui, |ui| {
+            ui.menu_button("File", |ui| {
+                item(ui, "Open…", Action::Open, true, actions);
+                ui.menu_button("Open Recent", |ui| {
+                    if self.recent.is_empty() {
+                        ui.add_enabled(false, egui::Button::new("No recent files"));
+                    }
+                    for path in &self.recent {
+                        let name = path.file_name().unwrap_or_default().to_string_lossy();
+                        if ui.button(name).on_hover_text(path.display().to_string()).clicked() {
+                            actions.push(Action::OpenRecent(path.clone()));
+                        }
+                    }
+                });
+                item(ui, "Close", Action::Close, true, actions);
+                item(ui, "Info", Action::Info, has_image, actions);
+            });
+            ui.menu_button("View", |ui| {
+                item(ui, "Zoom In", Action::ZoomIn, has_image, actions);
+                item(ui, "Zoom Out", Action::ZoomOut, has_image, actions);
+                item(ui, "Fit to Window", Action::Fit, has_image, actions);
+                item(ui, "Actual Size", Action::ActualSize, has_image, actions);
+                ui.separator();
+                item(ui, "Fullscreen", Action::Fullscreen, true, actions);
+            });
+        });
+    }
+
+    fn info_dialog(&mut self, ctx: &egui::Context) {
+        let (Some(path), true) = (self.current(), self.show_info) else { return };
+        let Some(l) = self.cache.get(path) else { return };
+        let modal = egui::Modal::new(egui::Id::unique("info")).show(ctx, |ui| {
+            ui.heading("Info");
+            egui::Grid::new("info-grid").num_columns(2).spacing([16.0, 6.0]).show(ui, |ui| {
+                let ext = path.extension().unwrap_or_default().to_string_lossy().to_uppercase();
+                let rows = [
+                    ("Name", path.file_name().unwrap_or_default().to_string_lossy().into_owned()),
+                    ("Folder", path.parent().map(|p| p.display().to_string()).unwrap_or_default()),
+                    ("Dimensions", format!("{} × {} px", l.frames[0].w, l.frames[0].h)),
+                    ("File size", format_size(l.file_size)),
+                    ("Type", if l.frames.len() > 1 { format!("{ext}, {} frames", l.frames.len()) } else { ext }),
+                ];
+                for (k, v) in rows {
+                    ui.label(k);
+                    ui.label(v);
+                    ui.end_row();
+                }
+            });
+            ui.add_space(8.0);
+            ui.button("Close").clicked()
+        });
+        if modal.inner || modal.should_close() {
+            self.show_info = false;
+        }
     }
 
     fn make_title(&self) -> String {
@@ -127,6 +274,15 @@ impl App {
 }
 
 impl eframe::App for App {
+    fn save(&mut self, storage: &mut dyn eframe::Storage) {
+        let recent: Vec<String> = self.recent.iter().map(|p| p.display().to_string()).collect();
+        storage.set_string("recent", recent.join("\n"));
+    }
+
+    fn persist_egui_memory(&self) -> bool {
+        false
+    }
+
     fn clear_color(&self, _visuals: &egui::Visuals) -> [f32; 4] {
         Color32::BLACK.to_normalized_gamma_f32()
     }
@@ -144,24 +300,34 @@ impl eframe::App for App {
             self.handle(msg);
         }
 
-        // Navigation and fullscreen.
-        let (left, right, f11, esc, fullscreen) = ctx.input(|i| {
-            (i.key_pressed(Key::ArrowLeft), i.key_pressed(Key::ArrowRight), i.key_pressed(Key::F11), i.key_pressed(Key::Escape), i.viewport().fullscreen.unwrap_or(false))
+        let mut actions: Vec<Action> = ctx.input_mut(|i| SHORTCUTS.iter().filter(|(sc, _)| i.consume_shortcut(sc)).map(|(_, a)| a.clone()).collect());
+        let (left, right, esc, fullscreen) = ctx.input(|i| {
+            (i.key_pressed(Key::ArrowLeft), i.key_pressed(Key::ArrowRight), i.key_pressed(Key::Escape), i.viewport().fullscreen.unwrap_or(false))
         });
+        if !fullscreen {
+            egui::Panel::top("menu").show(ui, |ui| self.menu_bar(ui, &mut actions));
+        }
+        for action in &actions {
+            match action {
+                Action::Open => self.open_dialog(),
+                Action::OpenRecent(path) => self.open(path.clone()),
+                Action::Close => ctx.send_viewport_cmd(ViewportCommand::Close),
+                Action::Info => self.show_info = true,
+                Action::Fullscreen => ctx.send_viewport_cmd(ViewportCommand::Fullscreen(!fullscreen)),
+                _ => {} // zoom actions are applied below, once the image size is known
+            }
+        }
         if left {
             self.navigate(-1);
         }
         if right {
             self.navigate(1);
         }
-        if f11 {
-            ctx.send_viewport_cmd(ViewportCommand::Fullscreen(!fullscreen));
-        }
         if esc && fullscreen {
             ctx.send_viewport_cmd(ViewportCommand::Fullscreen(false));
         }
 
-        let viewport = ui.max_rect();
+        let viewport = ui.available_rect_before_wrap();
         let ppp = ctx.pixels_per_point();
         let full = self.current().and_then(|p| self.cache.get(p));
 
@@ -176,23 +342,14 @@ impl eframe::App for App {
             if factor != 1.0 {
                 self.view = view::zoom_at(self.view, factor, hover.unwrap_or(viewport.center()), img, viewport, ppp);
             }
-            let (zoom_in, zoom_out, fit, actual) = ctx.input_mut(|i| {
-                (
-                    i.consume_key(Modifiers::COMMAND, Key::Equals) || i.consume_key(Modifiers::COMMAND, Key::Plus),
-                    i.consume_key(Modifiers::COMMAND, Key::Minus),
-                    i.consume_key(Modifiers::COMMAND, Key::Num0),
-                    i.consume_key(Modifiers::COMMAND, Key::Num1),
-                )
-            });
-            if zoom_in || zoom_out {
-                let factor = if zoom_in { 1.25 } else { 0.8 };
-                self.view = view::zoom_at(self.view, factor, viewport.center(), img, viewport, ppp);
-            }
-            if fit {
-                self.view = View::Fit;
-            }
-            if actual {
-                self.view = view::actual_size(img);
+            for action in &actions {
+                self.view = match action {
+                    Action::ZoomIn => view::zoom_at(self.view, 1.25, viewport.center(), img, viewport, ppp),
+                    Action::ZoomOut => view::zoom_at(self.view, 0.8, viewport.center(), img, viewport, ppp),
+                    Action::Fit => View::Fit,
+                    Action::ActualSize => view::actual_size(img),
+                    _ => self.view,
+                };
             }
 
             // Animation.
@@ -249,6 +406,8 @@ impl eframe::App for App {
             ui.painter().text(viewport.center(), egui::Align2::CENTER_CENTER, format!("Can't open this image:\n{e}"), egui::FontId::proportional(14.0), Color32::GRAY);
         }
 
+        self.info_dialog(&ctx);
+
         let title = self.make_title();
         if title != self.title {
             ctx.send_viewport_cmd(ViewportCommand::Title(title.clone()));
@@ -270,10 +429,36 @@ fn resize(frame: &Frame, crop: Rect, size: [u32; 2]) -> ColorImage {
     if frame.alpha { ColorImage::from_rgba_unmultiplied(size, dst.buffer()) } else { ColorImage::from_rgb(size, dst.buffer()) }
 }
 
+/// Moves `path` to the front of `recent`, keeping at most `RECENT_MAX`.
+fn push_recent(recent: &mut Vec<PathBuf>, path: &std::path::Path) {
+    recent.retain(|p| p != path);
+    recent.insert(0, path.to_path_buf());
+    recent.truncate(RECENT_MAX);
+}
+
 fn format_size(bytes: u64) -> String {
     if bytes >= 1_000_000 { format!("{:.1} MB", bytes as f64 / 1e6) } else { format!("{} KB", bytes.div_ceil(1000)) }
 }
 
 pub fn ms(t: Instant) -> f64 {
     t.elapsed().as_secs_f64() * 1000.0
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn recent_list() {
+        let mut recent = Vec::new();
+        for p in ["/a", "/b", "/a"] {
+            push_recent(&mut recent, std::path::Path::new(p));
+        }
+        assert_eq!(recent, [PathBuf::from("/a"), PathBuf::from("/b")]);
+        for i in 0..20 {
+            push_recent(&mut recent, std::path::Path::new(&format!("/{i}")));
+        }
+        assert_eq!(recent.len(), RECENT_MAX);
+        assert_eq!(recent[0], PathBuf::from("/19"));
+    }
 }

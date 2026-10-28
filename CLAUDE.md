@@ -19,6 +19,8 @@
 - Dev machine: Kubuntu, KDE Plasma on Wayland, i7-8750H with turbo OFF (`intel_pstate/no_turbo=1`), so timings are pessimistic.
 - Build/test: `cargo test`, `cargo build --release`. `--timings` prints window/preview/full/navigation ms; `--bench` does the same and quits after the first full image.
 - Modules: `main.rs` startup, `app.rs` UI/state/input, `load.rs` decode pool + EXIF + folder listing, `view.rs` zoom/pan math.
+- Install / set as default viewer: `./install.sh` (binary → `~/.local/bin`, desktop file → `~/.local/share/applications`, `xdg-mime default`).
+- Saved data: eframe persistence in `~/.local/share/lightview/app.ron` (only the recent list). Keep `persist_window: false` and `persist_egui_memory() = false`, so the window always opens at 1280×720.
 - Screenshots: `spectacle -b -n -a` captures the *active* window, and KDE often doesn't focus lightview, so it can capture the user's other windows. Don't use it for checks.
 - Resize opaque images as RGB (U8x3), not RGBA: 9 ms vs 66 ms for 12 MP → 480×360.
 - M1 result (2026-10-28): eframe alone takes 115–200 ms to the first frame; a 12 MP JPEG takes ~360–410 ms to decode in a fresh process (~190 ms warm) → P1 is ~420 ms, so the 100 ms target is missed.
@@ -33,9 +35,10 @@ Format: `YYYY-MM-DD — decision — reason`
 - 2026-10-28 — no AVIF/HEIC/SVG/RAW, gallery, delete/move or packaging in v1 — keep the app simple.
 - 2026-10-28 — UI always renders with eframe's OpenGL backend (glow); a "GPU image scaling" setting (off by default) picks GPU vs CPU (`fast_image_resize`) scaling — egui has no CPU-only renderer.
 - 2026-10-28 — v1 is view only: rotate/flip never change the file; Save As/Export later, Draw/EXIF editing a later phase — keep v1 small.
-- 2026-10-28 — fixed 480×360 window, never resized on navigation or remembered; fit-to-window (aspect kept, small images upscaled) on black; no wrap; sort order setting (name default) — user's choice, kept as behaviours not settings.
+- 2026-10-28 — fixed default window (480×360, now 1280×720, changed 2026-10-28), never resized on navigation or remembered; fit-to-window (aspect kept, small images upscaled) on black; no wrap; sort order setting (name default) — user's choice, kept as behaviours not settings.
 - 2026-10-28 — keep egui after M1 missed 100 ms; split P1 into P1a (window <200 ms) and P1b (image as fast as decode allows), and show the EXIF preview first in M2 — decoding, not egui, is the bottleneck.
 - 2026-10-28 — M2: apply EXIF orientation (phone photos are often rotated); hand-written bounds-checked EXIF thumbnail reader instead of an EXIF crate; 3-thread decode pool with a replaceable wanted list; menus moved to M3.
+- 2026-10-28 — M3: File → Close closes the window (Ctrl+W); Info = name/folder/dimensions/size/type; menus hidden in fullscreen; Open Recent lists only explicit opens; file dialog via `rfd` (XDG portal, pure Rust), run on its own thread.
 
 ## Self-Update Rule
 Before finishing your turn:

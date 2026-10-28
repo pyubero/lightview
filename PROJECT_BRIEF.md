@@ -48,7 +48,7 @@ A simple, very fast image viewer written fully in Rust. It becomes the default i
 ### Viewing
 - Fit to window is the default. It always keeps the image's proportions, and fills the rest of the viewport with the background colour (black).
 - Small images are also enlarged to fit the window
-- The window always opens at the default size (480 × 360). It doesn't remember its last size or position.
+- The window always opens at the default size (1280 × 720). It doesn't remember its last size or position.
 - The window never resizes itself when you move to another image
 - Zoom in and out with the mouse wheel and Ctrl +/−
 - Pan by dragging
@@ -75,7 +75,7 @@ The later phases add File → Save As and Export, and Edit → Draw and Edit EXI
 | GPU image scaling | Off: the CPU resizes the image to its size on screen. On: the full image is uploaded to the GPU once and the GPU scales it, so zooming is smoother. | Off |
 | Interpolation | Nearest, Bilinear, Bicubic, Lanczos3. With GPU scaling on, only Nearest and Bilinear are available. | Bilinear |
 | Background colour | A colour picker | Black |
-| Default window size | Width × height | 480 × 360 |
+| Default window size | Width × height | 1280 × 720 |
 | Sort order | By file name, or by date modified | By file name |
 
 ## Performance targets (each one gets measured)
@@ -91,7 +91,7 @@ Binary size and memory aren't goals for now; we'll optimize them if they become 
 ## Milestones
 1. **Spike** ✅ (2026-10-28): an eframe window that shows one JPEG passed on the command line. Result: eframe takes 115–200 ms to the first frame and a 12 MP JPEG takes ~360–410 ms to decode, so the image appears at ~420 ms. The original 100 ms target was split into P1a and P1b.
 2. **Viewer** ✅ (2026-10-28; checked by hand by the user). Measured with `--bench` on a 4000×2252 Samsung photo: window 121 ms (P1a ✅), preview 124 ms, full image 243 ms (medians of 10). Also applies EXIF orientation. Menus move to milestone 3. The plan was to: show the small preview built into the JPEG's EXIF data straight away, then replace it with the sharp image. Also navigating, zoom and pan, fit and 1:1, fullscreen, the title bar, animation.
-3. **Integration:** the `.desktop` file, setting lightview as the default app, Open and Open Recent.
+3. **Integration** ✅ (2026-10-28; checked by the user). Menu bar (File: Open, Open Recent, Close, Info; View: zoom/fit/actual size/fullscreen), hidden in fullscreen. `lightview.desktop` and `install.sh` make it the default viewer. Recent = files opened explicitly, last 10, saved between runs.
 4. **Light editing:** rotate and flip, view only.
 5. **Settings dialog**, with the settings saved between runs.
 6. *(Later)* Save As and Export. 

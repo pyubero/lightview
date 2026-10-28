@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=lightview
+GenericName=Image Viewer
+Comment=A simple, fast image viewer
+Exec=lightview %f
+Icon=image-x-generic
+Terminal=false
+Categories=Graphics;Viewer;
+MimeType=image/jpeg;image/png;image/gif;image/webp;image/bmp;
