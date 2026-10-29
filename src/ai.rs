@@ -419,28 +419,31 @@ fn input(pre: &Preprocess, img: &RgbaImage) -> Vec<f32> {
 }
 
 /// The licence prompt's body: Some(true) to accept and download, Some(false) to cancel.
-pub fn license_ui(ui: &mut egui::Ui, title: &str, licenses: &[License], note: Option<&str>) -> Option<bool> {
-    ui.heading(format!("Licence — {title}"));
+/// One licence of a download (`step` of `count`, from 0). Some(true) accepts it, Some(false) cancels.
+/// The text scrolls within the window's height, so the buttons stay on screen.
+pub fn license_ui(ui: &mut egui::Ui, title: &str, l: &License, step: usize, count: usize, note: Option<&str>) -> Option<bool> {
+    let of = if count > 1 { format!(" ({} of {count})", step + 1) } else { String::new() };
+    ui.heading(format!("Licence{of} — {title}"));
     ui.label("Please read and accept the licence before downloading.");
     if let Some(note) = note {
         ui.weak(note);
     }
-    for (i, l) in licenses.iter().enumerate() {
-        ui.add_space(6.0);
-        ui.horizontal(|ui| {
-            ui.strong(format!("{} — {}", l.project, l.spdx));
-            if ui.button("Open project page").clicked() {
-                // shortcut: xdg-open is Linux only.
-                drop(std::process::Command::new("xdg-open").arg(l.url).spawn());
-            }
-        });
-        egui::ScrollArea::vertical().id_salt(("license", i)).max_height(320.0).show(ui, |ui| {
-            ui.add(egui::Label::new(egui::RichText::new(l.text).monospace()).wrap());
-        });
-    }
     ui.add_space(6.0);
     ui.horizontal(|ui| {
-        let accept = ui.button("Accept and Download").clicked();
+        ui.strong(format!("{} — {}", l.project, l.spdx));
+        if ui.button("Open project page").clicked() {
+            // shortcut: xdg-open is Linux only.
+            drop(std::process::Command::new("xdg-open").arg(l.url).spawn());
+        }
+    });
+    // Room for the heading, notes and buttons around the text.
+    let height = (ui.ctx().content_rect().height() - 260.0).clamp(100.0, 360.0);
+    egui::ScrollArea::vertical().id_salt(("license", step)).max_height(height).show(ui, |ui| {
+        ui.add(egui::Label::new(egui::RichText::new(l.text).monospace()).wrap());
+    });
+    ui.add_space(6.0);
+    ui.horizontal(|ui| {
+        let accept = ui.button(if step + 1 < count { "Accept and Continue" } else { "Accept and Download" }).clicked();
         let cancel = ui.button("Cancel").clicked();
         accept.then_some(true).or(cancel.then_some(false))
     })

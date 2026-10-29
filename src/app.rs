@@ -242,7 +242,8 @@ pub struct App {
     adjusting: Option<Doc>,
     pending: Option<Pending>,
     show_ai_models: bool,
-    license_prompt: Option<Download>,
+    /// The download whose licences are being shown, and which one (they come one at a time).
+    license_prompt: Option<(Download, usize)>,
     restoring: Option<Restoring>,
     compare: Option<Compare>,
     /// Enhance Image waiting for the user to read the "may invent detail" notice.
@@ -1255,7 +1256,7 @@ impl App {
         }
         let notify = self.notify.clone();
         if let Some(i) = out.download {
-            self.license_prompt = Some(Download::Model(i));
+            self.license_prompt = Some((Download::Model(i), 0));
         } else if let Some(file) = out.detect {
             // Opening a big model takes a moment, so not on the UI thread.
             std::thread::spawn(move || notify.send(Msg::Detected(file.clone(), crate::ai::input_size(&file))));
@@ -1273,14 +1274,15 @@ impl App {
 
     /// Shows the download's licence; the download starts only once it's accepted.
     fn license_dialog(&mut self, ctx: &egui::Context) {
-        let Some(download) = self.license_prompt else { return };
+        let Some((download, step)) = self.license_prompt else { return };
         let (title, licenses, note) = match download {
             Download::Model(i) => (crate::ai::CATALOG[i].label, crate::ai::CATALOG[i].licenses, crate::ai::CATALOG[i].converted_by),
             Download::Runtime => ("AI runtime (ONNX Runtime)", std::slice::from_ref(&crate::ai::RUNTIME_LICENSE), None),
         };
-        let modal = egui::Modal::new(egui::Id::unique("license")).show(ctx, |ui| crate::ai::license_ui(ui, title, licenses, note));
+        let modal = egui::Modal::new(egui::Id::unique("license")).show(ctx, |ui| crate::ai::license_ui(ui, title, &licenses[step], step, licenses.len(), note));
         let close = modal.should_close();
         match modal.inner {
+            Some(true) if step + 1 < licenses.len() => self.license_prompt = Some((download, step + 1)),
             Some(true) => {
                 self.license_prompt = None;
                 let notify = self.notify.clone();
@@ -1484,7 +1486,7 @@ impl eframe::App for App {
                 Action::Cutout(crop) => self.cutout(*crop),
                 Action::Restore(task) if *task == crate::ai::Task::Enhance && !self.settings.ai.enhance_notice_seen => self.enhance_notice = true,
                 Action::Restore(task) => self.preview_restore(*task),
-                Action::DownloadRuntime => self.license_prompt = Some(Download::Runtime),
+                Action::DownloadRuntime => self.license_prompt = Some((Download::Runtime, 0)),
                 Action::AiModels => self.show_ai_models = true,
                 Action::ImageFromSelection => self.image_from_selection(),
                 Action::RotateLeft => self.edit(Doc::rotate_left),
