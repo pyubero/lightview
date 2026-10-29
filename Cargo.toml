@@ -12,7 +12,7 @@ image = { version = "0.25.10", default-features = false, features = ["jpeg", "pn
 libloading = "0.8"
 little_exif = "0.6"
 # ONNX Runtime itself is loaded at run time from the copy Tools → Download AI Runtime… installs.
-ort = { version = "=2.0.0-rc.15", default-features = false, features = ["std", "load-dynamic", "api-31"] }
+ort = { version = "=2.0.0-rc.15", default-features = false, features = ["std", "load-dynamic", "api-31", "cuda"] }
 rfd = "0.17.2"
 ron = "0.12"
 serde = { version = "1.0.229", features = ["derive"] }

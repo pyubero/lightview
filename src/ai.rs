@@ -25,9 +25,139 @@ fn runtime_path() -> Result<PathBuf, String> {
     Ok(data_dir()?.join("lib").join(RUNTIME_FILE))
 }
 
+/// The CPU runtime, or the GPU support (whose ONNX Runtime also runs on the CPU).
 pub fn runtime_installed() -> bool {
-    runtime_path().is_ok_and(|p| p.is_file())
+    runtime_path().is_ok_and(|p| p.is_file()) || gpu_installed()
 }
+
+/// ONNX Runtime's CUDA 12 build (Microsoft) and the NVIDIA libraries it needs (NVIDIA's own
+/// PyPI packages), pinned by checksum. CUDA 12, not 13: 13 no longer runs on Pascal cards
+/// such as the GTX 10xx. Installed into `~/.local/share/lightview/gpu`.
+struct GpuPart {
+    url: &'static str,
+    sha256: &'static str,
+    /// tar members of the ONNX Runtime archive, or None for a wheel (its `nvidia/*/lib/*` files).
+    members: Option<&'static [&'static str]>,
+}
+
+const GPU_PARTS: [GpuPart; 5] = [
+    GpuPart {
+        url: "https://github.com/microsoft/onnxruntime/releases/download/v1.31.1/onnxruntime-linux-x64-gpu_cuda12-1.31.1.tgz",
+        sha256: "57cd51f677eca19a269cdba31b0c16c15d73a8feea41f170aa8b750447ab1f70",
+        members: Some(&[
+            "onnxruntime-linux-x64-gpu_cuda12-1.31.1/lib/libonnxruntime.so.1.31.1",
+            "onnxruntime-linux-x64-gpu_cuda12-1.31.1/lib/libonnxruntime_providers_cuda.so",
+            "onnxruntime-linux-x64-gpu_cuda12-1.31.1/lib/libonnxruntime_providers_shared.so",
+        ]),
+    },
+    GpuPart {
+        url: "https://files.pythonhosted.org/packages/bc/46/a92db19b8309581092a3add7e6fceb4c301a3fd233969856a8cbf042cd3c/nvidia_cuda_runtime_cu12-12.9.79-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
+        sha256: "25bba2dfb01d48a9b59ca474a1ac43c6ebf7011f1b0b8cc44f54eb6ac48a96c3",
+        members: None,
+    },
+    GpuPart {
+        url: "https://files.pythonhosted.org/packages/af/eb/ff4b8c503fa1f1796679dce648854d58751982426e4e4b37d6fce49d259c/nvidia_cublas_cu12-12.6.4.1-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
+        sha256: "08ed2686e9875d01b58e3cb379c6896df8e76c75e0d4a7f7dace3d7b6d9ef8eb",
+        members: None,
+    },
+    GpuPart {
+        url: "https://files.pythonhosted.org/packages/73/1b/44a01c4e70933637c93e6e1a8063d1e998b50213a6b65ac5a9169c47e98e/nvidia_curand_cu12-10.3.7.77-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
+        sha256: "a42cd1344297f70b9e39a1e4f467a4e1c10f1da54ff7a85c12197f6c652c8bdf",
+        members: None,
+    },
+    GpuPart {
+        url: "https://files.pythonhosted.org/packages/36/24/50e8018ddf113473dcebbc7c109d2843ec948740f5abed89f1885c9a982e/nvidia_cudnn_cu12-9.5.0.50-py3-none-manylinux2014_x86_64.whl",
+        sha256: "518d6cffad7d707871dfb9af667ddb619144f78d85b07f64c1e52449e6da6b9c",
+        members: None,
+    },
+];
+
+/// Download size of `GPU_PARTS`, for the menu.
+pub const GPU_DOWNLOAD_MB: u32 = 1470;
+
+/// The NVIDIA libraries the CUDA provider needs, loaded before it in this order: it has no
+/// search path of its own, and a library that's already loaded satisfies it by name.
+const CUDA_LIBS: [&str; 5] = ["libcudart.so.12", "libcublasLt.so.12", "libcublas.so.12", "libcurand.so.10", "libcudnn.so.9"];
+
+const NVIDIA_CUDA_LICENSE: License = License { project: "NVIDIA CUDA runtime, cuBLAS, cuRAND", spdx: "NVIDIA proprietary licence", url: "https://docs.nvidia.com/cuda/eula/", text: include_str!("../licenses/nvidia-cuda.txt") };
+const NVIDIA_CUDNN_LICENSE: License = License { project: "NVIDIA cuDNN", spdx: "NVIDIA proprietary licence", url: "https://docs.nvidia.com/deeplearning/cudnn/latest/reference/eula.html", text: include_str!("../licenses/nvidia-cudnn.txt") };
+/// Shown one after the other before the GPU download.
+pub const GPU_LICENSES: [License; 3] = [RUNTIME_LICENSE, NVIDIA_CUDA_LICENSE, NVIDIA_CUDNN_LICENSE];
+
+fn gpu_dir() -> Result<PathBuf, String> {
+    Ok(data_dir()?.join("gpu"))
+}
+
+pub fn gpu_installed() -> bool {
+    gpu_dir().is_ok_and(|d| d.join("libonnxruntime.so.1.31.1").is_file() && d.join("libonnxruntime_providers_cuda.so").is_file())
+}
+
+/// Whether an NVIDIA driver is loaded; without one the GPU support can't do anything.
+pub fn nvidia_driver() -> bool {
+    Path::new("/proc/driver/nvidia/version").exists()
+}
+
+/// Downloads and installs the GPU support (blocking; ~1.5 GB). Everything is fetched, checked
+/// and unpacked into a temporary folder first, which only replaces the old one at the end.
+pub fn download_gpu() -> Result<(), String> {
+    let dir = gpu_dir()?;
+    let tmp = dir.with_extension("part");
+    let _ = std::fs::remove_dir_all(&tmp);
+    std::fs::create_dir_all(&tmp).map_err(|e| e.to_string())?;
+    let result = (|| {
+        for (i, part) in GPU_PARTS.iter().enumerate() {
+            let archive = tmp.join(format!("download-{i}"));
+            fetch(part.url, part.sha256, &archive)?;
+            // shortcut: unpacks with the system's tar and unzip; use the tar/zip crates for Windows.
+            match part.members {
+                Some(members) => run(std::process::Command::new("tar").arg("-xzf").arg(&archive).arg("-C").arg(&tmp).arg("--strip-components=2").args(members))?,
+                None => run(std::process::Command::new("unzip").args(["-q", "-j", "-o"]).arg(&archive).arg("nvidia/*/lib/lib*.so*").arg("-d").arg(&tmp))?,
+            }
+            // The archives are big: drop each one once it's unpacked.
+            std::fs::remove_file(&archive).map_err(|e| e.to_string())?;
+        }
+        if !CUDA_LIBS.iter().all(|l| tmp.join(l).is_file()) {
+            return Err("a GPU library was missing from the download".into());
+        }
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::rename(&tmp, &dir).map_err(|e| e.to_string())
+    })();
+    if result.is_err() {
+        let _ = std::fs::remove_dir_all(&tmp);
+    }
+    result
+}
+
+/// Whether sessions should try the GPU (the user's setting).
+static USE_GPU: AtomicBool = AtomicBool::new(true);
+
+pub fn set_use_gpu(on: bool) {
+    USE_GPU.store(on, Ordering::Relaxed);
+}
+
+/// Why the last session couldn't use the GPU, if it couldn't.
+static GPU_ERROR: std::sync::Mutex<Option<String>> = std::sync::Mutex::new(None);
+
+pub fn gpu_error() -> Option<String> {
+    GPU_ERROR.lock().ok()?.clone()
+}
+
+/// ONNX Runtime's CUDA errors are long C++ traces; keep the "CUDA failure …" part.
+fn short_error(e: &str) -> String {
+    let e = e.find("CUDA failure").map_or(e, |i| &e[i..]);
+    let e = e.split(" ;").next().unwrap_or(e).trim();
+    if e.chars().count() > 160 { format!("{}…", e.chars().take(160).collect::<String>()) } else { e.to_string() }
+}
+
+/// Whether the loaded ONNX Runtime is the GPU build (decided once, when it's first loaded).
+static GPU_LOADED: AtomicBool = AtomicBool::new(false);
+
+/// The GPU support is installed but lightview started with the CPU runtime: it needs a restart.
+pub fn gpu_needs_restart() -> bool {
+    gpu_installed() && ENV_LOADED.load(Ordering::Relaxed) && !GPU_LOADED.load(Ordering::Relaxed)
+}
+
+static ENV_LOADED: AtomicBool = AtomicBool::new(false);
 
 /// Downloads ONNX Runtime and installs just its library (blocking).
 pub fn download_runtime() -> Result<(), String> {
@@ -69,10 +199,26 @@ fn run(cmd: &mut std::process::Command) -> Result<(), String> {
 }
 
 /// Loads ONNX Runtime the first time an AI tool runs, never at startup.
+/// With the GPU support installed, its ONNX Runtime is loaded instead (it runs on the CPU too).
 fn environment() -> Result<&'static ort::environment::Environment, String> {
     static ENV: OnceLock<Result<ort::environment::Environment, String>> = OnceLock::new();
     ENV.get_or_init(|| {
-        let builder = ort::init_from(runtime_path()?).map_err(|e| e.to_string())?;
+        ENV_LOADED.store(true, Ordering::Relaxed);
+        let lib = if gpu_installed() {
+            let dir = gpu_dir()?;
+            // Kept loaded for the life of the process, for the CUDA provider to find.
+            for name in CUDA_LIBS {
+                match unsafe { libloading::Library::new(dir.join(name)) } {
+                    Ok(lib) => std::mem::forget(lib),
+                    Err(e) => *GPU_ERROR.lock().unwrap() = Some(format!("{name}: {e}")),
+                }
+            }
+            GPU_LOADED.store(true, Ordering::Relaxed);
+            dir.join("libonnxruntime.so.1.31.1")
+        } else {
+            runtime_path()?
+        };
+        let builder = ort::init_from(lib).map_err(|e| e.to_string())?;
         builder.build().map_err(|e| e.to_string())
     })
     .as_ref()
@@ -291,9 +437,35 @@ fn session(file: &str) -> Result<ort::session::Session, String> {
     // One thread per physical core was ~10% faster than one per hardware thread here.
     // shortcut: assumes two hardware threads per core; read the real core count if that's wrong somewhere.
     let threads = std::thread::available_parallelism().map_or(1, |n| (n.get() / 2).max(1));
-    let builder = ort::session::Session::builder(environment()?).map_err(|e| e.to_string())?;
-    let mut builder = builder.with_intra_threads(threads).map_err(|e| e.to_string())?;
-    builder.commit_from_file(path).map_err(|e| e.to_string())
+    let cpu = || -> Result<ort::session::Session, String> {
+        let builder = ort::session::Session::builder(environment()?).map_err(|e| e.to_string())?;
+        let mut builder = builder.with_intra_threads(threads).map_err(|e| e.to_string())?;
+        builder.commit_from_file(&path).map_err(|e| e.to_string())
+    };
+    if !(USE_GPU.load(Ordering::Relaxed) && { environment()?; GPU_LOADED.load(Ordering::Relaxed) }) {
+        return cpu();
+    }
+    // The GPU, falling back to the CPU (and saying why) if it can't be used.
+    let gpu = (|| -> Result<ort::session::Session, String> {
+        let builder = ort::session::Session::builder(environment()?).map_err(|e| e.to_string())?;
+        let mut builder = builder.with_execution_providers([ort::ep::CUDA::default().build().error_on_failure()]).map_err(|e| e.to_string())?;
+        builder.commit_from_file(&path).map_err(|e| e.to_string())
+    })();
+    match gpu {
+        Ok(session) => {
+            *GPU_ERROR.lock().unwrap() = None;
+            Ok(session)
+        }
+        Err(e) => {
+            *GPU_ERROR.lock().unwrap() = Some(e);
+            cpu()
+        }
+    }
+}
+
+/// Whether the last session runs on the GPU.
+pub fn on_gpu() -> bool {
+    GPU_LOADED.load(Ordering::Relaxed) && USE_GPU.load(Ordering::Relaxed) && gpu_error().is_none()
 }
 
 /// Denoise / Enhance: runs an image-to-image model over `img` in overlapping tiles.
@@ -450,9 +622,32 @@ pub fn license_ui(ui: &mut egui::Ui, title: &str, l: &License, step: usize, coun
     .inner
 }
 
+/// The GPU row of the AI Models dialog.
+fn gpu_ui(ui: &mut egui::Ui, use_gpu: &mut bool, downloading: bool, out: &mut ModelsOut) {
+    if !nvidia_driver() && !gpu_installed() {
+        return;
+    }
+    ui.add_space(4.0);
+    ui.strong("GPU (NVIDIA)");
+    if gpu_installed() {
+        ui.checkbox(use_gpu, "Use the GPU").on_hover_text("Denoise and Enhance run about 10× faster on a GTX 1050");
+        if gpu_needs_restart() {
+            ui.colored_label(ui.visuals().warn_fg_color, "Restart lightview to start using the GPU.");
+        } else if let Some(e) = gpu_error().filter(|_| *use_gpu) {
+            ui.colored_label(ui.visuals().warn_fg_color, format!("The GPU couldn't be used, so the CPU is: {}", short_error(&e)));
+        }
+    } else {
+        ui.horizontal(|ui| {
+            ui.label(format!("Run the AI tools on the graphics card ({} MB download, NVIDIA's CUDA libraries).", GPU_DOWNLOAD_MB));
+            out.download_gpu = ui.add_enabled(!downloading, egui::Button::new(if downloading { "Downloading…" } else { "Download GPU Support" })).clicked();
+        });
+    }
+}
+
 /// What the AI Models dialog asks for this frame.
 #[derive(Default)]
 pub struct ModelsOut {
+    pub download_gpu: bool,
     /// An index into `CATALOG`.
     pub download: Option<usize>,
     /// Read this model's input size.
@@ -469,6 +664,7 @@ pub fn models_ui(ui: &mut egui::Ui, s: &mut AiSettings, installed: &[String], bu
     if !runtime {
         ui.colored_label(ui.visuals().warn_fg_color, "The AI runtime isn't installed yet: Tools → Download AI Runtime…");
     }
+    gpu_ui(ui, &mut s.use_gpu, busy.contains("gpu"), &mut out);
     let name = |f: &str| {
         let mb = models_dir().ok().and_then(|d| std::fs::metadata(d.join(f)).ok()).map_or(0, |m| m.len().div_ceil(1_000_000));
         match known(f) {
@@ -714,6 +910,14 @@ mod tests {
     }
 
     #[test]
+    fn short_gpu_errors() {
+        let trace = "/onnxruntime_src/onnxruntime/core/providers/cuda/cuda_call.cc:154 std::conditional_t<THRW, void> onnxruntime::CudaCall(…) CUDA failure 100: no CUDA-capable device is detected ; GPU=-1 ; hostname=x ; file=cuda_execution_provider.cc";
+        assert_eq!(short_error(trace), "CUDA failure 100: no CUDA-capable device is detected");
+        assert_eq!(short_error("libcudnn.so.9: not found"), "libcudnn.so.9: not found");
+        assert!(short_error(&"x".repeat(500)).chars().count() <= 161);
+    }
+
+    #[test]
     fn sigmoid_logits() {
         // Logits −4, 0, 4: with the sigmoid the middle one is half-way; without it, too (min–max).
         let mask = to_mask(&[-4.0, 0.0, 4.0, 4.0], 2, true, 2, 2);
@@ -790,6 +994,36 @@ mod tests {
         let out_path = std::env::temp_dir().join(format!("{}-restored.png", path.file_stem().unwrap().to_string_lossy()));
         out.save(&out_path).unwrap();
         eprintln!("wrote {}", out_path.display());
+    }
+
+    /// Installs the GPU support the way the menu does (~1.5 GB): `cargo test install_gpu -- --ignored`.
+    #[test]
+    #[ignore]
+    fn install_gpu() {
+        download_gpu().unwrap();
+        assert!(gpu_installed());
+    }
+
+    /// With the GPU support installed: `LIGHTVIEW_AI=crop.png LIGHTVIEW_AI_MODEL=<file or path>
+    /// cargo test --release gpu_restore -- --ignored --nocapture`. Runs on the GPU, then with
+    /// the GPU switched off, and checks both give the same image.
+    #[test]
+    #[ignore]
+    fn gpu_restore() {
+        let img = image::open(std::env::var("LIGHTVIEW_AI").unwrap()).unwrap().into_rgba8();
+        let file = std::env::var("LIGHTVIEW_AI_MODEL").unwrap();
+        let mut results = Vec::new();
+        for gpu in [true, false] {
+            set_use_gpu(gpu);
+            let t = std::time::Instant::now();
+            let out = restore(&file, &img, &|_| {}, &AtomicBool::new(false)).unwrap();
+            eprintln!("use_gpu {gpu}: on_gpu {} in {:.0} ms, error {:?}", on_gpu(), t.elapsed().as_secs_f64() * 1000.0, gpu_error());
+            assert_eq!(on_gpu(), gpu);
+            results.push(out);
+        }
+        let worst = results[0].as_raw().iter().zip(results[1].as_raw()).map(|(a, b)| a.abs_diff(*b)).max().unwrap();
+        eprintln!("largest GPU/CPU difference: {worst}");
+        assert!(worst <= 2);
     }
 
     /// Installs the runtime the way the menu does: `cargo test install_runtime -- --ignored`.

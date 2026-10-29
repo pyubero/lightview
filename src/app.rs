@@ -123,6 +123,8 @@ enum Download {
     /// An index into `ai::CATALOG`.
     Model(usize),
     Runtime,
+    /// ONNX Runtime's GPU build and NVIDIA's CUDA libraries.
+    Gpu,
 }
 
 /// What to do once the user agrees to discard unsaved edits.
@@ -343,6 +345,7 @@ impl App {
             Msg::Downloaded(file, result) => {
                 self.downloading.remove(&file);
                 self.status = Some((match result {
+                    Ok(()) if file == "gpu" => "GPU support installed: restart lightview to use it".into(),
                     Ok(()) => format!("Downloaded {file}"),
                     Err(e) => format!("Couldn't download {file}: {e}"),
                 }, Instant::now()));
@@ -1147,7 +1150,8 @@ impl App {
     fn restore_progress(&mut self, ctx: &egui::Context, viewport: Rect) {
         let Some(r) = &self.restoring else { return };
         let left = (r.progress > 0.02).then(|| r.started.elapsed().as_secs_f64() * (1.0 - r.progress as f64) / r.progress as f64);
-        let label = format!("{}… {:.0} %{}", r.task.title(), r.progress * 100.0, left.map_or(String::new(), |s| format!(" · about {} left", format_duration(s))));
+        let on = if crate::ai::on_gpu() { " on the GPU" } else { "" };
+        let label = format!("{}{on}… {:.0} %{}", r.task.title(), r.progress * 100.0, left.map_or(String::new(), |s| format!(" · about {} left", format_duration(s))));
         let cancel = egui::Area::new(egui::Id::unique("restore-progress")).fixed_pos(Pos2::new(viewport.center().x - 200.0, viewport.bottom() - 64.0)).show(ctx, |ui| {
             egui::Frame::popup(ui.style()).show(ui, |ui| {
                 ui.set_width(400.0);
@@ -1257,6 +1261,8 @@ impl App {
         let notify = self.notify.clone();
         if let Some(i) = out.download {
             self.license_prompt = Some((Download::Model(i), 0));
+        } else if out.download_gpu {
+            self.license_prompt = Some((Download::Gpu, 0));
         } else if let Some(file) = out.detect {
             // Opening a big model takes a moment, so not on the UI thread.
             std::thread::spawn(move || notify.send(Msg::Detected(file.clone(), crate::ai::input_size(&file))));
@@ -1278,6 +1284,7 @@ impl App {
         let (title, licenses, note) = match download {
             Download::Model(i) => (crate::ai::CATALOG[i].label, crate::ai::CATALOG[i].licenses, crate::ai::CATALOG[i].converted_by),
             Download::Runtime => ("AI runtime (ONNX Runtime)", std::slice::from_ref(&crate::ai::RUNTIME_LICENSE), None),
+            Download::Gpu => ("GPU support", &crate::ai::GPU_LICENSES[..], Some("Downloaded from Microsoft (ONNX Runtime) and NVIDIA (CUDA libraries, via their official PyPI packages).")),
         };
         let modal = egui::Modal::new(egui::Id::unique("license")).show(ctx, |ui| crate::ai::license_ui(ui, title, &licenses[step], step, licenses.len(), note));
         let close = modal.should_close();
@@ -1291,6 +1298,11 @@ impl App {
                         let known = &crate::ai::CATALOG[i];
                         self.downloading.insert(known.file.to_string());
                         std::thread::spawn(move || notify.send(Msg::Downloaded(known.file.to_string(), crate::ai::download(known))));
+                    }
+                    Download::Gpu => {
+                        self.downloading.insert("gpu".into());
+                        self.status = Some((format!("Downloading GPU support ({} MB)…", crate::ai::GPU_DOWNLOAD_MB), Instant::now()));
+                        std::thread::spawn(move || notify.send(Msg::Downloaded("gpu".into(), crate::ai::download_gpu())));
                     }
                     Download::Runtime => {
                         self.status = Some(("Downloading the AI runtime…".into(), Instant::now()));
@@ -1387,6 +1399,7 @@ impl eframe::App for App {
         while let Ok(msg) = self.rx.try_recv() {
             self.handle(msg);
         }
+        crate::ai::set_use_gpu(self.settings.ai.use_gpu);
         if ctx.input(|i| i.viewport().close_requested()) && self.dirty() {
             ctx.send_viewport_cmd(ViewportCommand::CancelClose);
             self.pending = Some(Pending::Close);

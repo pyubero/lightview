@@ -42,7 +42,7 @@ pub enum SortOrder {
 }
 
 /// The model each AI task uses, and per-file preprocessing the user set (Tools → AI Models…).
-#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct AiSettings {
     /// Background removal's model (named before there were other tasks).
@@ -52,6 +52,19 @@ pub struct AiSettings {
     pub overrides: HashMap<String, Preprocess>,
     /// The "may invent detail" notice has been shown for Enhance Image.
     pub enhance_notice_seen: bool,
+    /// Run models on the GPU when the GPU support is installed.
+    #[serde(default = "yes")]
+    pub use_gpu: bool,
+}
+
+fn yes() -> bool {
+    true
+}
+
+impl Default for AiSettings {
+    fn default() -> Self {
+        AiSettings { model: None, denoise: None, enhance: None, overrides: HashMap::new(), enhance_notice_seen: false, use_gpu: true }
+    }
 }
 
 impl AiSettings {

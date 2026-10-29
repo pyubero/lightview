@@ -108,6 +108,12 @@ Numbering continues from v1.
 - Tools → AI Models… is grouped by task (Remove Background, Denoise, Enhance Image), each with its own model drop-down and its downloads sorted by size.
 - **Done when** tiling reproduces an identity model exactly, a two-file download is all-or-nothing, and the real models clean a noisy test crop without visible tile seams.
 
+### 19. AI on the GPU (NVIDIA) ✅ (2026-10-29)
+- Optional **Download GPU Support** in Tools → AI Models… (only shown with an NVIDIA driver): ONNX Runtime 1.31.1's CUDA 12 build from Microsoft plus cudart, cuBLAS, cuRAND and cuDNN from NVIDIA's official PyPI packages — ~1.5 GB download, 2.1 GB in `~/.local/share/lightview/gpu`, every file pinned by SHA-256, all three licences (ONNX Runtime MIT, NVIDIA CUDA EULA, NVIDIA cuDNN SLA) shown one after the other first. CUDA 12, because CUDA 13 no longer supports Pascal (GTX 10xx).
+- "Use the GPU" switch (on by default). If the GPU can't be used, it falls back to the CPU and the dialog says why. Installing it needs a restart (ONNX Runtime is loaded once).
+- Measured on a GTX 1050 (4 GB): Denoise/Enhance ≈ 5.8 s/MP vs ≈ 57 s/MP on the CPU (≈ 10×; a 9 MP photo in ~70 s instead of ~12 min, peak 3.1 GB graphics memory); same output as the CPU (max 1/255 difference).
+- **Done when** it installs through the app's own code, runs Denoise on the GPU with the same result as the CPU, and falls back cleanly with no usable GPU.
+
 ## Non-goals (v2)
 - JPEG 2000
 - Smart lasso
