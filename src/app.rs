@@ -832,7 +832,7 @@ impl App {
         }
         let doc = self.doc.clone();
         let ins = self.inspector.as_mut().unwrap();
-        let save = egui::Panel::right("inspector").default_size(320.0).resizable(true).show(ui, |ui| inspector::ui(ui, ins, l, doc.as_ref())).inner;
+        let save = egui::Panel::right("inspector").size_range(300.0..=520.0).default_size(520.0).resizable(true).show(ui, |ui| inspector::ui(ui, ins, l, doc.as_ref())).inner;
         let Some(d) = ins.exif.as_ref().ok().filter(|_| save) else { return };
         let stem = d.path.file_stem().unwrap_or_default().to_string_lossy();
         let mut file_dialog = rfd::FileDialog::new().set_file_name(format!("{stem}-edited.jpg")).add_filter("JPEG", &["jpg", "jpeg"]);

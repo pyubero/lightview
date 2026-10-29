@@ -39,7 +39,8 @@ impl Inspector {
 /// The sidebar body. Returns true when the user asks to save a copy with edited EXIF.
 pub fn ui(ui: &mut egui::Ui, ins: &mut Inspector, loaded: &Loaded, doc: Option<&Doc>) -> bool {
     let mut save = false;
-    egui::ScrollArea::vertical().show(ui, |ui| {
+    // Fill the sidebar's width: shrinking to the content made the sidebar shrink with it.
+    egui::ScrollArea::vertical().auto_shrink([false, true]).show(ui, |ui| {
         egui::CollapsingHeader::new("General").default_open(true).show(ui, |ui| {
             let (w, h) = (loaded.frames[0].w, loaded.frames[0].h);
             let ext = ins.path.extension().unwrap_or_default().to_string_lossy().to_uppercase();
