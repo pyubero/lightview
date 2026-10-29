@@ -29,6 +29,7 @@ Numbering continues from v1.
 - View → Animation: Play, Pause, Next Frame, Previous Frame (for GIF/WebP).
 - Where: `app.rs` (`menu_bar`, `Action`, `SHORTCUTS`).
 - **Done when** every menu item works and `cargo test` passes.
+- **Menu cleanup ✅ (2026-10-29):** the draft listed some features in several menus. Now each action appears once, in File · Edit · View · Image · Tools (see `MENUS.md`). The Export submenu is gone (Save As already picks the format). Crop crops to the selection when there is one. Image changes and AI moved to Image, Draw merged into Tools, Settings moved to Edit (Ctrl+,). EXIF editing and the image description are reached from the inspector (Ctrl+I).
 
 ### 9. Edit list, undo/redo, Crop, Resize, Export ✅ (2026-10-29)
 - An `Edit` enum and a list of edits on the current image. Undo (Ctrl+Z) and Redo (Ctrl+Shift+Z).

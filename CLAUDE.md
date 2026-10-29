@@ -63,6 +63,7 @@ Format: `YYYY-MM-DD — decision — reason`
 - 2026-10-29 — Enhance = BSRGAN 4× (user's choice): third-party fp16 ONNX (FuryTMP) since no trusted conversion exists; SCUNet GAN removed; results 4× bigger for now; upscalers use 256 px tiles (4 GB GPU) and tile outputs are written without blending (memory).
 - 2026-10-29 — DarkIR (user's choices): converted ourselves in a separate repo `lightview-models` (published as GitHub release assets), offered under Enhance; models now carry `max_tile` (DarkIR 1024: its FFT block is global per tile) and their own first-use notice.
 - 2026-10-29 — v2 roadmap (`ROADMAP-v2.md`, user's choices): edits as an undoable edit list applied only when saving a copy; AI tools last, behind an optional `ai` cargo feature; no JPEG 2000 (no pure-Rust encoder), TIFF added; selection = rectangle/ellipse/lasso, no smart lasso; rotate/flip now saved; GIF export added; ask before dropping unsaved edits; paste = movable element so Selection follows Draw; arboard/tiny-skia/ab_glyph/ort approved — keep the original safe and the default build small.
+- 2026-10-29 — menus File · Edit · View · Image · Tools, each action once (no Export submenu, Crop = crop to selection when there is one, Settings in Edit with Ctrl+,, no Draw menu) — the menus built from the draft repeated features.
 
 ## Self-Update Rule
 Before finishing your turn:

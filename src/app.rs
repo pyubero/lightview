@@ -22,7 +22,6 @@ enum Action {
     OpenRecent(PathBuf),
     Close,
     Info,
-    EditExif,
     Settings,
     ZoomIn,
     ZoomOut,
@@ -43,16 +42,12 @@ enum Action {
     Redo,
     Crop,
     Resize,
-    /// Save As in one format: an index into `save::FORMATS`.
-    Export(usize),
     AdjustColor,
     AutoLevels,
     ResetAdjust,
     Measure,
     ShowToolbar,
     Pick(Pick),
-    /// Border/Fill Color…: show the toolbar's style controls.
-    StyleControls,
     Describe,
     SelectTool(SelKind),
     SelectAll,
@@ -61,7 +56,6 @@ enum Action {
     Cut,
     Paste,
     DeleteSelection,
-    ImageFromSelection,
     /// Remove Background, and crop to the subject when true.
     Cutout(bool),
     /// Denoise or Enhance Image: shows a before/after preview first.
@@ -145,7 +139,7 @@ const fn key(key: Key) -> KeyboardShortcut {
 }
 
 /// Keyboard shortcuts, also shown in the menus. Ctrl+Plus is an alias for Ctrl+=.
-const SHORTCUTS: [(KeyboardShortcut, Action); 18] = [
+const SHORTCUTS: [(KeyboardShortcut, Action); 19] = [
     (ctrl(Key::O), Action::Open),
     (KeyboardShortcut::new(Modifiers { shift: true, ..Modifiers::COMMAND }, Key::S), Action::SaveAs),
     (ctrl(Key::W), Action::Close),
@@ -165,6 +159,7 @@ const SHORTCUTS: [(KeyboardShortcut, Action); 18] = [
     (ctrl(Key::Z), Action::Undo),
     (KeyboardShortcut::new(Modifiers { shift: true, ..Modifiers::COMMAND }, Key::A), Action::Deselect),
     (ctrl(Key::A), Action::SelectAll),
+    (ctrl(Key::Comma), Action::Settings),
 ];
 
 /// What the current texture holds; it's rebuilt when this changes.
@@ -627,20 +622,11 @@ impl App {
     }
 
     /// Asks where to save the current image (with its edits), then saves on that thread.
-    /// `format` (an index into `save::FORMATS`) limits the dialog to one format.
-    fn save_dialog(&mut self, format: Option<usize>) {
+    fn save_dialog(&mut self) {
         let Some((path, l)) = self.current().and_then(|p| Some((p, self.cache.get(p)?))) else { return };
         let Some(doc) = self.doc().filter(|_| l.frames.len() == 1) else { return };
         let (frame, source) = (l.frames[0].clone(), path.clone());
-        let mut dialog = rfd::FileDialog::new();
-        dialog = match format {
-            Some(i) => {
-                let (name, exts) = save::FORMATS[i];
-                let stem = path.file_stem().unwrap_or_default().to_string_lossy();
-                dialog.set_file_name(format!("{stem}.{}", exts[0])).add_filter(name, exts)
-            }
-            None => save::FORMATS.iter().fold(dialog.set_file_name(path.file_name().unwrap_or_default().to_string_lossy()), |d, (name, exts)| d.add_filter(*name, exts)),
-        };
+        let mut dialog = save::FORMATS.iter().fold(rfd::FileDialog::new().set_file_name(path.file_name().unwrap_or_default().to_string_lossy()), |d, (name, exts)| d.add_filter(*name, exts));
         if let Some(dir) = path.parent() {
             dialog = dialog.set_directory(dir);
         }
@@ -686,45 +672,28 @@ impl App {
                 item(ui, "Close", Action::Close, true, actions);
                 ui.separator();
                 item(ui, "Save As…", Action::SaveAs, can_save, actions);
-                ui.add_enabled_ui(can_save, |ui| {
-                    ui.menu_button("Export", |ui| {
-                        for (i, (name, _)) in save::FORMATS.iter().enumerate() {
-                            item(ui, &format!("{name}…"), Action::Export(i), true, actions);
-                        }
-                    });
-                });
             });
             ui.menu_button("Edit", |ui| {
                 item(ui, "Undo", Action::Undo, !self.undo.is_empty(), actions);
                 item(ui, "Redo", Action::Redo, !self.redo.is_empty(), actions);
                 ui.separator();
                 let selected = self.selection.is_some();
-                item(ui, "Select All", Action::SelectAll, has_image, actions);
-                item(ui, "Deselect", Action::Deselect, selected, actions);
                 // Ctrl+C/X/V come as clipboard events, not key presses.
                 for (label, action, enabled, keys) in [
+                    ("Cut", Action::Cut, selected, "Ctrl+X"),
                     ("Copy", Action::Copy, has_image, "Ctrl+C"),
                     ("Paste", Action::Paste, has_image, "Ctrl+V"),
-                    ("Cut", Action::Cut, selected, "Ctrl+X"),
                 ] {
                     if ui.add_enabled(enabled, egui::Button::new(label).shortcut_text(keys)).clicked() {
                         actions.push(action);
                     }
                 }
                 item(ui, "Delete Selection", Action::DeleteSelection, selected, actions);
-                item(ui, "Copy Selected Region", Action::Copy, selected, actions);
-                item(ui, "Create Image from Selection", Action::ImageFromSelection, selected, actions);
                 ui.separator();
-                item(ui, "Crop", Action::Crop, has_image, actions);
-                item(ui, "Resize…", Action::Resize, has_image, actions);
+                item(ui, "Select All", Action::SelectAll, has_image, actions);
+                item(ui, "Deselect", Action::Deselect, selected, actions);
                 ui.separator();
-                item(ui, "Adjust Color…", Action::AdjustColor, has_image, actions);
-                item(ui, "Reset Color Adjustments", Action::ResetAdjust, has_image, actions);
-                ui.separator();
-                item(ui, "Rotate Left", Action::RotateLeft, has_image, actions);
-                item(ui, "Rotate Right", Action::RotateRight, has_image, actions);
-                item(ui, "Flip Horizontally", Action::FlipHorizontal, has_image, actions);
-                item(ui, "Flip Vertically", Action::FlipVertical, has_image, actions);
+                item(ui, "Settings…", Action::Settings, true, actions);
             });
             ui.menu_button("View", |ui| {
                 item(ui, "Previous Image", Action::PrevImage, self.index > 0, actions);
@@ -750,49 +719,42 @@ impl App {
                     });
                 });
             });
+            ui.menu_button("Image", |ui| {
+                item(ui, "Crop", Action::Crop, has_image, actions);
+                item(ui, "Resize…", Action::Resize, has_image, actions);
+                ui.separator();
+                item(ui, "Rotate Left", Action::RotateLeft, has_image, actions);
+                item(ui, "Rotate Right", Action::RotateRight, has_image, actions);
+                item(ui, "Flip Horizontally", Action::FlipHorizontal, has_image, actions);
+                item(ui, "Flip Vertically", Action::FlipVertical, has_image, actions);
+                ui.separator();
+                item(ui, "Adjust Color…", Action::AdjustColor, has_image, actions);
+                item(ui, "Auto Levels", Action::AutoLevels, has_image, actions);
+                item(ui, "Reset Color Adjustments", Action::ResetAdjust, has_image, actions);
+                ui.separator();
+                ui.weak("AI Image Processing");
+                let runtime = crate::ai::runtime_installed();
+                let models = crate::ai::installed();
+                use crate::ai::Task;
+                let ready = |task| has_image && runtime && self.restoring.is_none() && crate::ai::choose(self.settings.ai.choice(task), task, &models).is_some();
+                item(ui, "Remove Background", Action::Cutout(false), ready(Task::Background), actions);
+                item(ui, "Remove Background and Crop", Action::Cutout(true), ready(Task::Background), actions);
+                item(ui, "Denoise", Action::Restore(Task::Denoise), ready(Task::Denoise), actions);
+                item(ui, "Enhance Image", Action::Restore(Task::Enhance), ready(Task::Enhance), actions);
+            });
             ui.menu_button("Tools", |ui| {
-                let jpeg = self.current().and_then(|p| p.extension()).is_some_and(|e| e.eq_ignore_ascii_case("jpg") || e.eq_ignore_ascii_case("jpeg"));
-                item(ui, "Edit EXIF…", Action::EditExif, has_image && jpeg, actions);
+                let label = if self.show_toolbar { "Hide Drawing Toolbar" } else { "Show Drawing Toolbar" };
+                item(ui, label, Action::ShowToolbar, has_image, actions);
+                ui.separator();
                 for (label, kind) in [("Rectangular Selection", SelKind::Rect), ("Elliptical Selection", SelKind::Ellipse), ("Lasso", SelKind::Lasso)] {
                     if ui.add_enabled(has_image, egui::Button::selectable(self.tool == Tool::Selection(kind), label)).clicked() {
                         actions.push(Action::SelectTool(kind));
                     }
                 }
-                {
-                    ui.separator();
-                    ui.weak("AI Image Processing");
-                    let runtime = crate::ai::runtime_installed();
-                    let models = crate::ai::installed();
-                    use crate::ai::Task;
-                    let ready = |task| has_image && runtime && self.restoring.is_none() && crate::ai::choose(self.settings.ai.choice(task), task, &models).is_some();
-                    item(ui, "Remove Background", Action::Cutout(false), ready(Task::Background), actions);
-                    item(ui, "Remove Background and Crop", Action::Cutout(true), ready(Task::Background), actions);
-                    item(ui, "Denoise", Action::Restore(Task::Denoise), ready(Task::Denoise), actions);
-                    item(ui, "Enhance Image", Action::Restore(Task::Enhance), ready(Task::Enhance), actions);
-                    item(ui, "AI Models…", Action::AiModels, true, actions);
-                    if !runtime {
-                        item(ui, "Download AI Runtime…", Action::DownloadRuntime, true, actions);
-                    }
-                }
-                ui.separator();
                 let measuring = self.tool == Tool::Measure;
                 if ui.add_enabled(has_image, egui::Button::selectable(measuring, "Measure")).clicked() {
                     actions.push(Action::Measure);
                 }
-                ui.add_enabled_ui(has_image, |ui| {
-                    ui.menu_button("Adjust", |ui| {
-                        // They all open the same panel.
-                        for label in ["Adjust Color…", "Exposure…", "Contrast…", "Saturation…", "Tint…"] {
-                            item(ui, label, Action::AdjustColor, true, actions);
-                        }
-                        item(ui, "Auto Levels", Action::AutoLevels, true, actions);
-                        item(ui, "Reset Adjustments", Action::ResetAdjust, true, actions);
-                    });
-                });
-            });
-            ui.menu_button("Draw", |ui| {
-                let label = if self.show_toolbar { "Hide Drawing Toolbar" } else { "Show Drawing Toolbar" };
-                item(ui, label, Action::ShowToolbar, has_image, actions);
                 ui.separator();
                 item(ui, "Sketch", Action::Pick(Pick::Draw(Shape::Sketch)), has_image, actions);
                 ui.add_enabled_ui(has_image, |ui| {
@@ -803,17 +765,14 @@ impl App {
                     });
                 });
                 item(ui, "Text", Action::Pick(Pick::Draw(Shape::Text)), has_image, actions);
-                item(ui, "Text Formatting…", Action::Pick(Pick::Draw(Shape::Text)), has_image, actions);
-                item(ui, "Border Color…", Action::StyleControls, has_image, actions);
-                item(ui, "Fill Color…", Action::StyleControls, has_image, actions);
                 item(ui, "Highlight", Action::Pick(Pick::Draw(Shape::Highlight)), has_image, actions);
                 item(ui, "Magnifier", Action::Pick(Pick::Draw(Shape::Magnifier)), has_image, actions);
                 ui.separator();
-                item(ui, "Image Description…", Action::Describe, has_image, actions);
+                item(ui, "AI Models…", Action::AiModels, true, actions);
+                if !crate::ai::runtime_installed() {
+                    item(ui, "Download AI Runtime…", Action::DownloadRuntime, true, actions);
+                }
             });
-            if ui.button("Settings").clicked() {
-                actions.push(Action::Settings);
-            }
         });
     }
 
@@ -1464,17 +1423,16 @@ impl eframe::App for App {
         for action in &actions {
             match action {
                 Action::Open => self.open_dialog(),
-                Action::SaveAs => self.save_dialog(None),
-                Action::Export(i) => self.save_dialog(Some(*i)),
+                Action::SaveAs => self.save_dialog(),
                 Action::OpenRecent(path) => self.confirm(Pending::Open(path.clone())),
                 Action::Close => self.confirm(Pending::Close),
                 Action::Undo => self.undo_redo(true),
                 Action::Redo => self.undo_redo(false),
+                Action::Crop if self.selection.is_some() => self.image_from_selection(),
                 Action::Crop if self.doc().is_some() => (self.tool, self.crop_rect) = (Tool::Crop, None),
                 Action::Resize => self.resize_dialog = self.doc().map(|d| ResizeDialog::new(&d)),
                 Action::Info => self.show_info = !self.show_info,
                 Action::Settings => self.show_settings = true,
-                Action::EditExif => self.show_info = true,
                 Action::AdjustColor => {
                     if self.adjusting.is_none() {
                         self.adjusting = self.doc();
@@ -1496,12 +1454,6 @@ impl eframe::App for App {
                     }
                 }
                 Action::Pick(pick) if self.doc().is_some() => self.set_pick(*pick),
-                Action::StyleControls if self.doc().is_some() => {
-                    if !matches!(self.tool, Tool::Select | Tool::Draw(_)) {
-                        self.set_pick(Pick::Draw(Shape::Rect));
-                    }
-                    self.show_toolbar = true;
-                }
                 Action::Describe => self.show_info = true,
                 Action::SelectTool(kind) if self.doc().is_some() => {
                     self.finish_text();
@@ -1526,7 +1478,6 @@ impl eframe::App for App {
                 Action::Restore(task) => self.preview_restore(*task),
                 Action::DownloadRuntime => self.license_prompt = Some((Download::Runtime, 0)),
                 Action::AiModels => self.show_ai_models = true,
-                Action::ImageFromSelection => self.image_from_selection(),
                 Action::RotateLeft => self.edit(Doc::rotate_left),
                 Action::RotateRight => self.edit(Doc::rotate_right),
                 Action::FlipHorizontal => self.edit(Doc::flip_horizontal),
