@@ -8,7 +8,7 @@ A simple, very fast image viewer written fully in Rust. It becomes the default i
 ## Goals
 1. **Fast.** The first image appears almost at once, and moving through a folder feels instant.
 2. **Simple.** It views images. It does only the few light edits listed below.
-3. **Fully Rust.** No C libraries for decoding or for the UI.
+3. **Mostly Rust.** The UI is Rust. JPEGs use libjpeg-turbo when it's installed, with the pure-Rust decoder as the fallback; everything else is pure Rust.
 
 ## Non-goals (v1)
 - Thumbnail grid or gallery mode
@@ -24,7 +24,7 @@ A simple, very fast image viewer written fully in Rust. It becomes the default i
 
 ## Tech stack
 - **UI:** `egui` through `eframe`. It runs on Linux and Windows, and gives us menus and dialogs.
-- **Decoding:** the `image` crate, with only the format features we need (png, jpeg, gif, webp, bmp)
+- **Decoding:** the `image` crate, with only the format features we need (png, jpeg, gif, webp, bmp). JPEGs go through libjpeg-turbo when its runtime library is installed (loaded at run time, no build dependency): first at the smallest 1/2, 1/4 or 1/8 scale that still fills the window, and at 1:1 in parallel, which replaces it
 - **Rendering:** eframe's OpenGL backend (`glow`) for all drawing. We don't use wgpu.
 - **Image scaling:** `fast_image_resize` on the CPU by default, or the GPU when the setting is on (see Settings)
 - **Background work:** decoding happens on a separate thread, so the window never waits on it
@@ -103,6 +103,8 @@ Binary size and memory aren't goals for now; we'll optimize them if they become 
 - **Editing (Q3):** v1 is view only. Saving comes later, and Draw and EXIF editing after that.
 - **Interpolation (Q4):** the four common modes listed in the Settings table.
 - **Preferences (Q5):** the settings in the Settings table. Wrapping, zoom mode, enlarging small images and window size are fixed behaviours, not settings.
+
+- **libjpeg-turbo (Q6, 2026-10-29):** decoding is the bottleneck, so "fully Rust" became "mostly Rust" for JPEG decoding only. Measured: libjpeg-turbo is 11–22% faster at 1:1 and 36–50% faster at 1/2 than the pure-Rust decoder. With it, the sharp fitted image of the 4000×2252 Samsung photo appears at ~250 ms instead of ~405 ms.
 
 ## Open questions
 - None right now. Any new setting needs the user's approval before it's added.

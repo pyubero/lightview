@@ -96,7 +96,8 @@ pub struct App {
     title: String,
     // --timings bookkeeping.
     window_reported: bool,
-    preview_reported: bool,
+    // The size of the last preview reported, so the EXIF thumbnail and the reduced-size decode both show.
+    preview_reported: Option<[u32; 2]>,
     full_reported: bool,
     nav_start: Option<Instant>,
     close_next: bool,
@@ -119,7 +120,7 @@ impl App {
             files: start.into_iter().collect(), index: 0,
             cache: HashMap::new(), preview: None, error: None, view: View::Fit,
             texture: None, tex_key: None, generation: 0, anim_frame: 0, anim_due: None, transform: Transform::default(), title: String::new(),
-            window_reported: false, preview_reported: false, full_reported: false, nav_start: None, close_next: false, status: None,
+            window_reported: false, preview_reported: None, full_reported: false, nav_start: None, close_next: false, status: None,
         }
     }
 
@@ -482,6 +483,7 @@ impl eframe::App for App {
 
         let viewport = ui.available_rect_before_wrap();
         let ppp = ctx.pixels_per_point();
+        self.loader.set_target([(viewport.width() * ppp) as u32, (viewport.height() * ppp) as u32]);
         let full = self.current().and_then(|p| self.cache.get(p));
 
         // Zoom and pan only once the full image is in (the preview has different pixel sizes).
@@ -572,9 +574,9 @@ impl eframe::App for App {
             }
 
             if self.timings {
-                if full.is_none() && !self.preview_reported {
-                    eprintln!("preview     {:.1} ms", ms(self.t0));
-                    self.preview_reported = true;
+                if full.is_none() && self.preview_reported != Some([frame.w, frame.h]) {
+                    eprintln!("preview     {:.1} ms  ({}×{})", ms(self.t0), frame.w, frame.h);
+                    self.preview_reported = Some([frame.w, frame.h]);
                 }
                 if full.is_some() && !self.full_reported {
                     eprintln!("full image  {:.1} ms", ms(self.t0));

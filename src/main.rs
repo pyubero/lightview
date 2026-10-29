@@ -3,6 +3,7 @@ mod exif_edit;
 mod load;
 mod save;
 mod settings;
+mod turbo;
 mod view;
 
 use eframe::egui;
@@ -30,7 +31,8 @@ fn main() -> eframe::Result {
     // Decoding starts before the window exists so it overlaps OpenGL/eframe setup.
     let (tx, rx) = mpsc::channel();
     let notify = Notify { tx, ctx: Arc::new(OnceLock::new()) };
-    let loader = Loader::new(notify.clone(), 3);
+    // The first decode starts before the window exists, so it targets the configured window size.
+    let loader = Loader::new(notify.clone(), 3, settings.window_size.map(|v| v as u32));
     if let Some(path) = &path {
         load::start(path, settings.sort, &loader, &notify);
     }

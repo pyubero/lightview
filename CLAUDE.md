@@ -24,6 +24,8 @@
 - little_exif gotchas: it panics on unexpected input (wrap with `catch_unwind`), returns *empty* metadata when it can't decode (writing that back wipes EXIF), and trims the NUL padding off fixed-size strings (harmless).
 - Screenshots: `spectacle -b -n -a` captures the *active* window, and KDE often doesn't focus lightview, so it can capture the user's other windows. Don't use it for checks.
 - Resize opaque images as RGB (U8x3), not RGBA: 9 ms vs 66 ms for 12 MP → 480×360.
+- libjpeg-turbo is loaded at run time from `libturbojpeg.so.0` (`src/turbo.rs`, via `libloading`); no `-dev` package needed. `--bench` prints every preview drawn with its size (EXIF thumbnail, then the reduced-size decode).
+- `--bench` window times vary 110–230 ms run to run; compare binaries by interleaving runs, and compare image times against each run's own window time.
 - M1 result (2026-10-28): eframe alone takes 115–200 ms to the first frame; a 12 MP JPEG takes ~360–410 ms to decode in a fresh process (~190 ms warm) → P1 is ~420 ms, so the 100 ms target is missed.
 
 ## Architecture Decisions
@@ -44,6 +46,8 @@ Format: `YYYY-MM-DD — decision — reason`
 - 2026-10-28 — M5: GPU scaling uploads the whole frame once (mipmaps for Bilinear) and draws a mesh whose UVs carry the rotate/flip; images over `max_texture_side` stay on the CPU path. With GPU on, Bicubic/Lanczos3 fall back to Bilinear. Date sort is oldest first.
 - 2026-10-28 — M6 (user's choices): one Save As (format by extension, no Export); overwrite allowed after the system dialog's confirmation; JPEG quality fixed at 90; EXIF kept with orientation reset + thumbnail unlinked; atomic write via temp file + rename; animated images not saveable yet.
 - 2026-10-29 — M7 EXIF editing (user's choices): Tools menu; `little_exif` (pure Rust) rewrites only the JPEG's EXIF block; JPEG only; always a copy, never the original; MakerNote dropped; little_exif calls wrapped in catch_unwind, refuse when it reads existing EXIF as empty, and verify the written buffer before writing it.
+
+- 2026-10-29 — JPEGs: reduced-size decode (largest of 1/8, 1/4, 1/2 that still covers the fitted viewport, after EXIF orientation) sent as a `Msg::Preview`, with 1:1 decoded in parallel in the same scope; both via libjpeg-turbo when installed, otherwise unchanged pure-Rust path — decoding was the bottleneck; the pure-Rust scaled decode only saved ~12%, so it isn't used.
 
 ## Self-Update Rule
 Before finishing your turn:

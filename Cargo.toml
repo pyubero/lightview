@@ -7,6 +7,7 @@ edition = "2024"
 eframe = { version = "0.37.0", default-features = false, features = ["glow", "wayland", "x11", "default_fonts", "persistence"] }
 fast_image_resize = "6.1.0"
 image = { version = "0.25.10", default-features = false, features = ["jpeg", "png", "gif", "webp", "bmp"] }
+libloading = "0.8"
 little_exif = "0.6"
 rfd = "0.17.2"
 ron = "0.12"

@@ -1,6 +1,8 @@
 use crate::settings::SortOrder;
+use crate::turbo;
 use eframe::egui;
 use image::codecs::{gif::GifDecoder, webp::WebPDecoder};
+use image::metadata::Orientation;
 use image::{AnimationDecoder, DynamicImage, ImageDecoder, ImageFormat, ImageReader};
 use std::cmp::Ordering;
 use std::collections::HashSet;
@@ -65,13 +67,16 @@ struct Queue {
 /// A fixed pool of decode threads working through the newest wanted list.
 pub struct Loader {
     queue: Arc<(Mutex<Queue>, Condvar)>,
+    // The viewport in physical pixels, which sets the reduced-size JPEG decode.
+    target: Arc<Mutex<[u32; 2]>>,
 }
 
 impl Loader {
-    pub fn new(notify: Notify, workers: usize) -> Self {
+    pub fn new(notify: Notify, workers: usize, target: [u32; 2]) -> Self {
         let queue: Arc<(Mutex<Queue>, Condvar)> = Arc::default();
+        let target = Arc::new(Mutex::new(target));
         for _ in 0..workers {
-            let (queue, notify) = (queue.clone(), notify.clone());
+            let (queue, notify, target) = (queue.clone(), notify.clone(), target.clone());
             std::thread::spawn(move || loop {
                 let path = {
                     let mut q = queue.1.wait_while(queue.0.lock().unwrap(), |q| q.wanted.is_empty()).unwrap();
@@ -79,7 +84,8 @@ impl Loader {
                     q.busy.insert(path.clone());
                     path
                 };
-                let msg = match load(&path, |frame| notify.send(Msg::Preview(path.clone(), frame))) {
+                let target = *target.lock().unwrap();
+                let msg = match load(&path, target, |frame| notify.send(Msg::Preview(path.clone(), frame))) {
                     Ok(loaded) => Msg::Full(path.clone(), loaded),
                     Err(e) => Msg::Error(path.clone(), e),
                 };
@@ -87,7 +93,11 @@ impl Loader {
                 notify.send(msg);
             });
         }
-        Loader { queue }
+        Loader { queue, target }
+    }
+
+    pub fn set_target(&self, size: [u32; 2]) {
+        *self.target.lock().unwrap() = size;
     }
 
     /// Replaces the wanted list (most important first). Stale requests are dropped;
@@ -111,8 +121,9 @@ pub fn relist(path: &Path, sort: SortOrder, notify: &Notify) {
     std::thread::spawn(move || notify.send(Msg::Folder(list_folder(&path, sort))));
 }
 
-/// Decodes a file. For JPEGs with an EXIF thumbnail, `on_preview` gets it first.
-fn load(path: &Path, on_preview: impl Fn(Frame)) -> Result<Loaded, String> {
+/// Decodes a file. For JPEGs, `on_preview` first gets the EXIF thumbnail (if any), then,
+/// when libjpeg-turbo is installed, a reduced-size decode just big enough for `target`.
+fn load(path: &Path, target: [u32; 2], on_preview: impl Fn(Frame) + Sync) -> Result<Loaded, String> {
     let bytes = std::fs::read(path).map_err(|e| e.to_string())?;
     let file_size = bytes.len() as u64;
     let reader = ImageReader::new(Cursor::new(&bytes)).with_guessed_format().map_err(|e| e.to_string())?;
@@ -151,9 +162,38 @@ fn load(path: &Path, on_preview: impl Fn(Frame)) -> Result<Loaded, String> {
         img.apply_orientation(orientation);
         on_preview(to_frame(img, Duration::ZERO));
     }
-    let mut img = DynamicImage::from_decoder(decoder).map_err(|e| e.to_string())?;
+    let turbo = (format == Some(ImageFormat::Jpeg) && turbo::available()).then(|| {
+        let (w, h) = decoder.dimensions();
+        let rotated = matches!(orientation, Orientation::Rotate90 | Orientation::Rotate270 | Orientation::Rotate90FlipH | Orientation::Rotate270FlipH);
+        let den = scale_denominator(if rotated { (h, w) } else { (w, h) }, target);
+        // The scope joins the reduced-size decode, so its preview always arrives before the full image.
+        let (bytes, on_preview) = (&bytes, &on_preview);
+        std::thread::scope(|s| {
+            if let Some(den) = den {
+                s.spawn(move || {
+                    if let Some(small) = turbo::decode(bytes, den) {
+                        let mut small = DynamicImage::ImageRgb8(small);
+                        small.apply_orientation(orientation);
+                        on_preview(to_frame(small, Duration::ZERO));
+                    }
+                });
+            }
+            turbo::decode(bytes, 1)
+        })
+    });
+    let mut img = match turbo.flatten() {
+        Some(img) => DynamicImage::ImageRgb8(img),
+        None => DynamicImage::from_decoder(decoder).map_err(|e| e.to_string())?,
+    };
     img.apply_orientation(orientation);
     Ok(Loaded { frames: vec![to_frame(img, Duration::ZERO)], file_size })
+}
+
+/// The largest JPEG scale-down (8, 4 or 2) whose output still covers `img` (upright) when
+/// fitted into `target`, or None when only 1:1 is big enough.
+fn scale_denominator(img: (u32, u32), target: [u32; 2]) -> Option<u32> {
+    let fit = (target[0] as f64 / img.0 as f64).min(target[1] as f64 / img.1 as f64);
+    [8, 4, 2].into_iter().find(|&d| img.0.div_ceil(d) as f64 >= img.0 as f64 * fit && img.1.div_ceil(d) as f64 >= img.1 as f64 * fit)
 }
 
 fn to_frame(img: DynamicImage, delay: Duration) -> Frame {
@@ -289,6 +329,17 @@ mod tests {
         assert_eq!(natural_cmp("photo", "photo1"), Ordering::Less);
     }
 
+    #[test]
+    fn scale_down_covers_the_fitted_size() {
+        assert_eq!(scale_denominator((4000, 2252), [1280, 720]), Some(2));
+        assert_eq!(scale_denominator((4000, 2252), [500, 282]), Some(8));
+        assert_eq!(scale_denominator((4000, 2252), [1000, 563]), Some(4));
+        assert_eq!(scale_denominator((1000, 563), [1280, 720]), None);
+        assert_eq!(scale_denominator((4000, 2252), [3840, 2160]), None);
+        // A portrait photo (already swapped to upright) in a landscape window is limited by height.
+        assert_eq!(scale_denominator((2252, 4000), [1280, 720]), Some(4));
+    }
+
     /// A TIFF block with an empty IFD0 and an IFD1 pointing at `thumb`.
     fn tiff(le: bool, thumb: &[u8]) -> Vec<u8> {
         let u16b = |v: u16| if le { v.to_le_bytes() } else { v.to_be_bytes() };
@@ -354,7 +405,7 @@ mod tests {
                 enc.encode_frame(image::Frame::from_parts(buf, 0, 0, image::Delay::from_numer_denom_ms(ms, 1))).unwrap();
             }
         }
-        let loaded = load(&path, |_| panic!("GIFs have no preview")).unwrap();
+        let loaded = load(&path, [1280, 720], |_| panic!("GIFs have no preview")).unwrap();
         std::fs::remove_file(&path).unwrap();
         assert_eq!(loaded.frames.len(), 2);
         assert_eq!((loaded.frames[0].w, loaded.frames[0].h, loaded.frames[0].alpha), (4, 2, true));
