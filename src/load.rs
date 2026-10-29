@@ -42,6 +42,10 @@ pub enum Msg {
     /// when extracting it.
     Cutout(PathBuf, Result<(image::RgbaImage, Option<egui::Rect>), String>),
     Status(String),
+    /// A model download finished.
+    Downloaded(String, Result<(), String>),
+    /// A model's input size was read.
+    Detected(String, Result<u32, String>),
 }
 
 /// Sends messages to the UI and wakes it up. The context is set once eframe has created it;

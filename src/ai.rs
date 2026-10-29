@@ -1,7 +1,10 @@
 //! AI background removal and object extraction. ONNX Runtime and the models aren't
 //! shipped: Tools → Download AI Runtime… / Download … Model… install them on request.
-use eframe::egui::{Pos2, Rect};
+use crate::settings::AiSettings;
+use eframe::egui::{self, Pos2, Rect};
 use image::{DynamicImage, GrayImage, RgbaImage, imageops::FilterType};
+use serde::{Deserialize, Serialize};
+use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 use std::sync::OnceLock;
 
@@ -75,89 +78,296 @@ fn environment() -> Result<&'static ort::environment::Environment, String> {
     .map_err(Clone::clone)
 }
 
-/// A segmentation model (U²-Net family, as used by rembg): one RGB input, a saliency map out.
-pub struct Model {
-    pub name: &'static str,
-    file: &'static str,
-    url: &'static str,
-    sha256: &'static str,
+/// How a model wants its input, and whether its output needs a sigmoid (BiRefNet gives logits).
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
+pub struct Preprocess {
     /// Input width and height.
-    size: u32,
-    mean: [f32; 3],
-    std: [f32; 3],
+    pub size: u32,
+    pub mean: [f32; 3],
+    pub std: [f32; 3],
+    pub sigmoid: bool,
 }
 
-/// Remove Background: small and fast (43 MB).
-pub const BACKGROUND: Model = Model {
-    name: "background removal",
-    file: "silueta.onnx",
-    url: "https://github.com/danielgatis/rembg/releases/download/v0.0.0/silueta.onnx",
-    sha256: "75da6c8d2f8096ec743d071951be73b4a8bc7b3e51d9a6625d63644f90ffeedb",
-    size: 320,
-    mean: [0.485, 0.456, 0.406],
-    std: [0.229, 0.224, 0.225],
-};
+const IMAGENET_MEAN: [f32; 3] = [0.485, 0.456, 0.406];
+const IMAGENET_STD: [f32; 3] = [0.229, 0.224, 0.225];
 
-/// Extract Object: higher resolution, cleaner edges (179 MB).
-pub const OBJECT: Model = Model {
-    name: "object extraction",
-    file: "isnet-general-use.onnx",
-    url: "https://github.com/danielgatis/rembg/releases/download/v0.0.0/isnet-general-use.onnx",
-    sha256: "60920e99c45464f2ba57bee2ad08c919a52bbf852739e96947fbb4358c0d964a",
-    size: 1024,
-    mean: [0.485, 0.456, 0.406],
-    std: [1.0, 1.0, 1.0],
-};
-
-impl Model {
-    /// `~/.local/share/lightview/models/<file>`.
-    fn path(&self) -> Result<PathBuf, String> {
-        Ok(data_dir()?.join("models").join(self.file))
+impl Preprocess {
+    /// For a model lightview doesn't know: its input size, and the usual normalisation.
+    pub fn auto(size: u32) -> Self {
+        Preprocess { size, mean: IMAGENET_MEAN, std: IMAGENET_STD, sigmoid: false }
     }
+}
 
-    pub fn installed(&self) -> bool {
-        self.path().is_ok_and(|p| p.is_file())
+const U2NET: Preprocess = Preprocess { size: 320, mean: IMAGENET_MEAN, std: IMAGENET_STD, sigmoid: false };
+const ISNET: Preprocess = Preprocess { size: 1024, mean: IMAGENET_MEAN, std: [1.0; 3], sigmoid: false };
+const BIREFNET: Preprocess = Preprocess { size: 1024, mean: IMAGENET_MEAN, std: IMAGENET_STD, sigmoid: true };
+
+/// Which tool a catalog model is meant for (it's only the default; any model works for either).
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum Role {
+    Background,
+    Object,
+}
+
+/// A model lightview can download (rembg's releases), pinned by checksum.
+pub struct Known {
+    pub file: &'static str,
+    pub label: &'static str,
+    pub mb: u32,
+    sha256: &'static str,
+    pre: Preprocess,
+    role: Role,
+}
+
+const RELEASES: &str = "https://github.com/danielgatis/rembg/releases/download/v0.0.0";
+
+/// In order of preference for each role.
+pub const CATALOG: [Known; 7] = [
+    Known { file: "silueta.onnx", label: "Silueta — small and fast", mb: 44, sha256: "75da6c8d2f8096ec743d071951be73b4a8bc7b3e51d9a6625d63644f90ffeedb", pre: U2NET, role: Role::Background },
+    Known { file: "u2netp.onnx", label: "U²-Net small — fastest", mb: 5, sha256: "309c8469258dda742793dce0ebea8e6dd393174f89934733ecc8b14c76f4ddd8", pre: U2NET, role: Role::Background },
+    Known { file: "u2net.onnx", label: "U²-Net — general", mb: 176, sha256: "8d10d2f3bb75ae3b6d527c77944fc5e7dcd94b29809d47a739a7a728a912b491", pre: U2NET, role: Role::Background },
+    Known { file: "u2net_human_seg.onnx", label: "U²-Net people — portraits", mb: 176, sha256: "01eb6a29a5c4d8edb30b56adad9bb3a2a0535338e480724a213e0acfd2d1c73c", pre: U2NET, role: Role::Background },
+    Known { file: "isnet-general-use.onnx", label: "IS-Net — general, clean edges", mb: 179, sha256: "60920e99c45464f2ba57bee2ad08c919a52bbf852739e96947fbb4358c0d964a", pre: ISNET, role: Role::Object },
+    Known { file: "isnet-anime.onnx", label: "IS-Net anime — illustrations", mb: 176, sha256: "f15622d853e8260172812b657053460e20806f04b9e05147d49af7bed31a6e99", pre: ISNET, role: Role::Object },
+    Known { file: "BiRefNet-general-bb_swin_v1_tiny-epoch_232.onnx", label: "BiRefNet lite — best quality, slow", mb: 224, sha256: "5600024376f572a557870a5eb0afb1e5961636bef4e1e22132025467d0f03333", pre: BIREFNET, role: Role::Object },
+];
+
+fn models_dir() -> Result<PathBuf, String> {
+    Ok(data_dir()?.join("models"))
+}
+
+fn known(file: &str) -> Option<&'static Known> {
+    CATALOG.iter().find(|k| k.file == file)
+}
+
+/// The `*.onnx` files in the models folder, sorted.
+pub fn installed() -> Vec<String> {
+    models_dir().map(|d| list_models(&d)).unwrap_or_default()
+}
+
+fn list_models(dir: &Path) -> Vec<String> {
+    let Ok(entries) = std::fs::read_dir(dir) else { return Vec::new() };
+    let mut files: Vec<String> = entries
+        .filter_map(|e| e.ok()?.file_name().into_string().ok())
+        .filter(|f| f.to_ascii_lowercase().ends_with(".onnx"))
+        .collect();
+    files.sort();
+    files
+}
+
+/// The model a tool uses: the user's choice if it's installed, else the first installed
+/// catalog model for that role, else the first installed model.
+pub fn choose(choice: Option<&String>, role: Role, installed: &[String]) -> Option<String> {
+    choice
+        .filter(|f| installed.contains(f))
+        .cloned()
+        .or_else(|| CATALOG.iter().find(|k| k.role == role && installed.iter().any(|f| f == k.file)).map(|k| k.file.to_string()))
+        .or_else(|| installed.first().cloned())
+}
+
+/// The preprocessing for `file`: the user's override, else the catalog preset; None means
+/// "read the size from the model".
+pub fn preset(file: &str, overrides: &HashMap<String, Preprocess>) -> Option<Preprocess> {
+    overrides.get(file).copied().or_else(|| known(file).map(|k| k.pre))
+}
+
+/// Downloads a catalog model (blocking). Writes to a temporary file first, so a failed or
+/// tampered download never leaves a model behind.
+pub fn download(k: &Known) -> Result<(), String> {
+    let path = models_dir()?.join(k.file);
+    std::fs::create_dir_all(path.parent().unwrap()).map_err(|e| e.to_string())?;
+    let tmp = path.with_extension("onnx.part");
+    fetch(&format!("{RELEASES}/{}", k.file), k.sha256, &tmp)?;
+    std::fs::rename(&tmp, &path).map_err(|e| e.to_string())
+}
+
+/// Copies a model file the user picked into the models folder; never replaces one.
+pub fn add_model(src: &Path) -> Result<String, String> {
+    let name = src.file_name().and_then(|n| n.to_str()).filter(|n| n.to_ascii_lowercase().ends_with(".onnx")).ok_or("pick an .onnx file")?.to_string();
+    let dir = models_dir()?;
+    let dest = dir.join(&name);
+    if dest.exists() {
+        return Err(format!("{name} is already installed"));
     }
-
-    /// Downloads the model (blocking). Writes to a temporary file first, so a failed or
-    /// tampered download never leaves a model behind.
-    pub fn download(&self) -> Result<(), String> {
-        let path = self.path()?;
-        std::fs::create_dir_all(path.parent().unwrap()).map_err(|e| e.to_string())?;
-        let tmp = path.with_extension("onnx.part");
-        fetch(self.url, self.sha256, &tmp)?;
-        std::fs::rename(&tmp, &path).map_err(|e| e.to_string())
+    std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    let tmp = dir.join(format!("{name}.part"));
+    let result = std::fs::copy(src, &tmp).map_err(|e| e.to_string()).and_then(|_| std::fs::rename(&tmp, &dest).map_err(|e| e.to_string()));
+    if result.is_err() {
+        let _ = std::fs::remove_file(&tmp);
     }
+    result.map(|()| name)
+}
 
-    /// The foreground mask (255 = keep) for `img`, at its size.
-    pub fn mask(&self, img: &RgbaImage) -> Result<GrayImage, String> {
-        let input = self.input(img);
-        let model = self.path()?;
-        let mut session = ort::session::Session::builder(environment()?).and_then(|mut b| b.commit_from_file(model)).map_err(|e| e.to_string())?;
-        let s = self.size as usize;
-        let tensor = ort::value::Tensor::from_array(([1usize, 3, s, s], input)).map_err(|e| e.to_string())?;
-        let outputs = session.run(ort::inputs![tensor]).map_err(|e| e.to_string())?;
-        let (_, pred) = outputs[0].try_extract_tensor::<f32>().map_err(|e| e.to_string())?;
-        let pred = pred.get(..s * s).ok_or("unexpected model output")?;
-        Ok(to_mask(pred, self.size, img.width(), img.height()))
+/// Opens the models folder in the file manager.
+pub fn open_folder() {
+    if let Ok(dir) = models_dir() {
+        let _ = std::fs::create_dir_all(&dir);
+        // shortcut: xdg-open is Linux only.
+        drop(std::process::Command::new("xdg-open").arg(dir).spawn());
     }
+}
 
-    /// The model's input: resized, scaled to 0–1, normalised, in channel-first order.
-    fn input(&self, img: &RgbaImage) -> Vec<f32> {
-        let small = DynamicImage::ImageRgba8(img.clone()).resize_exact(self.size, self.size, FilterType::Triangle).into_rgb8();
-        let plane = (self.size * self.size) as usize;
-        let mut input = vec![0f32; 3 * plane];
-        for (i, px) in small.pixels().enumerate() {
-            for c in 0..3 {
-                input[c * plane + i] = (px[c] as f32 / 255.0 - self.mean[c]) / self.std[c];
-            }
+fn session(file: &str) -> Result<ort::session::Session, String> {
+    let path = models_dir()?.join(file);
+    ort::session::Session::builder(environment()?).and_then(|mut b| b.commit_from_file(path)).map_err(|e| e.to_string())
+}
+
+/// The model's input size, from its first input's shape (…, H, W); 1024 when it's dynamic.
+pub fn input_size(file: &str) -> Result<u32, String> {
+    let session = session(file)?;
+    let shape = session.inputs().first().and_then(|i| i.dtype().tensor_shape()).ok_or("the model has no image input")?;
+    let dims: Vec<i64> = shape.iter().copied().collect();
+    Ok(match dims.as_slice() {
+        [.., h, w] if h == w && *h > 0 => *h as u32,
+        _ => 1024,
+    })
+}
+
+/// The foreground mask (255 = keep) for `img`, at its size.
+pub fn mask(file: &str, pre: &Preprocess, img: &RgbaImage) -> Result<GrayImage, String> {
+    let input = input(pre, img);
+    let mut session = session(file)?;
+    let s = pre.size as usize;
+    let tensor = ort::value::Tensor::from_array(([1usize, 3, s, s], input)).map_err(|e| e.to_string())?;
+    let outputs = session.run(ort::inputs![tensor]).map_err(|e| e.to_string())?;
+    let (_, pred) = outputs[0].try_extract_tensor::<f32>().map_err(|e| e.to_string())?;
+    let pred = pred.get(..s * s).ok_or("the model's output doesn't match its input size")?;
+    Ok(to_mask(pred, pre.size, pre.sigmoid, img.width(), img.height()))
+}
+
+/// The model's input: resized, scaled to 0–1, normalised, in channel-first order.
+fn input(pre: &Preprocess, img: &RgbaImage) -> Vec<f32> {
+    let small = DynamicImage::ImageRgba8(img.clone()).resize_exact(pre.size, pre.size, FilterType::Triangle).into_rgb8();
+    let plane = (pre.size * pre.size) as usize;
+    let mut input = vec![0f32; 3 * plane];
+    for (i, px) in small.pixels().enumerate() {
+        for c in 0..3 {
+            input[c * plane + i] = (px[c] as f32 / 255.0 - pre.mean[c]) / pre.std[c];
         }
-        input
     }
+    input
+}
+
+/// What the AI Models dialog asks for this frame.
+#[derive(Default)]
+pub struct ModelsOut {
+    /// An index into `CATALOG`.
+    pub download: Option<usize>,
+    /// Read this model's input size.
+    pub detect: Option<String>,
+    pub add: bool,
+    pub close: bool,
+}
+
+/// The AI Models dialog body: installed models (which tool uses which, and their
+/// preprocessing) and the catalog to download from. `busy` holds files being downloaded.
+pub fn models_ui(ui: &mut egui::Ui, s: &mut AiSettings, installed: &[String], busy: &HashSet<String>, runtime: bool) -> ModelsOut {
+    let mut out = ModelsOut::default();
+    ui.heading("AI Models");
+    if !runtime {
+        ui.colored_label(ui.visuals().warn_fg_color, "The AI runtime isn't installed yet: Tools → Download AI Runtime…");
+    }
+    ui.add_space(4.0);
+    ui.strong("Installed");
+    if installed.is_empty() {
+        ui.weak("No models yet. Download one below, or add your own .onnx file.");
+    } else {
+        let (bg, obj) = (choose(s.background.as_ref(), Role::Background, installed), choose(s.object.as_ref(), Role::Object, installed));
+        egui::Grid::new("models-grid").num_columns(4).spacing([16.0, 6.0]).striped(true).show(ui, |ui| {
+            ui.weak("Model");
+            ui.weak("Size");
+            ui.weak("Remove Background");
+            ui.weak("Extract Object");
+            ui.end_row();
+            for f in installed {
+                let label = ui.label(f);
+                if let Some(k) = known(f) {
+                    label.on_hover_text(k.label);
+                }
+                let mb = models_dir().ok().and_then(|d| std::fs::metadata(d.join(f)).ok()).map_or(0, |m| m.len().div_ceil(1_000_000));
+                ui.label(format!("{mb} MB"));
+                if ui.radio(bg.as_ref() == Some(f), "").clicked() {
+                    s.background = Some(f.clone());
+                }
+                if ui.radio(obj.as_ref() == Some(f), "").clicked() {
+                    s.object = Some(f.clone());
+                }
+                ui.end_row();
+            }
+        });
+        for f in installed {
+            egui::CollapsingHeader::new(format!("Preprocessing: {f}")).id_salt(("pre", f)).show(ui, |ui| preprocess_ui(ui, s, f, runtime, &mut out));
+        }
+    }
+    let available: Vec<(usize, &Known)> = CATALOG.iter().enumerate().filter(|(_, k)| !installed.iter().any(|f| f == k.file)).collect();
+    if !available.is_empty() {
+        ui.add_space(8.0);
+        ui.strong("Download");
+        egui::Grid::new("catalog-grid").num_columns(3).spacing([16.0, 6.0]).show(ui, |ui| {
+            for (i, k) in available {
+                ui.label(k.label);
+                ui.label(format!("{} MB", k.mb));
+                let downloading = busy.contains(k.file);
+                if ui.add_enabled(!downloading, egui::Button::new(if downloading { "Downloading…" } else { "Download" })).clicked() {
+                    out.download = Some(i);
+                }
+                ui.end_row();
+            }
+        });
+    }
+    ui.add_space(8.0);
+    ui.horizontal(|ui| {
+        out.add = ui.button("Add model file…").clicked();
+        if ui.button("Open models folder").clicked() {
+            open_folder();
+        }
+        out.close = ui.button("Close").clicked();
+    });
+    out
+}
+
+/// One model's preprocessing; any change becomes that file's override.
+fn preprocess_ui(ui: &mut egui::Ui, s: &mut AiSettings, f: &str, runtime: bool, out: &mut ModelsOut) {
+    let current = preset(f, &s.overrides);
+    if current.is_none() {
+        ui.weak("Size read from the model when it runs; the usual normalisation.");
+    }
+    let mut p = current.unwrap_or(Preprocess::auto(1024));
+    let before = p;
+    egui::Grid::new(("pre-grid", f)).num_columns(2).spacing([12.0, 6.0]).show(ui, |ui| {
+        ui.label("Input size");
+        ui.add(egui::DragValue::new(&mut p.size).range(32..=4096).suffix(" px"));
+        ui.end_row();
+        for (label, values, range) in [("Mean (R, G, B)", &mut p.mean, 0.0..=1.0), ("Std (R, G, B)", &mut p.std, 0.001..=10.0)] {
+            ui.label(label);
+            ui.horizontal(|ui| {
+                for v in values.iter_mut() {
+                    ui.add(egui::DragValue::new(v).range(range.clone()).speed(0.001).fixed_decimals(3));
+                }
+            });
+            ui.end_row();
+        }
+        ui.label("Output");
+        ui.checkbox(&mut p.sigmoid, "Apply sigmoid (the model outputs logits)");
+        ui.end_row();
+    });
+    if p != before {
+        s.overrides.insert(f.to_string(), p);
+    }
+    ui.horizontal(|ui| {
+        if ui.add_enabled(runtime, egui::Button::new("Detect size")).on_hover_text("Read the input size from the model").clicked() {
+            out.detect = Some(f.to_string());
+        }
+        if ui.add_enabled(s.overrides.contains_key(f), egui::Button::new("Reset to default")).clicked() {
+            s.overrides.remove(f);
+        }
+    });
 }
 
 /// Stretches the prediction to 0–255 (like rembg) and scales it to `w`×`h`.
-fn to_mask(pred: &[f32], size: u32, w: u32, h: u32) -> GrayImage {
+fn to_mask(pred: &[f32], size: u32, sigmoid: bool, w: u32, h: u32) -> GrayImage {
+    let sig = |v: f32| if sigmoid { 1.0 / (1.0 + (-v).exp()) } else { v };
+    let pred: Vec<f32> = pred.iter().map(|&v| sig(v)).collect();
     let (lo, hi) = pred.iter().fold((f32::MAX, f32::MIN), |(lo, hi), &v| (lo.min(v), hi.max(v)));
     let range = (hi - lo).max(1e-6);
     let small = GrayImage::from_vec(size, size, pred.iter().map(|&v| ((v - lo) / range * 255.0).round() as u8).collect()).unwrap();
@@ -192,7 +402,7 @@ mod tests {
     #[test]
     fn mask_helpers() {
         // A 2×2 prediction: one strong pixel, scaled up to 4×4.
-        let mask = to_mask(&[0.1, 0.1, 0.1, 0.9], 2, 4, 4);
+        let mask = to_mask(&[0.1, 0.1, 0.1, 0.9], 2, false, 4, 4);
         assert_eq!(mask.get_pixel(3, 3)[0], 255);
         assert_eq!(mask.get_pixel(0, 0)[0], 0);
         let b = bbox(&mask).unwrap();
@@ -208,10 +418,65 @@ mod tests {
     fn input_layout() {
         // A red 1×1 image becomes three planes: R high, G and B low.
         let img = RgbaImage::from_pixel(1, 1, image::Rgba([255, 0, 0, 255]));
-        let m = Model { size: 2, ..BACKGROUND };
-        let input = m.input(&img);
+        let input = input(&Preprocess { size: 2, ..U2NET }, &img);
         assert_eq!(input.len(), 3 * 4);
         assert!(input[..4].iter().all(|&v| v > 2.0) && input[4..].iter().all(|&v| v < -1.0));
+    }
+
+    #[test]
+    fn sigmoid_logits() {
+        // Logits −4, 0, 4: with the sigmoid the middle one is half-way; without it, too (min–max).
+        let mask = to_mask(&[-4.0, 0.0, 4.0, 4.0], 2, true, 2, 2);
+        assert_eq!((mask.get_pixel(0, 0)[0], mask.get_pixel(1, 0)[0], mask.get_pixel(0, 1)[0]), (0, 128, 255));
+        // A logit far past the others saturates under the sigmoid instead of squashing the rest.
+        let squashed = to_mask(&[-6.0, 6.0, 100.0, 100.0], 2, false, 2, 2);
+        let kept = to_mask(&[-6.0, 6.0, 100.0, 100.0], 2, true, 2, 2);
+        assert!(kept.get_pixel(1, 0)[0] > 250 && squashed.get_pixel(1, 0)[0] < 40);
+    }
+
+    #[test]
+    fn choosing_models() {
+        let installed = |names: &[&str]| names.iter().map(|n| n.to_string()).collect::<Vec<_>>();
+        let both = installed(&["isnet-general-use.onnx", "mine.onnx", "silueta.onnx", "u2netp.onnx"]);
+        // Defaults: the catalog's preferred model for each tool.
+        assert_eq!(choose(None, Role::Background, &both).as_deref(), Some("silueta.onnx"));
+        assert_eq!(choose(None, Role::Object, &both).as_deref(), Some("isnet-general-use.onnx"));
+        // The user's choice wins while it's installed.
+        assert_eq!(choose(Some(&"mine.onnx".into()), Role::Object, &both).as_deref(), Some("mine.onnx"));
+        assert_eq!(choose(Some(&"gone.onnx".into()), Role::Background, &both).as_deref(), Some("silueta.onnx"));
+        // No catalog model for the role: any installed model; nothing installed: none.
+        assert_eq!(choose(None, Role::Object, &installed(&["mine.onnx", "u2netp.onnx"])).as_deref(), Some("mine.onnx"));
+        assert_eq!(choose(None, Role::Background, &[]), None);
+    }
+
+    #[test]
+    fn presets_and_overrides() {
+        let mut overrides = HashMap::new();
+        assert_eq!(preset("u2netp.onnx", &overrides), Some(U2NET));
+        assert_eq!(preset("BiRefNet-general-bb_swin_v1_tiny-epoch_232.onnx", &overrides).map(|p| p.sigmoid), Some(true));
+        assert_eq!(preset("mine.onnx", &overrides), None, "unknown: size comes from the model");
+        overrides.insert("u2netp.onnx".to_string(), Preprocess::auto(512));
+        assert_eq!(preset("u2netp.onnx", &overrides).map(|p| p.size), Some(512));
+    }
+
+    #[test]
+    fn lists_only_onnx_files() {
+        let dir = std::env::temp_dir().join(format!("lightview-models-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        for f in ["b.onnx", "a.ONNX", "c.onnx.part", "notes.txt"] {
+            std::fs::write(dir.join(f), b"").unwrap();
+        }
+        let listed = list_models(&dir);
+        std::fs::remove_dir_all(&dir).unwrap();
+        assert_eq!(listed, ["a.ONNX", "b.onnx"]);
+    }
+
+    /// Needs the runtime: `cargo test input_sizes -- --ignored` (silueta and isnet installed).
+    #[test]
+    #[ignore]
+    fn input_sizes() {
+        assert_eq!(input_size("silueta.onnx"), Ok(320));
+        assert_eq!(input_size("isnet-general-use.onnx"), Ok(1024));
     }
 
     /// Installs the runtime the way the menu does: `cargo test install_runtime -- --ignored`.
@@ -234,15 +499,16 @@ mod tests {
     }
 
     /// `LIGHTVIEW_AI=photo.jpg cargo test --release remove_background -- --ignored --nocapture`
-    /// (needs the runtime and model; `LIGHTVIEW_AI_MODEL=object` for the other one); writes `photo-cutout.png` to the temp folder.
+    /// (needs the runtime; `LIGHTVIEW_AI_MODEL=<file in the models folder>`, silueta by default); writes `photo-cutout.png` to the temp folder.
     #[test]
     #[ignore]
     fn remove_background() {
         let path = PathBuf::from(std::env::var("LIGHTVIEW_AI").unwrap());
         let img = image::open(&path).unwrap().into_rgba8();
         let t = std::time::Instant::now();
-        let model = if std::env::var("LIGHTVIEW_AI_MODEL").is_ok_and(|m| m == "object") { &OBJECT } else { &BACKGROUND };
-        let mask = model.mask(&img).unwrap();
+        let file = std::env::var("LIGHTVIEW_AI_MODEL").unwrap_or("silueta.onnx".into());
+        let pre = preset(&file, &HashMap::new()).unwrap_or_else(|| Preprocess::auto(input_size(&file).unwrap()));
+        let mask = mask(&file, &pre, &img).unwrap();
         eprintln!("mask in {:.0} ms, foreground {:?}", t.elapsed().as_secs_f64() * 1000.0, bbox(&mask));
         let out = std::env::temp_dir().join(format!("{}-cutout.png", path.file_stem().unwrap().to_string_lossy()));
         cutout(&img, &mask).save(&out).unwrap();

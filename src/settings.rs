@@ -1,3 +1,4 @@
+use crate::ai::Preprocess;
 use eframe::egui;
 use fast_image_resize::{FilterType, ResizeAlg};
 use serde::{Deserialize, Serialize};
@@ -40,7 +41,16 @@ pub enum SortOrder {
     DateModified,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
+/// Which model each AI tool uses, and per-file preprocessing the user set (Tools → AI Models…).
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct AiSettings {
+    pub background: Option<String>,
+    pub object: Option<String>,
+    pub overrides: HashMap<String, Preprocess>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Settings {
     pub gpu_scaling: bool,
@@ -48,11 +58,12 @@ pub struct Settings {
     pub background: [u8; 3],
     pub window_size: [f32; 2],
     pub sort: SortOrder,
+    pub ai: AiSettings,
 }
 
 impl Default for Settings {
     fn default() -> Self {
-        Settings { gpu_scaling: false, interpolation: Interpolation::Bilinear, background: [0, 0, 0], window_size: [1280.0, 720.0], sort: SortOrder::Name }
+        Settings { gpu_scaling: false, interpolation: Interpolation::Bilinear, background: [0, 0, 0], window_size: [1280.0, 720.0], sort: SortOrder::Name, ai: AiSettings::default() }
     }
 }
 
@@ -130,7 +141,9 @@ mod tests {
 
     #[test]
     fn storage_round_trip() {
-        let s = Settings { gpu_scaling: true, interpolation: Interpolation::Lanczos3, background: [1, 2, 3], window_size: [800.0, 600.0], sort: SortOrder::DateModified };
+        let mut ai = AiSettings { background: Some("mine.onnx".into()), ..AiSettings::default() };
+        ai.overrides.insert("mine.onnx".into(), Preprocess::auto(512));
+        let s = Settings { gpu_scaling: true, interpolation: Interpolation::Lanczos3, background: [1, 2, 3], window_size: [800.0, 600.0], sort: SortOrder::DateModified, ai };
         // eframe stores each value as a RON string inside a RON map.
         let kv = HashMap::from([(KEY.to_string(), ron::to_string(&s).unwrap()), ("recent".to_string(), "/a".to_string())]);
         assert_eq!(parse(&ron::to_string(&kv).unwrap()), s);
@@ -149,7 +162,7 @@ mod tests {
     fn gpu_falls_back_to_bilinear() {
         let s = Settings { gpu_scaling: true, interpolation: Interpolation::Lanczos3, ..Settings::default() };
         assert_eq!(s.interpolation(), Interpolation::Bilinear);
-        assert_eq!(Settings { gpu_scaling: false, ..s }.interpolation(), Interpolation::Lanczos3);
-        assert_eq!(Settings { interpolation: Interpolation::Nearest, ..s }.interpolation(), Interpolation::Nearest);
+        assert_eq!(Settings { gpu_scaling: false, ..s.clone() }.interpolation(), Interpolation::Lanczos3);
+        assert_eq!(Settings { interpolation: Interpolation::Nearest, ..s.clone() }.interpolation(), Interpolation::Nearest);
     }
 }

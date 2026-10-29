@@ -91,6 +91,13 @@ Numbering continues from v1.
 - Linux only for now (system `curl`, `sha256sum`, `tar`).
 - **Done when** the lean binary links no ONNX Runtime (`ldd`), the runtime installs through the app's own code, and background removal gives the same result as the built-in version.
 
+### 17. Choose and add AI models ✅ (2026-10-29)
+- Tools → AI Models… lists the `.onnx` files in `~/.local/share/lightview/models` and picks which one Remove Background and which one Extract Object use (saved in Settings). Without a choice: the catalog's preferred model for that tool, else any installed one.
+- Download from a catalog of rembg models, each pinned by SHA-256: Silueta, U²-Net small, U²-Net, U²-Net people, IS-Net, IS-Net anime, BiRefNet lite.
+- Add model file… copies your own `.onnx` in (never overwrites); Open models folder.
+- Each model's preprocessing (input size, mean, std, sigmoid) can be edited and is saved per file. Unknown models read their input size from the model and use the usual normalisation; Detect size re-reads it.
+- **Done when** every catalog model and a renamed (unknown) model run on a test photo, and the unknown one gives the same result as its catalog twin.
+
 ## Non-goals (v2)
 - JPEG 2000
 - Smart lasso

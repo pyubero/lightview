@@ -7,7 +7,7 @@ use crate::save;
 use crate::settings::{self, Interpolation, Settings};
 use crate::view::{self, Transform, View};
 use eframe::egui::{self, Color32, ColorImage, CursorIcon, Key, KeyboardShortcut, Modifiers, Pos2, Rect, Sense, TextureFilter, TextureHandle, TextureOptions, Vec2, ViewportCommand};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 use std::sync::{Arc, mpsc};
 use std::time::Instant;
@@ -63,8 +63,8 @@ enum Action {
     ImageFromSelection,
     /// Remove Background (false) or Extract Object (true).
     Cutout(bool),
-    DownloadModel(bool),
     DownloadRuntime,
+    AiModels,
 }
 
 #[derive(Clone, Copy, PartialEq)]
@@ -209,6 +209,9 @@ pub struct App {
     /// While the Adjust Color panel is open: the edits from before it opened.
     adjusting: Option<Doc>,
     pending: Option<Pending>,
+    show_ai_models: bool,
+    /// Model files being downloaded.
+    downloading: HashSet<String>,
     title: String,
     // --timings bookkeeping.
     window_reported: bool,
@@ -238,7 +241,7 @@ impl App {
             texture: None, tex_key: None, resized: None, generation: 0, anim_frame: 0, anim_due: None, anim_paused: false,
             doc: None, undo: Vec::new(), redo: Vec::new(), saved: None, saving: None, tool: Tool::Pan, drag_start: None, crop_rect: None, measure: None, measure_drag: 1,
             show_toolbar: false, style: None, selected: None, grab: Grab::None, editing_text: None, focus_text: false, change_base: None, last_restyle: None, selection: None, element_textures: HashMap::new(),
-            resize_dialog: None, adjusting: None, pending: None,
+            resize_dialog: None, adjusting: None, pending: None, show_ai_models: false, downloading: HashSet::new(),
             title: String::new(),
             window_reported: false, preview_reported: None, full_reported: false, nav_start: None, close_next: false, status: None,
         }
@@ -266,6 +269,20 @@ impl App {
     fn handle(&mut self, msg: Msg) {
         match msg {
             Msg::Status(text) => self.status = Some((text, Instant::now())),
+            Msg::Downloaded(file, result) => {
+                self.downloading.remove(&file);
+                self.status = Some((match result {
+                    Ok(()) => format!("Downloaded {file}"),
+                    Err(e) => format!("Couldn't download {file}: {e}"),
+                }, Instant::now()));
+            }
+            Msg::Detected(file, result) => match result {
+                Ok(size) => {
+                    let base = crate::ai::preset(&file, &self.settings.ai.overrides).unwrap_or(crate::ai::Preprocess::auto(size));
+                    self.settings.ai.overrides.insert(file, crate::ai::Preprocess { size, ..base });
+                }
+                Err(e) => self.status = Some((format!("Couldn't read {file}: {e}"), Instant::now())),
+            },
             Msg::Cutout(path, result) => match result {
                 Ok((img, object)) if self.current() == Some(&path) => {
                     let Some(doc) = self.doc() else { return };
@@ -654,11 +671,14 @@ impl App {
                     ui.separator();
                     ui.weak("AI Image Processing");
                     let runtime = crate::ai::runtime_installed();
-                    item(ui, "Remove Background", Action::Cutout(false), has_image && runtime && crate::ai::BACKGROUND.installed(), actions);
-                    item(ui, "Extract Object", Action::Cutout(true), has_image && runtime && crate::ai::OBJECT.installed(), actions);
-                    item(ui, "Download AI Runtime…", Action::DownloadRuntime, !runtime, actions);
-                    item(ui, "Download Background Removal Model…", Action::DownloadModel(false), !crate::ai::BACKGROUND.installed(), actions);
-                    item(ui, "Download Object Extraction Model…", Action::DownloadModel(true), !crate::ai::OBJECT.installed(), actions);
+                    let models = crate::ai::installed();
+                    let has = |choice: &Option<String>, role| crate::ai::choose(choice.as_ref(), role, &models).is_some();
+                    item(ui, "Remove Background", Action::Cutout(false), has_image && runtime && has(&self.settings.ai.background, crate::ai::Role::Background), actions);
+                    item(ui, "Extract Object", Action::Cutout(true), has_image && runtime && has(&self.settings.ai.object, crate::ai::Role::Object), actions);
+                    item(ui, "AI Models…", Action::AiModels, true, actions);
+                    if !runtime {
+                        item(ui, "Download AI Runtime…", Action::DownloadRuntime, true, actions);
+                    }
                 }
                 ui.separator();
                 let measuring = self.tool == Tool::Measure;
@@ -990,13 +1010,19 @@ impl App {
     /// Runs background removal (or object extraction) on the edited image, on another thread.
     fn cutout(&mut self, extract: bool) {
         let Some((l, doc, path)) = self.current().and_then(|p| Some((self.cache.get(p)?.clone(), self.doc()?, p.clone()))) else { return };
-        let model = if extract { &crate::ai::OBJECT } else { &crate::ai::BACKGROUND };
-        self.status = Some((format!("Running {}…", model.name), Instant::now()));
+        let (choice, role) = if extract { (&self.settings.ai.object, crate::ai::Role::Object) } else { (&self.settings.ai.background, crate::ai::Role::Background) };
+        let Some(file) = crate::ai::choose(choice.as_ref(), role, &crate::ai::installed()) else { return };
+        let preset = crate::ai::preset(&file, &self.settings.ai.overrides);
+        self.status = Some((format!("Running {file}…"), Instant::now()));
         let notify = self.notify.clone();
         std::thread::spawn(move || {
             let result = edit::render(&l.frames[0], &doc).and_then(|img| {
                 let img = img.into_rgba8();
-                let mask = model.mask(&img)?;
+                let pre = match preset {
+                    Some(p) => p,
+                    None => crate::ai::Preprocess::auto(crate::ai::input_size(&file)?),
+                };
+                let mask = crate::ai::mask(&file, &pre, &img)?;
                 let object = if extract { Some(crate::ai::bbox(&mask).ok_or("no object found")?) } else { None };
                 Ok((crate::ai::cutout(&img, &mask), object))
             });
@@ -1027,6 +1053,37 @@ impl App {
             if choice == Some(true) {
                 self.edit(|d| d.adjust = adjust);
             }
+        }
+    }
+
+    fn ai_models_dialog(&mut self, ctx: &egui::Context) {
+        if !self.show_ai_models {
+            return;
+        }
+        let (installed, runtime) = (crate::ai::installed(), crate::ai::runtime_installed());
+        let modal = egui::Modal::new(egui::Id::unique("ai-models")).show(ctx, |ui| crate::ai::models_ui(ui, &mut self.settings.ai, &installed, &self.downloading, runtime));
+        let close = modal.should_close();
+        let out = modal.inner;
+        if out.close || close {
+            self.show_ai_models = false;
+        }
+        let notify = self.notify.clone();
+        if let Some(i) = out.download {
+            let known = &crate::ai::CATALOG[i];
+            self.downloading.insert(known.file.to_string());
+            std::thread::spawn(move || notify.send(Msg::Downloaded(known.file.to_string(), crate::ai::download(known))));
+        } else if let Some(file) = out.detect {
+            // Opening a big model takes a moment, so not on the UI thread.
+            std::thread::spawn(move || notify.send(Msg::Detected(file.clone(), crate::ai::input_size(&file))));
+        } else if out.add {
+            std::thread::spawn(move || {
+                if let Some(src) = rfd::FileDialog::new().add_filter("ONNX model", &["onnx"]).pick_file() {
+                    notify.send(Msg::Status(match crate::ai::add_model(&src) {
+                        Ok(name) => format!("Added {name}"),
+                        Err(e) => format!("Couldn't add the model: {e}"),
+                    }));
+                }
+            });
         }
     }
 
@@ -1214,17 +1271,7 @@ impl eframe::App for App {
                         }));
                     });
                 }
-                Action::DownloadModel(object) => {
-                    let model = if *object { &crate::ai::OBJECT } else { &crate::ai::BACKGROUND };
-                    self.status = Some((format!("Downloading the {} model…", model.name), Instant::now()));
-                    let notify = self.notify.clone();
-                    std::thread::spawn(move || {
-                        notify.send(Msg::Status(match model.download() {
-                            Ok(()) => format!("Downloaded the {} model", model.name),
-                            Err(e) => format!("Couldn't download the {} model: {e}", model.name),
-                        }));
-                    });
-                }
+                Action::AiModels => self.show_ai_models = true,
                 Action::ImageFromSelection => self.image_from_selection(),
                 Action::RotateLeft => self.edit(Doc::rotate_left),
                 Action::RotateRight => self.edit(Doc::rotate_right),
@@ -1532,6 +1579,7 @@ impl eframe::App for App {
 
         self.settings_dialog(&ctx);
         self.resize_dialog(&ctx);
+        self.ai_models_dialog(&ctx);
         self.adjust_panel(&ctx);
         self.discard_dialog(&ctx);
 
