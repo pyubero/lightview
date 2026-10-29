@@ -61,7 +61,7 @@ enum Action {
     Paste,
     DeleteSelection,
     ImageFromSelection,
-    /// Remove Background (false) or Extract Object (true).
+    /// Remove Background, and crop to the subject when true.
     Cutout(bool),
     DownloadRuntime,
     AiModels,
@@ -672,9 +672,9 @@ impl App {
                     ui.weak("AI Image Processing");
                     let runtime = crate::ai::runtime_installed();
                     let models = crate::ai::installed();
-                    let has = |choice: &Option<String>, role| crate::ai::choose(choice.as_ref(), role, &models).is_some();
-                    item(ui, "Remove Background", Action::Cutout(false), has_image && runtime && has(&self.settings.ai.background, crate::ai::Role::Background), actions);
-                    item(ui, "Extract Object", Action::Cutout(true), has_image && runtime && has(&self.settings.ai.object, crate::ai::Role::Object), actions);
+                    let ready = has_image && runtime && crate::ai::choose(self.settings.ai.model.as_ref(), &models).is_some();
+                    item(ui, "Remove Background", Action::Cutout(false), ready, actions);
+                    item(ui, "Remove Background and Crop", Action::Cutout(true), ready, actions);
                     item(ui, "AI Models…", Action::AiModels, true, actions);
                     if !runtime {
                         item(ui, "Download AI Runtime…", Action::DownloadRuntime, true, actions);
@@ -1007,11 +1007,10 @@ impl App {
         self.selected = self.doc.as_ref().map(|d| d.elements.len() - 1);
     }
 
-    /// Runs background removal (or object extraction) on the edited image, on another thread.
-    fn cutout(&mut self, extract: bool) {
+    /// Runs background removal on the edited image on another thread, cropping to the subject when `crop`.
+    fn cutout(&mut self, crop: bool) {
         let Some((l, doc, path)) = self.current().and_then(|p| Some((self.cache.get(p)?.clone(), self.doc()?, p.clone()))) else { return };
-        let (choice, role) = if extract { (&self.settings.ai.object, crate::ai::Role::Object) } else { (&self.settings.ai.background, crate::ai::Role::Background) };
-        let Some(file) = crate::ai::choose(choice.as_ref(), role, &crate::ai::installed()) else { return };
+        let Some(file) = crate::ai::choose(self.settings.ai.model.as_ref(), &crate::ai::installed()) else { return };
         let preset = crate::ai::preset(&file, &self.settings.ai.overrides);
         self.status = Some((format!("Running {file}…"), Instant::now()));
         let notify = self.notify.clone();
@@ -1023,7 +1022,7 @@ impl App {
                     None => crate::ai::Preprocess::auto(crate::ai::input_size(&file)?),
                 };
                 let mask = crate::ai::mask(&file, &pre, &img)?;
-                let object = if extract { Some(crate::ai::bbox(&mask).ok_or("no object found")?) } else { None };
+                let object = if crop { Some(crate::ai::bbox(&mask).ok_or("no subject found")?) } else { None };
                 Ok((crate::ai::cutout(&img, &mask), object))
             });
             notify.send(Msg::Cutout(path, result));
@@ -1260,7 +1259,7 @@ impl eframe::App for App {
                     Err(e) => self.status = Some((format!("Nothing to paste: {e}"), Instant::now())),
                 },
                 Action::DeleteSelection => self.delete_selection(),
-                Action::Cutout(extract) => self.cutout(*extract),
+                Action::Cutout(crop) => self.cutout(*crop),
                 Action::DownloadRuntime => {
                     self.status = Some(("Downloading the AI runtime…".into(), Instant::now()));
                     let notify = self.notify.clone();

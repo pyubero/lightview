@@ -41,12 +41,11 @@ pub enum SortOrder {
     DateModified,
 }
 
-/// Which model each AI tool uses, and per-file preprocessing the user set (Tools → AI Models…).
+/// The model background removal uses, and per-file preprocessing the user set (Tools → AI Models…).
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct AiSettings {
-    pub background: Option<String>,
-    pub object: Option<String>,
+    pub model: Option<String>,
     pub overrides: HashMap<String, Preprocess>,
 }
 
@@ -141,7 +140,7 @@ mod tests {
 
     #[test]
     fn storage_round_trip() {
-        let mut ai = AiSettings { background: Some("mine.onnx".into()), ..AiSettings::default() };
+        let mut ai = AiSettings { model: Some("mine.onnx".into()), ..AiSettings::default() };
         ai.overrides.insert("mine.onnx".into(), Preprocess::auto(512));
         let s = Settings { gpu_scaling: true, interpolation: Interpolation::Lanczos3, background: [1, 2, 3], window_size: [800.0, 600.0], sort: SortOrder::DateModified, ai };
         // eframe stores each value as a RON string inside a RON map.

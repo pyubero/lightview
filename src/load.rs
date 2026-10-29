@@ -38,8 +38,8 @@ pub enum Msg {
     Error(PathBuf, String),
     /// A Save As finished (successfully or not) writing this path.
     Saved(PathBuf, Result<(), String>),
-    /// Background removal finished for this image: the cut-out, and the object's bounds
-    /// when extracting it.
+    /// Background removal finished for this image: the cut-out, and the subject's bounds
+    /// when cropping to it.
     Cutout(PathBuf, Result<(image::RgbaImage, Option<egui::Rect>), String>),
     Status(String),
     /// A model download finished.

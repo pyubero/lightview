@@ -1,4 +1,4 @@
-//! AI background removal and object extraction. ONNX Runtime and the models aren't
+//! AI background removal (optionally cropped to the subject). ONNX Runtime and the models aren't
 //! shipped: Tools → Download AI Runtime… / Download … Model… install them on request.
 use crate::settings::AiSettings;
 use eframe::egui::{self, Pos2, Rect};
@@ -102,13 +102,6 @@ const U2NET: Preprocess = Preprocess { size: 320, mean: IMAGENET_MEAN, std: IMAG
 const ISNET: Preprocess = Preprocess { size: 1024, mean: IMAGENET_MEAN, std: [1.0; 3], sigmoid: false };
 const BIREFNET: Preprocess = Preprocess { size: 1024, mean: IMAGENET_MEAN, std: IMAGENET_STD, sigmoid: true };
 
-/// Which tool a catalog model is meant for (it's only the default; any model works for either).
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub enum Role {
-    Background,
-    Object,
-}
-
 /// A model lightview can download (rembg's releases), pinned by checksum.
 pub struct Known {
     pub file: &'static str,
@@ -116,20 +109,19 @@ pub struct Known {
     pub mb: u32,
     sha256: &'static str,
     pre: Preprocess,
-    role: Role,
 }
 
 const RELEASES: &str = "https://github.com/danielgatis/rembg/releases/download/v0.0.0";
 
-/// In order of preference for each role.
+/// In order of preference: the first one installed is the default.
 pub const CATALOG: [Known; 7] = [
-    Known { file: "silueta.onnx", label: "Silueta — small and fast", mb: 44, sha256: "75da6c8d2f8096ec743d071951be73b4a8bc7b3e51d9a6625d63644f90ffeedb", pre: U2NET, role: Role::Background },
-    Known { file: "u2netp.onnx", label: "U²-Net small — fastest", mb: 5, sha256: "309c8469258dda742793dce0ebea8e6dd393174f89934733ecc8b14c76f4ddd8", pre: U2NET, role: Role::Background },
-    Known { file: "u2net.onnx", label: "U²-Net — general", mb: 176, sha256: "8d10d2f3bb75ae3b6d527c77944fc5e7dcd94b29809d47a739a7a728a912b491", pre: U2NET, role: Role::Background },
-    Known { file: "u2net_human_seg.onnx", label: "U²-Net people — portraits", mb: 176, sha256: "01eb6a29a5c4d8edb30b56adad9bb3a2a0535338e480724a213e0acfd2d1c73c", pre: U2NET, role: Role::Background },
-    Known { file: "isnet-general-use.onnx", label: "IS-Net — general, clean edges", mb: 179, sha256: "60920e99c45464f2ba57bee2ad08c919a52bbf852739e96947fbb4358c0d964a", pre: ISNET, role: Role::Object },
-    Known { file: "isnet-anime.onnx", label: "IS-Net anime — illustrations", mb: 176, sha256: "f15622d853e8260172812b657053460e20806f04b9e05147d49af7bed31a6e99", pre: ISNET, role: Role::Object },
-    Known { file: "BiRefNet-general-bb_swin_v1_tiny-epoch_232.onnx", label: "BiRefNet lite — best quality, slow", mb: 224, sha256: "5600024376f572a557870a5eb0afb1e5961636bef4e1e22132025467d0f03333", pre: BIREFNET, role: Role::Object },
+    Known { file: "silueta.onnx", label: "Silueta — small and fast", mb: 44, sha256: "75da6c8d2f8096ec743d071951be73b4a8bc7b3e51d9a6625d63644f90ffeedb", pre: U2NET },
+    Known { file: "u2netp.onnx", label: "U²-Net small — fastest", mb: 5, sha256: "309c8469258dda742793dce0ebea8e6dd393174f89934733ecc8b14c76f4ddd8", pre: U2NET },
+    Known { file: "u2net.onnx", label: "U²-Net — general", mb: 176, sha256: "8d10d2f3bb75ae3b6d527c77944fc5e7dcd94b29809d47a739a7a728a912b491", pre: U2NET },
+    Known { file: "u2net_human_seg.onnx", label: "U²-Net people — portraits", mb: 176, sha256: "01eb6a29a5c4d8edb30b56adad9bb3a2a0535338e480724a213e0acfd2d1c73c", pre: U2NET },
+    Known { file: "isnet-general-use.onnx", label: "IS-Net — general, clean edges", mb: 179, sha256: "60920e99c45464f2ba57bee2ad08c919a52bbf852739e96947fbb4358c0d964a", pre: ISNET },
+    Known { file: "isnet-anime.onnx", label: "IS-Net anime — illustrations", mb: 176, sha256: "f15622d853e8260172812b657053460e20806f04b9e05147d49af7bed31a6e99", pre: ISNET },
+    Known { file: "BiRefNet-general-bb_swin_v1_tiny-epoch_232.onnx", label: "BiRefNet lite — best quality, slow", mb: 224, sha256: "5600024376f572a557870a5eb0afb1e5961636bef4e1e22132025467d0f03333", pre: BIREFNET },
 ];
 
 fn models_dir() -> Result<PathBuf, String> {
@@ -155,13 +147,13 @@ fn list_models(dir: &Path) -> Vec<String> {
     files
 }
 
-/// The model a tool uses: the user's choice if it's installed, else the first installed
-/// catalog model for that role, else the first installed model.
-pub fn choose(choice: Option<&String>, role: Role, installed: &[String]) -> Option<String> {
+/// The model background removal uses: the user's choice if it's installed, else the first
+/// installed catalog model, else the first installed model.
+pub fn choose(choice: Option<&String>, installed: &[String]) -> Option<String> {
     choice
         .filter(|f| installed.contains(f))
         .cloned()
-        .or_else(|| CATALOG.iter().find(|k| k.role == role && installed.iter().any(|f| f == k.file)).map(|k| k.file.to_string()))
+        .or_else(|| CATALOG.iter().find(|k| installed.iter().any(|f| f == k.file)).map(|k| k.file.to_string()))
         .or_else(|| installed.first().cloned())
 }
 
@@ -272,29 +264,25 @@ pub fn models_ui(ui: &mut egui::Ui, s: &mut AiSettings, installed: &[String], bu
     if installed.is_empty() {
         ui.weak("No models yet. Download one below, or add your own .onnx file.");
     } else {
-        let (bg, obj) = (choose(s.background.as_ref(), Role::Background, installed), choose(s.object.as_ref(), Role::Object, installed));
-        egui::Grid::new("models-grid").num_columns(4).spacing([16.0, 6.0]).striped(true).show(ui, |ui| {
-            ui.weak("Model");
-            ui.weak("Size");
-            ui.weak("Remove Background");
-            ui.weak("Extract Object");
-            ui.end_row();
-            for f in installed {
-                let label = ui.label(f);
-                if let Some(k) = known(f) {
-                    label.on_hover_text(k.label);
-                }
-                let mb = models_dir().ok().and_then(|d| std::fs::metadata(d.join(f)).ok()).map_or(0, |m| m.len().div_ceil(1_000_000));
-                ui.label(format!("{mb} MB"));
-                if ui.radio(bg.as_ref() == Some(f), "").clicked() {
-                    s.background = Some(f.clone());
-                }
-                if ui.radio(obj.as_ref() == Some(f), "").clicked() {
-                    s.object = Some(f.clone());
-                }
-                ui.end_row();
+        let name = |f: &str| {
+            let mb = models_dir().ok().and_then(|d| std::fs::metadata(d.join(f)).ok()).map_or(0, |m| m.len().div_ceil(1_000_000));
+            match known(f) {
+                Some(k) => format!("{} ({mb} MB)", k.label),
+                None => format!("{f} ({mb} MB)"),
             }
+        };
+        let current = choose(s.model.as_ref(), installed);
+        ui.horizontal(|ui| {
+            ui.label("Model");
+            egui::ComboBox::from_id_salt("ai-model").selected_text(current.as_deref().map(name).unwrap_or_default()).show_ui(ui, |ui| {
+                for f in installed {
+                    if ui.selectable_label(current.as_ref() == Some(f), name(f)).on_hover_text(f).clicked() {
+                        s.model = Some(f.clone());
+                    }
+                }
+            });
         });
+        ui.weak("Used by Remove Background and Remove Background and Crop.");
         for f in installed {
             egui::CollapsingHeader::new(format!("Preprocessing: {f}")).id_salt(("pre", f)).show(ui, |ui| preprocess_ui(ui, s, f, runtime, &mut out));
         }
@@ -437,16 +425,16 @@ mod tests {
     #[test]
     fn choosing_models() {
         let installed = |names: &[&str]| names.iter().map(|n| n.to_string()).collect::<Vec<_>>();
-        let both = installed(&["isnet-general-use.onnx", "mine.onnx", "silueta.onnx", "u2netp.onnx"]);
-        // Defaults: the catalog's preferred model for each tool.
-        assert_eq!(choose(None, Role::Background, &both).as_deref(), Some("silueta.onnx"));
-        assert_eq!(choose(None, Role::Object, &both).as_deref(), Some("isnet-general-use.onnx"));
+        let all = installed(&["isnet-general-use.onnx", "mine.onnx", "silueta.onnx", "u2netp.onnx"]);
+        // Default: the catalog's preferred model.
+        assert_eq!(choose(None, &all).as_deref(), Some("silueta.onnx"));
+        assert_eq!(choose(None, &installed(&["isnet-general-use.onnx", "u2netp.onnx"])).as_deref(), Some("u2netp.onnx"));
         // The user's choice wins while it's installed.
-        assert_eq!(choose(Some(&"mine.onnx".into()), Role::Object, &both).as_deref(), Some("mine.onnx"));
-        assert_eq!(choose(Some(&"gone.onnx".into()), Role::Background, &both).as_deref(), Some("silueta.onnx"));
-        // No catalog model for the role: any installed model; nothing installed: none.
-        assert_eq!(choose(None, Role::Object, &installed(&["mine.onnx", "u2netp.onnx"])).as_deref(), Some("mine.onnx"));
-        assert_eq!(choose(None, Role::Background, &[]), None);
+        assert_eq!(choose(Some(&"mine.onnx".into()), &all).as_deref(), Some("mine.onnx"));
+        assert_eq!(choose(Some(&"gone.onnx".into()), &all).as_deref(), Some("silueta.onnx"));
+        // No catalog model: any installed model; nothing installed: none.
+        assert_eq!(choose(None, &installed(&["mine.onnx", "zzz.onnx"])).as_deref(), Some("mine.onnx"));
+        assert_eq!(choose(None, &[]), None);
     }
 
     #[test]
