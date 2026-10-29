@@ -30,14 +30,24 @@ enum Action {
     RotateRight,
     FlipHorizontal,
     FlipVertical,
+    PrevImage,
+    NextImage,
+    Play,
+    Pause,
+    NextFrame,
+    PrevFrame,
 }
 
 const fn ctrl(key: Key) -> KeyboardShortcut {
     KeyboardShortcut::new(Modifiers::COMMAND, key)
 }
 
+const fn key(key: Key) -> KeyboardShortcut {
+    KeyboardShortcut::new(Modifiers::NONE, key)
+}
+
 /// Keyboard shortcuts, also shown in the menus. Ctrl+Plus is an alias for Ctrl+=.
-const SHORTCUTS: [(KeyboardShortcut, Action); 12] = [
+const SHORTCUTS: [(KeyboardShortcut, Action); 14] = [
     (ctrl(Key::O), Action::Open),
     (KeyboardShortcut::new(Modifiers { shift: true, ..Modifiers::COMMAND }, Key::S), Action::SaveAs),
     (ctrl(Key::W), Action::Close),
@@ -47,7 +57,9 @@ const SHORTCUTS: [(KeyboardShortcut, Action); 12] = [
     (ctrl(Key::Minus), Action::ZoomOut),
     (ctrl(Key::Num0), Action::Fit),
     (ctrl(Key::Num1), Action::ActualSize),
-    (KeyboardShortcut::new(Modifiers::NONE, Key::F11), Action::Fullscreen),
+    (key(Key::F11), Action::Fullscreen),
+    (key(Key::ArrowLeft), Action::PrevImage),
+    (key(Key::ArrowRight), Action::NextImage),
     (ctrl(Key::L), Action::RotateLeft),
     (ctrl(Key::R), Action::RotateRight),
 ];
@@ -91,6 +103,7 @@ pub struct App {
     generation: u64,
     anim_frame: usize,
     anim_due: Option<Instant>,
+    anim_paused: bool,
     /// View-only rotate/flip of the current image; never written to the file.
     transform: Transform,
     title: String,
@@ -119,7 +132,7 @@ impl App {
             t0, timings, bench, rx, loader, notify, recent, settings, show_info: false, show_settings: false, exif_dialog: None,
             files: start.into_iter().collect(), index: 0,
             cache: HashMap::new(), preview: None, error: None, view: View::Fit,
-            texture: None, tex_key: None, generation: 0, anim_frame: 0, anim_due: None, transform: Transform::default(), title: String::new(),
+            texture: None, tex_key: None, generation: 0, anim_frame: 0, anim_due: None, anim_paused: false, transform: Transform::default(), title: String::new(),
             window_reported: false, preview_reported: None, full_reported: false, nav_start: None, close_next: false, status: None,
         }
     }
@@ -229,6 +242,7 @@ impl App {
         self.generation += 1;
         self.anim_frame = 0;
         self.anim_due = None;
+        self.anim_paused = false;
     }
 
     fn open_dialog(&self) {
@@ -299,9 +313,9 @@ impl App {
                         }
                     }
                 });
-                item(ui, "Save As…", Action::SaveAs, can_save, actions);
                 item(ui, "Close", Action::Close, true, actions);
-                item(ui, "Info", Action::Info, has_image, actions);
+                ui.separator();
+                item(ui, "Save As…", Action::SaveAs, can_save, actions);
             });
             ui.menu_button("Edit", |ui| {
                 item(ui, "Rotate Left", Action::RotateLeft, has_image, actions);
@@ -310,12 +324,27 @@ impl App {
                 item(ui, "Flip Vertically", Action::FlipVertical, has_image, actions);
             });
             ui.menu_button("View", |ui| {
+                item(ui, "Previous Image", Action::PrevImage, self.index > 0, actions);
+                item(ui, "Next Image", Action::NextImage, self.index + 1 < self.files.len(), actions);
+                ui.separator();
                 item(ui, "Zoom In", Action::ZoomIn, has_image, actions);
                 item(ui, "Zoom Out", Action::ZoomOut, has_image, actions);
-                item(ui, "Fit to Window", Action::Fit, has_image, actions);
                 item(ui, "Actual Size", Action::ActualSize, has_image, actions);
+                item(ui, "Fit to Window", Action::Fit, has_image, actions);
                 ui.separator();
-                item(ui, "Fullscreen", Action::Fullscreen, true, actions);
+                item(ui, "Enter Full Screen", Action::Fullscreen, true, actions);
+                ui.separator();
+                item(ui, "Show Image Information", Action::Info, has_image, actions);
+                ui.separator();
+                let animated = loaded.is_some_and(|l| l.frames.len() > 1);
+                ui.add_enabled_ui(animated, |ui| {
+                    ui.menu_button("Animation", |ui| {
+                        item(ui, "Play Animation", Action::Play, self.anim_paused, actions);
+                        item(ui, "Pause Animation", Action::Pause, !self.anim_paused, actions);
+                        item(ui, "Next Frame", Action::NextFrame, true, actions);
+                        item(ui, "Previous Frame", Action::PrevFrame, true, actions);
+                    });
+                });
             });
             ui.menu_button("Tools", |ui| {
                 let jpeg = self.current().and_then(|p| p.extension()).is_some_and(|e| e.eq_ignore_ascii_case("jpg") || e.eq_ignore_ascii_case("jpeg"));
@@ -438,10 +467,12 @@ impl eframe::App for App {
             self.handle(msg);
         }
 
-        let mut actions: Vec<Action> = ctx.input_mut(|i| SHORTCUTS.iter().filter(|(sc, _)| i.consume_shortcut(sc)).map(|(_, a)| a.clone()).collect());
-        let (left, right, esc, fullscreen) = ctx.input(|i| {
-            (i.key_pressed(Key::ArrowLeft), i.key_pressed(Key::ArrowRight), i.key_pressed(Key::Escape), i.viewport().fullscreen.unwrap_or(false))
+        // Plain keys (arrows, F11) belong to a text field while one has focus.
+        let typing = ctx.egui_wants_keyboard_input();
+        let mut actions: Vec<Action> = ctx.input_mut(|i| {
+            SHORTCUTS.iter().filter(|(sc, _)| !(typing && sc.modifiers.is_none()) && i.consume_shortcut(sc)).map(|(_, a)| a.clone()).collect()
         });
+        let (esc, fullscreen) = ctx.input(|i| (i.key_pressed(Key::Escape), i.viewport().fullscreen.unwrap_or(false)));
         if !fullscreen {
             egui::Panel::top("menu").show(ui, |ui| self.menu_bar(ui, &mut actions));
         }
@@ -468,14 +499,12 @@ impl eframe::App for App {
                     self.view = View::Fit;
                 }
                 Action::Fullscreen => ctx.send_viewport_cmd(ViewportCommand::Fullscreen(!fullscreen)),
-                _ => {} // zoom actions are applied below, once the image size is known
+                Action::PrevImage => self.navigate(-1),
+                Action::NextImage => self.navigate(1),
+                Action::Play => (self.anim_paused, self.anim_due) = (false, None),
+                Action::Pause => self.anim_paused = true,
+                _ => {} // zoom and frame-step actions are applied below, once the image is known
             }
-        }
-        if left {
-            self.navigate(-1);
-        }
-        if right {
-            self.navigate(1);
         }
         if esc && fullscreen {
             ctx.send_viewport_cmd(ViewportCommand::Fullscreen(false));
@@ -509,7 +538,16 @@ impl eframe::App for App {
 
             // Animation.
             let frames = &l.frames;
-            if frames.len() > 1 {
+            for action in &actions {
+                let step = match action {
+                    Action::NextFrame => 1,
+                    Action::PrevFrame => frames.len() - 1,
+                    _ => continue,
+                };
+                self.anim_frame = (self.anim_frame + step) % frames.len();
+                self.anim_paused = true;
+            }
+            if frames.len() > 1 && !self.anim_paused {
                 let now = Instant::now();
                 let due = *self.anim_due.get_or_insert(now + frames[self.anim_frame].delay);
                 if now >= due {
