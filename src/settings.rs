@@ -50,8 +50,8 @@ pub struct AiSettings {
     pub denoise: Option<String>,
     pub enhance: Option<String>,
     pub overrides: HashMap<String, Preprocess>,
-    /// The "may invent detail" notice has been shown for Enhance Image.
-    pub enhance_notice_seen: bool,
+    /// The Enhance models whose notice has been shown (once each).
+    pub notices_seen: Vec<String>,
     /// Run models on the GPU when the GPU support is installed.
     #[serde(default = "yes")]
     pub use_gpu: bool,
@@ -63,7 +63,7 @@ fn yes() -> bool {
 
 impl Default for AiSettings {
     fn default() -> Self {
-        AiSettings { model: None, denoise: None, enhance: None, overrides: HashMap::new(), enhance_notice_seen: false, use_gpu: true }
+        AiSettings { model: None, denoise: None, enhance: None, overrides: HashMap::new(), notices_seen: Vec::new(), use_gpu: true }
     }
 }
 
@@ -189,7 +189,7 @@ mod tests {
         let kv = HashMap::from([(KEY.to_string(), r#"(ai: (model: Some("silueta.onnx")))"#.to_string())]);
         let s = parse(&ron::to_string(&kv).unwrap());
         assert_eq!(s.ai.choice(Task::Background).map(String::as_str), Some("silueta.onnx"));
-        assert_eq!((s.ai.denoise, s.ai.enhance, s.ai.enhance_notice_seen), (None, None, false));
+        assert_eq!((s.ai.denoise, s.ai.enhance, s.ai.notices_seen.len()), (None, None, 0));
     }
 
     #[test]

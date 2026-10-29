@@ -250,8 +250,8 @@ pub struct App {
     license_prompt: Option<(Download, usize)>,
     restoring: Option<Restoring>,
     compare: Option<Compare>,
-    /// Enhance Image waiting for the user to read the "may invent detail" notice.
-    enhance_notice: bool,
+    /// Enhance Image waiting for the user to read its model's notice: the model file.
+    enhance_notice: Option<String>,
     /// The part of the image on screen (output px), for the Denoise / Enhance preview.
     visible: Option<Rect>,
     /// Model files being downloaded.
@@ -286,7 +286,7 @@ impl App {
             texture: None, tex_key: None, resized: None, generation: 0, anim_frame: 0, anim_due: None, anim_paused: false,
             doc: None, undo: Vec::new(), redo: Vec::new(), saved: None, saving: None, tool: Tool::Pan, drag_start: None, crop_rect: None, measure: None, measure_drag: 1,
             show_toolbar, style: None, selected: None, grab: Grab::None, editing_text: None, focus_text: false, change_base: None, last_restyle: None, selection: None, element_textures: HashMap::new(),
-            resize_dialog: None, adjusting: None, pending: None, show_ai_models: false, license_prompt: None, restoring: None, compare: None, enhance_notice: false, visible: None, downloading: HashSet::new(),
+            resize_dialog: None, adjusting: None, pending: None, show_ai_models: false, license_prompt: None, restoring: None, compare: None, enhance_notice: None, visible: None, downloading: HashSet::new(),
             title: String::new(),
             window_reported: false, preview_reported: None, full_reported: false, nav_start: None, close_next: false, status: None,
         }
@@ -1219,25 +1219,30 @@ impl App {
     }
 
     /// Shown before the first Enhance Image.
+    /// The Enhance model about to be used, if its notice hasn't been shown yet.
+    fn unseen_notice(&self) -> Option<String> {
+        let task = crate::ai::Task::Enhance;
+        crate::ai::choose(self.settings.ai.choice(task), task, &crate::ai::installed()).filter(|f| !self.settings.ai.notices_seen.contains(f))
+    }
+
+    /// Shown before an Enhance model is first used.
     fn enhance_notice_dialog(&mut self, ctx: &egui::Context) {
-        if !self.enhance_notice {
-            return;
-        }
+        let Some(file) = self.enhance_notice.clone() else { return };
         let modal = egui::Modal::new(egui::Id::unique("enhance-notice")).show(ctx, |ui| {
             ui.heading("Enhance Image");
-            ui.label("Enhance Image uses generative AI. To make the image look better it may invent or alter fine details, such as textures, text or faces, that weren't in the original.");
-            ui.label("It also makes the image 4× bigger (16× the pixels), which takes a while for a big photo.");
-            ui.label("For a faithful clean-up, use Denoise instead.");
+            for line in crate::ai::enhance_notice(&file) {
+                ui.label(line);
+            }
             ui.add_space(6.0);
             ui.horizontal(|ui| (ui.button("Continue").clicked(), ui.button("Cancel").clicked())).inner
         });
         let (go, cancel) = modal.inner;
         if go {
-            self.settings.ai.enhance_notice_seen = true;
-            self.enhance_notice = false;
+            self.settings.ai.notices_seen.push(file);
+            self.enhance_notice = None;
             self.preview_restore(crate::ai::Task::Enhance);
         } else if cancel || modal.should_close() {
-            self.enhance_notice = false;
+            self.enhance_notice = None;
         }
     }
 
@@ -1517,7 +1522,7 @@ impl eframe::App for App {
                 },
                 Action::DeleteSelection => self.delete_selection(),
                 Action::Cutout(crop) => self.cutout(*crop),
-                Action::Restore(task) if *task == crate::ai::Task::Enhance && !self.settings.ai.enhance_notice_seen => self.enhance_notice = true,
+                Action::Restore(task) if *task == crate::ai::Task::Enhance && let Some(file) = self.unseen_notice() => self.enhance_notice = Some(file),
                 Action::Restore(task) => self.preview_restore(*task),
                 Action::DownloadRuntime => self.license_prompt = Some((Download::Runtime, 0)),
                 Action::AiModels => self.show_ai_models = true,

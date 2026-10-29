@@ -290,6 +290,11 @@ pub struct Known {
     pub converted_by: Option<&'static str>,
     /// How many times bigger the output is (an upscaler), else 1.
     pub scale: u32,
+    /// What the notice before its first use says (Enhance models), when not the generative warning.
+    pub notice: Option<&'static str>,
+    /// The largest tile it runs on (image-to-image models). Bigger tiles give models that look at
+    /// the whole picture (DarkIR) fewer seams; upscalers need smaller ones to fit a 4 GB GPU.
+    pub max_tile: u32,
     /// Shown, and accepted by the user, before the download starts.
     pub licenses: &'static [License],
 }
@@ -325,19 +330,19 @@ const SCUNET_LICENSES: &[License] = &[SCUNET_LICENSE, HELIOSOPH_SCUNET_LICENSE];
 
 /// In order of preference within each task: the first one installed is that task's default.
 pub const CATALOG: [Known; 13] = [
-    Known { file: "silueta.onnx", label: "Silueta — small and fast", task: Task::Background, mb: 44, sha256: "75da6c8d2f8096ec743d071951be73b4a8bc7b3e51d9a6625d63644f90ffeedb", base: RELEASES, data: None, pre: Some(U2NET), converted_by: None, scale: 1, licenses: &[U2NET_LICENSE, REMBG_LICENSE] },
-    Known { file: "u2netp.onnx", label: "U²-Net small — fastest", task: Task::Background, mb: 5, sha256: "309c8469258dda742793dce0ebea8e6dd393174f89934733ecc8b14c76f4ddd8", base: RELEASES, data: None, pre: Some(U2NET), converted_by: None, scale: 1, licenses: &[U2NET_LICENSE] },
-    Known { file: "u2net.onnx", label: "U²-Net — general", task: Task::Background, mb: 176, sha256: "8d10d2f3bb75ae3b6d527c77944fc5e7dcd94b29809d47a739a7a728a912b491", base: RELEASES, data: None, pre: Some(U2NET), converted_by: None, scale: 1, licenses: &[U2NET_LICENSE] },
-    Known { file: "u2net_human_seg.onnx", label: "U²-Net people — portraits", task: Task::Background, mb: 176, sha256: "01eb6a29a5c4d8edb30b56adad9bb3a2a0535338e480724a213e0acfd2d1c73c", base: RELEASES, data: None, pre: Some(U2NET), converted_by: None, scale: 1, licenses: &[U2NET_LICENSE] },
-    Known { file: "isnet-general-use.onnx", label: "IS-Net — general, clean edges", task: Task::Background, mb: 179, sha256: "60920e99c45464f2ba57bee2ad08c919a52bbf852739e96947fbb4358c0d964a", base: RELEASES, data: None, pre: Some(ISNET), converted_by: None, scale: 1, licenses: &[DIS_LICENSE] },
-    Known { file: "isnet-anime.onnx", label: "IS-Net anime — illustrations", task: Task::Background, mb: 176, sha256: "f15622d853e8260172812b657053460e20806f04b9e05147d49af7bed31a6e99", base: RELEASES, data: None, pre: Some(ISNET), converted_by: None, scale: 1, licenses: &[ANIME_LICENSE] },
-    Known { file: "BiRefNet-general-bb_swin_v1_tiny-epoch_232.onnx", label: "BiRefNet lite — best quality, slow", task: Task::Background, mb: 224, sha256: "5600024376f572a557870a5eb0afb1e5961636bef4e1e22132025467d0f03333", base: RELEASES, data: None, pre: Some(BIREFNET), converted_by: None, scale: 1, licenses: &[BIREFNET_LICENSE] },
-    Known { file: "scunet_color_real_psnr.onnx", label: "SCUNet — noise and JPEG artifacts (recommended)", task: Task::Denoise, mb: 77, sha256: "231be201ab413dbc999d7951caa9844846b93a12a40a41e037d6b5888ed4e88c", base: SCUNET, data: Some(("scunet_color_real_psnr.onnx.data", "98825ea1210b641c71e5f052f582c70c49fd44b35387ebe2c034268c17df3feb")), pre: None, converted_by: HELIOSOPH, scale: 1, licenses: SCUNET_LICENSES },
-    Known { file: "scunet_color_15.onnx", label: "SCUNet σ15 — light noise", task: Task::Denoise, mb: 77, sha256: "228dfb72f8b5e23d35c0a92048b46ada31676b34e90a1ced6d221377861ffd6b", base: SCUNET, data: Some(("scunet_color_15.onnx.data", "4f2cdeeade2744b8fefdae9d572c8c71d84bc153e4863579c5f8fe680a3b1c74")), pre: None, converted_by: HELIOSOPH, scale: 1, licenses: SCUNET_LICENSES },
-    Known { file: "scunet_color_25.onnx", label: "SCUNet σ25 — moderate noise", task: Task::Denoise, mb: 77, sha256: "76170f1fcb84d3b3d38c4e7133a658bbbb70504e3dc5e4e4d1f7b0c395c093be", base: SCUNET, data: Some(("scunet_color_25.onnx.data", "f46aa0f533e5bb8b2485a6531a205e270f4a7be2447880a12d97f5f00b1e70c9")), pre: None, converted_by: HELIOSOPH, scale: 1, licenses: SCUNET_LICENSES },
-    Known { file: "scunet_color_50.onnx", label: "SCUNet σ50 — heavy noise", task: Task::Denoise, mb: 77, sha256: "691b995af0700809ddf882265de4a68373b2d2af9d4a89daca662b828686229d", base: SCUNET, data: Some(("scunet_color_50.onnx.data", "a12e0931304ea43d3367d5f5848099e46fdafe07fd2126ed207ceca02989d446")), pre: None, converted_by: HELIOSOPH, scale: 1, licenses: SCUNET_LICENSES },
-    Known { file: "swinir_denoising_color_25.onnx", label: "SwinIR σ25 — moderate noise, very slow", task: Task::Denoise, mb: 55, sha256: "5fb427215c6a893b4c4aa27b6ab0aad66742fb9cb7ab24f65eff27b09cc2ea74", base: SWINIR, data: None, pre: None, converted_by: HELIOSOPH, scale: 1, licenses: &[SWINIR_LICENSE, HELIOSOPH_SWINIR_LICENSE] },
-    Known { file: "BSRGANx4_fp16.onnx", label: "BSRGAN 4× — upscales and sharpens, may invent detail", task: Task::Enhance, mb: 33, sha256: "9682732b50a4ab4d78a3c84220702b4063e11cccb2bf50ca27ea2b572dedd173", base: BSRGAN, data: None, pre: None, converted_by: Some("ONNX export (half precision) by FuryTMP on Hugging Face; its origin isn't verified."), scale: 4, licenses: &[BSRGAN_LICENSE] },
+    Known { file: "silueta.onnx", label: "Silueta — small and fast", task: Task::Background, mb: 44, sha256: "75da6c8d2f8096ec743d071951be73b4a8bc7b3e51d9a6625d63644f90ffeedb", base: RELEASES, data: None, pre: Some(U2NET), converted_by: None, scale: 1, max_tile: 512, notice: None, licenses: &[U2NET_LICENSE, REMBG_LICENSE] },
+    Known { file: "u2netp.onnx", label: "U²-Net small — fastest", task: Task::Background, mb: 5, sha256: "309c8469258dda742793dce0ebea8e6dd393174f89934733ecc8b14c76f4ddd8", base: RELEASES, data: None, pre: Some(U2NET), converted_by: None, scale: 1, max_tile: 512, notice: None, licenses: &[U2NET_LICENSE] },
+    Known { file: "u2net.onnx", label: "U²-Net — general", task: Task::Background, mb: 176, sha256: "8d10d2f3bb75ae3b6d527c77944fc5e7dcd94b29809d47a739a7a728a912b491", base: RELEASES, data: None, pre: Some(U2NET), converted_by: None, scale: 1, max_tile: 512, notice: None, licenses: &[U2NET_LICENSE] },
+    Known { file: "u2net_human_seg.onnx", label: "U²-Net people — portraits", task: Task::Background, mb: 176, sha256: "01eb6a29a5c4d8edb30b56adad9bb3a2a0535338e480724a213e0acfd2d1c73c", base: RELEASES, data: None, pre: Some(U2NET), converted_by: None, scale: 1, max_tile: 512, notice: None, licenses: &[U2NET_LICENSE] },
+    Known { file: "isnet-general-use.onnx", label: "IS-Net — general, clean edges", task: Task::Background, mb: 179, sha256: "60920e99c45464f2ba57bee2ad08c919a52bbf852739e96947fbb4358c0d964a", base: RELEASES, data: None, pre: Some(ISNET), converted_by: None, scale: 1, max_tile: 512, notice: None, licenses: &[DIS_LICENSE] },
+    Known { file: "isnet-anime.onnx", label: "IS-Net anime — illustrations", task: Task::Background, mb: 176, sha256: "f15622d853e8260172812b657053460e20806f04b9e05147d49af7bed31a6e99", base: RELEASES, data: None, pre: Some(ISNET), converted_by: None, scale: 1, max_tile: 512, notice: None, licenses: &[ANIME_LICENSE] },
+    Known { file: "BiRefNet-general-bb_swin_v1_tiny-epoch_232.onnx", label: "BiRefNet lite — best quality, slow", task: Task::Background, mb: 224, sha256: "5600024376f572a557870a5eb0afb1e5961636bef4e1e22132025467d0f03333", base: RELEASES, data: None, pre: Some(BIREFNET), converted_by: None, scale: 1, max_tile: 512, notice: None, licenses: &[BIREFNET_LICENSE] },
+    Known { file: "scunet_color_real_psnr.onnx", label: "SCUNet — noise and JPEG artifacts (recommended)", task: Task::Denoise, mb: 77, sha256: "231be201ab413dbc999d7951caa9844846b93a12a40a41e037d6b5888ed4e88c", base: SCUNET, data: Some(("scunet_color_real_psnr.onnx.data", "98825ea1210b641c71e5f052f582c70c49fd44b35387ebe2c034268c17df3feb")), pre: None, converted_by: HELIOSOPH, scale: 1, max_tile: 512, notice: None, licenses: SCUNET_LICENSES },
+    Known { file: "scunet_color_15.onnx", label: "SCUNet σ15 — light noise", task: Task::Denoise, mb: 77, sha256: "228dfb72f8b5e23d35c0a92048b46ada31676b34e90a1ced6d221377861ffd6b", base: SCUNET, data: Some(("scunet_color_15.onnx.data", "4f2cdeeade2744b8fefdae9d572c8c71d84bc153e4863579c5f8fe680a3b1c74")), pre: None, converted_by: HELIOSOPH, scale: 1, max_tile: 512, notice: None, licenses: SCUNET_LICENSES },
+    Known { file: "scunet_color_25.onnx", label: "SCUNet σ25 — moderate noise", task: Task::Denoise, mb: 77, sha256: "76170f1fcb84d3b3d38c4e7133a658bbbb70504e3dc5e4e4d1f7b0c395c093be", base: SCUNET, data: Some(("scunet_color_25.onnx.data", "f46aa0f533e5bb8b2485a6531a205e270f4a7be2447880a12d97f5f00b1e70c9")), pre: None, converted_by: HELIOSOPH, scale: 1, max_tile: 512, notice: None, licenses: SCUNET_LICENSES },
+    Known { file: "scunet_color_50.onnx", label: "SCUNet σ50 — heavy noise", task: Task::Denoise, mb: 77, sha256: "691b995af0700809ddf882265de4a68373b2d2af9d4a89daca662b828686229d", base: SCUNET, data: Some(("scunet_color_50.onnx.data", "a12e0931304ea43d3367d5f5848099e46fdafe07fd2126ed207ceca02989d446")), pre: None, converted_by: HELIOSOPH, scale: 1, max_tile: 512, notice: None, licenses: SCUNET_LICENSES },
+    Known { file: "swinir_denoising_color_25.onnx", label: "SwinIR σ25 — moderate noise, very slow", task: Task::Denoise, mb: 55, sha256: "5fb427215c6a893b4c4aa27b6ab0aad66742fb9cb7ab24f65eff27b09cc2ea74", base: SWINIR, data: None, pre: None, converted_by: HELIOSOPH, scale: 1, max_tile: 512, notice: None, licenses: &[SWINIR_LICENSE, HELIOSOPH_SWINIR_LICENSE] },
+    Known { file: "BSRGANx4_fp16.onnx", label: "BSRGAN 4× — upscales and sharpens, may invent detail", task: Task::Enhance, mb: 33, sha256: "9682732b50a4ab4d78a3c84220702b4063e11cccb2bf50ca27ea2b572dedd173", base: BSRGAN, data: None, pre: None, converted_by: Some("ONNX export (half precision) by FuryTMP on Hugging Face; its origin isn't verified."), scale: 4, max_tile: 256, notice: None, licenses: &[BSRGAN_LICENSE] },
 ];
 
 fn models_dir() -> Result<PathBuf, String> {
@@ -483,9 +488,9 @@ pub fn restore(file: &str, img: &RgbaImage, progress: &dyn Fn(f32), cancel: &Ato
     });
     // Big tiles: per pixel they cost the same. A smaller image gets a tile just big enough
     // (a multiple of 64, which these models accept), so the preview isn't padded out.
-    // Upscalers get smaller ones: BSRGAN's 512 px tile needs a 2 GB buffer, too much for a 4 GB card.
+    // Each catalog model says how big (`Known::max_tile`); 512 for others.
     let name = Path::new(file).file_name().and_then(|n| n.to_str()).unwrap_or(file);
-    let cap = if known(name).is_some_and(|k| k.scale > 1) { 256 } else { 512 };
+    let cap = known(name).map_or(512, |k| k.max_tile as usize);
     let long = img.width().max(img.height()) as usize;
     let tile = fixed.unwrap_or(long.div_ceil(64).max(1) * 64).min(fixed.unwrap_or(cap));
     let run = |input: Vec<f32>, t: usize| -> Result<Vec<f32>, String> {
@@ -671,6 +676,18 @@ fn gpu_ui(ui: &mut egui::Ui, use_gpu: &mut bool, downloading: bool, out: &mut Mo
             out.download_gpu = ui.add_enabled(!downloading, egui::Button::new(if downloading { "Downloading…" } else { "Download GPU Support" })).clicked();
         });
     }
+}
+
+/// The paragraphs of the notice shown before an Enhance model is first used.
+pub fn enhance_notice(file: &str) -> Vec<String> {
+    const GENERATIVE: &str = "Enhance Image uses generative AI. To make the image look better it may invent or alter fine details, such as textures, text or faces, that weren't in the original.";
+    let k = known(file);
+    let mut lines = vec![k.and_then(|k| k.notice).unwrap_or(GENERATIVE).to_string()];
+    if let Some(k) = k.filter(|k| k.scale > 1) {
+        lines.push(format!("It also makes the image {}× bigger ({}× the pixels), which takes a while for a big photo.", k.scale, k.scale * k.scale));
+    }
+    lines.push("For a faithful clean-up, use Denoise instead.".into());
+    lines
 }
 
 /// What the AI Models dialog asks for this frame.
@@ -948,7 +965,7 @@ mod tests {
         let sha = |f: &str| String::from_utf8(std::process::Command::new("sha256sum").arg(src.join(f)).output().unwrap().stdout).unwrap()[..64].to_string();
         let (graph, weights) = (sha("m.onnx").leak() as &str, sha("m.onnx.data").leak() as &str);
         let base = format!("file://{}", src.display()).leak();
-        let known = |data_sha: &'static str| Known { file: "m.onnx", label: "", task: Task::Denoise, mb: 0, sha256: graph, base, data: Some(("m.onnx.data", data_sha)), pre: None, converted_by: None, scale: 1, licenses: &[] };
+        let known = |data_sha: &'static str| Known { file: "m.onnx", label: "", task: Task::Denoise, mb: 0, sha256: graph, base, data: Some(("m.onnx.data", data_sha)), pre: None, converted_by: None, scale: 1, max_tile: 512, notice: None, licenses: &[] };
         // A bad weights checksum installs nothing, not even the good .onnx.
         assert!(download_to(&dest, &known("0000")).is_err());
         let leftovers: Vec<_> = std::fs::read_dir(&dest).unwrap().collect();
@@ -966,6 +983,16 @@ mod tests {
         assert_eq!(short_error(trace), "CUDA failure 100: no CUDA-capable device is detected");
         assert_eq!(short_error("libcudnn.so.9: not found"), "libcudnn.so.9: not found");
         assert!(short_error(&"x".repeat(500)).chars().count() <= 161);
+    }
+
+    #[test]
+    fn enhance_notices() {
+        let bsrgan = enhance_notice("BSRGANx4_fp16.onnx");
+        assert!(bsrgan[0].contains("generative") && bsrgan[1].contains("4× bigger (16× the pixels)"));
+        // An unknown model: the generative warning, no size line.
+        let mine = enhance_notice("mine.onnx");
+        assert_eq!(mine.len(), 2);
+        assert!(mine[0].contains("generative") && !mine.iter().any(|l| l.contains("bigger")));
     }
 
     #[test]

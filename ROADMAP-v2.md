@@ -121,6 +121,12 @@ Numbering continues from v1.
 - Measured: ~1.6 s per 256 px tile on a GTX 1050, ~21 s on the CPU; a 12 MP photo is ~250 tiles (≈ 7 min GPU, > 1 h CPU). A pasted image is shown at most 4096 px across on screen.
 - Later: for photos over 4 MP, offer to shrink 2× or 4× first, for a 2× or 1× result.
 
+### 18c. DarkIR for Enhance (in progress)
+- DarkIR-m (CVPR 2025, CIDAUT AI; code MIT, weights CC-BY-4.0) brightens dark and night photos and removes noise and blur, at the same size. Converted to ONNX in the separate `lightview-models` repo (`../lightview-models`): pinned sources, the complex-FFT block rewritten as real matrix products (matches to ~4e-6), ONNX matches PyTorch to ~1e-6.
+- Its FFT block looks at the whole tile, so it runs on 1024 px tiles (`Known::max_tile`), 1.2 GB on a 4 GB GPU, ~5.4 s/MP there, ~23 s/MP on the CPU.
+- The Enhance notice is per model and shown once per model.
+- **Left:** publish `DarkIR_384.onnx` as release `darkir-v1` of the `lightview-models` GitHub repo, then add its catalog entry (URL + SHA-256 `a6d5104f…`) and licences.
+
 ## Future ideas
 - Convert the best FOSS restoration and upscaling models (BSRGAN, Real-ESRGAN, …) to ONNX ourselves, with documented scripts, and publish them from a separate repo, instead of relying on third-party uploads.
 
