@@ -305,8 +305,10 @@ pub fn restore(file: &str, img: &RgbaImage, progress: &dyn Fn(f32), cancel: &Ato
         [.., h, w] if h == w && *h > 0 => Some(*h as usize),
         _ => None,
     });
-    // Big tiles: per pixel they cost the same, and the 512 px preview is then a single tile.
-    let tile = fixed.unwrap_or(512);
+    // Big tiles: per pixel they cost the same. A smaller image gets a tile just big enough
+    // (a multiple of 64, which these models accept), so the preview isn't padded out.
+    let long = img.width().max(img.height()) as usize;
+    let tile = fixed.unwrap_or(long.div_ceil(64).max(1) * 64).min(fixed.unwrap_or(512));
     let run = |input: Vec<f32>, t: usize| -> Result<Vec<f32>, String> {
         let tensor = ort::value::Tensor::from_array(([1usize, 3, t, t], input)).map_err(|e| e.to_string())?;
         let outputs = session.run(ort::inputs![tensor]).map_err(|e| e.to_string())?;

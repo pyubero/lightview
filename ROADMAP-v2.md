@@ -103,7 +103,7 @@ Numbering continues from v1.
 ### 18. Denoise and Enhance Image ✅ (2026-10-29)
 - Tools → **Denoise** (faithful: removes noise and JPEG artifacts) and **Enhance Image** (generative: sharper, may invent detail). No settings.
 - Models: SCUNet real-PSNR for Denoise (default; SCUNet σ15/25/50 and SwinIR σ25 as alternatives) and SCUNet real-GAN for Enhance. Apache-2.0 (SCUNet, SwinIR); ONNX conversions by Heliosoph LLC on Hugging Face, pinned to a revision and SHA-256, licence files of the conversions shown too. SUPIR (non-commercial licence, multi-GB, GPU) and BSRGAN (4× upscaler only) were dropped.
-- CPU speed (i7-8750H, turbo off): SCUNet ≈ 57 s per megapixel, SwinIR ≈ 4× slower. So each tool first previews the visible area (≤ 512 × 512, one tile, ≈ 15 s) as a before/after with a draggable line; **Apply to Whole Image** (with a time estimate) or **Apply to Selection** then runs in the background with a progress bar, time left and Cancel. The result is one undoable edit.
+- CPU speed (i7-8750H, turbo off): SCUNet ≈ 57 s per megapixel, SwinIR ≈ 4× slower. So each tool first previews the visible area (≤ 256 × 256, one tile, ≈ 5 s with SCUNet) as a before/after with a draggable line; **Apply to Whole Image** (with a time estimate) or **Apply to Selection** then runs in the background with a progress bar, time left and Cancel. The result is one undoable edit.
 - The first Enhance shows a notice that it may alter fine details.
 - Tools → AI Models… is grouped by task (Remove Background, Denoise, Enhance Image), each with its own model drop-down and its downloads sorted by size.
 - **Done when** tiling reproduces an identity model exactly, a two-file download is all-or-nothing, and the real models clean a noisy test crop without visible tile seams.

@@ -1107,11 +1107,11 @@ impl App {
         });
     }
 
-    /// Denoise / Enhance on the part of the image on screen (at most 512 px square, so it's
-    /// quick), for the before/after preview.
+    /// Denoise / Enhance on the part of the image on screen (at most 256 px square, so it takes
+    /// seconds), for the before/after preview.
     fn preview_restore(&mut self, task: crate::ai::Task) {
         let (Some(vis), Some(doc)) = (self.visible, self.doc()) else { return };
-        let size = vis.size().min(Vec2::splat(512.0));
+        let size = vis.size().min(Vec2::splat(256.0));
         let region = Rect::from_center_size(vis.center(), size);
         let region = Rect::from_min_max(region.min.round(), region.max.round()).intersect(Rect::from_min_size(Pos2::ZERO, doc.size_vec()));
         self.compare = None;
