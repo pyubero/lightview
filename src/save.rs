@@ -1,5 +1,5 @@
 use crate::edit::{self, Doc};
-use crate::load::{Frame, drop_exif_thumbnail};
+use crate::load::{Frame, drop_exif_thumbnail, set_exif_dpi};
 use image::codecs::{bmp::BmpEncoder, gif::GifEncoder, jpeg::{JpegEncoder, PixelDensity}, png::PngEncoder, tiff::TiffEncoder, webp::WebPEncoder};
 use image::metadata::Orientation;
 use image::{DynamicImage, ImageDecoder, ImageEncoder, ImageReader};
@@ -29,7 +29,10 @@ pub fn save(frame: &Frame, doc: &Doc, source: &Path, dest: &Path) -> Result<(), 
         return Err(format!("can't save as .{ext}: use .jpg, .png, .webp, .bmp, .tif or .gif"));
     }
     let img = edit::render(frame, doc)?;
-    let exif = source_exif(source);
+    let mut exif = source_exif(source);
+    if let (Some(exif), Some(dpi)) = (&mut exif, doc.dpi) {
+        set_exif_dpi(exif, dpi);
+    }
 
     write_atomic(dest, |out| encode(&img, &ext, exif, doc.dpi, out).map_err(|e| e.to_string()))
 }
@@ -124,10 +127,14 @@ mod tests {
     #[test]
     fn jpeg_keeps_exif_without_orientation() {
         let dir = temp_dir("exif");
-        // A source JPEG with EXIF orientation 6 (rotate 90°).
-        let mut tiff = b"II\x2a\0\x08\0\0\0\x01\0".to_vec();
+        // A source JPEG with EXIF orientation 6 (rotate 90°) and 72 dpi, like a phone photo.
+        let mut tiff = b"II\x2a\0\x08\0\0\0\x04\0".to_vec();
         tiff.extend([0x12, 0x01, 3, 0, 1, 0, 0, 0, 6, 0, 0, 0]); // Orientation, SHORT, 1, value 6
+        tiff.extend([0x1A, 0x01, 5, 0, 1, 0, 0, 0, 62, 0, 0, 0]); // XResolution, RATIONAL, at 62
+        tiff.extend([0x1B, 0x01, 5, 0, 1, 0, 0, 0, 70, 0, 0, 0]); // YResolution, RATIONAL, at 70
+        tiff.extend([0x28, 0x01, 3, 0, 1, 0, 0, 0, 3, 0, 0, 0]); // ResolutionUnit, SHORT, cm
         tiff.extend([0, 0, 0, 0]); // no IFD1
+        tiff.extend([72, 0, 0, 0, 1, 0, 0, 0, 72, 0, 0, 0, 1, 0, 0, 0]); // 72/1, 72/1
         let source = dir.join("source.jpg");
         let mut enc = JpegEncoder::new(std::fs::File::create(&source).unwrap());
         enc.set_exif_metadata(tiff).unwrap();
@@ -139,8 +146,18 @@ mod tests {
         let mut decoder = ImageReader::open(&dest).unwrap().with_guessed_format().unwrap().into_decoder().unwrap();
         let exif = decoder.exif_metadata().unwrap();
         let jpeg = std::fs::read(&dest).unwrap();
+        let m = little_exif::metadata::Metadata::new_from_path(&dest).unwrap();
         std::fs::remove_dir_all(&dir).unwrap();
         assert_eq!(Orientation::from_exif_chunk(&exif.unwrap()), Some(Orientation::NoTransforms));
+        // The copied EXIF says 300 dpi too, not the source's 72 (per cm).
+        use little_exif::exif_tag::ExifTag;
+        for tag in [ExifTag::XResolution(Vec::new()), ExifTag::YResolution(Vec::new())] {
+            match m.get_tag(&tag).next() {
+                Some(ExifTag::XResolution(v) | ExifTag::YResolution(v)) => assert_eq!((v[0].nominator, v[0].denominator), (300, 1)),
+                other => panic!("{other:?}"),
+            }
+        }
+        assert!(matches!(m.get_tag(&ExifTag::ResolutionUnit(Vec::new())).next(), Some(ExifTag::ResolutionUnit(v)) if v == &[2]));
         // JFIF density: units = 1 (dpi), then 300 × 300.
         let jfif = jpeg.windows(5).position(|w| w == b"JFIF\0").unwrap();
         assert_eq!(&jpeg[jfif + 7..jfif + 12], &[1, 1, 44, 1, 44]);

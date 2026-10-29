@@ -266,6 +266,41 @@ pub fn drop_exif_thumbnail(tiff: &mut [u8]) {
     }
 }
 
+/// Sets IFD0's XResolution and YResolution to `dpi` and ResolutionUnit to inches, so the
+/// copied EXIF agrees with the DPI written into the saved file. Tags that aren't there are
+/// left out (the file's own header still has the DPI); malformed input is left alone.
+pub fn set_exif_dpi(tiff: &mut [u8], dpi: u16) {
+    let mut writes: Vec<(usize, [u32; 2], bool)> = Vec::new();
+    {
+        let Some((u16_at, u32_at)) = tiff_readers(tiff) else { return };
+        let Some(ifd0) = u32_at(4) else { return };
+        for i in 0..u16_at(ifd0).unwrap_or(0) {
+            let entry = ifd0 + 2 + i * 12;
+            match (u16_at(entry), u16_at(entry + 2)) {
+                // RATIONAL: the value is 8 bytes elsewhere.
+                (Some(0x011A | 0x011B), Some(5)) => {
+                    if let Some(at) = u32_at(entry + 8).filter(|&at| u32_at(at + 4).is_some()) {
+                        writes.push((at, [dpi as u32, 1], true));
+                    }
+                }
+                // SHORT: the value sits in the entry.
+                (Some(0x0128), Some(3)) if u16_at(entry + 8).is_some() => writes.push((entry + 8, [2, 0], false)),
+                (Some(_), Some(_)) => {}
+                _ => return,
+            }
+        }
+    }
+    let le = tiff[0] == b'I';
+    for (at, [a, b], rational) in writes {
+        if rational {
+            tiff[at..at + 4].copy_from_slice(&if le { a.to_le_bytes() } else { a.to_be_bytes() });
+            tiff[at + 4..at + 8].copy_from_slice(&if le { b.to_le_bytes() } else { b.to_be_bytes() });
+        } else {
+            tiff[at..at + 2].copy_from_slice(&if le { (a as u16).to_le_bytes() } else { (a as u16).to_be_bytes() });
+        }
+    }
+}
+
 /// The supported images in `path`'s folder: by name in file-manager order, or oldest first.
 fn list_folder(path: &Path, sort: SortOrder) -> Vec<PathBuf> {
     let dir = path.parent().unwrap_or(Path::new("."));
@@ -387,6 +422,23 @@ mod tests {
         let mut junk = b"II\x2a\0\xff\xff\xff\xff".to_vec();
         drop_exif_thumbnail(&mut junk);
         assert_eq!(junk, b"II\x2a\0\xff\xff\xff\xff");
+    }
+
+    #[test]
+    fn exif_dpi_malformed() {
+        // IFD0 with XResolution (RATIONAL at 26) and ResolutionUnit, then 72/1.
+        let mut good = b"II\x2a\0\x08\0\0\0\x02\0".to_vec();
+        good.extend([0x1A, 0x01, 5, 0, 1, 0, 0, 0, 34, 0, 0, 0]);
+        good.extend([0x28, 0x01, 3, 0, 1, 0, 0, 0, 3, 0, 0, 0]);
+        good.extend([0, 0, 0, 0, 72, 0, 0, 0, 1, 0, 0, 0]);
+        let mut t = good.clone();
+        set_exif_dpi(&mut t, 300);
+        assert_eq!(&t[34..42], &[44, 1, 0, 0, 1, 0, 0, 0]);
+        assert_eq!(&t[30..32], &[2, 0]);
+        // Truncated anywhere: no panic.
+        for len in 0..good.len() {
+            set_exif_dpi(&mut good[..len].to_vec(), 300);
+        }
     }
 
     #[test]
