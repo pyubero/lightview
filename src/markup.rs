@@ -187,7 +187,19 @@ impl Element {
     /// The texture's pixels, at most `max_side` px on the longer side.
     pub fn texture_image(&self, max_side: f32) -> Option<egui::ColorImage> {
         match (self.shape, &self.image) {
-            (Shape::Image, Some(Pasted(img))) => Some(egui::ColorImage::from_rgba_unmultiplied([img.width() as usize, img.height() as usize], img.as_raw())),
+            (Shape::Image, Some(Pasted(img))) => {
+                // shortcut: a big image (a 4× Enhance result can be 16000 px wide) is shown at most
+                // 4096 px across, so it fits the GPU and its memory; it's blurrier only when zoomed far in.
+                let side = max_side.min(4096.0) as u32;
+                let shown = if img.width().max(img.height()) > side {
+                    let f = side as f32 / img.width().max(img.height()) as f32;
+                    let (w, h) = (((img.width() as f32 * f).round() as u32).max(1), ((img.height() as f32 * f).round() as u32).max(1));
+                    std::borrow::Cow::Owned(image::imageops::resize(img.as_ref(), w, h, image::imageops::FilterType::Triangle))
+                } else {
+                    std::borrow::Cow::Borrowed(img.as_ref())
+                };
+                Some(egui::ColorImage::from_rgba_unmultiplied([shown.width() as usize, shown.height() as usize], shown.as_raw()))
+            }
             (Shape::Erase, _) => {
                 let b = self.bbox();
                 let scale = (max_side / b.size().max_elem()).min(1.0);
@@ -820,6 +832,14 @@ mod tests {
         assert_eq!(masked.texture_id, tex);
         assert!(masked.vertices.iter().any(|v| v.uv == Pos2::new(1.0, 1.0)));
         assert!(checker(Rect::NOTHING, None).vertices.is_empty());
+    }
+
+    #[test]
+    fn big_pasted_images_are_shown_smaller() {
+        let big = Element::pasted(Arc::new(RgbaImage::new(5000, 100)), Pos2::ZERO, Vec2::new(5000.0, 100.0), style());
+        assert_eq!(big.texture_image(16384.0).unwrap().size, [4096, 82]);
+        let small = Element::pasted(Arc::new(RgbaImage::new(300, 200)), Pos2::ZERO, Vec2::new(300.0, 200.0), style());
+        assert_eq!(small.texture_image(16384.0).unwrap().size, [300, 200]);
     }
 
     #[test]

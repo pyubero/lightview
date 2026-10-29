@@ -505,6 +505,21 @@ mod tests {
     }
 
     #[test]
+    fn upscaled_result_covers_the_bigger_image() {
+        // What applying a 2× Enhance does: the doc grows, and the result covers it at full size.
+        use crate::markup::Style;
+        use std::sync::Arc;
+        let mut doc = Doc::new(6, 5);
+        doc.resize(12, 10);
+        let result = image::RgbaImage::from_fn(12, 10, |x, y| image::Rgba([(x * 20) as u8, (y * 20) as u8, 7, 255]));
+        doc.elements.push(Element::pasted(Arc::new(result.clone()), Pos2::ZERO, Vec2::new(12.0, 10.0), Style::for_image(Vec2::new(12.0, 10.0))));
+        let out = render(&frame(), &doc).unwrap().to_rgba8();
+        assert_eq!(out.dimensions(), (12, 10));
+        let worst = out.as_raw().iter().zip(result.as_raw()).map(|(a, b)| a.abs_diff(*b)).max().unwrap();
+        assert!(worst <= 1, "{worst}");
+    }
+
+    #[test]
     fn crop_after_resize_keeps_the_scale() {
         let mut doc = Doc::new(6, 5);
         doc.resize(12, 10);

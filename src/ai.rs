@@ -288,6 +288,8 @@ pub struct Known {
     pre: Option<Preprocess>,
     /// Who made the ONNX file, when it isn't the authors.
     pub converted_by: Option<&'static str>,
+    /// How many times bigger the output is (an upscaler), else 1.
+    pub scale: u32,
     /// Shown, and accepted by the user, before the download starts.
     pub licenses: &'static [License],
 }
@@ -306,6 +308,7 @@ const ANIME_LICENSE: License = License { project: "anime-segmentation", spdx: "A
 const BIREFNET_LICENSE: License = License { project: "BiRefNet", spdx: "MIT", url: "https://github.com/ZhengPeng7/BiRefNet", text: include_str!("../licenses/birefnet.txt") };
 const REMBG_LICENSE: License = License { project: "rembg", spdx: "MIT", url: "https://github.com/danielgatis/rembg", text: include_str!("../licenses/rembg.txt") };
 const SCUNET_LICENSE: License = License { project: "SCUNet", spdx: "Apache-2.0", url: "https://github.com/cszn/SCUNet", text: include_str!("../licenses/scunet.txt") };
+const BSRGAN_LICENSE: License = License { project: "BSRGAN", spdx: "Apache-2.0", url: "https://github.com/cszn/BSRGAN", text: include_str!("../licenses/bsrgan.txt") };
 const SWINIR_LICENSE: License = License { project: "SwinIR", spdx: "Apache-2.0", url: "https://github.com/JingyunLiang/SwinIR", text: include_str!("../licenses/swinir.txt") };
 /// The licence files that come with the ONNX conversions (SCUNet's is KAIR's MIT licence).
 const HELIOSOPH_SCUNET_LICENSE: License = License { project: "Heliosoph/scunet-onnx (the ONNX conversion)", spdx: "MIT", url: "https://huggingface.co/Heliosoph/scunet-onnx", text: include_str!("../licenses/heliosoph-scunet.txt") };
@@ -316,24 +319,25 @@ const RELEASES: &str = "https://github.com/danielgatis/rembg/releases/download/v
 // Pinned to a revision, so the files (and their checksums) can't change under us.
 const SCUNET: &str = "https://huggingface.co/Heliosoph/scunet-onnx/resolve/6d11417ee2fbcc73783c502a238ac115097754fe";
 const SWINIR: &str = "https://huggingface.co/Heliosoph/swinir-onnx/resolve/a4a77e2c33c32cfa4f39953b2aa87afec7f34aef";
+const BSRGAN: &str = "https://huggingface.co/FuryTMP/BSRGANx4_fp16/resolve/9359c20a3c91f930cdba220a31129ff9f8997791";
 const HELIOSOPH: Option<&str> = Some("Converted to ONNX by Heliosoph LLC from the authors' published weights.");
 const SCUNET_LICENSES: &[License] = &[SCUNET_LICENSE, HELIOSOPH_SCUNET_LICENSE];
 
 /// In order of preference within each task: the first one installed is that task's default.
 pub const CATALOG: [Known; 13] = [
-    Known { file: "silueta.onnx", label: "Silueta — small and fast", task: Task::Background, mb: 44, sha256: "75da6c8d2f8096ec743d071951be73b4a8bc7b3e51d9a6625d63644f90ffeedb", base: RELEASES, data: None, pre: Some(U2NET), converted_by: None, licenses: &[U2NET_LICENSE, REMBG_LICENSE] },
-    Known { file: "u2netp.onnx", label: "U²-Net small — fastest", task: Task::Background, mb: 5, sha256: "309c8469258dda742793dce0ebea8e6dd393174f89934733ecc8b14c76f4ddd8", base: RELEASES, data: None, pre: Some(U2NET), converted_by: None, licenses: &[U2NET_LICENSE] },
-    Known { file: "u2net.onnx", label: "U²-Net — general", task: Task::Background, mb: 176, sha256: "8d10d2f3bb75ae3b6d527c77944fc5e7dcd94b29809d47a739a7a728a912b491", base: RELEASES, data: None, pre: Some(U2NET), converted_by: None, licenses: &[U2NET_LICENSE] },
-    Known { file: "u2net_human_seg.onnx", label: "U²-Net people — portraits", task: Task::Background, mb: 176, sha256: "01eb6a29a5c4d8edb30b56adad9bb3a2a0535338e480724a213e0acfd2d1c73c", base: RELEASES, data: None, pre: Some(U2NET), converted_by: None, licenses: &[U2NET_LICENSE] },
-    Known { file: "isnet-general-use.onnx", label: "IS-Net — general, clean edges", task: Task::Background, mb: 179, sha256: "60920e99c45464f2ba57bee2ad08c919a52bbf852739e96947fbb4358c0d964a", base: RELEASES, data: None, pre: Some(ISNET), converted_by: None, licenses: &[DIS_LICENSE] },
-    Known { file: "isnet-anime.onnx", label: "IS-Net anime — illustrations", task: Task::Background, mb: 176, sha256: "f15622d853e8260172812b657053460e20806f04b9e05147d49af7bed31a6e99", base: RELEASES, data: None, pre: Some(ISNET), converted_by: None, licenses: &[ANIME_LICENSE] },
-    Known { file: "BiRefNet-general-bb_swin_v1_tiny-epoch_232.onnx", label: "BiRefNet lite — best quality, slow", task: Task::Background, mb: 224, sha256: "5600024376f572a557870a5eb0afb1e5961636bef4e1e22132025467d0f03333", base: RELEASES, data: None, pre: Some(BIREFNET), converted_by: None, licenses: &[BIREFNET_LICENSE] },
-    Known { file: "scunet_color_real_psnr.onnx", label: "SCUNet — noise and JPEG artifacts (recommended)", task: Task::Denoise, mb: 77, sha256: "231be201ab413dbc999d7951caa9844846b93a12a40a41e037d6b5888ed4e88c", base: SCUNET, data: Some(("scunet_color_real_psnr.onnx.data", "98825ea1210b641c71e5f052f582c70c49fd44b35387ebe2c034268c17df3feb")), pre: None, converted_by: HELIOSOPH, licenses: SCUNET_LICENSES },
-    Known { file: "scunet_color_15.onnx", label: "SCUNet σ15 — light noise", task: Task::Denoise, mb: 77, sha256: "228dfb72f8b5e23d35c0a92048b46ada31676b34e90a1ced6d221377861ffd6b", base: SCUNET, data: Some(("scunet_color_15.onnx.data", "4f2cdeeade2744b8fefdae9d572c8c71d84bc153e4863579c5f8fe680a3b1c74")), pre: None, converted_by: HELIOSOPH, licenses: SCUNET_LICENSES },
-    Known { file: "scunet_color_25.onnx", label: "SCUNet σ25 — moderate noise", task: Task::Denoise, mb: 77, sha256: "76170f1fcb84d3b3d38c4e7133a658bbbb70504e3dc5e4e4d1f7b0c395c093be", base: SCUNET, data: Some(("scunet_color_25.onnx.data", "f46aa0f533e5bb8b2485a6531a205e270f4a7be2447880a12d97f5f00b1e70c9")), pre: None, converted_by: HELIOSOPH, licenses: SCUNET_LICENSES },
-    Known { file: "scunet_color_50.onnx", label: "SCUNet σ50 — heavy noise", task: Task::Denoise, mb: 77, sha256: "691b995af0700809ddf882265de4a68373b2d2af9d4a89daca662b828686229d", base: SCUNET, data: Some(("scunet_color_50.onnx.data", "a12e0931304ea43d3367d5f5848099e46fdafe07fd2126ed207ceca02989d446")), pre: None, converted_by: HELIOSOPH, licenses: SCUNET_LICENSES },
-    Known { file: "swinir_denoising_color_25.onnx", label: "SwinIR σ25 — moderate noise, very slow", task: Task::Denoise, mb: 55, sha256: "5fb427215c6a893b4c4aa27b6ab0aad66742fb9cb7ab24f65eff27b09cc2ea74", base: SWINIR, data: None, pre: None, converted_by: HELIOSOPH, licenses: &[SWINIR_LICENSE, HELIOSOPH_SWINIR_LICENSE] },
-    Known { file: "scunet_color_real_gan.onnx", label: "SCUNet GAN — sharper, may invent detail", task: Task::Enhance, mb: 77, sha256: "e2bf014ad711f99322f2a94304431ffd6766b79ff00bcebb87d1a4f71c127b2d", base: SCUNET, data: Some(("scunet_color_real_gan.onnx.data", "1e8d582046abf4a773215445c248d0f54751a57d69d2a2312ec59f1150256b79")), pre: None, converted_by: HELIOSOPH, licenses: SCUNET_LICENSES },
+    Known { file: "silueta.onnx", label: "Silueta — small and fast", task: Task::Background, mb: 44, sha256: "75da6c8d2f8096ec743d071951be73b4a8bc7b3e51d9a6625d63644f90ffeedb", base: RELEASES, data: None, pre: Some(U2NET), converted_by: None, scale: 1, licenses: &[U2NET_LICENSE, REMBG_LICENSE] },
+    Known { file: "u2netp.onnx", label: "U²-Net small — fastest", task: Task::Background, mb: 5, sha256: "309c8469258dda742793dce0ebea8e6dd393174f89934733ecc8b14c76f4ddd8", base: RELEASES, data: None, pre: Some(U2NET), converted_by: None, scale: 1, licenses: &[U2NET_LICENSE] },
+    Known { file: "u2net.onnx", label: "U²-Net — general", task: Task::Background, mb: 176, sha256: "8d10d2f3bb75ae3b6d527c77944fc5e7dcd94b29809d47a739a7a728a912b491", base: RELEASES, data: None, pre: Some(U2NET), converted_by: None, scale: 1, licenses: &[U2NET_LICENSE] },
+    Known { file: "u2net_human_seg.onnx", label: "U²-Net people — portraits", task: Task::Background, mb: 176, sha256: "01eb6a29a5c4d8edb30b56adad9bb3a2a0535338e480724a213e0acfd2d1c73c", base: RELEASES, data: None, pre: Some(U2NET), converted_by: None, scale: 1, licenses: &[U2NET_LICENSE] },
+    Known { file: "isnet-general-use.onnx", label: "IS-Net — general, clean edges", task: Task::Background, mb: 179, sha256: "60920e99c45464f2ba57bee2ad08c919a52bbf852739e96947fbb4358c0d964a", base: RELEASES, data: None, pre: Some(ISNET), converted_by: None, scale: 1, licenses: &[DIS_LICENSE] },
+    Known { file: "isnet-anime.onnx", label: "IS-Net anime — illustrations", task: Task::Background, mb: 176, sha256: "f15622d853e8260172812b657053460e20806f04b9e05147d49af7bed31a6e99", base: RELEASES, data: None, pre: Some(ISNET), converted_by: None, scale: 1, licenses: &[ANIME_LICENSE] },
+    Known { file: "BiRefNet-general-bb_swin_v1_tiny-epoch_232.onnx", label: "BiRefNet lite — best quality, slow", task: Task::Background, mb: 224, sha256: "5600024376f572a557870a5eb0afb1e5961636bef4e1e22132025467d0f03333", base: RELEASES, data: None, pre: Some(BIREFNET), converted_by: None, scale: 1, licenses: &[BIREFNET_LICENSE] },
+    Known { file: "scunet_color_real_psnr.onnx", label: "SCUNet — noise and JPEG artifacts (recommended)", task: Task::Denoise, mb: 77, sha256: "231be201ab413dbc999d7951caa9844846b93a12a40a41e037d6b5888ed4e88c", base: SCUNET, data: Some(("scunet_color_real_psnr.onnx.data", "98825ea1210b641c71e5f052f582c70c49fd44b35387ebe2c034268c17df3feb")), pre: None, converted_by: HELIOSOPH, scale: 1, licenses: SCUNET_LICENSES },
+    Known { file: "scunet_color_15.onnx", label: "SCUNet σ15 — light noise", task: Task::Denoise, mb: 77, sha256: "228dfb72f8b5e23d35c0a92048b46ada31676b34e90a1ced6d221377861ffd6b", base: SCUNET, data: Some(("scunet_color_15.onnx.data", "4f2cdeeade2744b8fefdae9d572c8c71d84bc153e4863579c5f8fe680a3b1c74")), pre: None, converted_by: HELIOSOPH, scale: 1, licenses: SCUNET_LICENSES },
+    Known { file: "scunet_color_25.onnx", label: "SCUNet σ25 — moderate noise", task: Task::Denoise, mb: 77, sha256: "76170f1fcb84d3b3d38c4e7133a658bbbb70504e3dc5e4e4d1f7b0c395c093be", base: SCUNET, data: Some(("scunet_color_25.onnx.data", "f46aa0f533e5bb8b2485a6531a205e270f4a7be2447880a12d97f5f00b1e70c9")), pre: None, converted_by: HELIOSOPH, scale: 1, licenses: SCUNET_LICENSES },
+    Known { file: "scunet_color_50.onnx", label: "SCUNet σ50 — heavy noise", task: Task::Denoise, mb: 77, sha256: "691b995af0700809ddf882265de4a68373b2d2af9d4a89daca662b828686229d", base: SCUNET, data: Some(("scunet_color_50.onnx.data", "a12e0931304ea43d3367d5f5848099e46fdafe07fd2126ed207ceca02989d446")), pre: None, converted_by: HELIOSOPH, scale: 1, licenses: SCUNET_LICENSES },
+    Known { file: "swinir_denoising_color_25.onnx", label: "SwinIR σ25 — moderate noise, very slow", task: Task::Denoise, mb: 55, sha256: "5fb427215c6a893b4c4aa27b6ab0aad66742fb9cb7ab24f65eff27b09cc2ea74", base: SWINIR, data: None, pre: None, converted_by: HELIOSOPH, scale: 1, licenses: &[SWINIR_LICENSE, HELIOSOPH_SWINIR_LICENSE] },
+    Known { file: "BSRGANx4_fp16.onnx", label: "BSRGAN 4× — upscales and sharpens, may invent detail", task: Task::Enhance, mb: 33, sha256: "9682732b50a4ab4d78a3c84220702b4063e11cccb2bf50ca27ea2b572dedd173", base: BSRGAN, data: None, pre: None, converted_by: Some("ONNX export (half precision) by FuryTMP on Hugging Face; its origin isn't verified."), scale: 4, licenses: &[BSRGAN_LICENSE] },
 ];
 
 fn models_dir() -> Result<PathBuf, String> {
@@ -479,19 +483,25 @@ pub fn restore(file: &str, img: &RgbaImage, progress: &dyn Fn(f32), cancel: &Ato
     });
     // Big tiles: per pixel they cost the same. A smaller image gets a tile just big enough
     // (a multiple of 64, which these models accept), so the preview isn't padded out.
+    // Upscalers get smaller ones: BSRGAN's 512 px tile needs a 2 GB buffer, too much for a 4 GB card.
+    let name = Path::new(file).file_name().and_then(|n| n.to_str()).unwrap_or(file);
+    let cap = if known(name).is_some_and(|k| k.scale > 1) { 256 } else { 512 };
     let long = img.width().max(img.height()) as usize;
-    let tile = fixed.unwrap_or(long.div_ceil(64).max(1) * 64).min(fixed.unwrap_or(512));
+    let tile = fixed.unwrap_or(long.div_ceil(64).max(1) * 64).min(fixed.unwrap_or(cap));
     let run = |input: Vec<f32>, t: usize| -> Result<Vec<f32>, String> {
         let tensor = ort::value::Tensor::from_array(([1usize, 3, t, t], input)).map_err(|e| e.to_string())?;
         let outputs = session.run(ort::inputs![tensor]).map_err(|e| e.to_string())?;
         let (_, out) = outputs[0].try_extract_tensor::<f32>().map_err(|e| e.to_string())?;
-        out.get(..3 * t * t).map(<[f32]>::to_vec).ok_or_else(|| "the model's output isn't the size of its input".to_string())
+        Ok(out.to_vec())
     };
     tiled(img, tile, tile / 8, run, progress, cancel)
 }
 
-/// Runs `run` (RGB planes in 0–1, `tile`×`tile`) over `img` in tiles overlapping by `overlap`,
-/// blending the overlaps with linear ramps. Alpha is kept from `img`.
+/// Runs `run` (RGB planes in 0–1, `tile`×`tile`) over `img` in tiles overlapping by `overlap`.
+/// The model may upscale: its scale is read from the first tile's output, and the result is
+/// that many times bigger. Neighbouring tiles each keep their half of the overlap (so each sees
+/// context past its edge) and the result is written directly, without float buffers: a 4×
+/// result of a 12 MP photo is already 770 MB. Alpha comes from `img`, scaled up bilinearly.
 fn tiled(img: &RgbaImage, tile: usize, overlap: usize, mut run: impl FnMut(Vec<f32>, usize) -> Result<Vec<f32>, String>, progress: &dyn Fn(f32), cancel: &AtomicBool) -> Result<RgbaImage, String> {
     let (w, h) = (img.width() as usize, img.height() as usize);
     let starts = |len: usize| -> Vec<usize> {
@@ -502,25 +512,25 @@ fn tiled(img: &RgbaImage, tile: usize, overlap: usize, mut run: impl FnMut(Vec<f
         let n = (len - overlap).div_ceil(tile - overlap);
         (0..n).map(|i| i * (len - tile) / (n - 1)).collect()
     };
-    let (xs, ys) = (starts(w), starts(h));
-    let (mut acc, mut weights) = (vec![0f32; 3 * w * h], vec![0f32; w * h]);
-    let plane = tile * tile;
-    // Full weight in the middle, fading towards an edge that another tile overlaps.
-    let ramp = |i: usize, before: bool, after: bool| {
-        let r = |d: usize| (d + 1) as f32 / (overlap + 1) as f32;
-        let mut v = 1f32;
-        if before {
-            v = v.min(r(i));
-        }
-        if after {
-            v = v.min(r(tile - 1 - i));
-        }
-        v
+    // The part of the image each tile writes: up to the middle of its overlaps.
+    let owned = |starts: &[usize], len: usize| -> Vec<(usize, usize)> {
+        (0..starts.len())
+            .map(|i| {
+                let a = if i == 0 { 0 } else { (starts[i] + starts[i - 1] + tile) / 2 };
+                let b = if i + 1 == starts.len() { len } else { (starts[i + 1] + starts[i] + tile) / 2 };
+                (a, b)
+            })
+            .collect()
     };
-    for (n, (&y0, &x0)) in ys.iter().flat_map(|y| xs.iter().map(move |x| (y, x))).enumerate() {
+    let (xs, ys) = (starts(w), starts(h));
+    let (ox, oy) = (owned(&xs, w), owned(&ys, h));
+    let plane = tile * tile;
+    let mut out: Option<(usize, RgbaImage)> = None;
+    for (n, (yi, xi)) in (0..ys.len()).flat_map(|y| (0..xs.len()).map(move |x| (y, x))).enumerate() {
         if cancel.load(Ordering::Relaxed) {
             return Err("cancelled".into());
         }
+        let (x0, y0) = (xs[xi], ys[yi]);
         // Past the image's edge (an image smaller than a tile), repeat the edge pixels.
         let mut input = vec![0f32; 3 * plane];
         for ty in 0..tile {
@@ -531,27 +541,46 @@ fn tiled(img: &RgbaImage, tile: usize, overlap: usize, mut run: impl FnMut(Vec<f
                 }
             }
         }
-        let out = run(input, tile)?;
-        for ty in 0..tile.min(h - y0) {
-            let wy = ramp(ty, y0 > 0, y0 + tile < h);
-            for tx in 0..tile.min(w - x0) {
-                let wt = wy * ramp(tx, x0 > 0, x0 + tile < w);
-                let i = (y0 + ty) * w + x0 + tx;
+        let res = run(input, tile)?;
+        if out.is_none() {
+            let scale = ((res.len() / (3 * plane)) as f64).sqrt().round() as usize;
+            if scale == 0 || 3 * plane * scale * scale != res.len() {
+                return Err("the model's output isn't a whole multiple of its input".into());
+            }
+            out = Some((scale, with_alpha_of(img, scale)));
+        }
+        let (scale, result) = out.as_mut().unwrap();
+        let (s, ts) = (*scale, tile * *scale);
+        if res.len() != 3 * ts * ts {
+            return Err("the model's output changed size between tiles".into());
+        }
+        let ((ax, bx), (ay, by)) = (ox[xi], oy[yi]);
+        for y in ay * s..by * s {
+            let row = (y - y0 * s) * ts;
+            for x in ax * s..bx * s {
+                let px = result.get_pixel_mut(x as u32, y as u32);
                 for c in 0..3 {
-                    acc[3 * i + c] += out[c * plane + ty * tile + tx] * wt;
+                    px[c] = (res[c * ts * ts + row + x - x0 * s] * 255.0).round().clamp(0.0, 255.0) as u8;
                 }
-                weights[i] += wt;
             }
         }
         progress((n + 1) as f32 / (xs.len() * ys.len()) as f32);
     }
-    let mut result = img.clone();
-    for (i, px) in result.pixels_mut().enumerate() {
-        for c in 0..3 {
-            px[c] = (acc[3 * i + c] / weights[i] * 255.0).round().clamp(0.0, 255.0) as u8;
-        }
+    Ok(out.map_or_else(|| img.clone(), |(_, result)| result))
+}
+
+/// A `scale`× bigger image whose alpha is `img`'s (scaled up bilinearly); its RGB is filled in later.
+fn with_alpha_of(img: &RgbaImage, scale: usize) -> RgbaImage {
+    if scale == 1 {
+        return img.clone();
     }
-    Ok(result)
+    let (w, h) = (img.width() * scale as u32, img.height() * scale as u32);
+    if img.pixels().all(|p| p[3] == 255) {
+        return RgbaImage::from_pixel(w, h, image::Rgba([0, 0, 0, 255]));
+    }
+    let alpha = GrayImage::from_fn(img.width(), img.height(), |x, y| image::Luma([img.get_pixel(x, y)[3]]));
+    let alpha = image::imageops::resize(&alpha, w, h, FilterType::Triangle);
+    RgbaImage::from_fn(w, h, |x, y| image::Rgba([0, 0, 0, alpha.get_pixel(x, y)[0]]))
 }
 
 /// The model's input size, from its first input's shape (…, H, W); 1024 when it's dynamic.
@@ -851,11 +880,32 @@ mod tests {
             let out = tiled(&img, tile, overlap, |d, _| Ok(d), &|_| {}, &no).unwrap();
             assert_eq!(out, img, "{w}×{h} in {tile}px tiles");
         }
-        // A model that brightens: every pixel is changed exactly once (weights add up).
+        // A model that brightens: every pixel is written once, by exactly one tile.
         // 102 is 0.4; 0.4 + 0.2 is 153.
         let img = RgbaImage::from_pixel(100, 60, image::Rgba([102, 102, 102, 255]));
         let out = tiled(&img, 32, 4, |d, _| Ok(d.iter().map(|v| v + 0.2).collect()), &|_| {}, &no).unwrap();
         assert!(out.pixels().all(|p| p.0 == [153, 153, 153, 255]));
+    }
+
+    #[test]
+    fn tiles_upscale() {
+        // A fake 2× model (each pixel becomes a 2×2 block): the result is the image, 2× bigger.
+        let double = |d: Vec<f32>, t: usize| -> Result<Vec<f32>, String> {
+            let (p, t2) = (t * t, 2 * t);
+            Ok((0..3).flat_map(|c| (0..t2 * t2).map(move |i| (c, i))).map(|(c, i)| d[c * p + (i / t2 / 2) * t + (i % t2) / 2]).collect())
+        };
+        let no = AtomicBool::new(false);
+        let img = RgbaImage::from_fn(70, 45, |x, y| image::Rgba([(x * 3) as u8, (y * 5) as u8, 9, 255]));
+        let out = tiled(&img, 32, 4, double, &|_| {}, &no).unwrap();
+        assert_eq!(out.dimensions(), (140, 90));
+        let expected = image::imageops::resize(&img, 140, 90, FilterType::Nearest);
+        assert_eq!(out, expected);
+        // Alpha is scaled up too.
+        let clear = RgbaImage::from_fn(40, 20, |x, _| image::Rgba([1, 2, 3, if x < 20 { 0 } else { 255 }]));
+        let out = tiled(&clear, 32, 4, double, &|_| {}, &no).unwrap();
+        assert_eq!((out.get_pixel(2, 2)[3], out.get_pixel(77, 37)[3]), (0, 255));
+        // An output that's no whole multiple of the input is refused.
+        assert!(tiled(&img, 32, 4, |d, _| Ok(d[..10].to_vec()), &|_| {}, &no).is_err());
     }
 
     #[test]
@@ -884,7 +934,8 @@ mod tests {
         }
         // Each task's first entry is its default.
         assert_eq!(CATALOG.iter().find(|k| k.task == Task::Denoise).unwrap().file, "scunet_color_real_psnr.onnx");
-        assert_eq!(CATALOG.iter().find(|k| k.task == Task::Enhance).unwrap().file, "scunet_color_real_gan.onnx");
+        assert_eq!(CATALOG.iter().find(|k| k.task == Task::Enhance).unwrap().file, "BSRGANx4_fp16.onnx");
+        assert!(CATALOG.iter().all(|k| (k.scale > 1) == (k.file == "BSRGANx4_fp16.onnx")));
     }
 
     #[test]
@@ -897,7 +948,7 @@ mod tests {
         let sha = |f: &str| String::from_utf8(std::process::Command::new("sha256sum").arg(src.join(f)).output().unwrap().stdout).unwrap()[..64].to_string();
         let (graph, weights) = (sha("m.onnx").leak() as &str, sha("m.onnx.data").leak() as &str);
         let base = format!("file://{}", src.display()).leak();
-        let known = |data_sha: &'static str| Known { file: "m.onnx", label: "", task: Task::Denoise, mb: 0, sha256: graph, base, data: Some(("m.onnx.data", data_sha)), pre: None, converted_by: None, licenses: &[] };
+        let known = |data_sha: &'static str| Known { file: "m.onnx", label: "", task: Task::Denoise, mb: 0, sha256: graph, base, data: Some(("m.onnx.data", data_sha)), pre: None, converted_by: None, scale: 1, licenses: &[] };
         // A bad weights checksum installs nothing, not even the good .onnx.
         assert!(download_to(&dest, &known("0000")).is_err());
         let leftovers: Vec<_> = std::fs::read_dir(&dest).unwrap().collect();
@@ -942,12 +993,12 @@ mod tests {
         assert_eq!(choose(None, Task::Background, &installed(&["mine.onnx", "zzz.onnx"])).as_deref(), Some("mine.onnx"));
         assert_eq!(choose(None, Task::Background, &[]), None);
         // Denoise / Enhance: their own catalog models, never a background model.
-        let mixed = installed(&["mine.onnx", "scunet_color_15.onnx", "scunet_color_real_gan.onnx", "scunet_color_real_psnr.onnx", "silueta.onnx"]);
+        let mixed = installed(&["BSRGANx4_fp16.onnx", "mine.onnx", "scunet_color_15.onnx", "scunet_color_real_psnr.onnx", "silueta.onnx"]);
         assert_eq!(choose(None, Task::Denoise, &mixed).as_deref(), Some("scunet_color_real_psnr.onnx"));
-        assert_eq!(choose(None, Task::Enhance, &mixed).as_deref(), Some("scunet_color_real_gan.onnx"));
+        assert_eq!(choose(None, Task::Enhance, &mixed).as_deref(), Some("BSRGANx4_fp16.onnx"));
         assert_eq!(choose(None, Task::Denoise, &installed(&["silueta.onnx", "mine.onnx"])), None);
         assert_eq!(choose(Some(&"mine.onnx".into()), Task::Denoise, &mixed).as_deref(), Some("mine.onnx"));
-        assert_eq!(for_task(Task::Enhance, &mixed), ["mine.onnx", "scunet_color_real_gan.onnx"]);
+        assert_eq!(for_task(Task::Enhance, &mixed), ["BSRGANx4_fp16.onnx", "mine.onnx"]);
     }
 
     #[test]

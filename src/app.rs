@@ -115,6 +115,8 @@ struct Compare {
     /// Where the before/after line is, 0–1 across the region.
     split: f32,
     ms_per_mp: f64,
+    /// How many times bigger the model makes the image (an upscaler), else 1.
+    scale: u32,
 }
 
 /// A download waiting for the user to accept its licence.
@@ -324,7 +326,8 @@ impl App {
                     Ok((img, ms_per_mp)) if !whole => {
                         let image = egui::ColorImage::from_rgba_unmultiplied([img.width() as usize, img.height() as usize], img.as_raw());
                         let texture = self.notify.ctx.get().map(|ctx| ctx.load_texture("restored", image, TextureOptions::LINEAR));
-                        self.compare = texture.map(|texture| Compare { task: run.task, region, texture, split: 0.5, ms_per_mp });
+                        let scale = (img.width() as f32 / region.width()).round().max(1.0) as u32;
+                        self.compare = texture.map(|texture| Compare { task: run.task, region, texture, split: 0.5, ms_per_mp, scale });
                     }
                     Ok((mut img, _)) => {
                         if let Some(sel) = &run.selection
@@ -335,7 +338,17 @@ impl App {
                             }
                         }
                         let style = Style::for_image(region.size());
-                        self.edit(|d| d.elements.push(Element::pasted(Arc::new(img), region.min, region.size(), style)));
+                        let scale = (img.width() as f32 / region.width()).round().max(1.0);
+                        self.edit(|d| {
+                            if scale > 1.0 {
+                                // An upscaler ran on the whole image: the image becomes that many times bigger.
+                                let size = d.size_vec() * scale;
+                                d.resize(size.x as u32, size.y as u32);
+                                d.elements.push(Element::pasted(Arc::new(img), Pos2::ZERO, size, style));
+                            } else {
+                                d.elements.push(Element::pasted(Arc::new(img), region.min, region.size(), style));
+                            }
+                        });
                         self.status = Some((format!("{} done", run.task.title()), Instant::now()));
                     }
                     Err(e) if e == "cancelled" => self.status = Some(("Cancelled".into(), Instant::now())),
@@ -1178,14 +1191,16 @@ impl App {
         let Some(c) = &self.compare else { return };
         let Some(doc) = self.doc() else { return };
         let mp = doc.size_vec().x as f64 * doc.size_vec().y as f64 / 1e6;
-        // shortcut: overlapping 512 px tiles do ~1.4× the image's pixels on a 12 MP photo; count the tiles if estimates are off.
+        // shortcut: overlapping tiles do ~1.3–1.4× the image's pixels on a 12 MP photo; count the tiles if estimates are off.
         let estimate = format_duration(c.ms_per_mp * mp * 1.4 / 1000.0);
-        let selection = self.selection.clone().filter(|s| !s.is_empty());
+        // A bigger patch doesn't fit back into the image, so upscalers only do the whole image.
+        let selection = self.selection.clone().filter(|s| !s.is_empty() && c.scale == 1);
+        let result = if c.scale > 1 { format!(" → {} × {} px", doc.size[0] * c.scale, doc.size[1] * c.scale) } else { String::new() };
         let (whole, sel, discard) = egui::Area::new(egui::Id::unique("compare-bar")).fixed_pos(Pos2::new(viewport.center().x - 260.0, viewport.top() + 12.0)).show(ctx, |ui| {
             egui::Frame::popup(ui.style()).show(ui, |ui| {
                 ui.label(format!("{} preview of the visible area · drag to compare · Before | After", c.task.title()));
                 ui.horizontal(|ui| {
-                    let whole = ui.button(format!("Apply to Whole Image (about {estimate})")).clicked();
+                    let whole = ui.button(format!("Apply to Whole Image{result} (about {estimate})")).clicked();
                     let sel = selection.is_some() && ui.button("Apply to Selection").clicked();
                     (whole, sel, ui.button("Discard").clicked())
                 }).inner
@@ -1211,6 +1226,7 @@ impl App {
         let modal = egui::Modal::new(egui::Id::unique("enhance-notice")).show(ctx, |ui| {
             ui.heading("Enhance Image");
             ui.label("Enhance Image uses generative AI. To make the image look better it may invent or alter fine details, such as textures, text or faces, that weren't in the original.");
+            ui.label("It also makes the image 4× bigger (16× the pixels), which takes a while for a big photo.");
             ui.label("For a faithful clean-up, use Denoise instead.");
             ui.add_space(6.0);
             ui.horizontal(|ui| (ui.button("Continue").clicked(), ui.button("Cancel").clicked())).inner

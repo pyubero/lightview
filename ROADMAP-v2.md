@@ -114,6 +114,16 @@ Numbering continues from v1.
 - Measured on a GTX 1050 (4 GB): Denoise/Enhance ≈ 5.8 s/MP vs ≈ 57 s/MP on the CPU (≈ 10×; a 9 MP photo in ~70 s instead of ~12 min, peak 3.1 GB graphics memory); same output as the CPU (max 1/255 difference).
 - **Done when** it installs through the app's own code, runs Denoise on the GPU with the same result as the CPU, and falls back cleanly with no usable GPU.
 
+### 18b. Enhance Image = BSRGAN 4× ✅ (2026-10-29)
+- Enhance now upscales 4× with BSRGAN (cszn/BSRGAN, Apache-2.0), using the half-precision ONNX export `FuryTMP/BSRGANx4_fp16` from Hugging Face (33 MB, pinned by revision and SHA-256; its origin isn't verified). SCUNet real-GAN is gone from the catalog.
+- Same flow as Denoise: a 256 px preview (a 1024 px result), then Apply to Whole Image, which makes the image 4× bigger as one undoable edit. Apply to Selection isn't offered for upscalers.
+- Tiles are 256 px for upscalers (a 512 px tile needs a 2 GB buffer, too much for a 4 GB GPU), and tile outputs are written straight into the result instead of blended (a 4× result of a 12 MP photo is already ~770 MB).
+- Measured: ~1.6 s per 256 px tile on a GTX 1050, ~21 s on the CPU; a 12 MP photo is ~250 tiles (≈ 7 min GPU, > 1 h CPU). A pasted image is shown at most 4096 px across on screen.
+- Later: for photos over 4 MP, offer to shrink 2× or 4× first, for a 2× or 1× result.
+
+## Future ideas
+- Convert the best FOSS restoration and upscaling models (BSRGAN, Real-ESRGAN, …) to ONNX ourselves, with documented scripts, and publish them from a separate repo, instead of relying on third-party uploads.
+
 ## Non-goals (v2)
 - JPEG 2000
 - Smart lasso
