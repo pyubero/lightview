@@ -18,25 +18,26 @@ const FIELDS: [(&str, fn(String) -> ExifTag); 6] = [
     ("Camera make", ExifTag::Make),
     ("Camera model", ExifTag::Model),
 ];
+const DESCRIPTION: usize = 0;
 const DATE: usize = 3;
 
 pub type Values = [String; 6];
 
-/// The Edit EXIF dialog's state.
+/// The EXIF shown and edited in the inspector.
+#[derive(Debug)]
 pub struct Dialog {
     pub path: PathBuf,
     pub original: Values,
     pub values: Values,
-    /// "40.4168° N, 3.7038° W", if the file has a location.
-    gps: Option<String>,
+    /// Latitude and longitude in degrees (negative is south/west), if the file has a location.
+    gps: Option<(f64, f64)>,
     pub remove_gps: bool,
+    /// Camera, lens, exposure: read-only.
+    summary: Vec<(&'static str, String)>,
+    /// "300 dpi", from XResolution.
+    pub resolution: Option<String>,
     /// Read-only listing of every other tag.
     others: Vec<String>,
-}
-
-pub enum Choice {
-    Save,
-    Cancel,
 }
 
 /// little_exif can panic on input it doesn't expect; turn that into an error.
@@ -69,7 +70,56 @@ fn string_value(m: &Metadata, tag: &ExifTag) -> String {
     }).unwrap_or_default()
 }
 
-fn location(m: &Metadata) -> Option<String> {
+fn rationals(m: &Metadata, tag: &ExifTag) -> Option<f64> {
+    match m.get_tag(tag).next()? {
+        ExifTag::ExposureTime(v) | ExifTag::FNumber(v) | ExifTag::FocalLength(v) | ExifTag::XResolution(v) => {
+            v.first().filter(|r| r.denominator != 0).map(|r| r.nominator as f64 / r.denominator as f64)
+        }
+        _ => None,
+    }
+}
+
+/// Camera, lens and exposure, for the rows that the file has.
+fn summary(m: &Metadata) -> Vec<(&'static str, String)> {
+    let make = string_value(m, &ExifTag::Make(String::new()));
+    let model = string_value(m, &ExifTag::Model(String::new()));
+    let camera = if model.to_lowercase().starts_with(&make.to_lowercase()) { model } else { format!("{make} {model}").trim().to_string() };
+    let mut exposure = Vec::new();
+    if let Some(t) = rationals(m, &ExifTag::ExposureTime(Vec::new())) {
+        exposure.push(if t < 1.0 && t > 0.0 { format!("1/{} s", (1.0 / t).round()) } else { format!("{t} s") });
+    }
+    if let Some(f) = rationals(m, &ExifTag::FNumber(Vec::new())) {
+        exposure.push(format!("f/{f:.1}"));
+    }
+    if let Some(ExifTag::ISO(v)) = m.get_tag(&ExifTag::ISO(Vec::new())).next()
+        && let Some(iso) = v.first()
+    {
+        exposure.push(format!("ISO {iso}"));
+    }
+    if let Some(mm) = rationals(m, &ExifTag::FocalLength(Vec::new())) {
+        exposure.push(format!("{mm:.1} mm"));
+    }
+    [("Camera", camera), ("Lens", string_value(m, &ExifTag::LensModel(String::new()))), ("Exposure", exposure.join(" · "))]
+        .into_iter()
+        .filter(|(_, v)| !v.is_empty())
+        .collect()
+}
+
+fn resolution(m: &Metadata) -> Option<String> {
+    let x = rationals(m, &ExifTag::XResolution(Vec::new()))?;
+    let unit = match m.get_tag(&ExifTag::ResolutionUnit(Vec::new())).next() {
+        Some(ExifTag::ResolutionUnit(v)) if v.first() == Some(&3) => "dpcm",
+        _ => "dpi",
+    };
+    Some(format!("{} {unit}", x.round()))
+}
+
+/// "40.4168° N, 3.7038° W".
+pub fn format_location((lat, lon): (f64, f64)) -> String {
+    format!("{:.4}° {}, {:.4}° {}", lat.abs(), if lat < 0.0 { "S" } else { "N" }, lon.abs(), if lon < 0.0 { "W" } else { "E" })
+}
+
+fn location(m: &Metadata) -> Option<(f64, f64)> {
     let degrees = |tag: &ExifTag| -> Option<f64> {
         match m.get_tag(tag).next()? {
             ExifTag::GPSLatitude(v) | ExifTag::GPSLongitude(v) if v.len() == 3 => {
@@ -81,12 +131,12 @@ fn location(m: &Metadata) -> Option<String> {
     };
     let lat = degrees(&ExifTag::GPSLatitude(Vec::new()))?;
     let lon = degrees(&ExifTag::GPSLongitude(Vec::new()))?;
-    let lat_ref = string_value(m, &ExifTag::GPSLatitudeRef(String::new()));
-    let lon_ref = string_value(m, &ExifTag::GPSLongitudeRef(String::new()));
-    Some(format!("{lat:.4}° {lat_ref}, {lon:.4}° {lon_ref}"))
+    let south = string_value(m, &ExifTag::GPSLatitudeRef(String::new())) == "S";
+    let west = string_value(m, &ExifTag::GPSLongitudeRef(String::new())) == "W";
+    Some((if south { -lat } else { lat }, if west { -lon } else { lon }))
 }
 
-/// Reads `path` (a JPEG) for the dialog.
+/// Reads `path` (a JPEG) for the inspector.
 pub fn read(path: &Path) -> Result<Dialog, String> {
     let jpeg = std::fs::read(path).map_err(|e| e.to_string())?;
     let m = metadata(&jpeg)?;
@@ -101,7 +151,7 @@ pub fn read(path: &Path) -> Result<Dialog, String> {
             if s.chars().count() > 90 { format!("{}…", s.chars().take(90).collect::<String>()) } else { s }
         })
         .collect();
-    Ok(Dialog { path: path.to_path_buf(), values: original.clone(), original, gps: location(&m), remove_gps: false, others })
+    Ok(Dialog { path: path.to_path_buf(), values: original.clone(), original, gps: location(&m), remove_gps: false, summary: summary(&m), resolution: resolution(&m), others })
 }
 
 /// Applies the edits to a JPEG buffer. Only changed fields are touched; MakerNote is always
@@ -171,51 +221,76 @@ pub fn valid_date(s: &str) -> bool {
             })
 }
 
-/// The dialog body. Returns what the user chose, if anything.
-pub fn ui(ui: &mut egui::Ui, d: &mut Dialog) -> Option<Choice> {
-    let name = d.path.file_name().unwrap_or_default().to_string_lossy().into_owned();
-    ui.heading(format!("Edit EXIF — {name}"));
-    ui.add_space(4.0);
-    egui::Grid::new("exif-grid").num_columns(2).spacing([16.0, 6.0]).show(ui, |ui| {
-        for (i, (label, _)) in FIELDS.iter().enumerate() {
-            ui.label(*label);
-            ui.vertical(|ui| {
-                let hint = if i == DATE { "YYYY:MM:DD HH:MM:SS" } else { "" };
-                ui.add(egui::TextEdit::singleline(&mut d.values[i]).hint_text(hint).desired_width(260.0));
-                if i == DATE && !valid_date(&d.values[i]) {
-                    ui.colored_label(ui.visuals().error_fg_color, "Use YYYY:MM:DD HH:MM:SS");
-                }
-            });
-            ui.end_row();
-        }
-        ui.label("Location");
-        match &d.gps {
-            Some(gps) => {
-                ui.horizontal(|ui| {
-                    ui.label(gps);
-                    ui.checkbox(&mut d.remove_gps, "Remove location");
+impl Dialog {
+    fn changed(&self) -> bool {
+        self.remove_gps || self.values.iter().map(|v| v.trim()).ne(self.original.iter().map(String::as_str))
+    }
+}
+
+/// The inspector's EXIF, Location and Accessibility sections. Returns true when the user
+/// asks to save a copy with the edits.
+pub fn sections_ui(ui: &mut egui::Ui, d: &mut Dialog) -> bool {
+    egui::CollapsingHeader::new("EXIF").default_open(true).show(ui, |ui| {
+        egui::Grid::new("exif-grid").num_columns(2).spacing([12.0, 6.0]).show(ui, |ui| {
+            for (label, value) in &d.summary {
+                ui.label(*label);
+                ui.label(value);
+                ui.end_row();
+            }
+            for (i, (label, _)) in FIELDS.iter().enumerate().filter(|(i, _)| *i != DESCRIPTION) {
+                ui.label(*label);
+                ui.vertical(|ui| {
+                    let hint = if i == DATE { "YYYY:MM:DD HH:MM:SS" } else { "" };
+                    ui.add(egui::TextEdit::singleline(&mut d.values[i]).hint_text(hint).desired_width(f32::INFINITY));
+                    if i == DATE && !valid_date(&d.values[i]) {
+                        ui.colored_label(ui.visuals().error_fg_color, "Use YYYY:MM:DD HH:MM:SS");
+                    }
                 });
-            }
-            None => {
-                ui.weak("None");
-            }
-        }
-        ui.end_row();
-    });
-    egui::CollapsingHeader::new(format!("Other tags ({})", d.others.len())).show(ui, |ui| {
-        egui::ScrollArea::vertical().max_height(200.0).show(ui, |ui| {
-            for tag in &d.others {
-                ui.monospace(tag);
+                ui.end_row();
             }
         });
+        egui::CollapsingHeader::new(format!("Other tags ({})", d.others.len())).show(ui, |ui| {
+            egui::ScrollArea::vertical().max_height(200.0).show(ui, |ui| {
+                for tag in &d.others {
+                    ui.monospace(tag);
+                }
+            });
+        });
     });
-    ui.weak("Camera maker notes are removed in the saved copy.");
+    egui::CollapsingHeader::new("Location").default_open(true).show(ui, |ui| match d.gps {
+        Some((lat, lon)) => {
+            ui.label(format_location((lat, lon)));
+            ui.horizontal(|ui| {
+                // shortcut: xdg-open is Linux only; use the platform's opener on Windows.
+                let open = |url: String| drop(std::process::Command::new("xdg-open").arg(url).spawn());
+                if ui.button("Open in Google Maps").clicked() {
+                    open(format!("https://www.google.com/maps?q={lat},{lon}"));
+                }
+                if ui.button("OpenStreetMap").clicked() {
+                    open(format!("https://www.openstreetmap.org/?mlat={lat}&mlon={lon}#map=16/{lat}/{lon}"));
+                }
+            });
+            ui.checkbox(&mut d.remove_gps, "Remove location from the copy");
+        }
+        None => {
+            ui.weak("No location in this file");
+        }
+    });
+    egui::CollapsingHeader::new("Accessibility").default_open(true).show(ui, |ui| {
+        ui.label("Image description");
+        ui.add(egui::TextEdit::multiline(&mut d.values[DESCRIPTION]).hint_text("Describe the image for people who can't see it").desired_rows(3).desired_width(f32::INFINITY));
+    });
     ui.add_space(6.0);
-    ui.horizontal(|ui| {
-        let save = ui.add_enabled(valid_date(&d.values[DATE]), egui::Button::new("Save copy…")).clicked();
-        let cancel = ui.button("Cancel").clicked();
-        if save { Some(Choice::Save) } else if cancel { Some(Choice::Cancel) } else { None }
-    }).inner
+    let changed = d.changed();
+    let save = ui.horizontal(|ui| {
+        let save = ui.add_enabled(changed && valid_date(&d.values[DATE]), egui::Button::new("Save copy…")).clicked();
+        if ui.add_enabled(changed, egui::Button::new("Revert")).clicked() {
+            (d.values, d.remove_gps) = (d.original.clone(), false);
+        }
+        save
+    }).inner;
+    ui.weak("Saves a copy of the file with this metadata (without other edits). Camera maker notes are removed.");
+    save
 }
 
 #[cfg(test)]
@@ -264,7 +339,9 @@ mod tests {
         assert_eq!(d.original[1], "Ana");
         assert_eq!(d.original[3], "2020:01:02 03:04:05");
         assert_eq!(d.original[4], "Acme");
-        assert_eq!(d.gps.as_deref(), Some("40.4167° N, 3.7000° W"));
+        assert_eq!(d.gps.map(format_location).as_deref(), Some("40.4167° N, 3.7000° W"));
+        assert!(d.gps.unwrap().1 < 0.0, "west is negative");
+        assert_eq!(d.summary, [("Camera", "Acme".to_string())]);
     }
 
     #[test]

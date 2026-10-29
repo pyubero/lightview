@@ -1,5 +1,6 @@
 use crate::edit::{self, Adjust, Doc, ResizeDialog};
 use crate::exif_edit;
+use crate::inspector::{self, Inspector};
 use crate::load::{self, Frame, Loaded, Loader, Msg, Notify};
 use crate::save;
 use crate::settings::{self, Interpolation, Settings};
@@ -116,7 +117,7 @@ pub struct App {
     settings: Settings,
     show_info: bool,
     show_settings: bool,
-    exif_dialog: Option<exif_edit::Dialog>,
+    inspector: Option<Inspector>,
     files: Vec<PathBuf>,
     index: usize,
     /// Decoded images for current ±1 only.
@@ -171,7 +172,7 @@ impl App {
             push_recent(&mut recent, path);
         }
         App {
-            t0, timings, bench, rx, loader, notify, recent, settings, show_info: false, show_settings: false, exif_dialog: None,
+            t0, timings, bench, rx, loader, notify, recent, settings, show_info: false, show_settings: false, inspector: None,
             files: start.into_iter().collect(), index: 0,
             cache: HashMap::new(), preview: None, error: None, view: View::Fit,
             texture: None, tex_key: None, resized: None, generation: 0, anim_frame: 0, anim_due: None, anim_paused: false,
@@ -461,7 +462,8 @@ impl App {
                 ui.separator();
                 item(ui, "Enter Full Screen", Action::Fullscreen, true, actions);
                 ui.separator();
-                item(ui, "Show Image Information", Action::Info, has_image, actions);
+                let label = if self.show_info { "Hide Image Information" } else { "Show Image Information" };
+                item(ui, label, Action::Info, has_image, actions);
                 ui.separator();
                 let animated = loaded.is_some_and(|l| l.frames.len() > 1);
                 ui.add_enabled_ui(animated, |ui| {
@@ -512,57 +514,30 @@ impl App {
         }
     }
 
-    fn exif_dialog(&mut self, ctx: &egui::Context) {
-        let Some(dialog) = &mut self.exif_dialog else { return };
-        let modal = egui::Modal::new(egui::Id::unique("exif")).show(ctx, |ui| exif_edit::ui(ui, dialog));
-        match modal.inner {
-            Some(exif_edit::Choice::Save) => {
-                let Some(d) = self.exif_dialog.take() else { return };
-                let stem = d.path.file_stem().unwrap_or_default().to_string_lossy();
-                let mut file_dialog = rfd::FileDialog::new().set_file_name(format!("{stem}-edited.jpg")).add_filter("JPEG", &["jpg", "jpeg"]);
-                if let Some(dir) = d.path.parent() {
-                    file_dialog = file_dialog.set_directory(dir);
-                }
-                let notify = self.notify.clone();
-                std::thread::spawn(move || {
-                    if let Some(dest) = file_dialog.save_file() {
-                        let result = exif_edit::write_copy(&d.path, &dest, &d.original, &d.values, d.remove_gps);
-                        notify.send(Msg::Saved(dest, result));
-                    }
-                });
+    /// The inspector sidebar, shown while `show_info` is on.
+    fn inspector(&mut self, ui: &mut egui::Ui) {
+        let (Some(path), true) = (self.current().cloned(), self.show_info) else { return };
+        let Some(l) = self.cache.get(&path) else { return };
+        if self.inspector.as_ref().is_none_or(|i| i.path != path) {
+            self.inspector = Some(Inspector::new(&path));
+        }
+        let doc = self.doc.clone();
+        let ins = self.inspector.as_mut().unwrap();
+        let save = egui::Panel::right("inspector").default_size(320.0).resizable(true).show(ui, |ui| inspector::ui(ui, ins, l, doc.as_ref())).inner;
+        let Some(d) = ins.exif.as_ref().ok().filter(|_| save) else { return };
+        let stem = d.path.file_stem().unwrap_or_default().to_string_lossy();
+        let mut file_dialog = rfd::FileDialog::new().set_file_name(format!("{stem}-edited.jpg")).add_filter("JPEG", &["jpg", "jpeg"]);
+        if let Some(dir) = d.path.parent() {
+            file_dialog = file_dialog.set_directory(dir);
+        }
+        let (source, original, values, remove_gps) = (d.path.clone(), d.original.clone(), d.values.clone(), d.remove_gps);
+        let notify = self.notify.clone();
+        std::thread::spawn(move || {
+            if let Some(dest) = file_dialog.save_file() {
+                let result = exif_edit::write_copy(&source, &dest, &original, &values, remove_gps);
+                notify.send(Msg::Saved(dest, result));
             }
-            Some(exif_edit::Choice::Cancel) => self.exif_dialog = None,
-            None if modal.should_close() => self.exif_dialog = None,
-            None => {}
-        }
-    }
-
-    fn info_dialog(&mut self, ctx: &egui::Context) {
-        let (Some(path), true) = (self.current(), self.show_info) else { return };
-        let Some(l) = self.cache.get(path) else { return };
-        let modal = egui::Modal::new(egui::Id::unique("info")).show(ctx, |ui| {
-            ui.heading("Info");
-            egui::Grid::new("info-grid").num_columns(2).spacing([16.0, 6.0]).show(ui, |ui| {
-                let ext = path.extension().unwrap_or_default().to_string_lossy().to_uppercase();
-                let rows = [
-                    ("Name", path.file_name().unwrap_or_default().to_string_lossy().into_owned()),
-                    ("Folder", path.parent().map(|p| p.display().to_string()).unwrap_or_default()),
-                    ("Dimensions", format!("{} × {} px", l.frames[0].w, l.frames[0].h)),
-                    ("File size", format_size(l.file_size)),
-                    ("Type", if l.frames.len() > 1 { format!("{ext}, {} frames", l.frames.len()) } else { ext }),
-                ];
-                for (k, v) in rows {
-                    ui.label(k);
-                    ui.label(v);
-                    ui.end_row();
-                }
-            });
-            ui.add_space(8.0);
-            ui.button("Close").clicked()
         });
-        if modal.inner || modal.should_close() {
-            self.show_info = false;
-        }
     }
 
     /// Auto Levels for the visible part of the current image.
@@ -693,13 +668,9 @@ impl eframe::App for App {
                 Action::Redo => self.undo_redo(false),
                 Action::Crop if self.doc().is_some() => (self.tool, self.crop_rect) = (Tool::Crop, None),
                 Action::Resize => self.resize_dialog = self.doc().map(|d| ResizeDialog::new(&d)),
-                Action::Info => self.show_info = true,
+                Action::Info => self.show_info = !self.show_info,
                 Action::Settings => self.show_settings = true,
-                Action::EditExif => match self.current().map(|p| exif_edit::read(p)) {
-                    Some(Ok(dialog)) => self.exif_dialog = Some(dialog),
-                    Some(Err(e)) => self.status = Some((format!("Can't edit EXIF: {e}"), Instant::now())),
-                    None => {}
-                },
+                Action::EditExif => self.show_info = true,
                 Action::AdjustColor => {
                     if self.adjusting.is_none() {
                         self.adjusting = self.doc();
@@ -734,6 +705,7 @@ impl eframe::App for App {
             self.tool = Tool::Pan;
         }
 
+        self.inspector(ui);
         let viewport = ui.available_rect_before_wrap();
         let ppp = ctx.pixels_per_point();
         self.loader.set_target([(viewport.width() * ppp) as u32, (viewport.height() * ppp) as u32]);
@@ -918,9 +890,7 @@ impl eframe::App for App {
             }
         }
 
-        self.info_dialog(&ctx);
         self.settings_dialog(&ctx);
-        self.exif_dialog(&ctx);
         self.resize_dialog(&ctx);
         self.adjust_panel(&ctx);
         self.discard_dialog(&ctx);
@@ -964,7 +934,7 @@ fn push_recent(recent: &mut Vec<PathBuf>, path: &std::path::Path) {
     recent.truncate(RECENT_MAX);
 }
 
-fn format_size(bytes: u64) -> String {
+pub fn format_size(bytes: u64) -> String {
     if bytes >= 1_000_000 { format!("{:.1} MB", bytes as f64 / 1e6) } else { format!("{} KB", bytes.div_ceil(1000)) }
 }
 

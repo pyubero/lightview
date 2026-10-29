@@ -1,6 +1,7 @@
 mod app;
 mod edit;
 mod exif_edit;
+mod inspector;
 mod load;
 mod save;
 mod settings;

@@ -18,7 +18,7 @@
 - Scope and targets live in `PROJECT_BRIEF.md`; read it first.
 - Dev machine: Kubuntu, KDE Plasma on Wayland, i7-8750H with turbo OFF (`intel_pstate/no_turbo=1`), so timings are pessimistic.
 - Build/test: `cargo test`, `cargo build --release`. `--timings` prints window/preview/full/navigation ms; `--bench` does the same and quits after the first full image.
-- Modules: `main.rs` startup, `app.rs` UI/state/input, `load.rs` decode pool + EXIF + folder listing, `view.rs` zoom/pan math, `edit.rs` the edit state (`Doc`: crop → transform → size) and `render` for saving.
+- Modules: `main.rs` startup, `app.rs` UI/state/input, `load.rs` decode pool + EXIF + folder listing, `view.rs` zoom/pan math, `edit.rs` the edit state (`Doc`: crop → transform → size → colour) and `render` for saving, `inspector.rs` the sidebar (EXIF sections in `exif_edit.rs`).
 - Install / set as default viewer: `./install.sh` (binary → `~/.local/bin`, desktop file → `~/.local/share/applications`, `xdg-mime default`).
 - Saved data: eframe persistence in `~/.local/share/lightview/app.ron` (keys `recent` and `settings`). `settings::load()` reads that file directly in `main`, so the saved window size applies before the window exists. Keep `persist_window: false` and `persist_egui_memory() = false`, so the window always opens at 1280×720.
 - little_exif gotchas: it panics on unexpected input (wrap with `catch_unwind`), returns *empty* metadata when it can't decode (writing that back wipes EXIF), and trims the NUL padding off fixed-size strings (harmless).
@@ -26,6 +26,7 @@
 - Resize opaque images as RGB (U8x3), not RGBA: 9 ms vs 66 ms for 12 MP → 480×360.
 - libjpeg-turbo is loaded at run time from `libturbojpeg.so.0` (`src/turbo.rs`, via `libloading`); no `-dev` package needed. `--bench` prints every preview drawn with its size (EXIF thumbnail, then the reduced-size decode).
 - `--bench` window times vary 110–230 ms run to run; compare binaries by interleaving runs, and compare image times against each run's own window time.
+- Metadata checks: exiftool isn't installed (running a downloaded copy is blocked); compare with `python3 -I` + PIL 12.3 and `LIGHTVIEW_INSPECT=photo.jpg cargo test print_inspector -- --ignored --nocapture`.
 - M1 result (2026-10-28): eframe alone takes 115–200 ms to the first frame; a 12 MP JPEG takes ~360–410 ms to decode in a fresh process (~190 ms warm) → P1 is ~420 ms, so the 100 ms target is missed.
 
 ## Architecture Decisions
