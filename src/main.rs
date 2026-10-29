@@ -1,4 +1,3 @@
-#[cfg(feature = "ai")]
 mod ai;
 mod app;
 mod edit;

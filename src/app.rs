@@ -62,10 +62,9 @@ enum Action {
     DeleteSelection,
     ImageFromSelection,
     /// Remove Background (false) or Extract Object (true).
-    #[cfg(feature = "ai")]
     Cutout(bool),
-    #[cfg(feature = "ai")]
     DownloadModel(bool),
+    DownloadRuntime,
 }
 
 #[derive(Clone, Copy, PartialEq)]
@@ -266,9 +265,7 @@ impl App {
 
     fn handle(&mut self, msg: Msg) {
         match msg {
-            #[cfg(feature = "ai")]
             Msg::Status(text) => self.status = Some((text, Instant::now())),
-            #[cfg(feature = "ai")]
             Msg::Cutout(path, result) => match result {
                 Ok((img, object)) if self.current() == Some(&path) => {
                     let Some(doc) = self.doc() else { return };
@@ -653,12 +650,13 @@ impl App {
                         actions.push(Action::SelectTool(kind));
                     }
                 }
-                #[cfg(feature = "ai")]
                 {
                     ui.separator();
                     ui.weak("AI Image Processing");
-                    item(ui, "Remove Background", Action::Cutout(false), has_image && crate::ai::BACKGROUND.installed(), actions);
-                    item(ui, "Extract Object", Action::Cutout(true), has_image && crate::ai::OBJECT.installed(), actions);
+                    let runtime = crate::ai::runtime_installed();
+                    item(ui, "Remove Background", Action::Cutout(false), has_image && runtime && crate::ai::BACKGROUND.installed(), actions);
+                    item(ui, "Extract Object", Action::Cutout(true), has_image && runtime && crate::ai::OBJECT.installed(), actions);
+                    item(ui, "Download AI Runtime…", Action::DownloadRuntime, !runtime, actions);
                     item(ui, "Download Background Removal Model…", Action::DownloadModel(false), !crate::ai::BACKGROUND.installed(), actions);
                     item(ui, "Download Object Extraction Model…", Action::DownloadModel(true), !crate::ai::OBJECT.installed(), actions);
                 }
@@ -990,7 +988,6 @@ impl App {
     }
 
     /// Runs background removal (or object extraction) on the edited image, on another thread.
-    #[cfg(feature = "ai")]
     fn cutout(&mut self, extract: bool) {
         let Some((l, doc, path)) = self.current().and_then(|p| Some((self.cache.get(p)?.clone(), self.doc()?, p.clone()))) else { return };
         let model = if extract { &crate::ai::OBJECT } else { &crate::ai::BACKGROUND };
@@ -1206,9 +1203,17 @@ impl eframe::App for App {
                     Err(e) => self.status = Some((format!("Nothing to paste: {e}"), Instant::now())),
                 },
                 Action::DeleteSelection => self.delete_selection(),
-                #[cfg(feature = "ai")]
                 Action::Cutout(extract) => self.cutout(*extract),
-                #[cfg(feature = "ai")]
+                Action::DownloadRuntime => {
+                    self.status = Some(("Downloading the AI runtime…".into(), Instant::now()));
+                    let notify = self.notify.clone();
+                    std::thread::spawn(move || {
+                        notify.send(Msg::Status(match crate::ai::download_runtime() {
+                            Ok(()) => "Installed the AI runtime".into(),
+                            Err(e) => format!("Couldn't install the AI runtime: {e}"),
+                        }));
+                    });
+                }
                 Action::DownloadModel(object) => {
                     let model = if *object { &crate::ai::OBJECT } else { &crate::ai::BACKGROUND };
                     self.status = Some((format!("Downloading the {} model…", model.name), Instant::now()));

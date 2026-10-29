@@ -11,15 +11,12 @@ fast_image_resize = "6.1.0"
 image = { version = "0.25.10", default-features = false, features = ["jpeg", "png", "gif", "webp", "bmp", "tiff"] }
 libloading = "0.8"
 little_exif = "0.6"
-# Only with `--features ai` (Tools → AI Image Processing); downloads ONNX Runtime at build time.
-ort = { version = "=2.0.0-rc.15", optional = true, default-features = false, features = ["std", "download-binaries", "copy-dylibs", "tls-rustls", "api-31"] }
+# ONNX Runtime itself is loaded at run time from the copy Tools → Download AI Runtime… installs.
+ort = { version = "=2.0.0-rc.15", default-features = false, features = ["std", "load-dynamic", "api-31"] }
 rfd = "0.17.2"
 ron = "0.12"
 serde = { version = "1.0.229", features = ["derive"] }
 tiny-skia = { version = "0.11.4", default-features = false, features = ["std", "simd"] }
-
-[features]
-ai = ["dep:ort"]
 
 # Unoptimised decoders are 10–50× slower; keep dependencies fast in debug builds.
 [profile.dev.package."*"]

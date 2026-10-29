@@ -84,6 +84,13 @@ Numbering continues from v1.
 - Runtime: the `ort` crate (ONNX Runtime). Not in the default build or in `install.sh`.
 - **Done when** `cargo tree` shows no ONNX code in the default build, and the `ai` build removes the background from a test photo.
 
+### 16. AI runtime on request ✅ (2026-10-29)
+- One binary for everyone: the `ai` cargo feature is gone. `ort` loads ONNX Runtime at run time (load-dynamic), the first time an AI tool runs, never at startup.
+- Tools → Download AI Runtime… fetches Microsoft's ONNX Runtime 1.31.1 for Linux x64 (11 MB) and installs only `libonnxruntime.so.1.31.1` in `~/.local/share/lightview/lib`. Remove Background / Extract Object stay greyed out until the runtime and their model are installed.
+- Every download (runtime and models) is checked against a SHA-256 pinned in the code; a mismatch is deleted.
+- Linux only for now (system `curl`, `sha256sum`, `tar`).
+- **Done when** the lean binary links no ONNX Runtime (`ldd`), the runtime installs through the app's own code, and background removal gives the same result as the built-in version.
+
 ## Non-goals (v2)
 - JPEG 2000
 - Smart lasso

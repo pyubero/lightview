@@ -40,9 +40,7 @@ pub enum Msg {
     Saved(PathBuf, Result<(), String>),
     /// Background removal finished for this image: the cut-out, and the object's bounds
     /// when extracting it.
-    #[cfg(feature = "ai")]
     Cutout(PathBuf, Result<(image::RgbaImage, Option<egui::Rect>), String>),
-    #[cfg(feature = "ai")]
     Status(String),
 }
 
