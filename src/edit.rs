@@ -1,4 +1,5 @@
 use crate::load::Frame;
+use crate::markup::{self, Element};
 use crate::view::Transform;
 use eframe::egui::{self, Pos2, Rect, Vec2};
 use fast_image_resize::{FilterType, PixelType, ResizeAlg, ResizeOptions, Resizer, images::{Image, ImageRef}};
@@ -16,6 +17,8 @@ pub struct Doc {
     /// Written into saved JPEGs; None keeps the default.
     pub dpi: Option<u16>,
     pub adjust: Adjust,
+    /// Markup, in output px; flattened into the image when saving.
+    pub elements: Vec<Element>,
 }
 
 /// Colour adjustments. All zero (the default) changes nothing.
@@ -106,7 +109,7 @@ pub fn auto_levels(frame: &Frame, crop: Rect) -> [[u8; 2]; 3] {
 impl Doc {
     /// No edits on a `w`×`h` image.
     pub fn new(w: u32, h: u32) -> Self {
-        Doc { crop: Rect::from_min_size(Pos2::ZERO, Vec2::new(w as f32, h as f32)), transform: Transform::default(), size: [w, h], dpi: None, adjust: Adjust::default() }
+        Doc { crop: Rect::from_min_size(Pos2::ZERO, Vec2::new(w as f32, h as f32)), transform: Transform::default(), size: [w, h], dpi: None, adjust: Adjust::default(), elements: Vec::new() }
     }
 
     pub fn size_vec(&self) -> Vec2 {
@@ -134,21 +137,37 @@ impl Doc {
         self.transform.to_source(scaled, self.crop.size()).translate(self.crop.min.to_vec2())
     }
 
+    /// Moves the markup along with a geometric edit.
+    /// shortcut: text and pasted images move but don't turn with a rotate/flip; turn them too if that looks wrong.
+    fn map_elements(&mut self, f: impl Fn(Pos2) -> Pos2, scale: f32) {
+        for e in &mut self.elements {
+            e.map(&f, scale);
+        }
+    }
+
     pub fn rotate_right(&mut self) {
+        let h = self.size_vec().y;
+        self.map_elements(|p| Pos2::new(h - p.y, p.x), 1.0);
         self.transform = self.transform.rotate_right();
         self.size = [self.size[1], self.size[0]];
     }
 
     pub fn rotate_left(&mut self) {
+        let w = self.size_vec().x;
+        self.map_elements(|p| Pos2::new(p.y, w - p.x), 1.0);
         self.transform = self.transform.rotate_left();
         self.size = [self.size[1], self.size[0]];
     }
 
     pub fn flip_horizontal(&mut self) {
+        let w = self.size_vec().x;
+        self.map_elements(|p| Pos2::new(w - p.x, p.y), 1.0);
         self.transform = self.transform.flip_horizontal();
     }
 
     pub fn flip_vertical(&mut self) {
+        let h = self.size_vec().y;
+        self.map_elements(|p| Pos2::new(p.x, h - p.y), 1.0);
         self.transform = self.transform.flip_vertical();
     }
 
@@ -160,6 +179,7 @@ impl Doc {
         }
         self.crop = self.to_source(r);
         self.size = [r.width() as u32, r.height() as u32];
+        self.map_elements(|p| p - r.min.to_vec2(), 1.0);
     }
 
     /// ΔX, ΔY and the distance from `a` to `b` (output px), in the original image's pixels
@@ -172,7 +192,10 @@ impl Doc {
 
     /// Scales the output to `w`×`h` px.
     pub fn resize(&mut self, w: u32, h: u32) {
+        let old = self.size_vec();
         self.size = [w.max(1), h.max(1)];
+        let scale = self.size_vec() / old;
+        self.map_elements(|p| Pos2::new(p.x * scale.x, p.y * scale.y), (scale.x * scale.y).sqrt());
     }
 }
 
@@ -210,6 +233,11 @@ pub fn render(frame: &Frame, doc: &Doc) -> Result<DynamicImage, String> {
         DynamicImage::ImageRgba8(i) => doc.adjust.apply(i, 4),
         DynamicImage::ImageRgb8(i) => doc.adjust.apply(i, 3),
         _ => unreachable!("to_dynamic only makes RGB(A)"),
+    }
+    if !doc.elements.is_empty() {
+        let mut rgba = img.into_rgba8();
+        markup::flatten(&mut rgba, &doc.elements);
+        img = if frame.alpha { DynamicImage::ImageRgba8(rgba) } else { DynamicImage::ImageRgb8(DynamicImage::ImageRgba8(rgba).into_rgb8()) };
     }
     Ok(img)
 }
@@ -375,6 +403,36 @@ mod tests {
                 }
             }
         }
+    }
+
+    #[test]
+    fn markup_follows_geometric_edits() {
+        use crate::markup::{Shape, Style};
+        // A dot drawn on pixel (1, 0) of the 6×5 frame stays on that image pixel through any edit.
+        let mut doc = Doc::new(6, 5);
+        let mut dot = Element::new(Shape::Line, Pos2::new(1.2, 0.5), Style { width: 0.5, ..Style::for_image(Vec2::splat(6.0)) });
+        dot.points[1] = Pos2::new(1.8, 0.5);
+        doc.elements.push(dot);
+        let marked = |doc: &Doc| {
+            let px = |e: &Element| e.points[0].lerp(e.points[1], 0.5);
+            doc.source_point(px(&doc.elements[0]))
+        };
+        type Step = fn(&mut Doc);
+        let steps: [Step; 5] = [Doc::rotate_right, Doc::rotate_left, Doc::flip_horizontal, Doc::flip_vertical, |d| d.resize(d.size[0] * 2, d.size[1] * 3)];
+        for a in 0..5 {
+            for b in 0..5 {
+                let mut d = doc.clone();
+                steps[a](&mut d);
+                steps[b](&mut d);
+                assert!((marked(&d) - Pos2::new(1.5, 0.5)).length() < 1e-3, "steps {a} {b}: {:?}", marked(&d));
+            }
+        }
+        let mut d = doc.clone();
+        d.crop_to(rect(1.0, 0.0, 3.0, 3.0));
+        assert!((marked(&d) - Pos2::new(1.5, 0.5)).length() < 1e-3);
+        // And it's flattened into the saved image (the frame is dark, the default colour is red).
+        let out = render(&frame(), &doc).unwrap().to_rgb8();
+        assert!(out.get_pixel(1, 0)[0] > 100);
     }
 
     #[test]

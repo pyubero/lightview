@@ -3,6 +3,7 @@ mod edit;
 mod exif_edit;
 mod inspector;
 mod load;
+mod markup;
 mod save;
 mod settings;
 mod turbo;

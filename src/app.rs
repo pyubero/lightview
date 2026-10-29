@@ -2,13 +2,14 @@ use crate::edit::{self, Adjust, Doc, ResizeDialog};
 use crate::exif_edit;
 use crate::inspector::{self, Inspector};
 use crate::load::{self, Frame, Loaded, Loader, Msg, Notify};
+use crate::markup::{self, Element, Pick, Shape, Style};
 use crate::save;
 use crate::settings::{self, Interpolation, Settings};
 use crate::view::{self, Transform, View};
 use eframe::egui::{self, Color32, ColorImage, CursorIcon, Key, KeyboardShortcut, Modifiers, Pos2, Rect, Sense, TextureFilter, TextureHandle, TextureOptions, Vec2, ViewportCommand};
 use std::collections::HashMap;
 use std::path::PathBuf;
-use std::sync::mpsc;
+use std::sync::{Arc, mpsc};
 use std::time::Instant;
 
 const RECENT_MAX: usize = 10;
@@ -47,6 +48,11 @@ enum Action {
     AutoLevels,
     ResetAdjust,
     Measure,
+    ShowToolbar,
+    Pick(Pick),
+    /// Border/Fill Color…: show the toolbar's style controls.
+    StyleControls,
+    Describe,
 }
 
 /// What dragging on the image does.
@@ -55,6 +61,16 @@ enum Tool {
     Pan,
     Crop,
     Measure,
+    Select,
+    Draw(Shape),
+}
+
+/// What dragging with the Select tool does.
+#[derive(Clone, Copy, PartialEq)]
+enum Grab {
+    None,
+    Move,
+    Resize,
 }
 
 /// What to do once the user agrees to discard unsaved edits.
@@ -123,7 +139,8 @@ pub struct App {
     files: Vec<PathBuf>,
     index: usize,
     /// Decoded images for current ±1 only.
-    cache: HashMap<PathBuf, Loaded>,
+    // Arc so a frame can hold the current image while calling `&mut self` methods.
+    cache: HashMap<PathBuf, Arc<Loaded>>,
     preview: Option<Frame>,
     error: Option<String>,
     view: View,
@@ -150,6 +167,18 @@ pub struct App {
     /// Measure tool: the two endpoints (image px) and which one is being dragged.
     measure: Option<[Pos2; 2]>,
     measure_drag: usize,
+    show_toolbar: bool,
+    /// The style for new markup (None until the toolbar is first used on this image).
+    style: Option<Style>,
+    selected: Option<usize>,
+    grab: Grab,
+    /// The text element being typed into.
+    editing_text: Option<usize>,
+    focus_text: bool,
+    /// The edits before the markup change in progress (a drag or typing), for one undo step.
+    change_base: Option<Doc>,
+    /// The element whose style the last undo step changed, so style tweaks merge into one step.
+    last_restyle: Option<usize>,
     resize_dialog: Option<ResizeDialog>,
     /// While the Adjust Color panel is open: the edits from before it opened.
     adjusting: Option<Doc>,
@@ -181,7 +210,9 @@ impl App {
             files: start.into_iter().collect(), index: 0,
             cache: HashMap::new(), preview: None, error: None, view: View::Fit,
             texture: None, tex_key: None, resized: None, generation: 0, anim_frame: 0, anim_due: None, anim_paused: false,
-            doc: None, undo: Vec::new(), redo: Vec::new(), saved: None, saving: None, tool: Tool::Pan, drag_start: None, crop_rect: None, measure: None, measure_drag: 1, resize_dialog: None, adjusting: None, pending: None,
+            doc: None, undo: Vec::new(), redo: Vec::new(), saved: None, saving: None, tool: Tool::Pan, drag_start: None, crop_rect: None, measure: None, measure_drag: 1,
+            show_toolbar: false, style: None, selected: None, grab: Grab::None, editing_text: None, focus_text: false, change_base: None, last_restyle: None,
+            resize_dialog: None, adjusting: None, pending: None,
             title: String::new(),
             window_reported: false, preview_reported: None, full_reported: false, nav_start: None, close_next: false, status: None,
         }
@@ -228,7 +259,7 @@ impl App {
                         self.preview = None;
                         self.generation += 1;
                     }
-                    self.cache.insert(path, loaded);
+                    self.cache.insert(path, Arc::new(loaded));
                 }
             }
             Msg::Error(path, e) => {
@@ -289,6 +320,69 @@ impl App {
             self.undo.push(before);
             self.redo.clear();
             self.doc = Some(doc);
+            self.last_restyle = None;
+        }
+    }
+
+    /// The current edits, to change in place; pair with `commit`.
+    fn doc_mut(&mut self) -> Option<&mut Doc> {
+        if self.doc.is_none() {
+            self.doc = self.base_doc();
+        }
+        self.doc.as_mut()
+    }
+
+    /// Ends an in-place change that started from `before`, as one undo step.
+    fn commit(&mut self, before: Doc) {
+        if self.doc.as_ref() != Some(&before) {
+            self.undo.push(before);
+            self.redo.clear();
+        }
+        self.last_restyle = None;
+    }
+
+    /// Changes element `i`'s style; consecutive changes to one element are one undo step.
+    fn restyle(&mut self, i: usize, style: Style) {
+        if self.last_restyle == Some(i) {
+            if let Some(e) = self.doc_mut().and_then(|d| d.elements.get_mut(i)) {
+                e.style = style;
+            }
+        } else {
+            self.edit(|d| d.elements[i].style = style);
+            self.last_restyle = Some(i);
+        }
+    }
+
+    fn pick(&self) -> Option<Pick> {
+        match self.tool {
+            Tool::Select => Some(Pick::Select),
+            Tool::Draw(s) => Some(Pick::Draw(s)),
+            Tool::Measure => Some(Pick::Measure),
+            _ => None,
+        }
+    }
+
+    fn set_pick(&mut self, pick: Pick) {
+        self.finish_text();
+        (self.crop_rect, self.selected) = (None, None);
+        self.tool = match pick {
+            Pick::Select => Tool::Select,
+            Pick::Draw(s) => Tool::Draw(s),
+            Pick::Measure => Tool::Measure,
+        };
+        self.show_toolbar = true;
+    }
+
+    /// Stops typing into a text element; an empty one is removed.
+    fn finish_text(&mut self) {
+        let Some(i) = self.editing_text.take() else { return };
+        if let Some(d) = self.doc_mut()
+            && d.elements.get(i).is_some_and(Element::is_empty)
+        {
+            d.elements.remove(i);
+        }
+        if let Some(before) = self.change_base.take() {
+            self.commit(before);
         }
     }
 
@@ -296,6 +390,7 @@ impl App {
         let Some(current) = self.doc() else { return };
         let (from, to) = if undo { (&mut self.undo, &mut self.redo) } else { (&mut self.redo, &mut self.undo) };
         let Some(doc) = from.pop() else { return };
+        (self.selected, self.editing_text, self.change_base, self.last_restyle) = (None, None, None, None);
         to.push(current);
         if self.doc.as_ref().is_none_or(|d| d.geometry() != doc.geometry()) {
             (self.view, self.measure) = (View::Fit, None);
@@ -359,6 +454,7 @@ impl App {
         self.crop_rect = None;
         self.measure = None;
         self.adjusting = None;
+        (self.style, self.selected, self.grab, self.editing_text, self.change_base, self.last_restyle) = (None, None, Grab::None, None, None, None);
     }
 
     fn open_dialog(&self) {
@@ -500,6 +596,27 @@ impl App {
                     });
                 });
             });
+            ui.menu_button("Draw", |ui| {
+                let label = if self.show_toolbar { "Hide Drawing Toolbar" } else { "Show Drawing Toolbar" };
+                item(ui, label, Action::ShowToolbar, has_image, actions);
+                ui.separator();
+                item(ui, "Sketch", Action::Pick(Pick::Draw(Shape::Sketch)), has_image, actions);
+                ui.add_enabled_ui(has_image, |ui| {
+                    ui.menu_button("Shapes", |ui| {
+                        for (shape, name) in markup::SHAPES {
+                            item(ui, name, Action::Pick(Pick::Draw(shape)), true, actions);
+                        }
+                    });
+                });
+                item(ui, "Text", Action::Pick(Pick::Draw(Shape::Text)), has_image, actions);
+                item(ui, "Text Formatting…", Action::Pick(Pick::Draw(Shape::Text)), has_image, actions);
+                item(ui, "Border Color…", Action::StyleControls, has_image, actions);
+                item(ui, "Fill Color…", Action::StyleControls, has_image, actions);
+                item(ui, "Highlight", Action::Pick(Pick::Draw(Shape::Highlight)), has_image, actions);
+                item(ui, "Magnifier", Action::Pick(Pick::Draw(Shape::Magnifier)), has_image, actions);
+                ui.separator();
+                item(ui, "Image Description…", Action::Describe, has_image, actions);
+            });
             if ui.button("Settings").clicked() {
                 actions.push(Action::Settings);
             }
@@ -549,6 +666,173 @@ impl App {
                 notify.send(Msg::Saved(dest, result));
             }
         });
+    }
+
+    /// The markup toolbar, below the menu bar.
+    fn toolbar(&mut self, ui: &mut egui::Ui, actions: &mut Vec<Action>) {
+        let Some(doc) = self.doc() else { return };
+        let defaults = *self.style.get_or_insert_with(|| Style::for_image(doc.size_vec()));
+        let selected = self.selected.and_then(|i| doc.elements.get(i));
+        let (mut style, styled) = match (selected, self.tool) {
+            (Some(e), _) => (e.style, Some(e.shape)),
+            (None, Tool::Draw(shape)) => (defaults, Some(shape)),
+            _ => (defaults, None),
+        };
+        let pick = self.pick();
+        let out = egui::Panel::top("markup").show(ui, |ui| markup::toolbar_ui(ui, pick, &mut style, styled, !self.undo.is_empty(), !self.redo.is_empty())).inner;
+        if out.style_changed {
+            match self.selected {
+                Some(i) => self.restyle(i, style),
+                None => self.style = Some(style),
+            }
+        }
+        actions.extend(out.pick.map(Action::Pick));
+        actions.extend(out.undo.then_some(Action::Undo));
+        actions.extend(out.redo.then_some(Action::Redo));
+        actions.extend(out.describe.then_some(Action::Describe));
+        actions.extend(out.done.then_some(Action::ShowToolbar));
+    }
+
+    /// Select and Draw tools: dragging and clicking on the image. `dest`/`vis` is the layout.
+    fn markup_input(&mut self, ctx: &egui::Context, drag: &egui::Response, dest: Rect, vis: Rect, doc: &Doc) {
+        if drag.hovered() && self.tool != Tool::Select {
+            ctx.set_cursor_icon(CursorIcon::Crosshair);
+        }
+        let k = dest.width() / vis.width();
+        let bounds = Rect::from_min_size(Pos2::ZERO, doc.size_vec());
+        let at = |p: Pos2| bounds.clamp(view::to_image(dest, vis, p));
+        let origin = ctx.input(|i| i.pointer.press_origin());
+        let pointer = drag.interact_pointer_pos();
+        let style = *self.style.get_or_insert_with(|| Style::for_image(doc.size_vec()));
+        let hit = |p: Pos2| doc.elements.iter().rposition(|e| e.bbox().expand(6.0 / k).contains(p));
+        match self.tool {
+            Tool::Draw(shape @ (Shape::Text | Shape::Magnifier)) => {
+                if drag.clicked() && let Some(p) = pointer.map(at) {
+                    self.finish_text();
+                    let mut e = Element::new(shape, p, style);
+                    if shape == Shape::Magnifier {
+                        e.points[1] = p + Vec2::new(bounds.width().min(bounds.height()) / 8.0, 0.0);
+                    }
+                    let Some(d) = self.doc_mut() else { return };
+                    d.elements.push(e);
+                    let i = d.elements.len() - 1;
+                    if shape == Shape::Text {
+                        (self.editing_text, self.focus_text, self.change_base) = (Some(i), true, Some(doc.clone()));
+                    } else {
+                        self.commit(doc.clone());
+                    }
+                }
+            }
+            Tool::Draw(shape) => {
+                if drag.drag_started() && let Some(o) = origin {
+                    self.change_base = Some(doc.clone());
+                    if let Some(d) = self.doc_mut() {
+                        d.elements.push(Element::new(shape, at(o), style));
+                    }
+                }
+                if drag.dragged() && self.change_base.is_some() && let Some(p) = pointer.map(at) {
+                    let e = self.doc_mut().and_then(|d| d.elements.last_mut());
+                    match e {
+                        Some(e) if shape == Shape::Sketch => {
+                            if e.points.last().is_none_or(|q| q.distance(p) * k >= 1.0) {
+                                e.points.push(p);
+                            }
+                        }
+                        Some(e) => e.points[1] = p,
+                        None => {}
+                    }
+                }
+                if drag.drag_stopped() && let Some(before) = self.change_base.take() {
+                    if let Some(d) = self.doc_mut()
+                        && d.elements.last().is_some_and(Element::is_empty)
+                    {
+                        d.elements.pop();
+                    }
+                    self.commit(before);
+                }
+            }
+            _ => {
+                // Select.
+                if drag.clicked() {
+                    self.finish_text();
+                    self.selected = pointer.map(at).and_then(hit);
+                }
+                if drag.double_clicked() && let Some(i) = self.selected.filter(|&i| doc.elements[i].shape == Shape::Text) {
+                    (self.editing_text, self.focus_text, self.change_base) = (Some(i), true, Some(doc.clone()));
+                }
+                if drag.drag_started() && let Some(o) = origin {
+                    let handle = self.selected.and_then(|i| doc.elements.get(i)).is_some_and(|e| view::to_screen(dest, vis, e.bbox().max).distance(o) < 10.0);
+                    self.grab = if handle {
+                        Grab::Resize
+                    } else if let Some(i) = hit(at(o)) {
+                        self.selected = Some(i);
+                        Grab::Move
+                    } else {
+                        Grab::None
+                    };
+                    if self.grab != Grab::None {
+                        self.change_base = Some(doc.clone());
+                    }
+                }
+                if drag.dragged() && self.grab != Grab::None && let Some(i) = self.selected {
+                    let delta = drag.drag_delta() / k;
+                    let grab = self.grab;
+                    if let Some(e) = self.doc_mut().and_then(|d| d.elements.get_mut(i)) {
+                        match (grab, e.shape) {
+                            (Grab::Move, _) => e.translate(delta),
+                            (_, Shape::Magnifier) => e.points[1] += delta,
+                            _ => {
+                                // Scale about the top-left corner so the handle follows the pointer.
+                                let b = e.bbox();
+                                let f = ((b.size() + delta) / b.size()).max(Vec2::splat(0.05));
+                                if e.shape == Shape::Text {
+                                    e.style.font_size = (e.style.font_size * f.y).max(4.0);
+                                } else {
+                                    e.map(|p| b.min + (p - b.min) * f, 1.0);
+                                }
+                            }
+                        }
+                    }
+                }
+                if drag.drag_stopped() && let Some(before) = self.change_base.take() {
+                    self.grab = Grab::None;
+                    self.commit(before);
+                }
+            }
+        }
+    }
+
+    /// Draws the markup over the image, plus the selection and the text being typed.
+    #[allow(clippy::too_many_arguments)]
+    fn paint_markup(&mut self, ui: &egui::Ui, doc: &Doc, dest: Rect, crop: Rect, texture: egui::TextureId, uv: &dyn Fn(Pos2) -> Pos2) {
+        let k = dest.width() / crop.width();
+        let to_screen = |p: Pos2| view::to_screen(dest, crop, p);
+        let painter = ui.painter().with_clip_rect(dest);
+        for (i, e) in doc.elements.iter().enumerate() {
+            if Some(i) != self.editing_text {
+                markup::paint(&painter, e, &to_screen, k, texture, uv);
+            }
+        }
+        if self.tool == Tool::Select && let Some(e) = self.selected.and_then(|i| doc.elements.get(i)) {
+            let r = Rect::from_two_pos(to_screen(e.bbox().min), to_screen(e.bbox().max)).expand(3.0);
+            painter.rect_stroke(r, 0.0, egui::Stroke::new(1.0, Color32::from_rgb(66, 165, 245)), egui::StrokeKind::Outside);
+            painter.rect_filled(Rect::from_center_size(r.max, Vec2::splat(9.0)), 1.0, Color32::from_rgb(66, 165, 245));
+        }
+        let Some(i) = self.editing_text else { return };
+        let Some(e) = doc.elements.get(i) else { return };
+        let mut text = e.text.clone();
+        let font = egui::FontId::proportional(e.style.font_size * k);
+        let edit = egui::TextEdit::multiline(&mut text).font(font).text_color(e.style.color).frame(egui::Frame::NONE).desired_width(f32::INFINITY.min(dest.right() - to_screen(e.points[0]).x).max(40.0)).desired_rows(1);
+        let response = egui::Area::new(egui::Id::unique("markup-text")).fixed_pos(to_screen(e.points[0])).order(egui::Order::Foreground).show(ui.ctx(), |ui| ui.add(edit)).inner;
+        if std::mem::take(&mut self.focus_text) {
+            response.request_focus();
+        }
+        if text != e.text && let Some(e) = self.doc_mut().and_then(|d| d.elements.get_mut(i)) {
+            e.text = text;
+        }
+        if response.lost_focus() {
+            self.finish_text();
+        }
     }
 
     /// Auto Levels for the visible part of the current image.
@@ -659,14 +943,21 @@ impl eframe::App for App {
             self.pending = Some(Pending::Close);
         }
 
-        // Plain keys (arrows, F11) belong to a text field while one has focus.
+        // Plain keys (arrows, F11) and undo belong to a text field while one has focus.
         let typing = ctx.egui_wants_keyboard_input();
         let mut actions: Vec<Action> = ctx.input_mut(|i| {
-            SHORTCUTS.iter().filter(|(sc, _)| !(typing && sc.modifiers.is_none()) && i.consume_shortcut(sc)).map(|(_, a)| a.clone()).collect()
+            SHORTCUTS
+                .iter()
+                .filter(|(sc, a)| !(typing && (sc.modifiers.is_none() || matches!(a, Action::Undo | Action::Redo))) && i.consume_shortcut(sc))
+                .map(|(_, a)| a.clone())
+                .collect()
         });
         let (esc, fullscreen) = ctx.input(|i| (i.key_pressed(Key::Escape), i.viewport().fullscreen.unwrap_or(false)));
         if !fullscreen {
             egui::Panel::top("menu").show(ui, |ui| self.menu_bar(ui, &mut actions));
+            if self.show_toolbar {
+                self.toolbar(ui, &mut actions);
+            }
         }
         for action in &actions {
             match action {
@@ -695,6 +986,21 @@ impl eframe::App for App {
                 Action::ResetAdjust => self.edit(|d| d.adjust = Adjust::default()),
                 Action::Measure if self.tool == Tool::Measure => (self.tool, self.measure) = (Tool::Pan, None),
                 Action::Measure if self.doc().is_some() => (self.tool, self.crop_rect) = (Tool::Measure, None),
+                Action::ShowToolbar => {
+                    self.show_toolbar = !self.show_toolbar;
+                    if !self.show_toolbar {
+                        self.finish_text();
+                        (self.tool, self.selected) = (Tool::Pan, None);
+                    }
+                }
+                Action::Pick(pick) if self.doc().is_some() => self.set_pick(*pick),
+                Action::StyleControls if self.doc().is_some() => {
+                    if !matches!(self.tool, Tool::Select | Tool::Draw(_)) {
+                        self.set_pick(Pick::Draw(Shape::Rect));
+                    }
+                    self.show_toolbar = true;
+                }
+                Action::Describe => self.show_info = true,
                 Action::RotateLeft => self.edit(Doc::rotate_left),
                 Action::RotateRight => self.edit(Doc::rotate_right),
                 Action::FlipHorizontal => self.edit(Doc::flip_horizontal),
@@ -708,14 +1014,21 @@ impl eframe::App for App {
             }
         }
         let enter = !typing && ctx.input(|i| i.key_pressed(Key::Enter));
-        if esc && self.tool != Tool::Pan {
-            (self.tool, self.crop_rect, self.measure) = (Tool::Pan, None, None);
-        } else if esc && fullscreen {
+        let delete = !typing && ctx.input(|i| i.key_pressed(Key::Delete) || i.key_pressed(Key::Backspace));
+        if esc && !typing && let Some(before) = self.change_base.take() {
+            // Cancel the drawing in progress.
+            (self.doc, self.grab) = (Some(before), Grab::None);
+        } else if esc && !typing && self.tool != Tool::Pan {
+            (self.tool, self.crop_rect, self.measure, self.selected) = (Tool::Pan, None, None, None);
+        } else if esc && !typing && fullscreen {
             ctx.send_viewport_cmd(ViewportCommand::Fullscreen(false));
         }
         if enter && self.tool == Tool::Crop && let Some(r) = self.crop_rect.take() {
             self.edit(|d| d.crop_to(r));
             self.tool = Tool::Pan;
+        }
+        if delete && self.tool == Tool::Select && let Some(i) = self.selected.take() {
+            self.edit(|d| drop(d.elements.remove(i)));
         }
 
         self.inspector(ui);
@@ -723,15 +1036,20 @@ impl eframe::App for App {
         let ppp = ctx.pixels_per_point();
         self.loader.set_target([(viewport.width() * ppp) as u32, (viewport.height() * ppp) as u32]);
         let doc = self.doc();
-        let full = self.current().and_then(|p| self.cache.get(p));
+        let full = self.current().and_then(|p| self.cache.get(p)).cloned();
+        let full = full.as_deref();
 
         // Zoom and pan only once the full image is in (the preview has different pixel sizes).
         if let (Some(l), Some(doc)) = (full, &doc) {
             let img = doc.size_vec();
-            let drag = ui.interact(viewport, ui.scope_id().with("image"), Sense::drag());
+            let drag = ui.interact(viewport, ui.scope_id().with("image"), Sense::click_and_drag());
             match self.tool {
                 Tool::Pan if drag.dragged() => self.view = view::pan(self.view, drag.drag_delta(), img, viewport, ppp),
                 Tool::Pan => {}
+                Tool::Select | Tool::Draw(_) => {
+                    let (dest, vis) = view::layout(self.view, img, viewport, ppp);
+                    self.markup_input(&ctx, &drag, dest, vis, doc);
+                }
                 Tool::Crop | Tool::Measure => {
                     if drag.hovered() {
                         ctx.set_cursor_icon(CursorIcon::Crosshair);
@@ -862,6 +1180,12 @@ impl eframe::App for App {
             } else {
                 ui.painter().image(texture, dest, Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)), Color32::WHITE);
             }
+            let frame_wh = [frame.w, frame.h];
+            if !doc.elements.is_empty() || self.editing_text.is_some() {
+                // The magnifier samples the image texture: the whole frame (GPU) or the visible part (CPU).
+                let uv = |p: Pos2| if gpu { (doc.source_point(p).to_vec2() / frame_size).to_pos2() } else { ((p - crop.min) / crop.size()).to_pos2() };
+                self.paint_markup(ui, &doc, dest, crop, texture, &uv);
+            }
             if self.tool == Tool::Crop {
                 let painter = ui.painter().with_clip_rect(dest);
                 let shade = Color32::from_black_alpha(140);
@@ -904,9 +1228,9 @@ impl eframe::App for App {
             }
 
             if self.timings {
-                if full.is_none() && self.preview_reported != Some([frame.w, frame.h]) {
-                    eprintln!("preview     {:.1} ms  ({}×{})", ms(self.t0), frame.w, frame.h);
-                    self.preview_reported = Some([frame.w, frame.h]);
+                if full.is_none() && self.preview_reported != Some(frame_wh) {
+                    eprintln!("preview     {:.1} ms  ({}×{})", ms(self.t0), frame_wh[0], frame_wh[1]);
+                    self.preview_reported = Some(frame_wh);
                 }
                 if full.is_some() && !self.full_reported {
                     eprintln!("full image  {:.1} ms", ms(self.t0));

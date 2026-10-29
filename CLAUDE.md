@@ -18,7 +18,7 @@
 - Scope and targets live in `PROJECT_BRIEF.md`; read it first.
 - Dev machine: Kubuntu, KDE Plasma on Wayland, i7-8750H with turbo OFF (`intel_pstate/no_turbo=1`), so timings are pessimistic.
 - Build/test: `cargo test`, `cargo build --release`. `--timings` prints window/preview/full/navigation ms; `--bench` does the same and quits after the first full image.
-- Modules: `main.rs` startup, `app.rs` UI/state/input, `load.rs` decode pool + EXIF + folder listing, `view.rs` zoom/pan math, `edit.rs` the edit state (`Doc`: crop → transform → size → colour) and `render` for saving, `inspector.rs` the sidebar (EXIF sections in `exif_edit.rs`).
+- Modules: `main.rs` startup, `app.rs` UI/state/input, `load.rs` decode pool + EXIF + folder listing, `view.rs` zoom/pan math, `edit.rs` the edit state (`Doc`: crop → transform → size → colour) and `render` for saving, `inspector.rs` the sidebar (EXIF sections in `exif_edit.rs`), `markup.rs` markup elements: egui painting, tiny-skia/ab_glyph flattening, toolbar.
 - Install / set as default viewer: `./install.sh` (binary → `~/.local/bin`, desktop file → `~/.local/share/applications`, `xdg-mime default`).
 - Saved data: eframe persistence in `~/.local/share/lightview/app.ron` (keys `recent` and `settings`). `settings::load()` reads that file directly in `main`, so the saved window size applies before the window exists. Keep `persist_window: false` and `persist_egui_memory() = false`, so the window always opens at 1280×720.
 - little_exif gotchas: it panics on unexpected input (wrap with `catch_unwind`), returns *empty* metadata when it can't decode (writing that back wipes EXIF), and trims the NUL padding off fixed-size strings (harmless).
