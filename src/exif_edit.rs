@@ -262,8 +262,7 @@ pub fn sections_ui(ui: &mut egui::Ui, d: &mut Dialog) -> bool {
         Some((lat, lon)) => {
             ui.label(format_location((lat, lon)));
             ui.horizontal_wrapped(|ui| {
-                // shortcut: xdg-open is Linux only; use the platform's opener on Windows.
-                let open = |url: String| drop(std::process::Command::new("xdg-open").arg(url).spawn());
+                let open = |url: String| crate::platform::open(url);
                 if ui.button(tr("Open in Google Maps")).clicked() {
                     open(format!("https://www.google.com/maps?q={lat},{lon}"));
                 }

@@ -1,3 +1,6 @@
+// No console window behind the app on Windows (debug builds keep it, for --timings output).
+#![cfg_attr(all(windows, not(debug_assertions)), windows_subsystem = "windows")]
+
 mod ai;
 mod app;
 mod edit;
@@ -6,6 +9,7 @@ mod i18n;
 mod inspector;
 mod load;
 mod markup;
+mod platform;
 mod save;
 mod settings;
 mod turbo;

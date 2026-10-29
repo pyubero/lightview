@@ -11,17 +11,29 @@ use std::sync::OnceLock;
 use std::sync::atomic::{AtomicBool, Ordering};
 
 /// Microsoft's CPU build of ONNX Runtime, the version `ort` (api-31) is made for.
+#[cfg(not(windows))]
 const RUNTIME_URL: &str = "https://github.com/microsoft/onnxruntime/releases/download/v1.31.1/onnxruntime-linux-x64-1.31.1.tgz";
+#[cfg(not(windows))]
 const RUNTIME_SHA256: &str = "c849e36a1ef3e22d4ff217b9d1ce4a3cf5b9467b975610913ae959ad5b16bdc9";
 /// The library inside the archive, and its name once installed.
+#[cfg(not(windows))]
 const RUNTIME_MEMBER: &str = "onnxruntime-linux-x64-1.31.1/lib/libonnxruntime.so.1.31.1";
+#[cfg(not(windows))]
 const RUNTIME_FILE: &str = "libonnxruntime.so.1.31.1";
+#[cfg(windows)]
+const RUNTIME_URL: &str = "https://github.com/microsoft/onnxruntime/releases/download/v1.31.1/onnxruntime-win-x64-1.31.1.zip";
+#[cfg(windows)]
+const RUNTIME_SHA256: &str = "5869e26bb25314375f2d5ef1877e3ea06b1543d6c710e6e4a1ec2f7177ab4b2c";
+#[cfg(windows)]
+const RUNTIME_MEMBER: &str = "onnxruntime-win-x64-1.31.1/lib/onnxruntime.dll";
+#[cfg(windows)]
+const RUNTIME_FILE: &str = "onnxruntime.dll";
 
 fn data_dir() -> Result<PathBuf, String> {
     eframe::storage_dir("lightview").ok_or_else(|| tr("no data folder").to_string())
 }
 
-/// `~/.local/share/lightview/lib/libonnxruntime.so.1.31.1`.
+/// `~/.local/share/lightview/lib/libonnxruntime.so.1.31.1` (on Windows, `onnxruntime.dll` in lightview's AppData folder).
 fn runtime_path() -> Result<PathBuf, String> {
     Ok(data_dir()?.join("lib").join(RUNTIME_FILE))
 }
@@ -37,10 +49,11 @@ pub fn runtime_installed() -> bool {
 struct GpuPart {
     url: &'static str,
     sha256: &'static str,
-    /// tar members of the ONNX Runtime archive, or None for a wheel (its `nvidia/*/lib/*` files).
+    /// tar members of the ONNX Runtime archive, or None for a wheel (its `nvidia/*/lib` or `bin` files).
     members: Option<&'static [&'static str]>,
 }
 
+#[cfg(not(windows))]
 const GPU_PARTS: [GpuPart; 5] = [
     GpuPart {
         url: "https://github.com/microsoft/onnxruntime/releases/download/v1.31.1/onnxruntime-linux-x64-gpu_cuda12-1.31.1.tgz",
@@ -73,12 +86,52 @@ const GPU_PARTS: [GpuPart; 5] = [
     },
 ];
 
+#[cfg(windows)]
+const GPU_PARTS: [GpuPart; 5] = [
+    GpuPart {
+        url: "https://github.com/microsoft/onnxruntime/releases/download/v1.31.1/onnxruntime-win-x64-gpu_cuda12-1.31.1.zip",
+        sha256: "5cbf65edc93dc7bb3296249b1b6e1b2228e575902af64d6163d0da2103cef9d5",
+        members: Some(&[
+            "onnxruntime-win-x64-gpu_cuda12-1.31.1/lib/onnxruntime.dll",
+            "onnxruntime-win-x64-gpu_cuda12-1.31.1/lib/onnxruntime_providers_cuda.dll",
+            "onnxruntime-win-x64-gpu_cuda12-1.31.1/lib/onnxruntime_providers_shared.dll",
+        ]),
+    },
+    GpuPart {
+        url: "https://files.pythonhosted.org/packages/59/df/e7c3a360be4f7b93cee39271b792669baeb3846c58a4df6dfcf187a7ffab/nvidia_cuda_runtime_cu12-12.9.79-py3-none-win_amd64.whl",
+        sha256: "8e018af8fa02363876860388bd10ccb89eb9ab8fb0aa749aaf58430a9f7c4891",
+        members: None,
+    },
+    GpuPart {
+        url: "https://files.pythonhosted.org/packages/84/f7/985e9bdbe3e0ac9298fcc8cfa51a392862a46a0ffaccbbd56939b62a9c83/nvidia_cublas_cu12-12.6.4.1-py3-none-win_amd64.whl",
+        sha256: "9e4fa264f4d8a4eb0cdbd34beadc029f453b3bafae02401e999cf3d5a5af75f8",
+        members: None,
+    },
+    GpuPart {
+        url: "https://files.pythonhosted.org/packages/a9/a8/0cd0cec757bd4b4b4ef150fca62ec064db7d08a291dced835a0be7d2c147/nvidia_curand_cu12-10.3.7.77-py3-none-win_amd64.whl",
+        sha256: "6d6d935ffba0f3d439b7cd968192ff068fafd9018dbf1b85b37261b13cfc9905",
+        members: None,
+    },
+    GpuPart {
+        url: "https://files.pythonhosted.org/packages/66/b8/4ace228fae5a3b6a3b3972156fe1392f7f91199feaae9a46c7eb60303274/nvidia_cudnn_cu12-9.5.0.50-py3-none-win_amd64.whl",
+        sha256: "508c801f70baa8496e79b3338a55f7816488da815c0d55158a7adfc4e073a11e",
+        members: None,
+    },
+];
+
 /// Download size of `GPU_PARTS`, for the menu.
-pub const GPU_DOWNLOAD_MB: u32 = 1470;
+pub const GPU_DOWNLOAD_MB: u32 = if cfg!(windows) { 1440 } else { 1470 };
 
 /// The NVIDIA libraries the CUDA provider needs, loaded before it in this order: it has no
 /// search path of its own, and a library that's already loaded satisfies it by name.
+#[cfg(not(windows))]
 const CUDA_LIBS: [&str; 5] = ["libcudart.so.12", "libcublasLt.so.12", "libcublas.so.12", "libcurand.so.10", "libcudnn.so.9"];
+#[cfg(windows)]
+const CUDA_LIBS: [&str; 5] = ["cudart64_12.dll", "cublasLt64_12.dll", "cublas64_12.dll", "curand64_10.dll", "cudnn64_9.dll"];
+
+/// The GPU build of ONNX Runtime and its CUDA provider, as installed.
+const GPU_RUNTIME: &str = if cfg!(windows) { "onnxruntime.dll" } else { "libonnxruntime.so.1.31.1" };
+const GPU_PROVIDER: &str = if cfg!(windows) { "onnxruntime_providers_cuda.dll" } else { "libonnxruntime_providers_cuda.so" };
 
 const NVIDIA_CUDA_LICENSE: License = License { project: "NVIDIA CUDA runtime, cuBLAS, cuRAND", spdx: "NVIDIA proprietary licence", url: "https://docs.nvidia.com/cuda/eula/", text: include_str!("../licenses/nvidia-cuda.txt") };
 const NVIDIA_CUDNN_LICENSE: License = License { project: "NVIDIA cuDNN", spdx: "NVIDIA proprietary licence", url: "https://docs.nvidia.com/deeplearning/cudnn/latest/reference/eula.html", text: include_str!("../licenses/nvidia-cudnn.txt") };
@@ -90,12 +143,17 @@ fn gpu_dir() -> Result<PathBuf, String> {
 }
 
 pub fn gpu_installed() -> bool {
-    gpu_dir().is_ok_and(|d| d.join("libonnxruntime.so.1.31.1").is_file() && d.join("libonnxruntime_providers_cuda.so").is_file())
+    gpu_dir().is_ok_and(|d| d.join(GPU_RUNTIME).is_file() && d.join(GPU_PROVIDER).is_file())
 }
 
 /// Whether an NVIDIA driver is loaded; without one the GPU support can't do anything.
 pub fn nvidia_driver() -> bool {
-    Path::new("/proc/driver/nvidia/version").exists()
+    if cfg!(windows) {
+        // The driver installs its CUDA library into System32.
+        std::env::var_os("SystemRoot").is_some_and(|root| Path::new(&root).join("System32").join("nvcuda.dll").exists())
+    } else {
+        Path::new("/proc/driver/nvidia/version").exists()
+    }
 }
 
 /// Downloads and installs the GPU support (blocking; ~1.5 GB). Everything is fetched, checked
@@ -109,10 +167,12 @@ pub fn download_gpu() -> Result<(), String> {
         for (i, part) in GPU_PARTS.iter().enumerate() {
             let archive = tmp.join(format!("download-{i}"));
             fetch(part.url, part.sha256, &archive)?;
-            // shortcut: unpacks with the system's tar and unzip; use the tar/zip crates for Windows.
+            // The system's tools: tar for ONNX Runtime (GNU tar reads the .tgz, Windows' bsdtar the .zip);
+            // the wheels are zips, which Windows' tar reads too, but GNU tar doesn't, so Linux uses unzip.
             match part.members {
-                Some(members) => run(std::process::Command::new("tar").arg("-xzf").arg(&archive).arg("-C").arg(&tmp).arg("--strip-components=2").args(members))?,
-                None => run(std::process::Command::new("unzip").args(["-q", "-j", "-o"]).arg(&archive).arg("nvidia/*/lib/lib*.so*").arg("-d").arg(&tmp))?,
+                Some(members) => run(crate::platform::command("tar").arg("-xf").arg(&archive).arg("-C").arg(&tmp).arg("--strip-components=2").args(members))?,
+                None if cfg!(windows) => run(crate::platform::command("tar").arg("-xf").arg(&archive).arg("-C").arg(&tmp).arg("--strip-components=3").arg("nvidia/*/bin/*.dll"))?,
+                None => run(crate::platform::command("unzip").args(["-q", "-j", "-o"]).arg(&archive).arg("nvidia/*/lib/lib*.so*").arg("-d").arg(&tmp))?,
             }
             // The archives are big: drop each one once it's unpacked.
             std::fs::remove_file(&archive).map_err(|e| e.to_string())?;
@@ -170,8 +230,8 @@ pub fn download_runtime() -> Result<(), String> {
     let unpacked = dir.join("onnxruntime.part");
     let result = (|| {
         std::fs::create_dir_all(&unpacked).map_err(|e| e.to_string())?;
-        // shortcut: unpacks with the system's tar; use the tar/flate2 crates for Windows.
-        run(std::process::Command::new("tar").arg("-xzf").arg(&archive).arg("-C").arg(&unpacked).arg(RUNTIME_MEMBER))?;
+        // The system's tar: GNU tar reads the Linux .tgz, Windows' own tar (bsdtar) reads its .zip.
+        run(crate::platform::command("tar").arg("-xf").arg(&archive).arg("-C").arg(&unpacked).arg(RUNTIME_MEMBER))?;
         std::fs::rename(unpacked.join(RUNTIME_MEMBER), &path).map_err(|e| e.to_string())
     })();
     let _ = std::fs::remove_file(&archive);
@@ -180,17 +240,30 @@ pub fn download_runtime() -> Result<(), String> {
 }
 
 /// Downloads `url` to `dest`, keeping it only if its SHA-256 is `sha256`.
-// shortcut: uses the system's curl and sha256sum rather than HTTP/hash crates; add them if those can be missing (Windows).
+// shortcut: uses the system's curl (Linux, and Windows 10 and later) rather than an HTTP crate.
 fn fetch(url: &str, sha256: &str, dest: &Path) -> Result<(), String> {
-    let result = run(std::process::Command::new("curl").args(["-L", "--fail", "--silent", "--show-error", "-o"]).arg(dest).arg(url)).and_then(|()| {
-        let out = std::process::Command::new("sha256sum").arg(dest).output().map_err(|e| format!("sha256sum: {e}"))?;
-        let sum = String::from_utf8_lossy(&out.stdout);
-        if sum.split_whitespace().next() == Some(sha256) { Ok(()) } else { Err(tr("the download didn't match its checksum").into()) }
+    let result = run(crate::platform::command("curl").args(["-L", "--fail", "--silent", "--show-error", "-o"]).arg(dest).arg(url)).and_then(|()| {
+        if sha256_file(dest)? == sha256 { Ok(()) } else { Err(tr("the download didn't match its checksum").into()) }
     });
     if result.is_err() {
         let _ = std::fs::remove_file(dest);
     }
     result
+}
+
+/// The file's SHA-256, in lowercase hex.
+fn sha256_file(path: &Path) -> Result<String, String> {
+    use sha2::Digest;
+    let mut hasher = sha2::Sha256::new();
+    let mut file = std::fs::File::open(path).map_err(|e| e.to_string())?;
+    let mut buf = vec![0u8; 1 << 20];
+    loop {
+        match std::io::Read::read(&mut file, &mut buf).map_err(|e| e.to_string())? {
+            0 => break,
+            n => hasher.update(&buf[..n]),
+        }
+    }
+    Ok(hasher.finalize().iter().map(|b| format!("{b:02x}")).collect())
 }
 
 pub fn run(cmd: &mut std::process::Command) -> Result<(), String> {
@@ -207,6 +280,14 @@ fn environment() -> Result<&'static ort::environment::Environment, String> {
         ENV_LOADED.store(true, Ordering::Relaxed);
         let lib = if gpu_installed() {
             let dir = gpu_dir()?;
+            // Windows doesn't look for a DLL's dependencies next to it, and cuDNN loads its parts
+            // by name: let the GPU folder be searched for the rest of the process.
+            #[cfg(windows)]
+            {
+                use std::os::windows::ffi::OsStrExt;
+                let wide: Vec<u16> = dir.as_os_str().encode_wide().chain([0]).collect();
+                unsafe { windows_sys::Win32::System::LibraryLoader::SetDllDirectoryW(wide.as_ptr()) };
+            }
             // Kept loaded for the life of the process, for the CUDA provider to find.
             for name in CUDA_LIBS {
                 match unsafe { libloading::Library::new(dir.join(name)) } {
@@ -215,7 +296,7 @@ fn environment() -> Result<&'static ort::environment::Environment, String> {
                 }
             }
             GPU_LOADED.store(true, Ordering::Relaxed);
-            dir.join("libonnxruntime.so.1.31.1")
+            dir.join(GPU_RUNTIME)
         } else {
             runtime_path()?
         };
@@ -459,8 +540,7 @@ pub fn add_model(src: &Path) -> Result<String, String> {
 pub fn open_folder() {
     if let Ok(dir) = models_dir() {
         let _ = std::fs::create_dir_all(&dir);
-        // shortcut: xdg-open is Linux only.
-        drop(std::process::Command::new("xdg-open").arg(dir).spawn());
+        crate::platform::open(dir);
     }
 }
 
@@ -660,8 +740,7 @@ pub fn license_ui(ui: &mut egui::Ui, title: &str, l: &License, step: usize, coun
     ui.horizontal(|ui| {
         ui.strong(format!("{} — {}", l.project, l.spdx));
         if ui.button(tr("Open project page")).clicked() {
-            // shortcut: xdg-open is Linux only.
-            drop(std::process::Command::new("xdg-open").arg(l.url).spawn());
+            crate::platform::open(l.url);
         }
     });
     // Room for the heading, notes and buttons around the text.
@@ -988,9 +1067,9 @@ mod tests {
         std::fs::create_dir_all(&src).unwrap();
         std::fs::write(src.join("m.onnx"), b"graph").unwrap();
         std::fs::write(src.join("m.onnx.data"), b"weights").unwrap();
-        let sha = |f: &str| String::from_utf8(std::process::Command::new("sha256sum").arg(src.join(f)).output().unwrap().stdout).unwrap()[..64].to_string();
+        let sha = |f: &str| sha256_file(&src.join(f)).unwrap();
         let (graph, weights) = (sha("m.onnx").leak() as &str, sha("m.onnx.data").leak() as &str);
-        let base = format!("file://{}", src.display()).leak();
+        let base = file_url(&src).leak();
         let known = |data_sha: &'static str| Known { file: "m.onnx", label: "", task: Task::Denoise, mb: 0, sha256: graph, base, data: Some(("m.onnx.data", data_sha)), pre: None, converted_by: None, scale: 1, max_tile: 512, notice: None, licenses: &[] };
         // A bad weights checksum installs nothing, not even the good .onnx.
         assert!(download_to(&dest, &known("0000")).is_err());
@@ -1157,11 +1236,26 @@ mod tests {
         environment().unwrap();
     }
 
+    /// A file:// URL curl accepts on Linux and Windows (`file:///C:/…` there).
+    fn file_url(path: &Path) -> String {
+        let p = path.display().to_string().replace('\\', "/");
+        if p.starts_with('/') { format!("file://{p}") } else { format!("file:///{p}") }
+    }
+
+    #[test]
+    fn sha256_of_a_file() {
+        let path = std::env::temp_dir().join(format!("lightview-sha-{}", std::process::id()));
+        std::fs::write(&path, b"abc").unwrap();
+        let sum = sha256_file(&path);
+        std::fs::remove_file(&path).unwrap();
+        assert_eq!(sum.unwrap(), "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad");
+    }
+
     #[test]
     fn bad_checksum_is_refused() {
         let (src, dest) = (std::env::temp_dir().join(format!("lightview-fetch-src-{}", std::process::id())), std::env::temp_dir().join(format!("lightview-fetch-{}", std::process::id())));
         std::fs::write(&src, b"not what was expected").unwrap();
-        let result = fetch(&format!("file://{}", src.display()), "0000", &dest);
+        let result = fetch(&file_url(&src), "0000", &dest);
         std::fs::remove_file(&src).unwrap();
         assert_eq!(result, Err("the download didn't match its checksum".into()));
         assert!(!dest.exists(), "the bad download is removed");

@@ -1,0 +1,62 @@
+<!--
+  The Windows installer (WiX Toolset v5): lightview into Program Files, a Start menu entry, and
+  registration as an image viewer, so it shows up in Settings → Default apps (Windows doesn't let
+  an installer make itself the default). Built by .github/workflows/build.yml:
+    wix build packaging/windows/lightview.wxs -arch x64 -d Version=0.1.0 -d Dist=dist -o lightview.msi
+  `Dist` holds lightview.exe, turbojpeg.dll and the licence files.
+-->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <!-- Keep the UpgradeCode forever: it's how a new version replaces an installed one. -->
+  <Package Name="lightview" Manufacturer="Pablo Yubero" Version="$(var.Version)"
+           UpgradeCode="3acb8ffd-2b64-41ad-a53e-a89ccfc727b5" Scope="perMachine">
+    <MajorUpgrade DowngradeErrorMessage="A newer version of lightview is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="lightview">
+        <Component Id="App" Bitness="always64">
+          <File Id="LightviewExe" Source="$(var.Dist)\lightview.exe" KeyPath="yes" />
+          <File Source="$(var.Dist)\turbojpeg.dll" />
+          <File Source="$(var.Dist)\libjpeg-turbo-LICENSE.md" />
+          <File Source="$(var.Dist)\libjpeg-turbo-README.ijg" />
+
+          <!-- How Windows opens an image with lightview. -->
+          <RegistryValue Root="HKLM" Key="Software\Classes\lightview.Image" Value="Image" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\Classes\lightview.Image\DefaultIcon" Value="&quot;[INSTALLFOLDER]lightview.exe&quot;,0" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\Classes\lightview.Image\shell\open\command" Value="&quot;[INSTALLFOLDER]lightview.exe&quot; &quot;%1&quot;" Type="string" />
+
+          <!-- Listed in "Open with" for each supported type… -->
+          <RegistryValue Root="HKLM" Key="Software\Classes\.jpg\OpenWithProgids" Name="lightview.Image" Value="" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\Classes\.jpeg\OpenWithProgids" Name="lightview.Image" Value="" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\Classes\.png\OpenWithProgids" Name="lightview.Image" Value="" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\Classes\.gif\OpenWithProgids" Name="lightview.Image" Value="" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\Classes\.webp\OpenWithProgids" Name="lightview.Image" Value="" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\Classes\.bmp\OpenWithProgids" Name="lightview.Image" Value="" Type="string" />
+
+          <!-- …and as an app in Settings → Default apps. -->
+          <RegistryValue Root="HKLM" Key="Software\lightview\Capabilities" Name="ApplicationName" Value="lightview" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\lightview\Capabilities" Name="ApplicationDescription" Value="A simple, fast image viewer" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\lightview\Capabilities\FileAssociations" Name=".jpg" Value="lightview.Image" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\lightview\Capabilities\FileAssociations" Name=".jpeg" Value="lightview.Image" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\lightview\Capabilities\FileAssociations" Name=".png" Value="lightview.Image" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\lightview\Capabilities\FileAssociations" Name=".gif" Value="lightview.Image" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\lightview\Capabilities\FileAssociations" Name=".webp" Value="lightview.Image" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\lightview\Capabilities\FileAssociations" Name=".bmp" Value="lightview.Image" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\RegisteredApplications" Name="lightview" Value="Software\lightview\Capabilities" Type="string" />
+        </Component>
+      </Directory>
+    </StandardDirectory>
+
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Component Id="StartMenu" Guid="*">
+        <Shortcut Id="StartMenuShortcut" Name="lightview" Description="A simple, fast image viewer" Target="[INSTALLFOLDER]lightview.exe" WorkingDirectory="INSTALLFOLDER" />
+        <RegistryValue Root="HKLM" Key="Software\lightview" Name="StartMenuShortcut" Value="1" Type="integer" KeyPath="yes" />
+      </Component>
+    </StandardDirectory>
+
+    <Feature Id="Main">
+      <ComponentRef Id="App" />
+      <ComponentRef Id="StartMenu" />
+    </Feature>
+  </Package>
+</Wix>

@@ -135,6 +135,12 @@ Numbering continues from v1.
 - Licence texts, error detail from the OS or libraries, shortcuts and format names stay English.
 - **Done when** tests show every string in the code exists in all five tables with matching placeholders and drawable characters.
 
+### 21. Windows (in progress, branch `windows`)
+- Same code on both systems; the differences live in `platform.rs` (opening links/folders, helper programs without console windows) and per-OS constants in `ai.rs` (ONNX Runtime and NVIDIA packages for Windows, `SetDllDirectoryW` so cuDNN finds its parts). Checksums are computed in Rust (`sha2`) instead of `sha256sum`; downloads use the `curl` and `tar` that Windows 10+ includes.
+- `turbojpeg.dll` (libjpeg-turbo 3.2.1, 1.2 MB, ~0.45 MB in the installer) ships next to `lightview.exe` for fast JPEG decoding.
+- Releases are built by GitHub Actions (`.github/workflows/build.yml`): a Linux tarball (binary, `.desktop`, `install.sh`) and a Windows `.msi` (WiX v5, `packaging/windows/lightview.wxs`) that installs into Program Files, adds a Start menu entry and registers lightview for JPG/PNG/GIF/WebP/BMP/TIFF so it can be picked in Settings → Default apps.
+- **Done when** it runs on Windows 11 (open, navigate, edit, save, AI tools, GPU) and the workflow produces both packages.
+
 ## Future ideas
 - Convert the best FOSS restoration and upscaling models (BSRGAN, Real-ESRGAN, …) to ONNX ourselves, with documented scripts in a separate repo that users run themselves, instead of relying on third-party uploads. Done for DarkIR and Real-ESRGAN (18c); BSRGAN is still the third-party upload.
 - **Diffusion restorers (DiffBIR, HYPIR), looked at 2026-10-29, not adopted.** Both are by XPixelGroup and built on Stable Diffusion 2.1.

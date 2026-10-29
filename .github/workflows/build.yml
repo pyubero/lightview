@@ -1,0 +1,81 @@
+# Builds and tests lightview for Linux and Windows. Pushing a tag like `v0.1.0` also publishes a
+# GitHub release with the Linux tarball and the Windows installer (.msi). Can also be run by
+# hand from the Actions tab (it then only keeps the files as workflow artifacts).
+name: build
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  linux:
+    # An older Ubuntu, so the binary also runs on older glibc versions.
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo test --release
+      - run: cargo build --release
+      - name: Package
+        shell: bash
+        run: |
+          version=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[0].version')
+          mkdir -p dist/lightview
+          cp target/release/lightview lightview.desktop install.sh dist/lightview/
+          tar -czf "lightview-$version-linux-x86_64.tar.gz" -C dist lightview
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux
+          path: lightview-*-linux-x86_64.tar.gz
+
+  windows:
+    runs-on: windows-latest
+    env:
+      # Static C runtime: lightview.exe then runs without the Visual C++ redistributable.
+      RUSTFLAGS: -C target-feature=+crt-static
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo test --release
+      - run: cargo build --release
+      - name: Fetch libjpeg-turbo (turbojpeg.dll, for fast JPEG decoding)
+        shell: pwsh
+        run: |
+          $url = "https://github.com/libjpeg-turbo/libjpeg-turbo/releases/download/3.2.1/libjpeg-turbo-3.2.1-vc-x64.exe"
+          Invoke-WebRequest $url -OutFile ljt.exe
+          $sha = (Get-FileHash ljt.exe -Algorithm SHA256).Hash.ToLower()
+          if ($sha -ne "1f05bc3ed1585e6b12a8b0c24c8c5f07b1f6d90d01b4b709b331bedc9d6e5838") { throw "libjpeg-turbo checksum mismatch: $sha" }
+          7z e ljt.exe bin/turbojpeg.dll doc/LICENSE.md doc/README.ijg -oljt
+      - name: Build the installer
+        shell: pwsh
+        run: |
+          $version = (cargo metadata --no-deps --format-version 1 | ConvertFrom-Json).packages[0].version
+          New-Item -ItemType Directory dist | Out-Null
+          Copy-Item target/release/lightview.exe dist/
+          Copy-Item ljt/turbojpeg.dll dist/
+          Copy-Item ljt/LICENSE.md dist/libjpeg-turbo-LICENSE.md
+          Copy-Item ljt/README.ijg dist/libjpeg-turbo-README.ijg
+          dotnet tool install --global wix --version 5.0.2
+          wix build packaging/windows/lightview.wxs -arch x64 -d Version=$version -d Dist=dist -o "lightview-$version-x64.msi"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: lightview-*-x64.msi
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [linux, windows]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            lightview-*-linux-x86_64.tar.gz
+            lightview-*-x64.msi
