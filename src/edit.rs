@@ -205,9 +205,24 @@ pub fn resize(frame: &Frame, crop: Rect, w: u32, h: u32, alg: ResizeAlg) -> Vec<
     let pixel_type = if frame.alpha { PixelType::U8x4 } else { PixelType::U8x3 };
     let src = ImageRef::new(frame.w, frame.h, &frame.pixels, pixel_type).unwrap();
     let mut dst = Image::new(w, h, pixel_type);
-    let opts = ResizeOptions::new().resize_alg(alg).crop(crop.min.x.into(), crop.min.y.into(), crop.width().into(), crop.height().into());
+    let (left, width) = crop_axis(crop.min.x, crop.max.x, frame.w);
+    let (top, height) = crop_axis(crop.min.y, crop.max.y, frame.h);
+    let opts = ResizeOptions::new().resize_alg(alg).crop(left, top, width, height);
     Resizer::new().resize(&src, &mut dst, &opts).unwrap();
     dst.into_vec()
+}
+
+/// One axis of a crop, as the resizer wants it: start and length inside `0..len`. The resizer
+/// adds them up itself and refuses anything past the edge, and float rounding can put a crop that
+/// ends at the edge a hair past it, so the length is trimmed until the sum fits.
+fn crop_axis(min: f32, max: f32, len: u32) -> (f64, f64) {
+    let len = len as f64;
+    let start = (min as f64).clamp(0.0, (len - 1.0).max(0.0));
+    let mut size = ((max as f64).min(len) - start).max(0.0);
+    while start + size > len {
+        size = size.next_down();
+    }
+    (start, size)
 }
 
 pub fn to_dynamic(alpha: bool, w: u32, h: u32, pixels: Vec<u8>) -> Option<DynamicImage> {
@@ -453,6 +468,25 @@ mod tests {
         assert_eq!(out.dimensions(), (20, 20));
         assert_eq!(out.get_pixel(0, 0)[3], 0, "corner outside the ellipse is transparent");
         assert_eq!(out.get_pixel(10, 10).0, [200; 4], "centre kept");
+    }
+
+    #[test]
+    fn resize_never_rejects_a_crop_at_the_edge() {
+        // The visible area reaches the right edge; passed on as start + width (as the display does),
+        // float rounding could put the end a hair past the image, which the resizer refuses.
+        let frame = Frame { w: 4000, h: 3, pixels: vec![0; 4000 * 3 * 3], alpha: false, delay: Duration::ZERO };
+        let mut seed = 12345u32;
+        let mut next = || {
+            seed = seed.wrapping_mul(1_103_515_245).wrapping_add(12345);
+            (seed >> 8) as f32 / (1 << 24) as f32
+        };
+        for _ in 0..400 {
+            let edge = Rect::from_min_max(Pos2::new(next() * 50.0, 0.0), Pos2::new(4000.0 - next() * 1e-3, 3.0));
+            let passed_on = Rect::from_min_size(edge.min, edge.size());
+            resize(&frame, passed_on, 8, 1, ResizeAlg::Nearest);
+        }
+        // A rect slightly outside on every side (from rounding) is clamped, not refused.
+        resize(&frame, Rect::from_min_max(Pos2::new(-0.001, -0.001), Pos2::new(4000.001, 3.001)), 8, 1, ResizeAlg::Nearest);
     }
 
     #[test]
