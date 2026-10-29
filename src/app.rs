@@ -1715,6 +1715,11 @@ impl eframe::App for App {
                 self.tex_key = Some(key);
             }
             let texture = self.texture.as_ref().unwrap().id();
+            if frame.alpha {
+                // Transparent parts show as a checkerboard, not as the background.
+                let painter = ui.painter().with_clip_rect(dest.intersect(viewport));
+                painter.add(markup::checker(dest.intersect(viewport), None));
+            }
             if gpu {
                 // Each screen corner samples the source point the transform maps it from.
                 let mut mesh = egui::Mesh::with_texture(texture);

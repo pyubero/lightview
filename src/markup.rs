@@ -194,9 +194,8 @@ impl Element {
                 let (w, hgt) = ((b.width() * scale).ceil().max(1.0) as u32, (b.height() * scale).ceil().max(1.0) as u32);
                 let (polygon, outside) = self.erase_parts();
                 let mask = polygon_mask(polygon, outside, b.min, scale, w, hgt)?;
-                let [r, g, bl, a] = self.style.color.to_srgba_unmultiplied();
-                // Shown with the background colour even when it saves as transparent: that's what shows through.
-                let a = if a == 0 { 255 } else { a };
+                // Erasing to transparent: a white mask, which `paint` turns into the checkerboard.
+                let [r, g, bl, a] = if self.style.color.a() == 0 { [255; 4] } else { self.style.color.to_srgba_unmultiplied() };
                 let pixels: Vec<u8> = mask.data().iter().flat_map(|&m| [r, g, bl, (m as u32 * a as u32 / 255) as u8]).collect();
                 Some(egui::ColorImage::from_rgba_unmultiplied([w as usize, hgt as usize], &pixels))
             }
@@ -320,10 +319,46 @@ pub fn paint(painter: &egui::Painter, e: &Element, to_screen: &dyn Fn(Pos2) -> P
         Shape::Erase | Shape::Image => {
             if let Some(tex) = own {
                 let b = e.bbox();
-                painter.image(tex, Rect::from_two_pos(to_screen(b.min), to_screen(b.max)), Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)), Color32::WHITE);
+                let r = Rect::from_two_pos(to_screen(b.min), to_screen(b.max));
+                if e.shape == Shape::Erase && e.style.color.a() == 0 {
+                    painter.add(checker(r.intersect(painter.clip_rect()), Some((tex, r))));
+                } else {
+                    painter.image(tex, r, Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)), Color32::WHITE);
+                }
             }
         }
     }
+}
+
+/// The checkerboard that stands for transparency, over `rect` (screen points). Its squares are
+/// fixed to the screen, so they line up everywhere and keep their size at any zoom. With a
+/// `mask` (a texture and the screen rect it covers), it only shows where the mask does.
+pub fn checker(rect: Rect, mask: Option<(egui::TextureId, Rect)>) -> egui::Mesh {
+    const CELL: f32 = 8.0;
+    const GREYS: [Color32; 2] = [Color32::from_gray(160), Color32::from_gray(110)];
+    let mut mesh = egui::Mesh::with_texture(mask.map_or(egui::TextureId::default(), |(t, _)| t));
+    if !rect.is_positive() {
+        return mesh;
+    }
+    let uv = |p: Pos2| match mask {
+        Some((_, m)) => ((p - m.min) / m.size()).to_pos2(),
+        None => egui::epaint::WHITE_UV,
+    };
+    let (x0, y0) = ((rect.left() / CELL).floor() as i64, (rect.top() / CELL).floor() as i64);
+    let (x1, y1) = ((rect.right() / CELL).ceil() as i64, (rect.bottom() / CELL).ceil() as i64);
+    for cy in y0..y1 {
+        for cx in x0..x1 {
+            let cell = Rect::from_min_size(Pos2::new(cx as f32 * CELL, cy as f32 * CELL), Vec2::splat(CELL)).intersect(rect);
+            let color = GREYS[(cx + cy).rem_euclid(2) as usize];
+            let base = mesh.vertices.len() as u32;
+            for p in [cell.left_top(), cell.right_top(), cell.right_bottom(), cell.left_bottom()] {
+                mesh.vertices.push(egui::epaint::Vertex { pos: p, uv: uv(p), color });
+            }
+            mesh.add_triangle(base, base + 1, base + 2);
+            mesh.add_triangle(base, base + 2, base + 3);
+        }
+    }
+    mesh
 }
 
 /// egui's default proportional font, so saved text matches what's on screen.
@@ -766,6 +801,35 @@ mod tests {
         assert!(Selection::Rect(Rect::from_min_size(Pos2::ZERO, Vec2::new(0.5, 9.0))).is_empty());
         let e = Selection::Ellipse(Rect::from_min_max(Pos2::new(10.0, 20.0), Pos2::new(30.0, 60.0)));
         assert!((e.bbox().min - Pos2::new(10.0, 20.0)).length() < 1e-3 && (e.bbox().max - Pos2::new(30.0, 60.0)).length() < 1e-3);
+    }
+
+    #[test]
+    fn checkerboard() {
+        // 20×10 points from (4, 4): cells 0..3 across and 0..2 down, clipped to the rect.
+        let rect = Rect::from_min_size(Pos2::new(4.0, 4.0), Vec2::new(20.0, 10.0));
+        let mesh = checker(rect, None);
+        assert_eq!(mesh.vertices.len(), 3 * 2 * 4);
+        assert!(mesh.vertices.iter().all(|v| rect.expand(1e-3).contains(v.pos)));
+        assert!(mesh.vertices.iter().all(|v| v.uv == egui::epaint::WHITE_UV));
+        // Neighbouring cells alternate between the two greys.
+        assert_ne!(mesh.vertices[0].color, mesh.vertices[4].color);
+        assert_eq!(mesh.vertices[0].color, mesh.vertices[8].color);
+        // With a mask, the corners sample it across its rect.
+        let tex = egui::TextureId::User(7);
+        let masked = checker(Rect::from_min_size(Pos2::ZERO, Vec2::splat(16.0)), Some((tex, Rect::from_min_size(Pos2::ZERO, Vec2::splat(16.0)))));
+        assert_eq!(masked.texture_id, tex);
+        assert!(masked.vertices.iter().any(|v| v.uv == Pos2::new(1.0, 1.0)));
+        assert!(checker(Rect::NOTHING, None).vertices.is_empty());
+    }
+
+    #[test]
+    fn transparent_erase_is_a_white_mask() {
+        let sel = Selection::Rect(Rect::from_min_size(Pos2::ZERO, Vec2::splat(4.0)));
+        let full = Rect::from_min_size(Pos2::ZERO, Vec2::splat(4.0));
+        let clear = Element::erase(&sel, false, full, Color32::TRANSPARENT).texture_image(64.0).unwrap();
+        assert!(clear.pixels.iter().all(|p| *p == Color32::WHITE));
+        let red = Element::erase(&sel, false, full, Color32::from_rgb(200, 0, 0)).texture_image(64.0).unwrap();
+        assert!(red.pixels.iter().all(|p| *p == Color32::from_rgb(200, 0, 0)));
     }
 
     #[test]
