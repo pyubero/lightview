@@ -1,3 +1,5 @@
+#[cfg(feature = "ai")]
+mod ai;
 mod app;
 mod edit;
 mod exif_edit;

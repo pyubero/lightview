@@ -61,6 +61,11 @@ enum Action {
     Paste,
     DeleteSelection,
     ImageFromSelection,
+    /// Remove Background (false) or Extract Object (true).
+    #[cfg(feature = "ai")]
+    Cutout(bool),
+    #[cfg(feature = "ai")]
+    DownloadModel(bool),
 }
 
 #[derive(Clone, Copy, PartialEq)]
@@ -261,6 +266,27 @@ impl App {
 
     fn handle(&mut self, msg: Msg) {
         match msg {
+            #[cfg(feature = "ai")]
+            Msg::Status(text) => self.status = Some((text, Instant::now())),
+            #[cfg(feature = "ai")]
+            Msg::Cutout(path, result) => match result {
+                Ok((img, object)) if self.current() == Some(&path) => {
+                    let Some(doc) = self.doc() else { return };
+                    let bounds = Rect::from_min_size(Pos2::ZERO, doc.size_vec());
+                    let style = *self.style.get_or_insert_with(|| Style::for_image(doc.size_vec()));
+                    // Erase everything, then put the cut-out back on top: one undo step.
+                    self.edit(|d| {
+                        d.elements.push(Element::erase(&Selection::Rect(bounds), false, bounds, Color32::TRANSPARENT));
+                        d.elements.push(Element::pasted(Arc::new(img), Pos2::ZERO, bounds.size(), style));
+                        if let Some(r) = object {
+                            d.crop_to(r);
+                        }
+                    });
+                    self.status = Some(("Done".into(), Instant::now()));
+                }
+                Ok(_) => {}
+                Err(e) => self.status = Some((format!("Couldn't process the image: {e}"), Instant::now())),
+            },
             Msg::Open(path) => self.confirm(Pending::Open(path)),
             Msg::Folder(files) => {
                 if let Some(i) = self.current().and_then(|cur| files.iter().position(|p| p == cur)) {
@@ -627,6 +653,15 @@ impl App {
                         actions.push(Action::SelectTool(kind));
                     }
                 }
+                #[cfg(feature = "ai")]
+                {
+                    ui.separator();
+                    ui.weak("AI Image Processing");
+                    item(ui, "Remove Background", Action::Cutout(false), has_image && crate::ai::BACKGROUND.installed(), actions);
+                    item(ui, "Extract Object", Action::Cutout(true), has_image && crate::ai::OBJECT.installed(), actions);
+                    item(ui, "Download Background Removal Model…", Action::DownloadModel(false), !crate::ai::BACKGROUND.installed(), actions);
+                    item(ui, "Download Object Extraction Model…", Action::DownloadModel(true), !crate::ai::OBJECT.installed(), actions);
+                }
                 ui.separator();
                 let measuring = self.tool == Tool::Measure;
                 if ui.add_enabled(has_image, egui::Button::selectable(measuring, "Measure")).clicked() {
@@ -954,6 +989,24 @@ impl App {
         self.selected = self.doc.as_ref().map(|d| d.elements.len() - 1);
     }
 
+    /// Runs background removal (or object extraction) on the edited image, on another thread.
+    #[cfg(feature = "ai")]
+    fn cutout(&mut self, extract: bool) {
+        let Some((l, doc, path)) = self.current().and_then(|p| Some((self.cache.get(p)?.clone(), self.doc()?, p.clone()))) else { return };
+        let model = if extract { &crate::ai::OBJECT } else { &crate::ai::BACKGROUND };
+        self.status = Some((format!("Running {}…", model.name), Instant::now()));
+        let notify = self.notify.clone();
+        std::thread::spawn(move || {
+            let result = edit::render(&l.frames[0], &doc).and_then(|img| {
+                let img = img.into_rgba8();
+                let mask = model.mask(&img)?;
+                let object = if extract { Some(crate::ai::bbox(&mask).ok_or("no object found")?) } else { None };
+                Ok((crate::ai::cutout(&img, &mask), object))
+            });
+            notify.send(Msg::Cutout(path, result));
+        });
+    }
+
     /// Auto Levels for the visible part of the current image.
     fn auto_levels(&self) -> Option<[[u8; 2]; 3]> {
         let frame = &self.cache.get(self.current()?)?.frames[0];
@@ -1153,6 +1206,20 @@ impl eframe::App for App {
                     Err(e) => self.status = Some((format!("Nothing to paste: {e}"), Instant::now())),
                 },
                 Action::DeleteSelection => self.delete_selection(),
+                #[cfg(feature = "ai")]
+                Action::Cutout(extract) => self.cutout(*extract),
+                #[cfg(feature = "ai")]
+                Action::DownloadModel(object) => {
+                    let model = if *object { &crate::ai::OBJECT } else { &crate::ai::BACKGROUND };
+                    self.status = Some((format!("Downloading the {} model…", model.name), Instant::now()));
+                    let notify = self.notify.clone();
+                    std::thread::spawn(move || {
+                        notify.send(Msg::Status(match model.download() {
+                            Ok(()) => format!("Downloaded the {} model", model.name),
+                            Err(e) => format!("Couldn't download the {} model: {e}", model.name),
+                        }));
+                    });
+                }
                 Action::ImageFromSelection => self.image_from_selection(),
                 Action::RotateLeft => self.edit(Doc::rotate_left),
                 Action::RotateRight => self.edit(Doc::rotate_right),

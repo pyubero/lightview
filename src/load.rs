@@ -38,6 +38,12 @@ pub enum Msg {
     Error(PathBuf, String),
     /// A Save As finished (successfully or not) writing this path.
     Saved(PathBuf, Result<(), String>),
+    /// Background removal finished for this image: the cut-out, and the object's bounds
+    /// when extracting it.
+    #[cfg(feature = "ai")]
+    Cutout(PathBuf, Result<(image::RgbaImage, Option<egui::Rect>), String>),
+    #[cfg(feature = "ai")]
+    Status(String),
 }
 
 /// Sends messages to the UI and wakes it up. The context is set once eframe has created it;

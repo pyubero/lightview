@@ -1,6 +1,6 @@
 # lightview — Roadmap v2
 
-*Status: draft, 2026-10-29. Source: `future_draft.md`. v1 (milestones 1–7) is in `PROJECT_BRIEF.md`.*
+*Status: built, 2026-10-29 (milestones 8–15 done; checked by unit tests, not yet by hand). Source: `future_draft.md`. v1 (milestones 1–7) is in `PROJECT_BRIEF.md`.*
 
 ## What still holds
 - **Fast.** P1a (window under 200 ms), P2 (next/previous in one frame) and P3 (the UI never waits on decoding) still apply. New features must not slow down startup or navigation.
@@ -23,14 +23,14 @@
 ## Milestones
 Numbering continues from v1.
 
-### 8. Menu restructure + View
+### 8. Menu restructure + View ✅ (2026-10-29)
 - Menus follow the draft: File, Edit, View, Tools, Draw, Settings. A menu item appears only once its feature works. Items that don't exist yet are left out, not greyed out.
 - View → Previous / Next Image (← / →), Zoom In / Out (Ctrl + / Ctrl −), Actual Size, Fit to Window, Full Screen.
 - View → Animation: Play, Pause, Next Frame, Previous Frame (for GIF/WebP).
 - Where: `app.rs` (`menu_bar`, `Action`, `SHORTCUTS`).
 - **Done when** every menu item works and `cargo test` passes.
 
-### 9. Edit list, undo/redo, Crop, Resize, Export
+### 9. Edit list, undo/redo, Crop, Resize, Export ✅ (2026-10-29)
 - An `Edit` enum and a list of edits on the current image. Undo (Ctrl+Z) and Redo (Ctrl+Shift+Z).
 - Rotate/flip become entries in the list and replace the view-only `view::Transform` from M4, so they get saved.
 - **Crop:** drag a rectangle, then press Enter to apply it.
@@ -40,13 +40,13 @@ Numbering continues from v1.
 - Unsaved edits ask for confirmation before you move to another image or close the window.
 - **Done when** unit tests replay edit lists on a small image and check the pixels, and saving a copy and opening it again gives the same pixels.
 
-### 10. Colour adjustments
+### 10. Colour adjustments ✅ (2026-10-29)
 - A panel with Exposure, Contrast, Saturation and Tint sliders, plus Auto Levels and Reset Color Adjustments.
 - Edit → Adjust Color… and Tools → Adjust → … all open the same panel. Auto Levels and Reset apply at once, without opening it.
 - On screen the adjustment runs on the small resized output (the same trick as M4, so dragging stays cheap). At save time it runs on the full image. The whole panel is one `Edit` entry.
 - **Done when** the pixel maths has unit tests, and dragging a slider on a 12 MP photo stays at 60 fps.
 
-### 11. Inspector sidebar
+### 11. Inspector sidebar ✅ (2026-10-29)
 - Opens and closes from View → Show Image Information.
 - **General:** file name, format, file size, dimensions, resolution, colour profile.
 - **EXIF:** camera and lens, exposure, date taken, GPS. Editable for JPEGs (reuses `exif_edit.rs`).
@@ -55,14 +55,14 @@ Numbering continues from v1.
 - Saving still always writes a copy, as decided in M7.
 - **Done when** the values shown match `exiftool` on the test photos.
 
-### 12. Measure
+### 12. Measure ✅ (2026-10-29)
 - Tools → Measure. A temporary overlay: it's never saved and never changes the image.
 - Crosshair cursor. Drag from one point to another to draw a line with endpoints. Endpoints can be dragged again. ΔX, ΔY and the distance (`d = √(Δx² + Δy²)`) update live.
 - Values are in the original image's pixels at any zoom and rotation (uses the screen-to-image maths in `view.rs`).
 - One measurement per image.
 - **Done when** a unit test gets the same distance at several zoom levels and rotations.
 
-### 13. Draw / Markup toolbar
+### 13. Draw / Markup toolbar ✅ (2026-10-29)
 - Draw → Show Drawing Toolbar opens the toolbar, in this order: Select, Sketch, Shapes (rectangle, rounded rectangle, ellipse, line, arrow), Text, Highlight, Magnifier, Measure, Image Description, Style, Undo, Redo, Done.
 - Elements are vector items in the edit list. They can be selected, moved, resized and edited until you save. Saving flattens them into the image.
 - Style controls depend on what's selected (stroke, thickness, fill, opacity, font, magnification, …).
@@ -70,7 +70,7 @@ Numbering continues from v1.
 - Flattening needs a rasterizer: `tiny-skia`, plus `ab_glyph` for text.
 - **Done when** a flattened PNG matches the markup on screen, in tests with simple shapes.
 
-### 14. Selection + clipboard
+### 14. Selection + clipboard ✅ (2026-10-29)
 - Tools → Rectangular Selection, Elliptical Selection, Lasso.
 - Edit → Select All, Deselect, Copy, Cut, Paste, Delete Selection, Copy Selected Region, Create Image from Selection.
 - Cut / Delete fill the selection with transparency, or with the background colour for formats without alpha.
@@ -78,7 +78,7 @@ Numbering continues from v1.
 - Paste adds a movable element (reuses M13's element model).
 - **Done when** the selection masks have unit tests, and copying into another app (e.g. GIMP or Dolphin) works.
 
-### 15. AI tools (optional `ai` feature)
+### 15. AI tools (optional `ai` feature) ✅ (2026-10-29)
 - Tools → Remove Background, Extract Object, Download Background Removal Model…, Download Object Extraction Model…
 - Models go in `~/.local/share/lightview/models`. An item is greyed out while its model is missing.
 - Runtime: the `ort` crate (ONNX Runtime). Not in the default build or in `install.sh`.

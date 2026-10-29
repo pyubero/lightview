@@ -237,7 +237,9 @@ pub fn render(frame: &Frame, doc: &Doc) -> Result<DynamicImage, String> {
     if !doc.elements.is_empty() {
         let mut rgba = img.into_rgba8();
         markup::flatten(&mut rgba, &doc.elements);
-        img = if frame.alpha { DynamicImage::ImageRgba8(rgba) } else { DynamicImage::ImageRgb8(DynamicImage::ImageRgba8(rgba).into_rgb8()) };
+        // Erasing to transparent (background removal) gives an opaque image an alpha channel.
+        let alpha = frame.alpha || doc.elements.iter().any(|e| e.shape == markup::Shape::Erase && e.style.color.a() == 0);
+        img = if alpha { DynamicImage::ImageRgba8(rgba) } else { DynamicImage::ImageRgb8(DynamicImage::ImageRgba8(rgba).into_rgb8()) };
     }
     Ok(img)
 }
