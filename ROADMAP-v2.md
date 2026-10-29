@@ -129,6 +129,11 @@ Numbering continues from v1.
 
 ## Future ideas
 - Convert the best FOSS restoration and upscaling models (BSRGAN, Real-ESRGAN, …) to ONNX ourselves, with documented scripts, and publish them from a separate repo, instead of relying on third-party uploads.
+- **Diffusion restorers (DiffBIR, HYPIR), looked at 2026-10-29, not adopted.** Both are by XPixelGroup and built on Stable Diffusion 2.1.
+  - **HYPIR** (SIGGRAPH 2025): one forward pass per tile, a ~1 GB LoRA on the SD 2.1 base. Its README adds a *Non-Commercial Use Only* declaration from SupPixel (the company behind SUPIR, dropped for the same reason). As ONNX: the UNet with the LoRA merged in, plus the VAE; the prompt is fixed, so the text encoder can be dropped. About 1.9 GB (fp16) or 3.8 GB (fp32).
+  - **DiffBIR v2.1** (ECCV 2024): Apache-2.0 code on the SD 2.1 base (OpenRAIL++, commercial use allowed with use restrictions). 50 diffusion steps per tile plus a SwinIR pre-pass, so it would need a sampler in Rust. About 2.6 GB (fp16) or 5 GB (fp32) as ONNX, from about 7 GB of original weights.
+  - **Why not now:** gigabyte-sized downloads for a lightweight viewer; the fp32 UNet (about 3.5 GB) doesn't fit a 4 GB GPU with room to work, so they'd run in fp16, which is slow on Pascal cards; estimated (not measured) speed on a GTX 1050: HYPIR tens of seconds per 512 px tile, DiffBIR 10+ minutes.
+  - **Revisit** with a modern GPU, or if a smaller one-step restorer under an open licence appears. Any conversion would go in `lightview-models`, like BSRGAN and DarkIR.
 
 ## Non-goals (v2)
 - JPEG 2000
