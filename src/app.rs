@@ -1,10 +1,10 @@
+use crate::edit::{self, Doc, ResizeDialog};
 use crate::exif_edit;
 use crate::load::{self, Frame, Loaded, Loader, Msg, Notify};
 use crate::save;
 use crate::settings::{self, Interpolation, Settings};
 use crate::view::{self, Transform, View};
-use eframe::egui::{self, Color32, ColorImage, Key, KeyboardShortcut, Modifiers, Pos2, Rect, Sense, TextureFilter, TextureHandle, TextureOptions, Vec2, ViewportCommand};
-use fast_image_resize::{PixelType, ResizeOptions, Resizer, images::{Image, ImageRef}};
+use eframe::egui::{self, Color32, ColorImage, CursorIcon, Key, KeyboardShortcut, Modifiers, Pos2, Rect, Sense, TextureFilter, TextureHandle, TextureOptions, Vec2, ViewportCommand};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::mpsc;
@@ -36,6 +36,26 @@ enum Action {
     Pause,
     NextFrame,
     PrevFrame,
+    Undo,
+    Redo,
+    Crop,
+    Resize,
+    /// Save As in one format: an index into `save::FORMATS`.
+    Export(usize),
+}
+
+/// What dragging on the image does.
+#[derive(Clone, Copy, PartialEq)]
+enum Tool {
+    Pan,
+    Crop,
+}
+
+/// What to do once the user agrees to discard unsaved edits.
+enum Pending {
+    Navigate(isize),
+    Open(PathBuf),
+    Close,
 }
 
 const fn ctrl(key: Key) -> KeyboardShortcut {
@@ -47,7 +67,7 @@ const fn key(key: Key) -> KeyboardShortcut {
 }
 
 /// Keyboard shortcuts, also shown in the menus. Ctrl+Plus is an alias for Ctrl+=.
-const SHORTCUTS: [(KeyboardShortcut, Action); 14] = [
+const SHORTCUTS: [(KeyboardShortcut, Action); 16] = [
     (ctrl(Key::O), Action::Open),
     (KeyboardShortcut::new(Modifiers { shift: true, ..Modifiers::COMMAND }, Key::S), Action::SaveAs),
     (ctrl(Key::W), Action::Close),
@@ -62,6 +82,9 @@ const SHORTCUTS: [(KeyboardShortcut, Action); 14] = [
     (key(Key::ArrowRight), Action::NextImage),
     (ctrl(Key::L), Action::RotateLeft),
     (ctrl(Key::R), Action::RotateRight),
+    // Before Ctrl+Z, which would also match Ctrl+Shift+Z.
+    (KeyboardShortcut::new(Modifiers { shift: true, ..Modifiers::COMMAND }, Key::Z), Action::Redo),
+    (ctrl(Key::Z), Action::Undo),
 ];
 
 /// What the current texture holds; it's rebuilt when this changes.
@@ -104,8 +127,19 @@ pub struct App {
     anim_frame: usize,
     anim_due: Option<Instant>,
     anim_paused: bool,
-    /// View-only rotate/flip of the current image; never written to the file.
-    transform: Transform,
+    /// Edits to the current image (None: none yet), with undo/redo history.
+    doc: Option<Doc>,
+    undo: Vec<Doc>,
+    redo: Vec<Doc>,
+    /// The edits last saved to a copy, and the ones being saved now.
+    saved: Option<Doc>,
+    saving: Option<Doc>,
+    tool: Tool,
+    /// Crop tool: where the drag started and the rect so far, in image px.
+    drag_start: Option<Pos2>,
+    crop_rect: Option<Rect>,
+    resize_dialog: Option<ResizeDialog>,
+    pending: Option<Pending>,
     title: String,
     // --timings bookkeeping.
     window_reported: bool,
@@ -132,7 +166,9 @@ impl App {
             t0, timings, bench, rx, loader, notify, recent, settings, show_info: false, show_settings: false, exif_dialog: None,
             files: start.into_iter().collect(), index: 0,
             cache: HashMap::new(), preview: None, error: None, view: View::Fit,
-            texture: None, tex_key: None, generation: 0, anim_frame: 0, anim_due: None, anim_paused: false, transform: Transform::default(), title: String::new(),
+            texture: None, tex_key: None, generation: 0, anim_frame: 0, anim_due: None, anim_paused: false,
+            doc: None, undo: Vec::new(), redo: Vec::new(), saved: None, saving: None, tool: Tool::Pan, drag_start: None, crop_rect: None, resize_dialog: None, pending: None,
+            title: String::new(),
             window_reported: false, preview_reported: None, full_reported: false, nav_start: None, close_next: false, status: None,
         }
     }
@@ -158,7 +194,7 @@ impl App {
 
     fn handle(&mut self, msg: Msg) {
         match msg {
-            Msg::Open(path) => self.open(path),
+            Msg::Open(path) => self.confirm(Pending::Open(path)),
             Msg::Folder(files) => {
                 if let Some(i) = self.current().and_then(|cur| files.iter().position(|p| p == cur)) {
                     self.files = files;
@@ -187,6 +223,10 @@ impl App {
                 }
             }
             Msg::Saved(path, result) => {
+                let saving = self.saving.take();
+                if result.is_ok() && saving.is_some() {
+                    self.saved = saving;
+                }
                 let name = path.file_name().unwrap_or_default().to_string_lossy().into_owned();
                 self.status = Some((match &result {
                     Ok(()) => format!("Saved {name}"),
@@ -203,6 +243,61 @@ impl App {
                     load::relist(&current, self.settings.sort, &self.notify);
                 }
             }
+        }
+    }
+
+    /// The current image with no edits, once it's decoded.
+    fn base_doc(&self) -> Option<Doc> {
+        let l = self.current().and_then(|p| self.cache.get(p))?;
+        Some(Doc::new(l.frames[0].w, l.frames[0].h))
+    }
+
+    /// The current image's edits (none yet is the identity), once it's decoded.
+    fn doc(&self) -> Option<Doc> {
+        self.doc.clone().or_else(|| self.base_doc())
+    }
+
+    /// Whether the current edits haven't been saved to a copy.
+    fn dirty(&self) -> bool {
+        self.doc.is_some() && self.doc != self.saved.clone().or_else(|| self.base_doc())
+    }
+
+    /// Applies an edit to the current image as one undo step.
+    fn edit(&mut self, f: impl FnOnce(&mut Doc)) {
+        let Some(mut doc) = self.doc() else { return };
+        let before = doc.clone();
+        f(&mut doc);
+        if doc != before {
+            if doc.geometry() != before.geometry() {
+                self.view = View::Fit;
+            }
+            self.undo.push(before);
+            self.redo.clear();
+            self.doc = Some(doc);
+        }
+    }
+
+    fn undo_redo(&mut self, undo: bool) {
+        let Some(current) = self.doc() else { return };
+        let (from, to) = if undo { (&mut self.undo, &mut self.redo) } else { (&mut self.redo, &mut self.undo) };
+        let Some(doc) = from.pop() else { return };
+        to.push(current);
+        if self.doc.as_ref().is_none_or(|d| d.geometry() != doc.geometry()) {
+            self.view = View::Fit;
+        }
+        self.doc = Some(doc);
+    }
+
+    /// Runs `p` now, or asks first when that would lose unsaved edits.
+    fn confirm(&mut self, p: Pending) {
+        if self.dirty() {
+            self.pending = Some(p);
+            return;
+        }
+        match p {
+            Pending::Navigate(delta) => self.navigate(delta),
+            Pending::Open(path) => self.open(path),
+            Pending::Close => self.close_next = true,
         }
     }
 
@@ -236,13 +331,17 @@ impl App {
     /// Clears what's shown, before switching to another image.
     fn reset_shown(&mut self) {
         self.view = View::Fit;
-        self.transform = Transform::default();
         self.preview = None;
         self.error = None;
         self.generation += 1;
         self.anim_frame = 0;
         self.anim_due = None;
         self.anim_paused = false;
+        (self.doc, self.saved, self.saving) = (None, None, None);
+        self.undo.clear();
+        self.redo.clear();
+        self.tool = Tool::Pan;
+        self.crop_rect = None;
     }
 
     fn open_dialog(&self) {
@@ -259,27 +358,30 @@ impl App {
         });
     }
 
-    /// Asks where to save the current image (with its rotate/flip), then saves on that thread.
-    fn save_dialog(&self) {
+    /// Asks where to save the current image (with its edits), then saves on that thread.
+    /// `format` (an index into `save::FORMATS`) limits the dialog to one format.
+    fn save_dialog(&mut self, format: Option<usize>) {
         let Some((path, l)) = self.current().and_then(|p| Some((p, self.cache.get(p)?))) else { return };
-        if l.frames.len() != 1 {
-            return;
-        }
-        let (frame, transform, source) = (l.frames[0].clone(), self.transform, path.clone());
-        let mut dialog = rfd::FileDialog::new()
-            .set_file_name(path.file_name().unwrap_or_default().to_string_lossy())
-            .add_filter("JPEG", &["jpg", "jpeg"])
-            .add_filter("PNG", &["png"])
-            .add_filter("WebP", &["webp"])
-            .add_filter("BMP", &["bmp"]);
+        let Some(doc) = self.doc().filter(|_| l.frames.len() == 1) else { return };
+        let (frame, source) = (l.frames[0].clone(), path.clone());
+        let mut dialog = rfd::FileDialog::new();
+        dialog = match format {
+            Some(i) => {
+                let (name, exts) = save::FORMATS[i];
+                let stem = path.file_stem().unwrap_or_default().to_string_lossy();
+                dialog.set_file_name(format!("{stem}.{}", exts[0])).add_filter(name, exts)
+            }
+            None => save::FORMATS.iter().fold(dialog.set_file_name(path.file_name().unwrap_or_default().to_string_lossy()), |d, (name, exts)| d.add_filter(*name, exts)),
+        };
         if let Some(dir) = path.parent() {
             dialog = dialog.set_directory(dir);
         }
         let notify = self.notify.clone();
+        self.saving = Some(doc.clone());
         // The system dialog asks before replacing an existing file.
         std::thread::spawn(move || {
             if let Some(dest) = dialog.save_file() {
-                let result = save::save(&frame, transform, &source, &dest);
+                let result = save::save(&frame, &doc, &source, &dest);
                 notify.send(Msg::Saved(dest, result));
             }
         });
@@ -316,8 +418,21 @@ impl App {
                 item(ui, "Close", Action::Close, true, actions);
                 ui.separator();
                 item(ui, "Save As…", Action::SaveAs, can_save, actions);
+                ui.add_enabled_ui(can_save, |ui| {
+                    ui.menu_button("Export", |ui| {
+                        for (i, (name, _)) in save::FORMATS.iter().enumerate() {
+                            item(ui, &format!("{name}…"), Action::Export(i), true, actions);
+                        }
+                    });
+                });
             });
             ui.menu_button("Edit", |ui| {
+                item(ui, "Undo", Action::Undo, !self.undo.is_empty(), actions);
+                item(ui, "Redo", Action::Redo, !self.redo.is_empty(), actions);
+                ui.separator();
+                item(ui, "Crop", Action::Crop, has_image, actions);
+                item(ui, "Resize…", Action::Resize, has_image, actions);
+                ui.separator();
                 item(ui, "Rotate Left", Action::RotateLeft, has_image, actions);
                 item(ui, "Rotate Right", Action::RotateRight, has_image, actions);
                 item(ui, "Flip Horizontally", Action::FlipHorizontal, has_image, actions);
@@ -428,6 +543,45 @@ impl App {
         }
     }
 
+    fn resize_dialog(&mut self, ctx: &egui::Context) {
+        let Some(dialog) = &mut self.resize_dialog else { return };
+        let modal = egui::Modal::new(egui::Id::unique("resize")).show(ctx, |ui| edit::resize_ui(ui, dialog));
+        match modal.inner {
+            Some(true) => {
+                let (size, dpi) = dialog.result();
+                self.resize_dialog = None;
+                self.edit(|d| {
+                    d.resize(size[0], size[1]);
+                    d.dpi = dpi.or(d.dpi);
+                });
+            }
+            Some(false) => self.resize_dialog = None,
+            None if modal.should_close() => self.resize_dialog = None,
+            None => {}
+        }
+    }
+
+    /// Asks before an action that would lose unsaved edits.
+    fn discard_dialog(&mut self, ctx: &egui::Context) {
+        if self.pending.is_none() {
+            return;
+        }
+        let name = self.current().and_then(|p| p.file_name()).unwrap_or_default().to_string_lossy().into_owned();
+        let modal = egui::Modal::new(egui::Id::unique("discard")).show(ctx, |ui| {
+            ui.heading("Discard edits?");
+            ui.label(format!("Your edits to {name} haven't been saved."));
+            ui.add_space(6.0);
+            ui.horizontal(|ui| (ui.button("Discard").clicked(), ui.button("Cancel").clicked())).inner
+        });
+        let (discard, cancel) = modal.inner;
+        if discard && let Some(p) = self.pending.take() {
+            self.doc = None;
+            self.confirm(p);
+        } else if cancel || modal.should_close() {
+            self.pending = None;
+        }
+    }
+
     fn make_title(&self) -> String {
         let Some(path) = self.current() else { return "lightview".into() };
         let name = path.file_name().unwrap_or_default().to_string_lossy();
@@ -466,6 +620,10 @@ impl eframe::App for App {
         while let Ok(msg) = self.rx.try_recv() {
             self.handle(msg);
         }
+        if ctx.input(|i| i.viewport().close_requested()) && self.dirty() {
+            ctx.send_viewport_cmd(ViewportCommand::CancelClose);
+            self.pending = Some(Pending::Close);
+        }
 
         // Plain keys (arrows, F11) belong to a text field while one has focus.
         let typing = ctx.egui_wants_keyboard_input();
@@ -479,9 +637,14 @@ impl eframe::App for App {
         for action in &actions {
             match action {
                 Action::Open => self.open_dialog(),
-                Action::SaveAs => self.save_dialog(),
-                Action::OpenRecent(path) => self.open(path.clone()),
-                Action::Close => ctx.send_viewport_cmd(ViewportCommand::Close),
+                Action::SaveAs => self.save_dialog(None),
+                Action::Export(i) => self.save_dialog(Some(*i)),
+                Action::OpenRecent(path) => self.confirm(Pending::Open(path.clone())),
+                Action::Close => self.confirm(Pending::Close),
+                Action::Undo => self.undo_redo(true),
+                Action::Redo => self.undo_redo(false),
+                Action::Crop if self.doc().is_some() => (self.tool, self.crop_rect) = (Tool::Crop, None),
+                Action::Resize => self.resize_dialog = self.doc().map(|d| ResizeDialog::new(&d)),
                 Action::Info => self.show_info = true,
                 Action::Settings => self.show_settings = true,
                 Action::EditExif => match self.current().map(|p| exif_edit::read(p)) {
@@ -489,38 +652,55 @@ impl eframe::App for App {
                     Some(Err(e)) => self.status = Some((format!("Can't edit EXIF: {e}"), Instant::now())),
                     None => {}
                 },
-                Action::RotateLeft | Action::RotateRight | Action::FlipHorizontal | Action::FlipVertical => {
-                    self.transform = match action {
-                        Action::RotateLeft => self.transform.rotate_left(),
-                        Action::RotateRight => self.transform.rotate_right(),
-                        Action::FlipHorizontal => self.transform.flip_horizontal(),
-                        _ => self.transform.flip_vertical(),
-                    };
-                    self.view = View::Fit;
-                }
+                Action::RotateLeft => self.edit(Doc::rotate_left),
+                Action::RotateRight => self.edit(Doc::rotate_right),
+                Action::FlipHorizontal => self.edit(Doc::flip_horizontal),
+                Action::FlipVertical => self.edit(Doc::flip_vertical),
                 Action::Fullscreen => ctx.send_viewport_cmd(ViewportCommand::Fullscreen(!fullscreen)),
-                Action::PrevImage => self.navigate(-1),
-                Action::NextImage => self.navigate(1),
+                Action::PrevImage => self.confirm(Pending::Navigate(-1)),
+                Action::NextImage => self.confirm(Pending::Navigate(1)),
                 Action::Play => (self.anim_paused, self.anim_due) = (false, None),
                 Action::Pause => self.anim_paused = true,
                 _ => {} // zoom and frame-step actions are applied below, once the image is known
             }
         }
-        if esc && fullscreen {
+        let enter = !typing && ctx.input(|i| i.key_pressed(Key::Enter));
+        if esc && self.tool != Tool::Pan {
+            (self.tool, self.crop_rect) = (Tool::Pan, None);
+        } else if esc && fullscreen {
             ctx.send_viewport_cmd(ViewportCommand::Fullscreen(false));
+        }
+        if enter && self.tool == Tool::Crop && let Some(r) = self.crop_rect.take() {
+            self.edit(|d| d.crop_to(r));
+            self.tool = Tool::Pan;
         }
 
         let viewport = ui.available_rect_before_wrap();
         let ppp = ctx.pixels_per_point();
         self.loader.set_target([(viewport.width() * ppp) as u32, (viewport.height() * ppp) as u32]);
+        let doc = self.doc();
         let full = self.current().and_then(|p| self.cache.get(p));
 
         // Zoom and pan only once the full image is in (the preview has different pixel sizes).
-        if let Some(l) = full {
-            let img = self.transform.size(Vec2::new(l.frames[0].w as f32, l.frames[0].h as f32));
+        if let (Some(l), Some(doc)) = (full, &doc) {
+            let img = doc.size_vec();
             let drag = ui.interact(viewport, ui.scope_id().with("image"), Sense::drag());
-            if drag.dragged() {
-                self.view = view::pan(self.view, drag.drag_delta(), img, viewport, ppp);
+            match self.tool {
+                Tool::Pan if drag.dragged() => self.view = view::pan(self.view, drag.drag_delta(), img, viewport, ppp),
+                Tool::Pan => {}
+                Tool::Crop => {
+                    if drag.hovered() {
+                        ctx.set_cursor_icon(CursorIcon::Crosshair);
+                    }
+                    let (dest, vis) = view::layout(self.view, img, viewport, ppp);
+                    let at = |p: Pos2| view::to_image(dest, vis, p);
+                    if drag.drag_started() {
+                        self.drag_start = ctx.input(|i| i.pointer.press_origin()).map(at);
+                    }
+                    if drag.dragged() && let (Some(a), Some(p)) = (self.drag_start, drag.interact_pointer_pos()) {
+                        self.crop_rect = Some(Rect::from_two_pos(a, at(p)).intersect(Rect::from_min_size(Pos2::ZERO, img)));
+                    }
+                }
             }
             let (factor, hover) = ctx.input(|i| (i.zoom_delta() * (i.smooth_scroll_delta.y / 200.0).exp(), i.pointer.hover_pos()));
             if factor != 1.0 {
@@ -558,22 +738,22 @@ impl eframe::App for App {
             }
         }
 
-        let (frame, view) = match full {
-            Some(l) => (Some(&l.frames[self.anim_frame]), self.view),
-            None => (self.preview.as_ref(), View::Fit),
+        let (frame, view, doc) = match (full, doc) {
+            (Some(l), Some(doc)) => (Some(&l.frames[self.anim_frame]), self.view, doc),
+            _ => (self.preview.as_ref(), View::Fit, self.preview.as_ref().map(|f| Doc::new(f.w, f.h)).unwrap_or(Doc::new(1, 1))),
         };
         if let Some(frame) = frame {
             let frame_size = Vec2::new(frame.w as f32, frame.h as f32);
-            let (dest, crop) = view::layout(view, self.transform.size(frame_size), viewport, ppp);
+            let (dest, crop) = view::layout(view, doc.size_vec(), viewport, ppp);
             let interpolation = self.settings.interpolation();
             // Images bigger than the GPU's texture limit always take the CPU path.
             let gpu = self.settings.gpu_scaling && frame.w.max(frame.h) as usize <= ctx.input(|i| i.max_texture_side);
             let key = if gpu {
                 TexKey { generation: self.generation, anim_frame: self.anim_frame, gpu, interpolation, transform: Transform::default(), crop: [0.0; 4], size: [frame.w, frame.h] }
             } else {
-                let src = self.transform.to_source(crop, frame_size);
+                let src = doc.to_source(crop);
                 let size = [(dest.width() * ppp).round().max(1.0) as u32, (dest.height() * ppp).round().max(1.0) as u32];
-                TexKey { generation: self.generation, anim_frame: self.anim_frame, gpu, interpolation, transform: self.transform, crop: [src.min.x, src.min.y, src.width(), src.height()], size }
+                TexKey { generation: self.generation, anim_frame: self.anim_frame, gpu, interpolation, transform: doc.transform, crop: [src.min.x, src.min.y, src.width(), src.height()], size }
             };
             if self.tex_key != Some(key) {
                 let (image, options) = if gpu {
@@ -586,7 +766,7 @@ impl eframe::App for App {
                 } else {
                     // shortcut: resize runs on the UI thread every pan/zoom frame; GPU scaling is the smooth path.
                     let [x, y, w, h] = key.crop;
-                    (resize(frame, Rect::from_min_size(Pos2::new(x, y), Vec2::new(w, h)), key.size, self.transform, interpolation), TextureOptions::LINEAR)
+                    (resize(frame, Rect::from_min_size(Pos2::new(x, y), Vec2::new(w, h)), key.size, doc.transform, interpolation), TextureOptions::LINEAR)
                 };
                 match &mut self.texture {
                     Some(t) => t.set(image, options),
@@ -601,7 +781,7 @@ impl eframe::App for App {
                 let shown = [crop.left_top(), crop.right_top(), crop.right_bottom(), crop.left_bottom()];
                 let screen = [dest.left_top(), dest.right_top(), dest.right_bottom(), dest.left_bottom()];
                 for (pos, p) in screen.into_iter().zip(shown) {
-                    let uv = (self.transform.source_point(p, frame_size).to_vec2() / frame_size).to_pos2();
+                    let uv = (doc.source_point(p).to_vec2() / frame_size).to_pos2();
                     mesh.vertices.push(egui::epaint::Vertex { pos, uv, color: Color32::WHITE });
                 }
                 mesh.add_triangle(0, 1, 2);
@@ -609,6 +789,28 @@ impl eframe::App for App {
                 ui.painter().add(mesh);
             } else {
                 ui.painter().image(texture, dest, Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)), Color32::WHITE);
+            }
+            if self.tool == Tool::Crop {
+                let painter = ui.painter().with_clip_rect(dest);
+                let shade = Color32::from_black_alpha(140);
+                match self.crop_rect.map(|r| Rect::from_two_pos(view::to_screen(dest, crop, r.min), view::to_screen(dest, crop, r.max))) {
+                    Some(r) => {
+                        // Darken everything outside the crop.
+                        for side in [
+                            Rect::from_x_y_ranges(dest.x_range(), dest.top()..=r.top()),
+                            Rect::from_x_y_ranges(dest.x_range(), r.bottom()..=dest.bottom()),
+                            Rect::from_x_y_ranges(dest.left()..=r.left(), r.y_range()),
+                            Rect::from_x_y_ranges(r.right()..=dest.right(), r.y_range()),
+                        ] {
+                            painter.rect_filled(side, 0.0, shade);
+                        }
+                        painter.rect_stroke(r, 0.0, egui::Stroke::new(1.0, Color32::WHITE), egui::StrokeKind::Middle);
+                    }
+                    None => {
+                        painter.rect_filled(dest, 0.0, shade);
+                    }
+                }
+                bubble(ui.painter(), Pos2::new(viewport.center().x, viewport.top() + 24.0), "Drag to select · Enter to crop · Esc to cancel");
             }
 
             if self.timings {
@@ -635,11 +837,7 @@ impl eframe::App for App {
         if let Some((text, at)) = &self.status {
             const SHOWN: std::time::Duration = std::time::Duration::from_secs(4);
             if at.elapsed() < SHOWN {
-                let painter = ui.painter();
-                let galley = painter.layout_no_wrap(text.clone(), egui::FontId::proportional(14.0), Color32::WHITE);
-                let rect = Rect::from_center_size(Pos2::new(viewport.center().x, viewport.bottom() - 24.0), galley.size() + Vec2::new(16.0, 8.0));
-                painter.rect_filled(rect, 4.0, Color32::from_black_alpha(190));
-                painter.galley(rect.min + Vec2::new(8.0, 4.0), galley, Color32::WHITE);
+                bubble(ui.painter(), Pos2::new(viewport.center().x, viewport.bottom() - 24.0), text);
                 ctx.request_repaint_after(SHOWN - at.elapsed());
             } else {
                 self.status = None;
@@ -649,6 +847,8 @@ impl eframe::App for App {
         self.info_dialog(&ctx);
         self.settings_dialog(&ctx);
         self.exif_dialog(&ctx);
+        self.resize_dialog(&ctx);
+        self.discard_dialog(&ctx);
 
         let title = self.make_title();
         if title != self.title {
@@ -661,26 +861,23 @@ impl eframe::App for App {
 /// Resizes the `crop` part of `frame` so that, after `transform`, it's `size` px.
 /// Transforming the small resized output instead of the full image keeps rotating cheap.
 fn resize(frame: &Frame, crop: Rect, size: [u32; 2], transform: Transform, interpolation: Interpolation) -> ColorImage {
-    let pixel_type = if frame.alpha { PixelType::U8x4 } else { PixelType::U8x3 };
-    let src = ImageRef::new(frame.w, frame.h, &frame.pixels, pixel_type).unwrap();
     let [w, h] = if transform.rot % 2 == 1 { [size[1], size[0]] } else { size };
-    let mut dst = Image::new(w, h, pixel_type);
-    let opts = ResizeOptions::new()
-        .resize_alg(interpolation.cpu())
-        .crop(crop.min.x.into(), crop.min.y.into(), crop.width().into(), crop.height().into());
-    Resizer::new().resize(&src, &mut dst, &opts).unwrap();
+    let pixels = edit::resize(frame, crop, w, h, interpolation.cpu());
     let size = [size[0] as usize, size[1] as usize];
     let pixels = if transform == Transform::default() {
-        dst.into_vec()
+        pixels
     } else {
-        let img = if frame.alpha {
-            image::DynamicImage::ImageRgba8(image::RgbaImage::from_raw(w, h, dst.into_vec()).unwrap())
-        } else {
-            image::DynamicImage::ImageRgb8(image::RgbImage::from_raw(w, h, dst.into_vec()).unwrap())
-        };
-        transform.apply(img).into_bytes()
+        transform.apply(edit::to_dynamic(frame.alpha, w, h, pixels).unwrap()).into_bytes()
     };
     to_color_image(frame.alpha, size, &pixels)
+}
+
+/// A short message in a dark rounded box centred on `center`.
+fn bubble(painter: &egui::Painter, center: Pos2, text: &str) {
+    let galley = painter.layout_no_wrap(text.to_string(), egui::FontId::proportional(14.0), Color32::WHITE);
+    let rect = Rect::from_center_size(center, galley.size() + Vec2::new(16.0, 8.0));
+    painter.rect_filled(rect, 4.0, Color32::from_black_alpha(190));
+    painter.galley(rect.min + Vec2::new(8.0, 4.0), galley, Color32::WHITE);
 }
 
 fn to_color_image(alpha: bool, size: [usize; 2], pixels: &[u8]) -> ColorImage {

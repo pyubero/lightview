@@ -1,32 +1,37 @@
+use crate::edit::{self, Doc};
 use crate::load::{Frame, drop_exif_thumbnail};
-use crate::view::Transform;
-use image::codecs::{bmp::BmpEncoder, jpeg::JpegEncoder, png::PngEncoder, webp::WebPEncoder};
+use image::codecs::{bmp::BmpEncoder, gif::GifEncoder, jpeg::{JpegEncoder, PixelDensity}, png::PngEncoder, tiff::TiffEncoder, webp::WebPEncoder};
 use image::metadata::Orientation;
 use image::{DynamicImage, ImageDecoder, ImageEncoder, ImageReader};
 use std::fs::File;
-use std::io::{BufWriter, Write};
+use std::io::{BufWriter, Seek, Write};
 use std::path::Path;
 
 const JPEG_QUALITY: u8 = 90;
 
-/// Saves `frame` with `transform` applied to `dest`, in the format of its extension.
+/// The formats Save As and Export write: name and extensions (the first is the default).
+pub const FORMATS: [(&str, &[&str]); 6] = [
+    ("JPEG", &["jpg", "jpeg"]),
+    ("PNG", &["png"]),
+    ("WebP", &["webp"]),
+    ("BMP", &["bmp"]),
+    ("TIFF", &["tif", "tiff"]),
+    ("GIF", &["gif"]),
+];
+
+/// Saves `frame` with the edits in `doc` to `dest`, in the format of its extension.
 /// EXIF from `source` is kept, with the orientation reset (the pixels are already upright)
 /// and the old thumbnail unlinked. Writes to a temporary file first, so a failed save never
 /// damages an existing file (including the original).
-pub fn save(frame: &Frame, transform: Transform, source: &Path, dest: &Path) -> Result<(), String> {
+pub fn save(frame: &Frame, doc: &Doc, source: &Path, dest: &Path) -> Result<(), String> {
     let ext = dest.extension().and_then(|e| e.to_str()).unwrap_or_default().to_ascii_lowercase();
-    if !["jpg", "jpeg", "png", "webp", "bmp"].contains(&ext.as_str()) {
-        return Err(format!("can't save as .{ext}: use .jpg, .png, .webp or .bmp"));
+    if !FORMATS.iter().any(|(_, exts)| exts.contains(&ext.as_str())) {
+        return Err(format!("can't save as .{ext}: use .jpg, .png, .webp, .bmp, .tif or .gif"));
     }
-    let img = if frame.alpha {
-        DynamicImage::ImageRgba8(image::RgbaImage::from_raw(frame.w, frame.h, frame.pixels.clone()).ok_or("bad frame")?)
-    } else {
-        DynamicImage::ImageRgb8(image::RgbImage::from_raw(frame.w, frame.h, frame.pixels.clone()).ok_or("bad frame")?)
-    };
-    let img = transform.apply(img);
+    let img = edit::render(frame, doc)?;
     let exif = source_exif(source);
 
-    write_atomic(dest, |out| encode(&img, &ext, exif, out).map_err(|e| e.to_string()))
+    write_atomic(dest, |out| encode(&img, &ext, exif, doc.dpi, out).map_err(|e| e.to_string()))
 }
 
 /// Writes `dest` through a temporary file next to it and renames it into place,
@@ -46,7 +51,7 @@ pub fn write_atomic(dest: &Path, write: impl FnOnce(&mut BufWriter<File>) -> Res
     result
 }
 
-fn encode(img: &DynamicImage, ext: &str, exif: Option<Vec<u8>>, out: &mut impl Write) -> image::ImageResult<()> {
+fn encode(img: &DynamicImage, ext: &str, exif: Option<Vec<u8>>, dpi: Option<u16>, out: &mut (impl Write + Seek)) -> image::ImageResult<()> {
     // Formats that can't hold EXIF just skip it.
     fn with_exif<E: ImageEncoder>(mut enc: E, exif: Option<Vec<u8>>) -> E {
         if let Some(exif) = exif {
@@ -56,9 +61,17 @@ fn encode(img: &DynamicImage, ext: &str, exif: Option<Vec<u8>>, out: &mut impl W
     }
     match ext {
         // JPEG has no alpha channel.
-        "jpg" | "jpeg" => DynamicImage::ImageRgb8(img.to_rgb8()).write_with_encoder(with_exif(JpegEncoder::new_with_quality(out, JPEG_QUALITY), exif)),
+        "jpg" | "jpeg" => {
+            let mut enc = JpegEncoder::new_with_quality(out, JPEG_QUALITY);
+            if let Some(dpi) = dpi {
+                enc.set_pixel_density(PixelDensity::dpi(dpi));
+            }
+            DynamicImage::ImageRgb8(img.to_rgb8()).write_with_encoder(with_exif(enc, exif))
+        }
         "png" => img.write_with_encoder(with_exif(PngEncoder::new(out), exif)),
         "webp" => img.write_with_encoder(with_exif(WebPEncoder::new_lossless(out), exif)),
+        "tif" | "tiff" => img.write_with_encoder(TiffEncoder::new(out)),
+        "gif" => DynamicImage::ImageRgba8(img.to_rgba8()).write_with_encoder(GifEncoder::new(out)),
         _ => img.write_with_encoder(BmpEncoder::new(out)),
     }
 }
@@ -88,15 +101,18 @@ mod tests {
     }
 
     #[test]
-    fn lossless_formats_round_trip_with_transform() {
+    fn lossless_formats_round_trip_with_edits() {
         let dir = temp_dir("roundtrip");
         let source = dir.join("source.png");
         std::fs::write(&source, b"not an image").unwrap();
-        let t = Transform::default().rotate_right().flip_horizontal();
-        let expected = t.apply(DynamicImage::ImageRgb8(image::RgbImage::from_raw(3, 2, frame().pixels).unwrap())).to_rgb8();
-        for ext in ["png", "webp", "bmp"] {
+        let mut doc = Doc::new(3, 2);
+        doc.rotate_right();
+        doc.flip_horizontal();
+        let expected = edit::render(&frame(), &doc).unwrap().to_rgb8();
+        assert_eq!(expected, DynamicImage::ImageRgb8(image::RgbImage::from_raw(3, 2, frame().pixels).unwrap()).rotate90().fliph().to_rgb8());
+        for ext in ["png", "webp", "bmp", "tif"] {
             let dest = dir.join(format!("out.{ext}"));
-            save(&frame(), t, &source, &dest).unwrap();
+            save(&frame(), &doc, &source, &dest).unwrap();
             assert_eq!(image::open(&dest).unwrap().to_rgb8(), expected, "{ext}");
         }
         // No temporary files left behind.
@@ -118,11 +134,26 @@ mod tests {
         enc.write_image(&[0u8; 3 * 2 * 3], 3, 2, image::ExtendedColorType::Rgb8).unwrap();
 
         let dest = dir.join("saved.JPG");
-        save(&frame(), Transform::default(), &source, &dest).unwrap();
+        let doc = Doc { dpi: Some(300), ..Doc::new(3, 2) };
+        save(&frame(), &doc, &source, &dest).unwrap();
         let mut decoder = ImageReader::open(&dest).unwrap().with_guessed_format().unwrap().into_decoder().unwrap();
         let exif = decoder.exif_metadata().unwrap();
+        let jpeg = std::fs::read(&dest).unwrap();
         std::fs::remove_dir_all(&dir).unwrap();
         assert_eq!(Orientation::from_exif_chunk(&exif.unwrap()), Some(Orientation::NoTransforms));
+        // JFIF density: units = 1 (dpi), then 300 × 300.
+        let jfif = jpeg.windows(5).position(|w| w == b"JFIF\0").unwrap();
+        assert_eq!(&jpeg[jfif + 7..jfif + 12], &[1, 1, 44, 1, 44]);
+    }
+
+    #[test]
+    fn gif_export() {
+        let dir = temp_dir("gif");
+        let dest = dir.join("out.gif");
+        save(&frame(), &Doc::new(3, 2), &dir.join("missing.png"), &dest).unwrap();
+        let back = image::open(&dest).unwrap();
+        std::fs::remove_dir_all(&dir).unwrap();
+        assert_eq!((back.width(), back.height()), (3, 2));
     }
 
     #[test]
@@ -132,8 +163,8 @@ mod tests {
         std::fs::write(&dest, b"original").unwrap();
         // A frame whose pixel buffer is too short fails before anything is written.
         let bad = Frame { pixels: vec![0; 3], ..frame() };
-        assert!(save(&bad, Transform::default(), &dest, &dest).is_err());
-        assert!(save(&frame(), Transform::default(), &dest, &dir.join("x.gif")).is_err());
+        assert!(save(&bad, &Doc::new(3, 2), &dest, &dest).is_err());
+        assert!(save(&frame(), &Doc::new(3, 2), &dest, &dir.join("x.heic")).is_err());
         let kept = std::fs::read(&dest).unwrap();
         std::fs::remove_dir_all(&dir).unwrap();
         assert_eq!(kept, b"original");

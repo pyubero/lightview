@@ -126,6 +126,16 @@ impl Transform {
     }
 }
 
+/// The image px under screen point `p`, for a `layout` result (`dest`, `crop`).
+pub fn to_image(dest: Rect, crop: Rect, p: Pos2) -> Pos2 {
+    crop.min + (p - dest.min) * (crop.width() / dest.width())
+}
+
+/// The screen point showing image px `p`, for a `layout` result (`dest`, `crop`).
+pub fn to_screen(dest: Rect, crop: Rect, p: Pos2) -> Pos2 {
+    dest.min + (p - crop.min) * (dest.width() / crop.width())
+}
+
 /// 1:1 pixels, centred.
 pub fn actual_size(img: Vec2) -> View {
     View::Manual { scale: 1.0, center: (img / 2.0).to_pos2() }
@@ -228,6 +238,21 @@ mod tests {
                 }
             }
         }
+    }
+
+    #[test]
+    fn screen_image_round_trip() {
+        let img = Vec2::new(1000.0, 500.0);
+        let vp = panel(300.0, 200.0);
+        for view in [View::Fit, zoom_at(View::Fit, 3.0, Pos2::new(250.0, 50.0), img, vp, 1.5)] {
+            let (dest, crop) = layout(view, img, vp, 1.5);
+            for p in [Pos2::new(0.0, 0.0), Pos2::new(123.0, 77.0), Pos2::new(1000.0, 500.0)] {
+                assert!((to_image(dest, crop, to_screen(dest, crop, p)) - p).length() < 1e-2, "{view:?} {p:?}");
+            }
+        }
+        // Fit: the image's corners are the dest rect's.
+        let (dest, crop) = layout(View::Fit, img, vp, 1.0);
+        assert_eq!(to_screen(dest, crop, Pos2::new(1000.0, 500.0)), dest.max);
     }
 
     #[test]

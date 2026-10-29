@@ -1,4 +1,5 @@
 mod app;
+mod edit;
 mod exif_edit;
 mod load;
 mod save;
