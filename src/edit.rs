@@ -436,6 +436,23 @@ mod tests {
     }
 
     #[test]
+    fn image_from_elliptical_selection() {
+        use crate::markup::Selection;
+        use eframe::egui::Color32;
+        // What Create Image from Selection does, on an image with alpha.
+        let frame = Frame { w: 40, h: 40, pixels: vec![200; 40 * 40 * 4], alpha: true, delay: Duration::ZERO };
+        let sel = Selection::Ellipse(rect(10.0, 10.0, 20.0, 20.0));
+        let mut doc = Doc::new(40, 40);
+        let r = sel.bbox();
+        doc.crop_to(r);
+        doc.elements.push(Element::erase(&sel.translate(-r.min.to_vec2()), true, rect(0.0, 0.0, 20.0, 20.0), Color32::TRANSPARENT));
+        let out = render(&frame, &doc).unwrap().to_rgba8();
+        assert_eq!(out.dimensions(), (20, 20));
+        assert_eq!(out.get_pixel(0, 0)[3], 0, "corner outside the ellipse is transparent");
+        assert_eq!(out.get_pixel(10, 10).0, [200; 4], "centre kept");
+    }
+
+    #[test]
     fn crop_after_resize_keeps_the_scale() {
         let mut doc = Doc::new(6, 5);
         doc.resize(12, 10);

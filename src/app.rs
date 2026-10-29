@@ -2,7 +2,7 @@ use crate::edit::{self, Adjust, Doc, ResizeDialog};
 use crate::exif_edit;
 use crate::inspector::{self, Inspector};
 use crate::load::{self, Frame, Loaded, Loader, Msg, Notify};
-use crate::markup::{self, Element, Pick, Shape, Style};
+use crate::markup::{self, Element, Pick, Selection, Shape, Style};
 use crate::save;
 use crate::settings::{self, Interpolation, Settings};
 use crate::view::{self, Transform, View};
@@ -53,6 +53,21 @@ enum Action {
     /// Border/Fill Color…: show the toolbar's style controls.
     StyleControls,
     Describe,
+    SelectTool(SelKind),
+    SelectAll,
+    Deselect,
+    Copy,
+    Cut,
+    Paste,
+    DeleteSelection,
+    ImageFromSelection,
+}
+
+#[derive(Clone, Copy, PartialEq)]
+enum SelKind {
+    Rect,
+    Ellipse,
+    Lasso,
 }
 
 /// What dragging on the image does.
@@ -63,6 +78,7 @@ enum Tool {
     Measure,
     Select,
     Draw(Shape),
+    Selection(SelKind),
 }
 
 /// What dragging with the Select tool does.
@@ -89,7 +105,7 @@ const fn key(key: Key) -> KeyboardShortcut {
 }
 
 /// Keyboard shortcuts, also shown in the menus. Ctrl+Plus is an alias for Ctrl+=.
-const SHORTCUTS: [(KeyboardShortcut, Action); 16] = [
+const SHORTCUTS: [(KeyboardShortcut, Action); 18] = [
     (ctrl(Key::O), Action::Open),
     (KeyboardShortcut::new(Modifiers { shift: true, ..Modifiers::COMMAND }, Key::S), Action::SaveAs),
     (ctrl(Key::W), Action::Close),
@@ -107,6 +123,8 @@ const SHORTCUTS: [(KeyboardShortcut, Action); 16] = [
     // Before Ctrl+Z, which would also match Ctrl+Shift+Z.
     (KeyboardShortcut::new(Modifiers { shift: true, ..Modifiers::COMMAND }, Key::Z), Action::Redo),
     (ctrl(Key::Z), Action::Undo),
+    (KeyboardShortcut::new(Modifiers { shift: true, ..Modifiers::COMMAND }, Key::A), Action::Deselect),
+    (ctrl(Key::A), Action::SelectAll),
 ];
 
 /// What the current texture holds; it's rebuilt when this changes.
@@ -179,6 +197,10 @@ pub struct App {
     change_base: Option<Doc>,
     /// The element whose style the last undo step changed, so style tweaks merge into one step.
     last_restyle: Option<usize>,
+    /// The selection, in output px.
+    selection: Option<Selection>,
+    /// Textures for Erase and Image elements, by `Element::texture_key`.
+    element_textures: HashMap<u64, TextureHandle>,
     resize_dialog: Option<ResizeDialog>,
     /// While the Adjust Color panel is open: the edits from before it opened.
     adjusting: Option<Doc>,
@@ -211,7 +233,7 @@ impl App {
             cache: HashMap::new(), preview: None, error: None, view: View::Fit,
             texture: None, tex_key: None, resized: None, generation: 0, anim_frame: 0, anim_due: None, anim_paused: false,
             doc: None, undo: Vec::new(), redo: Vec::new(), saved: None, saving: None, tool: Tool::Pan, drag_start: None, crop_rect: None, measure: None, measure_drag: 1,
-            show_toolbar: false, style: None, selected: None, grab: Grab::None, editing_text: None, focus_text: false, change_base: None, last_restyle: None,
+            show_toolbar: false, style: None, selected: None, grab: Grab::None, editing_text: None, focus_text: false, change_base: None, last_restyle: None, selection: None, element_textures: HashMap::new(),
             resize_dialog: None, adjusting: None, pending: None,
             title: String::new(),
             window_reported: false, preview_reported: None, full_reported: false, nav_start: None, close_next: false, status: None,
@@ -314,8 +336,8 @@ impl App {
         f(&mut doc);
         if doc != before {
             if doc.geometry() != before.geometry() {
-                // The measurement's points are in the old image coordinates.
-                (self.view, self.measure) = (View::Fit, None);
+                // The measurement's and selection's points are in the old image coordinates.
+                (self.view, self.measure, self.selection) = (View::Fit, None, None);
             }
             self.undo.push(before);
             self.redo.clear();
@@ -393,7 +415,7 @@ impl App {
         (self.selected, self.editing_text, self.change_base, self.last_restyle) = (None, None, None, None);
         to.push(current);
         if self.doc.as_ref().is_none_or(|d| d.geometry() != doc.geometry()) {
-            (self.view, self.measure) = (View::Fit, None);
+            (self.view, self.measure, self.selection) = (View::Fit, None, None);
         }
         self.doc = Some(doc);
     }
@@ -455,6 +477,8 @@ impl App {
         self.measure = None;
         self.adjusting = None;
         (self.style, self.selected, self.grab, self.editing_text, self.change_base, self.last_restyle) = (None, None, Grab::None, None, None, None);
+        self.selection = None;
+        self.element_textures.clear();
     }
 
     fn open_dialog(&self) {
@@ -543,6 +567,23 @@ impl App {
                 item(ui, "Undo", Action::Undo, !self.undo.is_empty(), actions);
                 item(ui, "Redo", Action::Redo, !self.redo.is_empty(), actions);
                 ui.separator();
+                let selected = self.selection.is_some();
+                item(ui, "Select All", Action::SelectAll, has_image, actions);
+                item(ui, "Deselect", Action::Deselect, selected, actions);
+                // Ctrl+C/X/V come as clipboard events, not key presses.
+                for (label, action, enabled, keys) in [
+                    ("Copy", Action::Copy, has_image, "Ctrl+C"),
+                    ("Paste", Action::Paste, has_image, "Ctrl+V"),
+                    ("Cut", Action::Cut, selected, "Ctrl+X"),
+                ] {
+                    if ui.add_enabled(enabled, egui::Button::new(label).shortcut_text(keys)).clicked() {
+                        actions.push(action);
+                    }
+                }
+                item(ui, "Delete Selection", Action::DeleteSelection, selected, actions);
+                item(ui, "Copy Selected Region", Action::Copy, selected, actions);
+                item(ui, "Create Image from Selection", Action::ImageFromSelection, selected, actions);
+                ui.separator();
                 item(ui, "Crop", Action::Crop, has_image, actions);
                 item(ui, "Resize…", Action::Resize, has_image, actions);
                 ui.separator();
@@ -581,6 +622,12 @@ impl App {
             ui.menu_button("Tools", |ui| {
                 let jpeg = self.current().and_then(|p| p.extension()).is_some_and(|e| e.eq_ignore_ascii_case("jpg") || e.eq_ignore_ascii_case("jpeg"));
                 item(ui, "Edit EXIF…", Action::EditExif, has_image && jpeg, actions);
+                for (label, kind) in [("Rectangular Selection", SelKind::Rect), ("Elliptical Selection", SelKind::Ellipse), ("Lasso", SelKind::Lasso)] {
+                    if ui.add_enabled(has_image, egui::Button::selectable(self.tool == Tool::Selection(kind), label)).clicked() {
+                        actions.push(Action::SelectTool(kind));
+                    }
+                }
+                ui.separator();
                 let measuring = self.tool == Tool::Measure;
                 if ui.add_enabled(has_image, egui::Button::selectable(measuring, "Measure")).clicked() {
                     actions.push(Action::Measure);
@@ -704,7 +751,7 @@ impl App {
         let origin = ctx.input(|i| i.pointer.press_origin());
         let pointer = drag.interact_pointer_pos();
         let style = *self.style.get_or_insert_with(|| Style::for_image(doc.size_vec()));
-        let hit = |p: Pos2| doc.elements.iter().rposition(|e| e.bbox().expand(6.0 / k).contains(p));
+        let hit = |p: Pos2| doc.elements.iter().rposition(|e| e.shape != Shape::Erase && e.bbox().expand(6.0 / k).contains(p));
         match self.tool {
             Tool::Draw(shape @ (Shape::Text | Shape::Magnifier)) => {
                 if drag.clicked() && let Some(p) = pointer.map(at) {
@@ -808,11 +855,21 @@ impl App {
         let k = dest.width() / crop.width();
         let to_screen = |p: Pos2| view::to_screen(dest, crop, p);
         let painter = ui.painter().with_clip_rect(dest);
+        let mut used = Vec::new();
         for (i, e) in doc.elements.iter().enumerate() {
+            let own = e.texture_key().and_then(|key| {
+                used.push(key);
+                if let std::collections::hash_map::Entry::Vacant(slot) = self.element_textures.entry(key) {
+                    let image = e.texture_image(ui.ctx().input(|i| i.max_texture_side) as f32)?;
+                    slot.insert(ui.ctx().load_texture("markup", image, TextureOptions::LINEAR));
+                }
+                Some(self.element_textures[&key].id())
+            });
             if Some(i) != self.editing_text {
-                markup::paint(&painter, e, &to_screen, k, texture, uv);
+                markup::paint(&painter, e, &to_screen, k, texture, uv, own);
             }
         }
+        self.element_textures.retain(|key, _| used.contains(key));
         if self.tool == Tool::Select && let Some(e) = self.selected.and_then(|i| doc.elements.get(i)) {
             let r = Rect::from_two_pos(to_screen(e.bbox().min), to_screen(e.bbox().max)).expand(3.0);
             painter.rect_stroke(r, 0.0, egui::Stroke::new(1.0, Color32::from_rgb(66, 165, 245)), egui::StrokeKind::Outside);
@@ -833,6 +890,68 @@ impl App {
         if response.lost_focus() {
             self.finish_text();
         }
+    }
+
+    /// The colour that erased pixels get: transparent if the image has alpha, else the background.
+    fn erase_color(&self) -> Color32 {
+        let alpha = self.current().and_then(|p| self.cache.get(p)).is_some_and(|l| l.frames[0].alpha);
+        let [r, g, b] = self.settings.background;
+        if alpha { Color32::TRANSPARENT } else { Color32::from_rgb(r, g, b) }
+    }
+
+    /// Copies the selection (or the whole image) with its edits to the clipboard.
+    fn copy_selection(&mut self, ctx: &egui::Context) {
+        let Some((l, doc)) = self.current().and_then(|p| self.cache.get(p)).cloned().zip(self.doc()) else { return };
+        // shortcut: renders the full edited image on the UI thread; move it to a thread if copying big images stutters.
+        let Ok(img) = edit::render(&l.frames[self.anim_frame.min(l.frames.len() - 1)], &doc) else { return };
+        let img = img.into_rgba8();
+        let bounds = Rect::from_min_size(Pos2::ZERO, doc.size_vec());
+        let sel = self.selection.clone().unwrap_or(Selection::Rect(bounds));
+        let b = Rect::from_min_max(sel.bbox().min.floor(), sel.bbox().max.ceil()).intersect(bounds);
+        let (x, y, w, h) = (b.min.x as u32, b.min.y as u32, b.width() as u32, b.height() as u32);
+        if w == 0 || h == 0 {
+            return;
+        }
+        let mut part = image::imageops::crop_imm(&img, x, y, w, h).to_image();
+        if !matches!(sel, Selection::Rect(_)) && let Some(mask) = markup::polygon_mask(&sel.outline(), None, b.min, 1.0, w, h) {
+            for (px, m) in part.pixels_mut().zip(mask.data()) {
+                px[3] = (px[3] as u32 * *m as u32 / 255) as u8;
+            }
+        }
+        ctx.copy_image(egui::ColorImage::from_rgba_unmultiplied([w as usize, h as usize], part.as_raw()));
+        self.status = Some((format!("Copied {w} × {h} px"), Instant::now()));
+    }
+
+    fn delete_selection(&mut self) {
+        let (Some(sel), Some(doc)) = (self.selection.take(), self.doc()) else { return };
+        let (bounds, color) = (Rect::from_min_size(Pos2::ZERO, doc.size_vec()), self.erase_color());
+        self.edit(|d| d.elements.push(Element::erase(&sel, false, bounds, color)));
+    }
+
+    /// Crops to the selection; for an ellipse or lasso, the outside is erased too.
+    fn image_from_selection(&mut self) {
+        let (Some(sel), Some(doc)) = (self.selection.take(), self.doc()) else { return };
+        let r = Rect::from_min_max(sel.bbox().min.round(), sel.bbox().max.round()).intersect(Rect::from_min_size(Pos2::ZERO, doc.size_vec()));
+        let color = self.erase_color();
+        self.edit(|d| {
+            d.crop_to(r);
+            if !matches!(sel, Selection::Rect(_)) {
+                d.elements.push(Element::erase(&sel.translate(-r.min.to_vec2()), true, Rect::from_min_size(Pos2::ZERO, d.size_vec()), color));
+            }
+        });
+    }
+
+    /// Adds a clipboard image (straight RGBA) as a movable element, centred and fitted inside the image.
+    fn paste(&mut self, w: u32, h: u32, pixels: Vec<u8>) {
+        let (Some(img), Some(doc)) = (image::RgbaImage::from_raw(w, h, pixels), self.doc()) else { return };
+        let size = Vec2::new(w as f32, h as f32);
+        let fit = (doc.size_vec() / size).min_elem().min(1.0);
+        let at = self.selection.as_ref().map_or(((doc.size_vec() - size * fit) / 2.0).to_pos2(), |s| s.bbox().min);
+        let style = *self.style.get_or_insert_with(|| Style::for_image(doc.size_vec()));
+        self.edit(|d| d.elements.push(Element::pasted(Arc::new(img), at, size * fit, style)));
+        self.finish_text();
+        (self.tool, self.show_toolbar, self.selection) = (Tool::Select, true, None);
+        self.selected = self.doc.as_ref().map(|d| d.elements.len() - 1);
     }
 
     /// Auto Levels for the visible part of the current image.
@@ -948,11 +1067,26 @@ impl eframe::App for App {
         let mut actions: Vec<Action> = ctx.input_mut(|i| {
             SHORTCUTS
                 .iter()
-                .filter(|(sc, a)| !(typing && (sc.modifiers.is_none() || matches!(a, Action::Undo | Action::Redo))) && i.consume_shortcut(sc))
+                .filter(|(sc, a)| !(typing && (sc.modifiers.is_none() || matches!(a, Action::Undo | Action::Redo | Action::SelectAll | Action::Deselect))) && i.consume_shortcut(sc))
                 .map(|(_, a)| a.clone())
                 .collect()
         });
         let (esc, fullscreen) = ctx.input(|i| (i.key_pressed(Key::Escape), i.viewport().fullscreen.unwrap_or(false)));
+        let mut pasted = None;
+        if !typing {
+            ctx.input(|i| {
+                for event in &i.events {
+                    match event {
+                        egui::Event::Copy => actions.push(Action::Copy),
+                        egui::Event::Cut => actions.push(Action::Cut),
+                        egui::Event::PasteImage(img) => pasted = Some(img.clone()),
+                        // Text on the clipboard: there may be an image too.
+                        egui::Event::Paste(_) => actions.push(Action::Paste),
+                        _ => {}
+                    }
+                }
+            });
+        }
         if !fullscreen {
             egui::Panel::top("menu").show(ui, |ui| self.menu_bar(ui, &mut actions));
             if self.show_toolbar {
@@ -1001,6 +1135,25 @@ impl eframe::App for App {
                     self.show_toolbar = true;
                 }
                 Action::Describe => self.show_info = true,
+                Action::SelectTool(kind) if self.doc().is_some() => {
+                    self.finish_text();
+                    (self.tool, self.crop_rect, self.selected) = (Tool::Selection(*kind), None, None);
+                }
+                Action::SelectAll => self.selection = self.doc().map(|d| Selection::Rect(Rect::from_min_size(Pos2::ZERO, d.size_vec()))),
+                Action::Deselect => self.selection = None,
+                Action::Copy => self.copy_selection(&ctx),
+                Action::Cut => {
+                    if self.selection.is_some() {
+                        self.copy_selection(&ctx);
+                        self.delete_selection();
+                    }
+                }
+                Action::Paste => match arboard::Clipboard::new().and_then(|mut c| c.get_image()) {
+                    Ok(img) => self.paste(img.width as u32, img.height as u32, img.bytes.into_owned()),
+                    Err(e) => self.status = Some((format!("Nothing to paste: {e}"), Instant::now())),
+                },
+                Action::DeleteSelection => self.delete_selection(),
+                Action::ImageFromSelection => self.image_from_selection(),
                 Action::RotateLeft => self.edit(Doc::rotate_left),
                 Action::RotateRight => self.edit(Doc::rotate_right),
                 Action::FlipHorizontal => self.edit(Doc::flip_horizontal),
@@ -1013,12 +1166,19 @@ impl eframe::App for App {
                 _ => {} // zoom and frame-step actions are applied below, once the image is known
             }
         }
+        if let Some(img) = pasted {
+            let pixels = img.pixels.iter().flat_map(|c| c.to_srgba_unmultiplied()).collect();
+            self.paste(img.size[0] as u32, img.size[1] as u32, pixels);
+        }
         let enter = !typing && ctx.input(|i| i.key_pressed(Key::Enter));
         let delete = !typing && ctx.input(|i| i.key_pressed(Key::Delete) || i.key_pressed(Key::Backspace));
         if esc && !typing && let Some(before) = self.change_base.take() {
             // Cancel the drawing in progress.
             (self.doc, self.grab) = (Some(before), Grab::None);
         } else if esc && !typing && self.tool != Tool::Pan {
+            if matches!(self.tool, Tool::Selection(_)) {
+                self.selection = None;
+            }
             (self.tool, self.crop_rect, self.measure, self.selected) = (Tool::Pan, None, None, None);
         } else if esc && !typing && fullscreen {
             ctx.send_viewport_cmd(ViewportCommand::Fullscreen(false));
@@ -1029,6 +1189,8 @@ impl eframe::App for App {
         }
         if delete && self.tool == Tool::Select && let Some(i) = self.selected.take() {
             self.edit(|d| drop(d.elements.remove(i)));
+        } else if delete {
+            self.delete_selection();
         }
 
         self.inspector(ui);
@@ -1049,6 +1211,36 @@ impl eframe::App for App {
                 Tool::Select | Tool::Draw(_) => {
                     let (dest, vis) = view::layout(self.view, img, viewport, ppp);
                     self.markup_input(&ctx, &drag, dest, vis, doc);
+                }
+                Tool::Selection(kind) => {
+                    if drag.hovered() {
+                        ctx.set_cursor_icon(CursorIcon::Crosshair);
+                    }
+                    let (dest, vis) = view::layout(self.view, img, viewport, ppp);
+                    let bounds = Rect::from_min_size(Pos2::ZERO, img);
+                    let at = |p: Pos2| bounds.clamp(view::to_image(dest, vis, p));
+                    if drag.clicked() {
+                        self.selection = None;
+                    }
+                    if drag.drag_started() && let Some(o) = ctx.input(|i| i.pointer.press_origin()) {
+                        self.drag_start = Some(at(o));
+                        self.selection = (kind == SelKind::Lasso).then(|| Selection::Lasso(vec![at(o)]));
+                    }
+                    if drag.dragged() && let (Some(a), Some(p)) = (self.drag_start, drag.interact_pointer_pos().map(at)) {
+                        let k = dest.width() / vis.width();
+                        match (kind, &mut self.selection) {
+                            (SelKind::Lasso, Some(Selection::Lasso(points))) => {
+                                if points.last().is_none_or(|q| q.distance(p) * k >= 2.0) {
+                                    points.push(p);
+                                }
+                            }
+                            (SelKind::Ellipse, sel) => *sel = Some(Selection::Ellipse(Rect::from_two_pos(a, p))),
+                            (_, sel) => *sel = Some(Selection::Rect(Rect::from_two_pos(a, p))),
+                        }
+                    }
+                    if drag.drag_stopped() && self.selection.as_ref().is_some_and(Selection::is_empty) {
+                        self.selection = None;
+                    }
                 }
                 Tool::Crop | Tool::Measure => {
                     if drag.hovered() {
@@ -1181,10 +1373,18 @@ impl eframe::App for App {
                 ui.painter().image(texture, dest, Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)), Color32::WHITE);
             }
             let frame_wh = [frame.w, frame.h];
-            if !doc.elements.is_empty() || self.editing_text.is_some() {
+            if !doc.elements.is_empty() || self.editing_text.is_some() || !self.element_textures.is_empty() {
                 // The magnifier samples the image texture: the whole frame (GPU) or the visible part (CPU).
                 let uv = |p: Pos2| if gpu { (doc.source_point(p).to_vec2() / frame_size).to_pos2() } else { ((p - crop.min) / crop.size()).to_pos2() };
                 self.paint_markup(ui, &doc, dest, crop, texture, &uv);
+            }
+            if let Some(sel) = &self.selection {
+                let mut outline: Vec<Pos2> = sel.outline().into_iter().map(|p| view::to_screen(dest, crop, p)).collect();
+                outline.push(outline[0]);
+                // Marching-ants style: white dashes over a dark line, visible on any image.
+                let painter = ui.painter().with_clip_rect(dest.expand(1.0));
+                painter.add(egui::Shape::line(outline.clone(), egui::Stroke::new(1.0, Color32::from_black_alpha(200))));
+                painter.extend(egui::Shape::dashed_line(&outline, egui::Stroke::new(1.0, Color32::WHITE), 5.0, 4.0));
             }
             if self.tool == Tool::Crop {
                 let painter = ui.painter().with_clip_rect(dest);
@@ -1326,6 +1526,26 @@ mod tests {
         // Rotated right, the top row reads bottom-left then top-left of the source: 3, 0.
         let red: Vec<u8> = out.chunks(3).map(|p| p[0]).collect();
         assert_eq!(red, [3, 0, 4, 1, 5, 2]);
+    }
+
+    /// Clipboard between two processes (needs a desktop session):
+    /// `cargo test clipboard_copy -- --ignored & sleep 3; cargo test clipboard_paste -- --ignored`
+    #[test]
+    #[ignore]
+    fn clipboard_copy() {
+        let bytes: Vec<u8> = (0..4 * 3 * 4).map(|i| i as u8).collect();
+        let mut clipboard = arboard::Clipboard::new().unwrap();
+        clipboard.set_image(arboard::ImageData { width: 4, height: 3, bytes: bytes.into() }).unwrap();
+        // Like the app's window, keep owning the clipboard for a while.
+        std::thread::sleep(std::time::Duration::from_secs(8));
+    }
+
+    #[test]
+    #[ignore]
+    fn clipboard_paste() {
+        let img = arboard::Clipboard::new().unwrap().get_image().unwrap();
+        assert_eq!((img.width, img.height), (4, 3));
+        assert_eq!(img.bytes[..8], [0, 1, 2, 3, 4, 5, 6, 7]);
     }
 
     #[test]

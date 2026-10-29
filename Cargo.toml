@@ -5,7 +5,8 @@ edition = "2024"
 
 [dependencies]
 ab_glyph = "0.2.32"
-eframe = { version = "0.37.0", default-features = false, features = ["glow", "wayland", "x11", "default_fonts", "persistence"] }
+arboard = { version = "3.7.0", default-features = false, features = ["image-data"] }
+eframe = { version = "0.37.0", default-features = false, features = ["glow", "wayland", "x11", "default_fonts", "persistence", "clipboard"] }
 fast_image_resize = "6.1.0"
 image = { version = "0.25.10", default-features = false, features = ["jpeg", "png", "gif", "webp", "bmp", "tiff"] }
 libloading = "0.8"

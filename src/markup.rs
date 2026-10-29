@@ -13,6 +13,85 @@ pub enum Shape {
     Text,
     Highlight,
     Magnifier,
+    /// Deleted or cut pixels: filled with `style.color` (background, or transparent).
+    Erase,
+    /// A pasted image, drawn into the rect of its two points.
+    Image,
+}
+
+/// A pasted image. Compared by identity, so comparing edits never compares pixels.
+#[derive(Clone)]
+pub struct Pasted(pub Arc<RgbaImage>);
+
+impl PartialEq for Pasted {
+    fn eq(&self, other: &Self) -> bool {
+        Arc::ptr_eq(&self.0, &other.0)
+    }
+}
+
+impl std::fmt::Debug for Pasted {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "Pasted({}×{})", self.0.width(), self.0.height())
+    }
+}
+
+/// A selection, in output px.
+#[derive(Clone, Debug, PartialEq)]
+pub enum Selection {
+    Rect(Rect),
+    Ellipse(Rect),
+    Lasso(Vec<Pos2>),
+}
+
+impl Selection {
+    /// The outline as a polygon.
+    pub fn outline(&self) -> Vec<Pos2> {
+        match self {
+            Selection::Rect(r) => vec![r.left_top(), r.right_top(), r.right_bottom(), r.left_bottom()],
+            Selection::Ellipse(r) => (0..64).map(|i| r.center() + Vec2::angled(i as f32 / 64.0 * std::f32::consts::TAU) * r.size() / 2.0).collect(),
+            Selection::Lasso(points) => points.clone(),
+        }
+    }
+
+    pub fn bbox(&self) -> Rect {
+        Rect::from_points(&self.outline())
+    }
+
+    pub fn is_empty(&self) -> bool {
+        let b = self.bbox();
+        b.width() < 1.0 || b.height() < 1.0
+    }
+
+    pub fn translate(&self, d: Vec2) -> Selection {
+        match self {
+            Selection::Rect(r) => Selection::Rect(r.translate(d)),
+            Selection::Ellipse(r) => Selection::Ellipse(r.translate(d)),
+            Selection::Lasso(points) => Selection::Lasso(points.iter().map(|&p| p + d).collect()),
+        }
+    }
+}
+
+/// The polygon as a path; with `outside`, everything in that rect except the polygon (even-odd).
+fn polygon_path(points: &[Pos2], outside: Option<Rect>) -> Option<tiny_skia::Path> {
+    let mut pb = tiny_skia::PathBuilder::new();
+    if let Some(r) = outside.and_then(|r| tiny_skia::Rect::from_ltrb(r.left(), r.top(), r.right(), r.bottom())) {
+        pb.push_rect(r);
+    }
+    let (first, rest) = points.split_first()?;
+    pb.move_to(first.x, first.y);
+    for p in rest {
+        pb.line_to(p.x, p.y);
+    }
+    pb.close();
+    pb.finish()
+}
+
+/// Coverage (0–255) of `polygon` over the `w`×`h` px area whose top-left is `origin`, scaled by `scale`.
+pub fn polygon_mask(polygon: &[Pos2], outside: Option<Rect>, origin: Pos2, scale: f32, w: u32, h: u32) -> Option<tiny_skia::Mask> {
+    let mut mask = tiny_skia::Mask::new(w, h)?;
+    let t = tiny_skia::Transform::from_row(scale, 0.0, 0.0, scale, -origin.x * scale, -origin.y * scale);
+    mask.fill_path(&polygon_path(polygon, outside)?, tiny_skia::FillRule::EvenOdd, true, t);
+    Some(mask)
 }
 
 /// The Shapes submenu.
@@ -53,6 +132,10 @@ pub struct Element {
     pub points: Vec<Pos2>,
     pub text: String,
     pub style: Style,
+    /// Erase: the first two points are a rect, and everything in it outside the polygon (the
+    /// rest of the points) is erased.
+    pub invert: bool,
+    pub image: Option<Pasted>,
 }
 
 impl Element {
@@ -61,7 +144,64 @@ impl Element {
         if shape == Shape::Highlight {
             style.color = Color32::from_rgba_unmultiplied(255, 235, 59, 100);
         }
-        Element { shape, points: vec![at; if shape == Shape::Sketch { 1 } else { 2 }], text: String::new(), style }
+        Element { shape, points: vec![at; if shape == Shape::Sketch { 1 } else { 2 }], text: String::new(), style, invert: false, image: None }
+    }
+
+    /// Erases `selection` (or everything outside it) with `color`, in an image of size `bounds`.
+    pub fn erase(selection: &Selection, invert: bool, bounds: Rect, color: Color32) -> Self {
+        let mut points = if invert { vec![bounds.min, bounds.max] } else { Vec::new() };
+        points.extend(selection.outline());
+        let style = Style { color, width: 0.0, fill: None, font_size: 0.0, zoom: 1.0 };
+        Element { shape: Shape::Erase, points, text: String::new(), style, invert, image: None }
+    }
+
+    /// A pasted image, with its top-left at `at` and `size` image px.
+    pub fn pasted(img: Arc<RgbaImage>, at: Pos2, size: Vec2, style: Style) -> Self {
+        Element { shape: Shape::Image, points: vec![at, at + size], text: String::new(), style, invert: false, image: Some(Pasted(img)) }
+    }
+
+    /// Erase: the polygon, and the rect it's cut out of when inverted.
+    fn erase_parts(&self) -> (&[Pos2], Option<Rect>) {
+        if self.invert { (&self.points[2..], Some(Rect::from_two_pos(self.points[0], self.points[1]))) } else { (&self.points, None) }
+    }
+
+    /// Erase and Image elements are drawn from a texture; this keys it, and stays the same
+    /// while the element moves.
+    pub fn texture_key(&self) -> Option<u64> {
+        use std::hash::{Hash, Hasher};
+        let mut h = std::collections::hash_map::DefaultHasher::new();
+        match (self.shape, &self.image) {
+            (Shape::Image, Some(Pasted(img))) => (Arc::as_ptr(img) as usize).hash(&mut h),
+            (Shape::Erase, _) => {
+                let b = self.bbox();
+                for p in &self.points {
+                    [(p.x - b.min.x).to_bits(), (p.y - b.min.y).to_bits()].hash(&mut h);
+                }
+                (self.invert, self.style.color).hash(&mut h);
+            }
+            _ => return None,
+        }
+        Some(h.finish())
+    }
+
+    /// The texture's pixels, at most `max_side` px on the longer side.
+    pub fn texture_image(&self, max_side: f32) -> Option<egui::ColorImage> {
+        match (self.shape, &self.image) {
+            (Shape::Image, Some(Pasted(img))) => Some(egui::ColorImage::from_rgba_unmultiplied([img.width() as usize, img.height() as usize], img.as_raw())),
+            (Shape::Erase, _) => {
+                let b = self.bbox();
+                let scale = (max_side / b.size().max_elem()).min(1.0);
+                let (w, hgt) = ((b.width() * scale).ceil().max(1.0) as u32, (b.height() * scale).ceil().max(1.0) as u32);
+                let (polygon, outside) = self.erase_parts();
+                let mask = polygon_mask(polygon, outside, b.min, scale, w, hgt)?;
+                let [r, g, bl, a] = self.style.color.to_srgba_unmultiplied();
+                // Shown with the background colour even when it saves as transparent: that's what shows through.
+                let a = if a == 0 { 255 } else { a };
+                let pixels: Vec<u8> = mask.data().iter().flat_map(|&m| [r, g, bl, (m as u32 * a as u32 / 255) as u8]).collect();
+                Some(egui::ColorImage::from_rgba_unmultiplied([w as usize, hgt as usize], &pixels))
+            }
+            _ => None,
+        }
     }
 
     /// The area it covers (image px), for hit tests and selection.
@@ -73,6 +213,11 @@ impl Element {
                 Rect::from_min_size(self.points[0], Vec2::new(longest * 0.55, lines * 1.2) * self.style.font_size)
             }
             Shape::Magnifier => Rect::from_center_size(self.points[0], Vec2::splat(2.0 * self.radius())),
+            Shape::Erase => {
+                let (polygon, outside) = self.erase_parts();
+                outside.unwrap_or_else(|| Rect::from_points(polygon))
+            }
+            Shape::Image => Rect::from_two_pos(self.points[0], self.points[1]),
             _ => Rect::from_points(&self.points).expand(self.style.width / 2.0),
         }
     }
@@ -99,6 +244,7 @@ impl Element {
         match self.shape {
             Shape::Text => self.text.trim().is_empty(),
             Shape::Sketch => self.points.len() < 2,
+            Shape::Erase | Shape::Image => false,
             _ => self.points[0].distance(self.points[1]) < 1.0,
         }
     }
@@ -119,7 +265,8 @@ fn rounding(r: Rect) -> f32 {
 
 /// Draws `e` on screen. `to_screen` maps image px to points, `k` is points per image px,
 /// and `uv` maps image px to the image texture's UVs (for the magnifier).
-pub fn paint(painter: &egui::Painter, e: &Element, to_screen: &dyn Fn(Pos2) -> Pos2, k: f32, texture: egui::TextureId, uv: &dyn Fn(Pos2) -> Pos2) {
+/// `own` is the element's own texture (Erase, Image; see `Element::texture`).
+pub fn paint(painter: &egui::Painter, e: &Element, to_screen: &dyn Fn(Pos2) -> Pos2, k: f32, texture: egui::TextureId, uv: &dyn Fn(Pos2) -> Pos2, own: Option<egui::TextureId>) {
     let s = &e.style;
     let stroke = Stroke::new(s.width * k, s.color);
     let rect = || Rect::from_two_pos(to_screen(e.points[0]), to_screen(e.points[1]));
@@ -169,6 +316,12 @@ pub fn paint(painter: &egui::Painter, e: &Element, to_screen: &dyn Fn(Pos2) -> P
             }
             painter.add(mesh);
             painter.circle_stroke(to_screen(c), r * k, stroke);
+        }
+        Shape::Erase | Shape::Image => {
+            if let Some(tex) = own {
+                let b = e.bbox();
+                painter.image(tex, Rect::from_two_pos(to_screen(b.min), to_screen(b.max)), Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)), Color32::WHITE);
+            }
         }
     }
 }
@@ -267,6 +420,27 @@ pub fn flatten(img: &mut RgbaImage, elements: &[Element]) {
                 }
             }
             Shape::Text => draw_text(&mut pixmap, e),
+            Shape::Erase => {
+                let (polygon, outside) = e.erase_parts();
+                if let Some(path) = polygon_path(polygon, outside) {
+                    // Source, not source-over, so a transparent colour clears.
+                    paint.blend_mode = tiny_skia::BlendMode::Source;
+                    pixmap.fill_path(&path, &paint, tiny_skia::FillRule::EvenOdd, id, None);
+                }
+            }
+            Shape::Image => {
+                let Some(Pasted(src)) = &e.image else { continue };
+                let mut data = src.as_raw().clone();
+                for px in data.as_chunks_mut::<4>().0 {
+                    let a = px[3] as u32;
+                    for v in &mut px[..3] {
+                        *v = ((*v as u32 * a + 127) / 255) as u8;
+                    }
+                }
+                let Some(src_map) = tiny_skia::IntSize::from_wh(src.width(), src.height()).and_then(|size| tiny_skia::Pixmap::from_vec(data, size)) else { continue };
+                let t = tiny_skia::Transform::from_row(rect.width() / src.width() as f32, 0.0, 0.0, rect.height() / src.height() as f32, rect.left(), rect.top());
+                pixmap.draw_pixmap(0, 0, src_map.as_ref(), &tiny_skia::PixmapPaint { quality: tiny_skia::FilterQuality::Bicubic, ..Default::default() }, t, None);
+            }
             Shape::Magnifier => {
                 let (c, radius) = (a, e.radius());
                 let source = pixmap.clone();
@@ -477,7 +651,7 @@ mod tests {
     }
 
     fn element(shape: Shape, a: (f32, f32), b: (f32, f32)) -> Element {
-        Element { shape, points: vec![Pos2::new(a.0, a.1), Pos2::new(b.0, b.1)], text: String::new(), style: style() }
+        Element { shape, points: vec![Pos2::new(a.0, a.1), Pos2::new(b.0, b.1)], text: String::new(), style: style(), invert: false, image: None }
     }
 
     fn is_red(img: &RgbaImage, x: u32, y: u32) -> bool {
@@ -552,6 +726,46 @@ mod tests {
         // 10 px right of the centre shows what was 5 px right: still white; 10 px left: black.
         assert_eq!(img.get_pixel(60, 50)[0], 255);
         assert_eq!(img.get_pixel(40, 50)[0], 0);
+    }
+
+    #[test]
+    fn erase_and_paste() {
+        let full = Rect::from_min_size(Pos2::ZERO, Vec2::new(100.0, 100.0));
+        let sel = Selection::Ellipse(Rect::from_min_max(Pos2::new(20.0, 20.0), Pos2::new(80.0, 80.0)));
+        let black = Color32::from_rgb(0, 0, 0);
+        // Deleting a selection fills it; everything else is untouched.
+        let mut img = white(100, 100);
+        flatten(&mut img, &[Element::erase(&sel, false, full, black)]);
+        assert_eq!(img.get_pixel(50, 50).0, [0, 0, 0, 255]);
+        assert!(is_white(&img, 22, 22), "outside the ellipse");
+        // Inverted (Create Image from Selection): the outside goes, the inside stays.
+        let mut img = white(100, 100);
+        flatten(&mut img, &[Element::erase(&sel, true, full, Color32::TRANSPARENT)]);
+        assert_eq!(img.get_pixel(5, 5)[3], 0, "transparent outside");
+        assert!(is_white(&img, 50, 50));
+        // A pasted 2×1 image (red, blue) stretched over a 40×20 rect.
+        let src = Arc::new(RgbaImage::from_fn(2, 1, |x, _| if x == 0 { image::Rgba([255, 0, 0, 255]) } else { image::Rgba([0, 0, 255, 255]) }));
+        let mut img = white(100, 100);
+        flatten(&mut img, &[Element::pasted(src, Pos2::new(10.0, 10.0), Vec2::new(40.0, 20.0), style())]);
+        assert!(is_red(&img, 12, 20));
+        assert!(img.get_pixel(48, 20)[2] > 200 && img.get_pixel(48, 20)[0] < 60, "blue on the right");
+        assert!(is_white(&img, 60, 20) && is_white(&img, 20, 40));
+    }
+
+    #[test]
+    fn selection_masks() {
+        let lasso = Selection::Lasso(vec![Pos2::new(0.0, 0.0), Pos2::new(10.0, 0.0), Pos2::new(0.0, 10.0)]);
+        let mask = polygon_mask(&lasso.outline(), None, Pos2::ZERO, 1.0, 10, 10).unwrap();
+        let at = |x: usize, y: usize| mask.data()[y * 10 + x];
+        assert_eq!(at(1, 1), 255);
+        assert_eq!(at(8, 8), 0);
+        // Offset and scaled: the same triangle at half size, from (5, 5).
+        let half = polygon_mask(&lasso.outline(), None, Pos2::new(-10.0, -10.0), 0.5, 10, 10).unwrap();
+        assert_eq!(half.data()[6 * 10 + 6], 255);
+        assert_eq!(half.data()[2 * 10 + 2], 0);
+        assert!(Selection::Rect(Rect::from_min_size(Pos2::ZERO, Vec2::new(0.5, 9.0))).is_empty());
+        let e = Selection::Ellipse(Rect::from_min_max(Pos2::new(10.0, 20.0), Pos2::new(30.0, 60.0)));
+        assert!((e.bbox().min - Pos2::new(10.0, 20.0)).length() < 1e-3 && (e.bbox().max - Pos2::new(30.0, 60.0)).length() < 1e-3);
     }
 
     #[test]

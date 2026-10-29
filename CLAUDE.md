@@ -26,6 +26,7 @@
 - Resize opaque images as RGB (U8x3), not RGBA: 9 ms vs 66 ms for 12 MP → 480×360.
 - libjpeg-turbo is loaded at run time from `libturbojpeg.so.0` (`src/turbo.rs`, via `libloading`); no `-dev` package needed. `--bench` prints every preview drawn with its size (EXIF thumbnail, then the reduced-size decode).
 - `--bench` window times vary 110–230 ms run to run; compare binaries by interleaving runs, and compare image times against each run's own window time.
+- Clipboard: eframe's `clipboard` feature (arboard + Wayland data-control); Ctrl+C/X/V arrive as `Event::Copy/Cut/Paste(Image)`, not key presses. A copied image lives only while lightview runs. Cross-process check: `cargo test clipboard_copy -- --ignored &` then `cargo test clipboard_paste -- --ignored`.
 - Metadata checks: exiftool isn't installed (running a downloaded copy is blocked); compare with `python3 -I` + PIL 12.3 and `LIGHTVIEW_INSPECT=photo.jpg cargo test print_inspector -- --ignored --nocapture`.
 - M1 result (2026-10-28): eframe alone takes 115–200 ms to the first frame; a 12 MP JPEG takes ~360–410 ms to decode in a fresh process (~190 ms warm) → P1 is ~420 ms, so the 100 ms target is missed.
 
