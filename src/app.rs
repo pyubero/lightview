@@ -93,6 +93,14 @@ enum Grab {
     Resize,
 }
 
+/// A download waiting for the user to accept its licence.
+#[derive(Clone, Copy)]
+enum Download {
+    /// An index into `ai::CATALOG`.
+    Model(usize),
+    Runtime,
+}
+
 /// What to do once the user agrees to discard unsaved edits.
 enum Pending {
     Navigate(isize),
@@ -210,6 +218,7 @@ pub struct App {
     adjusting: Option<Doc>,
     pending: Option<Pending>,
     show_ai_models: bool,
+    license_prompt: Option<Download>,
     /// Model files being downloaded.
     downloading: HashSet<String>,
     title: String,
@@ -242,7 +251,7 @@ impl App {
             texture: None, tex_key: None, resized: None, generation: 0, anim_frame: 0, anim_due: None, anim_paused: false,
             doc: None, undo: Vec::new(), redo: Vec::new(), saved: None, saving: None, tool: Tool::Pan, drag_start: None, crop_rect: None, measure: None, measure_drag: 1,
             show_toolbar, style: None, selected: None, grab: Grab::None, editing_text: None, focus_text: false, change_base: None, last_restyle: None, selection: None, element_textures: HashMap::new(),
-            resize_dialog: None, adjusting: None, pending: None, show_ai_models: false, downloading: HashSet::new(),
+            resize_dialog: None, adjusting: None, pending: None, show_ai_models: false, license_prompt: None, downloading: HashSet::new(),
             title: String::new(),
             window_reported: false, preview_reported: None, full_reported: false, nav_start: None, close_next: false, status: None,
         }
@@ -1069,9 +1078,7 @@ impl App {
         }
         let notify = self.notify.clone();
         if let Some(i) = out.download {
-            let known = &crate::ai::CATALOG[i];
-            self.downloading.insert(known.file.to_string());
-            std::thread::spawn(move || notify.send(Msg::Downloaded(known.file.to_string(), crate::ai::download(known))));
+            self.license_prompt = Some(Download::Model(i));
         } else if let Some(file) = out.detect {
             // Opening a big model takes a moment, so not on the UI thread.
             std::thread::spawn(move || notify.send(Msg::Detected(file.clone(), crate::ai::input_size(&file))));
@@ -1084,6 +1091,42 @@ impl App {
                     }));
                 }
             });
+        }
+    }
+
+    /// Shows the download's licence; the download starts only once it's accepted.
+    fn license_dialog(&mut self, ctx: &egui::Context) {
+        let Some(download) = self.license_prompt else { return };
+        let (title, licenses) = match download {
+            Download::Model(i) => (crate::ai::CATALOG[i].label, crate::ai::CATALOG[i].licenses),
+            Download::Runtime => ("AI runtime (ONNX Runtime)", std::slice::from_ref(&crate::ai::RUNTIME_LICENSE)),
+        };
+        let modal = egui::Modal::new(egui::Id::unique("license")).show(ctx, |ui| crate::ai::license_ui(ui, title, licenses));
+        let close = modal.should_close();
+        match modal.inner {
+            Some(true) => {
+                self.license_prompt = None;
+                let notify = self.notify.clone();
+                match download {
+                    Download::Model(i) => {
+                        let known = &crate::ai::CATALOG[i];
+                        self.downloading.insert(known.file.to_string());
+                        std::thread::spawn(move || notify.send(Msg::Downloaded(known.file.to_string(), crate::ai::download(known))));
+                    }
+                    Download::Runtime => {
+                        self.status = Some(("Downloading the AI runtime…".into(), Instant::now()));
+                        std::thread::spawn(move || {
+                            notify.send(Msg::Status(match crate::ai::download_runtime() {
+                                Ok(()) => "Installed the AI runtime".into(),
+                                Err(e) => format!("Couldn't install the AI runtime: {e}"),
+                            }));
+                        });
+                    }
+                }
+            }
+            Some(false) => self.license_prompt = None,
+            None if close => self.license_prompt = None,
+            None => {}
         }
     }
 
@@ -1262,16 +1305,7 @@ impl eframe::App for App {
                 },
                 Action::DeleteSelection => self.delete_selection(),
                 Action::Cutout(crop) => self.cutout(*crop),
-                Action::DownloadRuntime => {
-                    self.status = Some(("Downloading the AI runtime…".into(), Instant::now()));
-                    let notify = self.notify.clone();
-                    std::thread::spawn(move || {
-                        notify.send(Msg::Status(match crate::ai::download_runtime() {
-                            Ok(()) => "Installed the AI runtime".into(),
-                            Err(e) => format!("Couldn't install the AI runtime: {e}"),
-                        }));
-                    });
-                }
+                Action::DownloadRuntime => self.license_prompt = Some(Download::Runtime),
                 Action::AiModels => self.show_ai_models = true,
                 Action::ImageFromSelection => self.image_from_selection(),
                 Action::RotateLeft => self.edit(Doc::rotate_left),
@@ -1581,6 +1615,7 @@ impl eframe::App for App {
         self.settings_dialog(&ctx);
         self.resize_dialog(&ctx);
         self.ai_models_dialog(&ctx);
+        self.license_dialog(&ctx);
         self.adjust_panel(&ctx);
         self.discard_dialog(&ctx);
 

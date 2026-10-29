@@ -109,19 +109,36 @@ pub struct Known {
     pub mb: u32,
     sha256: &'static str,
     pre: Preprocess,
+    /// Shown, and accepted by the user, before the download starts.
+    pub licenses: &'static [License],
 }
+
+/// A third-party licence, embedded so it can be read before downloading (and offline).
+pub struct License {
+    pub project: &'static str,
+    pub spdx: &'static str,
+    pub url: &'static str,
+    pub text: &'static str,
+}
+
+const U2NET_LICENSE: License = License { project: "U²-Net", spdx: "Apache-2.0", url: "https://github.com/xuebinqin/U-2-Net", text: include_str!("../licenses/u2net.txt") };
+const DIS_LICENSE: License = License { project: "IS-Net (DIS)", spdx: "Apache-2.0", url: "https://github.com/xuebinqin/DIS", text: include_str!("../licenses/dis.txt") };
+const ANIME_LICENSE: License = License { project: "anime-segmentation", spdx: "Apache-2.0", url: "https://github.com/SkyTNT/anime-segmentation", text: include_str!("../licenses/anime-segmentation.txt") };
+const BIREFNET_LICENSE: License = License { project: "BiRefNet", spdx: "MIT", url: "https://github.com/ZhengPeng7/BiRefNet", text: include_str!("../licenses/birefnet.txt") };
+const REMBG_LICENSE: License = License { project: "rembg", spdx: "MIT", url: "https://github.com/danielgatis/rembg", text: include_str!("../licenses/rembg.txt") };
+pub const RUNTIME_LICENSE: License = License { project: "ONNX Runtime", spdx: "MIT", url: "https://github.com/microsoft/onnxruntime", text: include_str!("../licenses/onnxruntime.txt") };
 
 const RELEASES: &str = "https://github.com/danielgatis/rembg/releases/download/v0.0.0";
 
 /// In order of preference: the first one installed is the default.
 pub const CATALOG: [Known; 7] = [
-    Known { file: "silueta.onnx", label: "Silueta — small and fast", mb: 44, sha256: "75da6c8d2f8096ec743d071951be73b4a8bc7b3e51d9a6625d63644f90ffeedb", pre: U2NET },
-    Known { file: "u2netp.onnx", label: "U²-Net small — fastest", mb: 5, sha256: "309c8469258dda742793dce0ebea8e6dd393174f89934733ecc8b14c76f4ddd8", pre: U2NET },
-    Known { file: "u2net.onnx", label: "U²-Net — general", mb: 176, sha256: "8d10d2f3bb75ae3b6d527c77944fc5e7dcd94b29809d47a739a7a728a912b491", pre: U2NET },
-    Known { file: "u2net_human_seg.onnx", label: "U²-Net people — portraits", mb: 176, sha256: "01eb6a29a5c4d8edb30b56adad9bb3a2a0535338e480724a213e0acfd2d1c73c", pre: U2NET },
-    Known { file: "isnet-general-use.onnx", label: "IS-Net — general, clean edges", mb: 179, sha256: "60920e99c45464f2ba57bee2ad08c919a52bbf852739e96947fbb4358c0d964a", pre: ISNET },
-    Known { file: "isnet-anime.onnx", label: "IS-Net anime — illustrations", mb: 176, sha256: "f15622d853e8260172812b657053460e20806f04b9e05147d49af7bed31a6e99", pre: ISNET },
-    Known { file: "BiRefNet-general-bb_swin_v1_tiny-epoch_232.onnx", label: "BiRefNet lite — best quality, slow", mb: 224, sha256: "5600024376f572a557870a5eb0afb1e5961636bef4e1e22132025467d0f03333", pre: BIREFNET },
+    Known { file: "silueta.onnx", label: "Silueta — small and fast", mb: 44, sha256: "75da6c8d2f8096ec743d071951be73b4a8bc7b3e51d9a6625d63644f90ffeedb", pre: U2NET, licenses: &[U2NET_LICENSE, REMBG_LICENSE] },
+    Known { file: "u2netp.onnx", label: "U²-Net small — fastest", mb: 5, sha256: "309c8469258dda742793dce0ebea8e6dd393174f89934733ecc8b14c76f4ddd8", pre: U2NET, licenses: &[U2NET_LICENSE] },
+    Known { file: "u2net.onnx", label: "U²-Net — general", mb: 176, sha256: "8d10d2f3bb75ae3b6d527c77944fc5e7dcd94b29809d47a739a7a728a912b491", pre: U2NET, licenses: &[U2NET_LICENSE] },
+    Known { file: "u2net_human_seg.onnx", label: "U²-Net people — portraits", mb: 176, sha256: "01eb6a29a5c4d8edb30b56adad9bb3a2a0535338e480724a213e0acfd2d1c73c", pre: U2NET, licenses: &[U2NET_LICENSE] },
+    Known { file: "isnet-general-use.onnx", label: "IS-Net — general, clean edges", mb: 179, sha256: "60920e99c45464f2ba57bee2ad08c919a52bbf852739e96947fbb4358c0d964a", pre: ISNET, licenses: &[DIS_LICENSE] },
+    Known { file: "isnet-anime.onnx", label: "IS-Net anime — illustrations", mb: 176, sha256: "f15622d853e8260172812b657053460e20806f04b9e05147d49af7bed31a6e99", pre: ISNET, licenses: &[ANIME_LICENSE] },
+    Known { file: "BiRefNet-general-bb_swin_v1_tiny-epoch_232.onnx", label: "BiRefNet lite — best quality, slow", mb: 224, sha256: "5600024376f572a557870a5eb0afb1e5961636bef4e1e22132025467d0f03333", pre: BIREFNET, licenses: &[BIREFNET_LICENSE] },
 ];
 
 fn models_dir() -> Result<PathBuf, String> {
@@ -238,6 +255,32 @@ fn input(pre: &Preprocess, img: &RgbaImage) -> Vec<f32> {
         }
     }
     input
+}
+
+/// The licence prompt's body: Some(true) to accept and download, Some(false) to cancel.
+pub fn license_ui(ui: &mut egui::Ui, title: &str, licenses: &[License]) -> Option<bool> {
+    ui.heading(format!("Licence — {title}"));
+    ui.label("Please read and accept the licence before downloading.");
+    for (i, l) in licenses.iter().enumerate() {
+        ui.add_space(6.0);
+        ui.horizontal(|ui| {
+            ui.strong(format!("{} — {}", l.project, l.spdx));
+            if ui.button("Open project page").clicked() {
+                // shortcut: xdg-open is Linux only.
+                drop(std::process::Command::new("xdg-open").arg(l.url).spawn());
+            }
+        });
+        egui::ScrollArea::vertical().id_salt(("license", i)).max_height(320.0).show(ui, |ui| {
+            ui.add(egui::Label::new(egui::RichText::new(l.text).monospace()).wrap());
+        });
+    }
+    ui.add_space(6.0);
+    ui.horizontal(|ui| {
+        let accept = ui.button("Accept and Download").clicked();
+        let cancel = ui.button("Cancel").clicked();
+        accept.then_some(true).or(cancel.then_some(false))
+    })
+    .inner
 }
 
 /// What the AI Models dialog asks for this frame.
@@ -409,6 +452,23 @@ mod tests {
         let input = input(&Preprocess { size: 2, ..U2NET }, &img);
         assert_eq!(input.len(), 3 * 4);
         assert!(input[..4].iter().all(|&v| v > 2.0) && input[4..].iter().all(|&v| v < -1.0));
+    }
+
+    #[test]
+    fn every_download_has_its_licence() {
+        for k in &CATALOG {
+            assert!(!k.licenses.is_empty(), "{}", k.file);
+        }
+        assert_eq!(CATALOG[0].file, "silueta.onnx");
+        assert_eq!(CATALOG[0].licenses.iter().map(|l| l.project).collect::<Vec<_>>(), ["U²-Net", "rembg"]);
+        for l in CATALOG.iter().flat_map(|k| k.licenses).chain([&RUNTIME_LICENSE]) {
+            let ok = match l.spdx {
+                "Apache-2.0" => l.text.contains("Apache License") && l.text.contains("Version 2.0"),
+                "MIT" => l.text.contains("Permission is hereby granted") && l.text.contains("Copyright"),
+                other => panic!("unexpected licence {other}"),
+            };
+            assert!(ok, "{} text doesn't look like {}", l.project, l.spdx);
+        }
     }
 
     #[test]

@@ -96,6 +96,7 @@ Numbering continues from v1.
 - Tools → AI Models… lists the `.onnx` files in `~/.local/share/lightview/models` and picks that model from a drop-down (saved in Settings). Without a choice: the first installed catalog model, else any installed one.
 - Download from a catalog of rembg models, each pinned by SHA-256: Silueta, U²-Net small, U²-Net, U²-Net people, IS-Net, IS-Net anime, BiRefNet lite.
 - Add model file… copies your own `.onnx` in (never overwrites); Open models folder.
+- Every download (models and the AI runtime) first shows its upstream licence in full (embedded from `licenses/`) and starts only after Accept and Download.
 - Each model's preprocessing (input size, mean, std, sigmoid) can be edited and is saved per file. Unknown models read their input size from the model and use the usual normalisation; Detect size re-reads it.
 - **Done when** every catalog model and a renamed (unknown) model run on a test photo, and the unknown one gives the same result as its catalog twin.
 
