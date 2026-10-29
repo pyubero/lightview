@@ -1,4 +1,4 @@
-use crate::edit::{self, Doc, ResizeDialog};
+use crate::edit::{self, Adjust, Doc, ResizeDialog};
 use crate::exif_edit;
 use crate::load::{self, Frame, Loaded, Loader, Msg, Notify};
 use crate::save;
@@ -42,6 +42,9 @@ enum Action {
     Resize,
     /// Save As in one format: an index into `save::FORMATS`.
     Export(usize),
+    AdjustColor,
+    AutoLevels,
+    ResetAdjust,
 }
 
 /// What dragging on the image does.
@@ -98,6 +101,7 @@ struct TexKey {
     transform: Transform,
     crop: [f32; 4],
     size: [u32; 2],
+    adjust: Adjust,
 }
 
 pub struct App {
@@ -122,6 +126,8 @@ pub struct App {
     view: View,
     texture: Option<TextureHandle>,
     tex_key: Option<TexKey>,
+    /// The CPU path's resized pixels before colour adjustments, and what they hold.
+    resized: Option<(TexKey, Vec<u8>)>,
     /// Bumped whenever what's shown changes source (navigation, preview → full).
     generation: u64,
     anim_frame: usize,
@@ -139,6 +145,8 @@ pub struct App {
     drag_start: Option<Pos2>,
     crop_rect: Option<Rect>,
     resize_dialog: Option<ResizeDialog>,
+    /// While the Adjust Color panel is open: the edits from before it opened.
+    adjusting: Option<Doc>,
     pending: Option<Pending>,
     title: String,
     // --timings bookkeeping.
@@ -166,8 +174,8 @@ impl App {
             t0, timings, bench, rx, loader, notify, recent, settings, show_info: false, show_settings: false, exif_dialog: None,
             files: start.into_iter().collect(), index: 0,
             cache: HashMap::new(), preview: None, error: None, view: View::Fit,
-            texture: None, tex_key: None, generation: 0, anim_frame: 0, anim_due: None, anim_paused: false,
-            doc: None, undo: Vec::new(), redo: Vec::new(), saved: None, saving: None, tool: Tool::Pan, drag_start: None, crop_rect: None, resize_dialog: None, pending: None,
+            texture: None, tex_key: None, resized: None, generation: 0, anim_frame: 0, anim_due: None, anim_paused: false,
+            doc: None, undo: Vec::new(), redo: Vec::new(), saved: None, saving: None, tool: Tool::Pan, drag_start: None, crop_rect: None, resize_dialog: None, adjusting: None, pending: None,
             title: String::new(),
             window_reported: false, preview_reported: None, full_reported: false, nav_start: None, close_next: false, status: None,
         }
@@ -342,6 +350,7 @@ impl App {
         self.redo.clear();
         self.tool = Tool::Pan;
         self.crop_rect = None;
+        self.adjusting = None;
     }
 
     fn open_dialog(&self) {
@@ -433,6 +442,9 @@ impl App {
                 item(ui, "Crop", Action::Crop, has_image, actions);
                 item(ui, "Resize…", Action::Resize, has_image, actions);
                 ui.separator();
+                item(ui, "Adjust Color…", Action::AdjustColor, has_image, actions);
+                item(ui, "Reset Color Adjustments", Action::ResetAdjust, has_image, actions);
+                ui.separator();
                 item(ui, "Rotate Left", Action::RotateLeft, has_image, actions);
                 item(ui, "Rotate Right", Action::RotateRight, has_image, actions);
                 item(ui, "Flip Horizontally", Action::FlipHorizontal, has_image, actions);
@@ -464,6 +476,16 @@ impl App {
             ui.menu_button("Tools", |ui| {
                 let jpeg = self.current().and_then(|p| p.extension()).is_some_and(|e| e.eq_ignore_ascii_case("jpg") || e.eq_ignore_ascii_case("jpeg"));
                 item(ui, "Edit EXIF…", Action::EditExif, has_image && jpeg, actions);
+                ui.add_enabled_ui(has_image, |ui| {
+                    ui.menu_button("Adjust", |ui| {
+                        // They all open the same panel.
+                        for label in ["Adjust Color…", "Exposure…", "Contrast…", "Saturation…", "Tint…"] {
+                            item(ui, label, Action::AdjustColor, true, actions);
+                        }
+                        item(ui, "Auto Levels", Action::AutoLevels, true, actions);
+                        item(ui, "Reset Adjustments", Action::ResetAdjust, true, actions);
+                    });
+                });
             });
             if ui.button("Settings").clicked() {
                 actions.push(Action::Settings);
@@ -540,6 +562,32 @@ impl App {
         });
         if modal.inner || modal.should_close() {
             self.show_info = false;
+        }
+    }
+
+    /// Auto Levels for the visible part of the current image.
+    fn auto_levels(&self) -> Option<[[u8; 2]; 3]> {
+        let frame = &self.cache.get(self.current()?)?.frames[0];
+        Some(edit::auto_levels(frame, self.doc()?.crop))
+    }
+
+    /// The Adjust Color panel: the sliders change the edits live, and Done makes them one undo step.
+    fn adjust_panel(&mut self, ctx: &egui::Context) {
+        let (Some(before), Some(mut doc)) = (self.adjusting.clone(), self.doc()) else { return };
+        let levels = self.auto_levels();
+        let mut open = true;
+        let choice = egui::Window::new("Adjust Color").open(&mut open).resizable(false).collapsible(false).show(ctx, |ui| {
+            edit::adjust_ui(ui, &mut doc.adjust, || levels.unwrap_or([[0, 255]; 3]))
+        }).and_then(|r| r.inner).flatten();
+        let adjust = doc.adjust;
+        self.doc = Some(doc);
+        if choice.is_some() || !open {
+            // Back to before the panel opened, then Done applies the result as one edit.
+            self.adjusting = None;
+            self.doc = Some(before);
+            if choice == Some(true) {
+                self.edit(|d| d.adjust = adjust);
+            }
         }
     }
 
@@ -652,6 +700,17 @@ impl eframe::App for App {
                     Some(Err(e)) => self.status = Some((format!("Can't edit EXIF: {e}"), Instant::now())),
                     None => {}
                 },
+                Action::AdjustColor => {
+                    if self.adjusting.is_none() {
+                        self.adjusting = self.doc();
+                    }
+                }
+                Action::AutoLevels => {
+                    if let Some(levels) = self.auto_levels() {
+                        self.edit(|d| d.adjust.levels = Some(levels));
+                    }
+                }
+                Action::ResetAdjust => self.edit(|d| d.adjust = Adjust::default()),
                 Action::RotateLeft => self.edit(Doc::rotate_left),
                 Action::RotateRight => self.edit(Doc::rotate_right),
                 Action::FlipHorizontal => self.edit(Doc::flip_horizontal),
@@ -747,13 +806,14 @@ impl eframe::App for App {
             let (dest, crop) = view::layout(view, doc.size_vec(), viewport, ppp);
             let interpolation = self.settings.interpolation();
             // Images bigger than the GPU's texture limit always take the CPU path.
-            let gpu = self.settings.gpu_scaling && frame.w.max(frame.h) as usize <= ctx.input(|i| i.max_texture_side);
+            // shortcut: colour adjustments only run on the CPU path; add a shader if GPU users miss smooth zoom while adjusting.
+            let gpu = self.settings.gpu_scaling && frame.w.max(frame.h) as usize <= ctx.input(|i| i.max_texture_side) && doc.adjust.is_identity();
             let key = if gpu {
-                TexKey { generation: self.generation, anim_frame: self.anim_frame, gpu, interpolation, transform: Transform::default(), crop: [0.0; 4], size: [frame.w, frame.h] }
+                TexKey { generation: self.generation, anim_frame: self.anim_frame, gpu, interpolation, transform: Transform::default(), crop: [0.0; 4], size: [frame.w, frame.h], adjust: Adjust::default() }
             } else {
                 let src = doc.to_source(crop);
                 let size = [(dest.width() * ppp).round().max(1.0) as u32, (dest.height() * ppp).round().max(1.0) as u32];
-                TexKey { generation: self.generation, anim_frame: self.anim_frame, gpu, interpolation, transform: doc.transform, crop: [src.min.x, src.min.y, src.width(), src.height()], size }
+                TexKey { generation: self.generation, anim_frame: self.anim_frame, gpu, interpolation, transform: doc.transform, crop: [src.min.x, src.min.y, src.width(), src.height()], size, adjust: doc.adjust }
             };
             if self.tex_key != Some(key) {
                 let (image, options) = if gpu {
@@ -765,8 +825,22 @@ impl eframe::App for App {
                     (to_color_image(frame.alpha, [frame.w as usize, frame.h as usize], &frame.pixels), options)
                 } else {
                     // shortcut: resize runs on the UI thread every pan/zoom frame; GPU scaling is the smooth path.
-                    let [x, y, w, h] = key.crop;
-                    (resize(frame, Rect::from_min_size(Pos2::new(x, y), Vec2::new(w, h)), key.size, doc.transform, interpolation), TextureOptions::LINEAR)
+                    let unadjusted = TexKey { adjust: Adjust::default(), ..key };
+                    if self.resized.as_ref().map(|r| r.0) != Some(unadjusted) {
+                        let [x, y, w, h] = key.crop;
+                        self.resized = Some((unadjusted, resize(frame, Rect::from_min_size(Pos2::new(x, y), Vec2::new(w, h)), key.size, doc.transform, interpolation)));
+                    }
+                    let pixels = &self.resized.as_ref().unwrap().1;
+                    let size = [key.size[0] as usize, key.size[1] as usize];
+                    let image = if doc.adjust.is_identity() {
+                        to_color_image(frame.alpha, size, pixels)
+                    } else {
+                        // Only the adjustment re-runs while a slider moves.
+                        let mut pixels = pixels.clone();
+                        doc.adjust.apply(&mut pixels, if frame.alpha { 4 } else { 3 });
+                        to_color_image(frame.alpha, size, &pixels)
+                    };
+                    (image, TextureOptions::LINEAR)
                 };
                 match &mut self.texture {
                     Some(t) => t.set(image, options),
@@ -848,6 +922,7 @@ impl eframe::App for App {
         self.settings_dialog(&ctx);
         self.exif_dialog(&ctx);
         self.resize_dialog(&ctx);
+        self.adjust_panel(&ctx);
         self.discard_dialog(&ctx);
 
         let title = self.make_title();
@@ -860,16 +935,14 @@ impl eframe::App for App {
 
 /// Resizes the `crop` part of `frame` so that, after `transform`, it's `size` px.
 /// Transforming the small resized output instead of the full image keeps rotating cheap.
-fn resize(frame: &Frame, crop: Rect, size: [u32; 2], transform: Transform, interpolation: Interpolation) -> ColorImage {
+fn resize(frame: &Frame, crop: Rect, size: [u32; 2], transform: Transform, interpolation: Interpolation) -> Vec<u8> {
     let [w, h] = if transform.rot % 2 == 1 { [size[1], size[0]] } else { size };
     let pixels = edit::resize(frame, crop, w, h, interpolation.cpu());
-    let size = [size[0] as usize, size[1] as usize];
-    let pixels = if transform == Transform::default() {
+    if transform == Transform::default() {
         pixels
     } else {
         transform.apply(edit::to_dynamic(frame.alpha, w, h, pixels).unwrap()).into_bytes()
-    };
-    to_color_image(frame.alpha, size, &pixels)
+    }
 }
 
 /// A short message in a dark rounded box centred on `center`.
@@ -911,9 +984,9 @@ mod tests {
         let t = Transform::default().rotate_right();
         let crop = t.to_source(Rect::from_min_size(Pos2::ZERO, Vec2::new(2.0, 3.0)), Vec2::new(3.0, 2.0));
         let out = resize(&frame, crop, [2, 3], t, Interpolation::Bilinear);
-        assert_eq!(out.size, [2, 3]);
+        assert_eq!(out.len(), 2 * 3 * 3);
         // Rotated right, the top row reads bottom-left then top-left of the source: 3, 0.
-        let red: Vec<u8> = out.pixels.iter().map(|p| p.r()).collect();
+        let red: Vec<u8> = out.chunks(3).map(|p| p[0]).collect();
         assert_eq!(red, [3, 0, 4, 1, 5, 2]);
     }
 

@@ -15,12 +15,98 @@ pub struct Doc {
     pub size: [u32; 2],
     /// Written into saved JPEGs; None keeps the default.
     pub dpi: Option<u16>,
+    pub adjust: Adjust,
+}
+
+/// Colour adjustments. All zero (the default) changes nothing.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct Adjust {
+    /// In stops: −3 to 3.
+    pub exposure: f32,
+    /// −1 (flat grey) to 1 (twice the contrast).
+    pub contrast: f32,
+    /// −1 (greyscale) to 1 (twice as saturated).
+    pub saturation: f32,
+    /// −1 (green) to 1 (magenta).
+    pub tint: f32,
+    /// Per channel, the input values that become black and white (Auto Levels).
+    pub levels: Option<[[u8; 2]; 3]>,
+}
+
+impl Adjust {
+    pub fn is_identity(&self) -> bool {
+        *self == Adjust::default()
+    }
+
+    /// Adjusts RGB (`channels` 3) or RGBA (4) pixels in place.
+    pub fn apply(&self, pixels: &mut [u8], channels: usize) {
+        if self.is_identity() {
+            return;
+        }
+        let gain = 2f32.powf(self.exposure);
+        let tint = [1.0 + self.tint * 0.1, 1.0 - self.tint * 0.1, 1.0 + self.tint * 0.1];
+        // Levels, exposure, tint and contrast are per channel, so they fit in lookup tables.
+        let luts: [[u8; 256]; 3] = std::array::from_fn(|c| {
+            let [lo, hi] = self.levels.map_or([0, 255], |l| l[c]);
+            std::array::from_fn(|v| {
+                let x = (v as f32 - lo as f32) / (hi as f32 - lo as f32).max(1.0) * gain * tint[c];
+                (((x - 0.5) * (1.0 + self.contrast) + 0.5).clamp(0.0, 1.0) * 255.0).round() as u8
+            })
+        });
+        // Fixed point (×256), so the per-pixel loop stays cheap enough for live sliders.
+        let sat = ((1.0 + self.saturation) * 256.0).round() as i32;
+        let pass = |px: &mut [u8]| {
+            let [r, g, b] = [luts[0][px[0] as usize], luts[1][px[1] as usize], luts[2][px[2] as usize]];
+            if sat == 256 {
+                (px[0], px[1], px[2]) = (r, g, b);
+            } else {
+                let l = (77 * r as i32 + 150 * g as i32 + 29 * b as i32) >> 8;
+                let mix = |v: u8| (l + (((v as i32 - l) * sat + 128) >> 8)).clamp(0, 255) as u8;
+                (px[0], px[1], px[2]) = (mix(r), mix(g), mix(b));
+            }
+        };
+        // Split across cores: a whole-screen image is a few million pixels.
+        let threads = std::thread::available_parallelism().map_or(1, |n| n.get());
+        let part = (pixels.len() / channels).div_ceil(threads).max(1) * channels;
+        std::thread::scope(|s| {
+            for part in pixels.chunks_mut(part) {
+                s.spawn(move || part.chunks_exact_mut(channels).for_each(pass));
+            }
+        });
+    }
+}
+
+/// Auto Levels: per channel, the values that clip 0.5% of the `crop` part of `frame` to black and to white.
+pub fn auto_levels(frame: &Frame, crop: Rect) -> [[u8; 2]; 3] {
+    let channels = if frame.alpha { 4 } else { 3 };
+    let mut hist = [[0u64; 256]; 3];
+    let (x0, x1) = (crop.min.x.max(0.0) as usize, (crop.max.x as usize).min(frame.w as usize));
+    for y in crop.min.y.max(0.0) as usize..(crop.max.y as usize).min(frame.h as usize) {
+        let row = &frame.pixels[(y * frame.w as usize + x0) * channels..(y * frame.w as usize + x1) * channels];
+        for px in row.chunks_exact(channels) {
+            for c in 0..3 {
+                hist[c][px[c] as usize] += 1;
+            }
+        }
+    }
+    hist.map(|h| {
+        let clip = h.iter().sum::<u64>() / 200;
+        let find = |values: Vec<usize>| {
+            let mut sum = 0;
+            values.into_iter().find(|&v| {
+                sum += h[v];
+                sum > clip
+            }).unwrap_or(0) as u8
+        };
+        let (lo, hi) = (find((0..256).collect()), find((0..256).rev().collect()));
+        if hi > lo { [lo, hi] } else { [0, 255] }
+    })
 }
 
 impl Doc {
     /// No edits on a `w`×`h` image.
     pub fn new(w: u32, h: u32) -> Self {
-        Doc { crop: Rect::from_min_size(Pos2::ZERO, Vec2::new(w as f32, h as f32)), transform: Transform::default(), size: [w, h], dpi: None }
+        Doc { crop: Rect::from_min_size(Pos2::ZERO, Vec2::new(w as f32, h as f32)), transform: Transform::default(), size: [w, h], dpi: None, adjust: Adjust::default() }
     }
 
     pub fn size_vec(&self) -> Vec2 {
@@ -111,7 +197,45 @@ pub fn render(frame: &Frame, doc: &Doc) -> Result<DynamicImage, String> {
         let pixels = resize(frame, doc.crop, w, h, ResizeAlg::Convolution(FilterType::Lanczos3));
         to_dynamic(frame.alpha, w, h, pixels).ok_or("bad frame")?
     };
-    Ok(doc.transform.apply(img))
+    let mut img = doc.transform.apply(img);
+    match &mut img {
+        DynamicImage::ImageRgba8(i) => doc.adjust.apply(i, 4),
+        DynamicImage::ImageRgb8(i) => doc.adjust.apply(i, 3),
+        _ => unreachable!("to_dynamic only makes RGB(A)"),
+    }
+    Ok(img)
+}
+
+/// The Adjust Color panel body: sliders that change `a` live. Returns Some(true) for Done,
+/// Some(false) for Cancel; `auto_levels` is called for the Auto Levels button.
+pub fn adjust_ui(ui: &mut egui::Ui, a: &mut Adjust, auto_levels: impl FnOnce() -> [[u8; 2]; 3]) -> Option<bool> {
+    egui::Grid::new("adjust-grid").num_columns(2).spacing([16.0, 8.0]).show(ui, |ui| {
+        for (label, value, range) in [
+            ("Exposure", &mut a.exposure, -3.0..=3.0),
+            ("Contrast", &mut a.contrast, -1.0..=1.0),
+            ("Saturation", &mut a.saturation, -1.0..=1.0),
+            ("Tint", &mut a.tint, -1.0..=1.0),
+        ] {
+            ui.label(label);
+            ui.add(egui::Slider::new(value, range).fixed_decimals(2));
+            ui.end_row();
+        }
+    });
+    ui.horizontal(|ui| {
+        let mut levels = a.levels.is_some();
+        if ui.checkbox(&mut levels, "Auto Levels").changed() {
+            a.levels = levels.then(auto_levels);
+        }
+        if ui.button("Reset").clicked() {
+            *a = Adjust::default();
+        }
+    });
+    ui.add_space(6.0);
+    ui.horizontal(|ui| {
+        let done = ui.button("Done").clicked();
+        let cancel = ui.button("Cancel").clicked();
+        done.then_some(true).or(cancel.then_some(false))
+    }).inner
 }
 
 /// The Resize dialog's state.
@@ -254,6 +378,66 @@ mod tests {
         assert_eq!(doc.crop, rect(1.0, 1.0, 2.0, 1.0));
         let out = render(&frame(), &doc).unwrap();
         assert_eq!((out.width(), out.height()), (4, 2));
+    }
+
+    #[test]
+    fn adjustments() {
+        let grey = |v: u8| vec![v, v, v];
+        let adjusted = |a: Adjust, mut px: Vec<u8>| {
+            a.apply(&mut px, 3);
+            px
+        };
+        assert_eq!(adjusted(Adjust::default(), vec![1, 2, 3]), [1, 2, 3]);
+        assert_eq!(adjusted(Adjust { exposure: 1.0, ..Adjust::default() }, grey(64)), grey(128));
+        assert_eq!(adjusted(Adjust { contrast: -1.0, ..Adjust::default() }, vec![0, 90, 255]), grey(128));
+        let desaturated = adjusted(Adjust { saturation: -1.0, ..Adjust::default() }, vec![200, 100, 50]);
+        assert!(desaturated[0] == desaturated[1] && desaturated[1] == desaturated[2]);
+        let magenta = adjusted(Adjust { tint: 1.0, ..Adjust::default() }, grey(128));
+        assert!(magenta[0] > magenta[1] && magenta[2] > magenta[1]);
+        // RGBA: alpha is left alone.
+        assert_eq!(adjusted4(Adjust { exposure: 1.0, ..Adjust::default() }, vec![64, 64, 64, 7]), [128, 128, 128, 7]);
+        fn adjusted4(a: Adjust, mut px: Vec<u8>) -> Vec<u8> {
+            a.apply(&mut px, 4);
+            px
+        }
+    }
+
+    #[test]
+    fn auto_levels_stretches() {
+        // Values 50..=200 on every channel.
+        let pixels: Vec<u8> = (0..151u8).flat_map(|i| [50 + i; 3]).collect();
+        let frame = Frame { w: 151, h: 1, pixels, alpha: false, delay: Duration::ZERO };
+        let levels = auto_levels(&frame, rect(0.0, 0.0, 151.0, 1.0));
+        assert_eq!(levels, [[50, 200]; 3]);
+        let a = Adjust { levels: Some(levels), ..Adjust::default() };
+        let mut px = vec![50, 125, 200];
+        a.apply(&mut px, 3);
+        assert_eq!(px, [0, 128, 255]);
+        // A flat image keeps the full range.
+        let flat = Frame { w: 2, h: 1, pixels: vec![9; 6], alpha: false, delay: Duration::ZERO };
+        assert_eq!(auto_levels(&flat, rect(0.0, 0.0, 2.0, 1.0)), [[0, 255]; 3]);
+    }
+
+    #[test]
+    fn render_applies_adjustments() {
+        let doc = Doc { adjust: Adjust { saturation: -1.0, ..Adjust::default() }, ..Doc::new(6, 5) };
+        let out = render(&frame(), &doc).unwrap().to_rgb8();
+        assert!(out.pixels().all(|p| p[0] == p[1] && p[1] == p[2]));
+    }
+
+    /// Run with `cargo test --release -- --ignored --nocapture`: what one slider step costs on screen.
+    #[test]
+    #[ignore]
+    fn adjust_speed() {
+        let big = Frame { w: 4000, h: 3000, pixels: (0..4000 * 3000 * 3).map(|i| (i % 251) as u8).collect(), alpha: false, delay: Duration::ZERO };
+        let a = Adjust { exposure: 0.5, contrast: 0.2, saturation: 0.3, tint: 0.1, levels: None };
+        // The app keeps the resized pixels, so a slider step only re-runs the adjustment.
+        let px = resize(&big, rect(0.0, 0.0, 4000.0, 3000.0), 1280, 960, ResizeAlg::Convolution(FilterType::Bilinear));
+        let t = std::time::Instant::now();
+        for _ in 0..10 {
+            a.apply(&mut px.clone(), 3);
+        }
+        eprintln!("adjust 1280×960: {:.1} ms per step", t.elapsed().as_secs_f64() * 100.0);
     }
 
     #[test]
