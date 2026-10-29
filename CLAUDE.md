@@ -48,6 +48,7 @@ Format: `YYYY-MM-DD — decision — reason`
 - 2026-10-29 — M7 EXIF editing (user's choices): Tools menu; `little_exif` (pure Rust) rewrites only the JPEG's EXIF block; JPEG only; always a copy, never the original; MakerNote dropped; little_exif calls wrapped in catch_unwind, refuse when it reads existing EXIF as empty, and verify the written buffer before writing it.
 
 - 2026-10-29 — JPEGs: reduced-size decode (largest of 1/8, 1/4, 1/2 that still covers the fitted viewport, after EXIF orientation) sent as a `Msg::Preview`, with 1:1 decoded in parallel in the same scope; both via libjpeg-turbo when installed, otherwise unchanged pure-Rust path — decoding was the bottleneck; the pure-Rust scaled decode only saved ~12%, so it isn't used.
+- 2026-10-29 — v2 roadmap (`ROADMAP-v2.md`, user's choices): edits as an undoable edit list applied only when saving a copy; AI tools last, behind an optional `ai` cargo feature; no JPEG 2000 (no pure-Rust encoder), TIFF added; selection = rectangle/ellipse/lasso, no smart lasso; rotate/flip now saved; GIF export added; ask before dropping unsaved edits; paste = movable element so Selection follows Draw; arboard/tiny-skia/ab_glyph/ort approved — keep the original safe and the default build small.
 
 ## Self-Update Rule
 Before finishing your turn:
