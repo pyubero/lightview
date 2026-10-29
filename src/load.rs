@@ -42,6 +42,11 @@ pub enum Msg {
     /// when cropping to it.
     Cutout(PathBuf, Result<(image::RgbaImage, Option<egui::Rect>), String>),
     Status(String),
+    /// Denoise / Enhance: how far the run is (0–1).
+    Progress(f32),
+    /// Denoise / Enhance finished `region` (output px) of this image: the result and how long
+    /// it took per megapixel. `whole` is false for the preview.
+    Restored(PathBuf, egui::Rect, bool, Result<(image::RgbaImage, f64), String>),
     /// A model download finished.
     Downloaded(String, Result<(), String>),
     /// A model's input size was read.

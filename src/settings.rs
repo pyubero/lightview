@@ -1,4 +1,4 @@
-use crate::ai::Preprocess;
+use crate::ai::{Preprocess, Task};
 use eframe::egui;
 use fast_image_resize::{FilterType, ResizeAlg};
 use serde::{Deserialize, Serialize};
@@ -41,12 +41,35 @@ pub enum SortOrder {
     DateModified,
 }
 
-/// The model background removal uses, and per-file preprocessing the user set (Tools → AI Models…).
+/// The model each AI task uses, and per-file preprocessing the user set (Tools → AI Models…).
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct AiSettings {
+    /// Background removal's model (named before there were other tasks).
     pub model: Option<String>,
+    pub denoise: Option<String>,
+    pub enhance: Option<String>,
     pub overrides: HashMap<String, Preprocess>,
+    /// The "may invent detail" notice has been shown for Enhance Image.
+    pub enhance_notice_seen: bool,
+}
+
+impl AiSettings {
+    pub fn choice(&self, task: Task) -> Option<&String> {
+        match task {
+            Task::Background => self.model.as_ref(),
+            Task::Denoise => self.denoise.as_ref(),
+            Task::Enhance => self.enhance.as_ref(),
+        }
+    }
+
+    pub fn choice_mut(&mut self, task: Task) -> &mut Option<String> {
+        match task {
+            Task::Background => &mut self.model,
+            Task::Denoise => &mut self.denoise,
+            Task::Enhance => &mut self.enhance,
+        }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -146,6 +169,14 @@ mod tests {
         // eframe stores each value as a RON string inside a RON map.
         let kv = HashMap::from([(KEY.to_string(), ron::to_string(&s).unwrap()), ("recent".to_string(), "/a".to_string())]);
         assert_eq!(parse(&ron::to_string(&kv).unwrap()), s);
+    }
+
+    #[test]
+    fn older_ai_settings_still_load() {
+        let kv = HashMap::from([(KEY.to_string(), r#"(ai: (model: Some("silueta.onnx")))"#.to_string())]);
+        let s = parse(&ron::to_string(&kv).unwrap());
+        assert_eq!(s.ai.choice(Task::Background).map(String::as_str), Some("silueta.onnx"));
+        assert_eq!((s.ai.denoise, s.ai.enhance, s.ai.enhance_notice_seen), (None, None, false));
     }
 
     #[test]

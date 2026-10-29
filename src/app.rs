@@ -9,6 +9,7 @@ use crate::view::{self, Transform, View};
 use eframe::egui::{self, Color32, ColorImage, CursorIcon, Key, KeyboardShortcut, Modifiers, Pos2, Rect, Sense, TextureFilter, TextureHandle, TextureOptions, Vec2, ViewportCommand};
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, mpsc};
 use std::time::Instant;
 
@@ -63,6 +64,8 @@ enum Action {
     ImageFromSelection,
     /// Remove Background, and crop to the subject when true.
     Cutout(bool),
+    /// Denoise or Enhance Image: shows a before/after preview first.
+    Restore(crate::ai::Task),
     DownloadRuntime,
     AiModels,
 }
@@ -91,6 +94,27 @@ enum Grab {
     None,
     Move,
     Resize,
+}
+
+/// A Denoise / Enhance run in progress.
+struct Restoring {
+    task: crate::ai::Task,
+    progress: f32,
+    started: Instant,
+    cancel: Arc<AtomicBool>,
+    /// Applying to a selection: its outline, to mask the result with.
+    selection: Option<Selection>,
+}
+
+/// The before/after preview of Denoise / Enhance on part of the image.
+struct Compare {
+    task: crate::ai::Task,
+    /// Output px.
+    region: Rect,
+    texture: TextureHandle,
+    /// Where the before/after line is, 0–1 across the region.
+    split: f32,
+    ms_per_mp: f64,
 }
 
 /// A download waiting for the user to accept its licence.
@@ -219,6 +243,12 @@ pub struct App {
     pending: Option<Pending>,
     show_ai_models: bool,
     license_prompt: Option<Download>,
+    restoring: Option<Restoring>,
+    compare: Option<Compare>,
+    /// Enhance Image waiting for the user to read the "may invent detail" notice.
+    enhance_notice: bool,
+    /// The part of the image on screen (output px), for the Denoise / Enhance preview.
+    visible: Option<Rect>,
     /// Model files being downloaded.
     downloading: HashSet<String>,
     title: String,
@@ -251,7 +281,7 @@ impl App {
             texture: None, tex_key: None, resized: None, generation: 0, anim_frame: 0, anim_due: None, anim_paused: false,
             doc: None, undo: Vec::new(), redo: Vec::new(), saved: None, saving: None, tool: Tool::Pan, drag_start: None, crop_rect: None, measure: None, measure_drag: 1,
             show_toolbar, style: None, selected: None, grab: Grab::None, editing_text: None, focus_text: false, change_base: None, last_restyle: None, selection: None, element_textures: HashMap::new(),
-            resize_dialog: None, adjusting: None, pending: None, show_ai_models: false, license_prompt: None, downloading: HashSet::new(),
+            resize_dialog: None, adjusting: None, pending: None, show_ai_models: false, license_prompt: None, restoring: None, compare: None, enhance_notice: false, visible: None, downloading: HashSet::new(),
             title: String::new(),
             window_reported: false, preview_reported: None, full_reported: false, nav_start: None, close_next: false, status: None,
         }
@@ -279,6 +309,36 @@ impl App {
     fn handle(&mut self, msg: Msg) {
         match msg {
             Msg::Status(text) => self.status = Some((text, Instant::now())),
+            Msg::Progress(p) => {
+                if let Some(r) = &mut self.restoring {
+                    r.progress = p;
+                }
+            }
+            Msg::Restored(path, region, whole, result) => {
+                let Some(run) = self.restoring.take() else { return };
+                match result {
+                    Ok(_) if self.current() != Some(&path) => {}
+                    Ok((img, ms_per_mp)) if !whole => {
+                        let image = egui::ColorImage::from_rgba_unmultiplied([img.width() as usize, img.height() as usize], img.as_raw());
+                        let texture = self.notify.ctx.get().map(|ctx| ctx.load_texture("restored", image, TextureOptions::LINEAR));
+                        self.compare = texture.map(|texture| Compare { task: run.task, region, texture, split: 0.5, ms_per_mp });
+                    }
+                    Ok((mut img, _)) => {
+                        if let Some(sel) = &run.selection
+                            && let Some(mask) = markup::polygon_mask(&sel.outline(), None, region.min, 1.0, img.width(), img.height())
+                        {
+                            for (px, m) in img.pixels_mut().zip(mask.data()) {
+                                px[3] = (px[3] as u32 * *m as u32 / 255) as u8;
+                            }
+                        }
+                        let style = Style::for_image(region.size());
+                        self.edit(|d| d.elements.push(Element::pasted(Arc::new(img), region.min, region.size(), style)));
+                        self.status = Some((format!("{} done", run.task.title()), Instant::now()));
+                    }
+                    Err(e) if e == "cancelled" => self.status = Some(("Cancelled".into(), Instant::now())),
+                    Err(e) => self.status = Some((format!("{} failed: {e}", run.task.title()), Instant::now())),
+                }
+            }
             Msg::Downloaded(file, result) => {
                 self.downloading.remove(&file);
                 self.status = Some((match result {
@@ -529,6 +589,10 @@ impl App {
         (self.style, self.selected, self.grab, self.editing_text, self.change_base, self.last_restyle) = (None, None, Grab::None, None, None, None);
         self.selection = None;
         self.element_textures.clear();
+        if let Some(r) = self.restoring.take() {
+            r.cancel.store(true, Ordering::Relaxed);
+        }
+        self.compare = None;
     }
 
     fn open_dialog(&self) {
@@ -682,9 +746,12 @@ impl App {
                     ui.weak("AI Image Processing");
                     let runtime = crate::ai::runtime_installed();
                     let models = crate::ai::installed();
-                    let ready = has_image && runtime && crate::ai::choose(self.settings.ai.model.as_ref(), &models).is_some();
-                    item(ui, "Remove Background", Action::Cutout(false), ready, actions);
-                    item(ui, "Remove Background and Crop", Action::Cutout(true), ready, actions);
+                    use crate::ai::Task;
+                    let ready = |task| has_image && runtime && self.restoring.is_none() && crate::ai::choose(self.settings.ai.choice(task), task, &models).is_some();
+                    item(ui, "Remove Background", Action::Cutout(false), ready(Task::Background), actions);
+                    item(ui, "Remove Background and Crop", Action::Cutout(true), ready(Task::Background), actions);
+                    item(ui, "Denoise", Action::Restore(Task::Denoise), ready(Task::Denoise), actions);
+                    item(ui, "Enhance Image", Action::Restore(Task::Enhance), ready(Task::Enhance), actions);
                     item(ui, "AI Models…", Action::AiModels, true, actions);
                     if !runtime {
                         item(ui, "Download AI Runtime…", Action::DownloadRuntime, true, actions);
@@ -1020,7 +1087,8 @@ impl App {
     /// Runs background removal on the edited image on another thread, cropping to the subject when `crop`.
     fn cutout(&mut self, crop: bool) {
         let Some((l, doc, path)) = self.current().and_then(|p| Some((self.cache.get(p)?.clone(), self.doc()?, p.clone()))) else { return };
-        let Some(file) = crate::ai::choose(self.settings.ai.model.as_ref(), &crate::ai::installed()) else { return };
+        let task = crate::ai::Task::Background;
+        let Some(file) = crate::ai::choose(self.settings.ai.choice(task), task, &crate::ai::installed()) else { return };
         let preset = crate::ai::preset(&file, &self.settings.ai.overrides);
         self.status = Some((format!("Running {file}…"), Instant::now()));
         let notify = self.notify.clone();
@@ -1037,6 +1105,115 @@ impl App {
             });
             notify.send(Msg::Cutout(path, result));
         });
+    }
+
+    /// Denoise / Enhance on the part of the image on screen (at most 512 px square, so it's
+    /// quick), for the before/after preview.
+    fn preview_restore(&mut self, task: crate::ai::Task) {
+        let (Some(vis), Some(doc)) = (self.visible, self.doc()) else { return };
+        let size = vis.size().min(Vec2::splat(512.0));
+        let region = Rect::from_center_size(vis.center(), size);
+        let region = Rect::from_min_max(region.min.round(), region.max.round()).intersect(Rect::from_min_size(Pos2::ZERO, doc.size_vec()));
+        self.compare = None;
+        self.run_restore(task, region, false, None);
+    }
+
+    /// Runs Denoise / Enhance on `region` (output px) of the edited image on another thread.
+    fn run_restore(&mut self, task: crate::ai::Task, region: Rect, whole: bool, selection: Option<Selection>) {
+        let Some((l, doc, path)) = self.current().and_then(|p| Some((self.cache.get(p)?.clone(), self.doc()?, p.clone()))) else { return };
+        let Some(file) = crate::ai::choose(self.settings.ai.choice(task), task, &crate::ai::installed()) else { return };
+        if region.width() < 1.0 || region.height() < 1.0 || self.restoring.is_some() {
+            return;
+        }
+        let cancel = Arc::new(AtomicBool::new(false));
+        self.restoring = Some(Restoring { task, progress: 0.0, started: Instant::now(), cancel: cancel.clone(), selection });
+        let notify = self.notify.clone();
+        std::thread::spawn(move || {
+            let started = Instant::now();
+            let result = edit::render(&l.frames[0], &doc).and_then(|img| {
+                let img = img.into_rgba8();
+                let part = image::imageops::crop_imm(&img, region.min.x as u32, region.min.y as u32, region.width() as u32, region.height() as u32).to_image();
+                let progress = |p: f32| notify.send(Msg::Progress(p));
+                let out = crate::ai::restore(&file, &part, &progress, &cancel)?;
+                let mp = (out.width() * out.height()) as f64 / 1e6;
+                Ok((out, started.elapsed().as_secs_f64() * 1000.0 / mp))
+            });
+            notify.send(Msg::Restored(path, region, whole, result));
+        });
+    }
+
+    /// The bottom bar while Denoise / Enhance runs: progress, time left, Cancel.
+    fn restore_progress(&mut self, ctx: &egui::Context, viewport: Rect) {
+        let Some(r) = &self.restoring else { return };
+        let left = (r.progress > 0.02).then(|| r.started.elapsed().as_secs_f64() * (1.0 - r.progress as f64) / r.progress as f64);
+        let label = format!("{}… {:.0} %{}", r.task.title(), r.progress * 100.0, left.map_or(String::new(), |s| format!(" · about {} left", format_duration(s))));
+        let cancel = egui::Area::new(egui::Id::unique("restore-progress")).fixed_pos(Pos2::new(viewport.center().x - 200.0, viewport.bottom() - 64.0)).show(ctx, |ui| {
+            egui::Frame::popup(ui.style()).show(ui, |ui| {
+                ui.set_width(400.0);
+                ui.label(label);
+                ui.horizontal(|ui| {
+                    ui.add(egui::ProgressBar::new(r.progress).desired_width(320.0));
+                    ui.button("Cancel").clicked()
+                }).inner
+            }).inner
+        }).inner;
+        if cancel {
+            r.cancel.store(true, Ordering::Relaxed);
+        }
+        // The time left updates even between tiles.
+        ctx.request_repaint_after(std::time::Duration::from_secs(1));
+    }
+
+    /// The bar over the before/after preview: Apply to Whole Image / Selection, Discard.
+    fn compare_bar(&mut self, ctx: &egui::Context, viewport: Rect) {
+        let Some(c) = &self.compare else { return };
+        let Some(doc) = self.doc() else { return };
+        let mp = doc.size_vec().x as f64 * doc.size_vec().y as f64 / 1e6;
+        // shortcut: overlapping 512 px tiles do ~1.4× the image's pixels on a 12 MP photo; count the tiles if estimates are off.
+        let estimate = format_duration(c.ms_per_mp * mp * 1.4 / 1000.0);
+        let selection = self.selection.clone().filter(|s| !s.is_empty());
+        let (whole, sel, discard) = egui::Area::new(egui::Id::unique("compare-bar")).fixed_pos(Pos2::new(viewport.center().x - 260.0, viewport.top() + 12.0)).show(ctx, |ui| {
+            egui::Frame::popup(ui.style()).show(ui, |ui| {
+                ui.label(format!("{} preview of the visible area · drag to compare · Before | After", c.task.title()));
+                ui.horizontal(|ui| {
+                    let whole = ui.button(format!("Apply to Whole Image (about {estimate})")).clicked();
+                    let sel = selection.is_some() && ui.button("Apply to Selection").clicked();
+                    (whole, sel, ui.button("Discard").clicked())
+                }).inner
+            }).inner
+        }).inner;
+        let task = c.task;
+        if whole || sel || discard {
+            self.compare = None;
+        }
+        if whole {
+            self.run_restore(task, Rect::from_min_size(Pos2::ZERO, doc.size_vec()), true, None);
+        } else if sel && let Some(s) = selection {
+            let b = Rect::from_min_max(s.bbox().min.floor(), s.bbox().max.ceil()).intersect(Rect::from_min_size(Pos2::ZERO, doc.size_vec()));
+            self.run_restore(task, b, true, Some(s));
+        }
+    }
+
+    /// Shown before the first Enhance Image.
+    fn enhance_notice_dialog(&mut self, ctx: &egui::Context) {
+        if !self.enhance_notice {
+            return;
+        }
+        let modal = egui::Modal::new(egui::Id::unique("enhance-notice")).show(ctx, |ui| {
+            ui.heading("Enhance Image");
+            ui.label("Enhance Image uses generative AI. To make the image look better it may invent or alter fine details, such as textures, text or faces, that weren't in the original.");
+            ui.label("For a faithful clean-up, use Denoise instead.");
+            ui.add_space(6.0);
+            ui.horizontal(|ui| (ui.button("Continue").clicked(), ui.button("Cancel").clicked())).inner
+        });
+        let (go, cancel) = modal.inner;
+        if go {
+            self.settings.ai.enhance_notice_seen = true;
+            self.enhance_notice = false;
+            self.preview_restore(crate::ai::Task::Enhance);
+        } else if cancel || modal.should_close() {
+            self.enhance_notice = false;
+        }
     }
 
     /// Auto Levels for the visible part of the current image.
@@ -1097,11 +1274,11 @@ impl App {
     /// Shows the download's licence; the download starts only once it's accepted.
     fn license_dialog(&mut self, ctx: &egui::Context) {
         let Some(download) = self.license_prompt else { return };
-        let (title, licenses) = match download {
-            Download::Model(i) => (crate::ai::CATALOG[i].label, crate::ai::CATALOG[i].licenses),
-            Download::Runtime => ("AI runtime (ONNX Runtime)", std::slice::from_ref(&crate::ai::RUNTIME_LICENSE)),
+        let (title, licenses, note) = match download {
+            Download::Model(i) => (crate::ai::CATALOG[i].label, crate::ai::CATALOG[i].licenses, crate::ai::CATALOG[i].converted_by),
+            Download::Runtime => ("AI runtime (ONNX Runtime)", std::slice::from_ref(&crate::ai::RUNTIME_LICENSE), None),
         };
-        let modal = egui::Modal::new(egui::Id::unique("license")).show(ctx, |ui| crate::ai::license_ui(ui, title, licenses));
+        let modal = egui::Modal::new(egui::Id::unique("license")).show(ctx, |ui| crate::ai::license_ui(ui, title, licenses, note));
         let close = modal.should_close();
         match modal.inner {
             Some(true) => {
@@ -1305,6 +1482,8 @@ impl eframe::App for App {
                 },
                 Action::DeleteSelection => self.delete_selection(),
                 Action::Cutout(crop) => self.cutout(*crop),
+                Action::Restore(task) if *task == crate::ai::Task::Enhance && !self.settings.ai.enhance_notice_seen => self.enhance_notice = true,
+                Action::Restore(task) => self.preview_restore(*task),
                 Action::DownloadRuntime => self.license_prompt = Some(Download::Runtime),
                 Action::AiModels => self.show_ai_models = true,
                 Action::ImageFromSelection => self.image_from_selection(),
@@ -1359,6 +1538,15 @@ impl eframe::App for App {
         if let (Some(l), Some(doc)) = (full, &doc) {
             let img = doc.size_vec();
             let drag = ui.interact(viewport, ui.scope_id().with("image"), Sense::click_and_drag());
+            if let Some(c) = &mut self.compare {
+                // Dragging moves the before/after line instead of using the tool.
+                let (dest, vis) = view::layout(self.view, img, viewport, ppp);
+                if drag.dragged() && let Some(p) = drag.interact_pointer_pos() {
+                    let left = view::to_screen(dest, vis, c.region.min).x;
+                    let right = view::to_screen(dest, vis, c.region.max).x;
+                    c.split = ((p.x - left) / (right - left).max(1.0)).clamp(0.0, 1.0);
+                }
+            } else {
             match self.tool {
                 Tool::Pan if drag.dragged() => self.view = view::pan(self.view, drag.drag_delta(), img, viewport, ppp),
                 Tool::Pan => {}
@@ -1422,6 +1610,7 @@ impl eframe::App for App {
                         }
                     }
                 }
+            }
             }
             let (factor, hover) = ctx.input(|i| (i.zoom_delta() * (i.smooth_scroll_delta.y / 200.0).exp(), i.pointer.hover_pos()));
             if factor != 1.0 {
@@ -1527,6 +1716,18 @@ impl eframe::App for App {
                 ui.painter().image(texture, dest, Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)), Color32::WHITE);
             }
             let frame_wh = [frame.w, frame.h];
+            self.visible = full.is_some().then_some(crop);
+            if let Some(c) = &self.compare {
+                // The result on the right of the line, the original on the left.
+                let r = Rect::from_two_pos(view::to_screen(dest, crop, c.region.min), view::to_screen(dest, crop, c.region.max));
+                let x = r.left() + r.width() * c.split;
+                let after = Rect::from_min_max(Pos2::new(x, r.top()), r.max);
+                ui.painter().with_clip_rect(after.intersect(dest)).image(c.texture.id(), r, Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)), Color32::WHITE);
+                let painter = ui.painter().with_clip_rect(dest);
+                painter.rect_stroke(r, 0.0, egui::Stroke::new(1.0, Color32::from_white_alpha(160)), egui::StrokeKind::Outside);
+                painter.line_segment([Pos2::new(x, r.top()), Pos2::new(x, r.bottom())], egui::Stroke::new(2.0, Color32::WHITE));
+                painter.circle_filled(Pos2::new(x, r.center().y), 6.0, Color32::WHITE);
+            }
             if !doc.elements.is_empty() || self.editing_text.is_some() || !self.element_textures.is_empty() {
                 // The magnifier samples the image texture: the whole frame (GPU) or the visible part (CPU).
                 let uv = |p: Pos2| if gpu { (doc.source_point(p).to_vec2() / frame_size).to_pos2() } else { ((p - crop.min) / crop.size()).to_pos2() };
@@ -1616,6 +1817,9 @@ impl eframe::App for App {
         self.resize_dialog(&ctx);
         self.ai_models_dialog(&ctx);
         self.license_dialog(&ctx);
+        self.enhance_notice_dialog(&ctx);
+        self.restore_progress(&ctx, viewport);
+        self.compare_bar(&ctx, viewport);
         self.adjust_panel(&ctx);
         self.discard_dialog(&ctx);
 
@@ -1656,6 +1860,16 @@ fn push_recent(recent: &mut Vec<PathBuf>, path: &std::path::Path) {
     recent.retain(|p| p != path);
     recent.insert(0, path.to_path_buf());
     recent.truncate(RECENT_MAX);
+}
+
+/// "40 s", "3 min", "1 h 5 min".
+fn format_duration(secs: f64) -> String {
+    let secs = secs.max(1.0).round() as u64;
+    match secs {
+        0..60 => format!("{secs} s"),
+        60..3600 => format!("{} min", secs.div_ceil(60)),
+        _ => format!("{} h {} min", secs / 3600, secs % 3600 / 60),
+    }
 }
 
 pub fn format_size(bytes: u64) -> String {
@@ -1702,6 +1916,14 @@ mod tests {
         let img = arboard::Clipboard::new().unwrap().get_image().unwrap();
         assert_eq!((img.width, img.height), (4, 3));
         assert_eq!(img.bytes[..8], [0, 1, 2, 3, 4, 5, 6, 7]);
+    }
+
+    #[test]
+    fn durations() {
+        assert_eq!(format_duration(0.2), "1 s");
+        assert_eq!(format_duration(42.4), "42 s");
+        assert_eq!(format_duration(61.0), "2 min");
+        assert_eq!(format_duration(3725.0), "1 h 2 min");
     }
 
     #[test]
