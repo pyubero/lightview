@@ -162,6 +162,14 @@ impl Doc {
         self.size = [r.width() as u32, r.height() as u32];
     }
 
+    /// ΔX, ΔY and the distance from `a` to `b` (output px), in the original image's pixels
+    /// but along the axes as shown.
+    pub fn measure(&self, a: Pos2, b: Pos2) -> [f32; 3] {
+        let d = self.source_point(b) - self.source_point(a);
+        let (dx, dy) = if self.transform.rot % 2 == 1 { (d.y, d.x) } else { (d.x, d.y) };
+        [dx.abs(), dy.abs(), d.length()]
+    }
+
     /// Scales the output to `w`×`h` px.
     pub fn resize(&mut self, w: u32, h: u32) {
         self.size = [w.max(1), h.max(1)];
@@ -378,6 +386,29 @@ mod tests {
         assert_eq!(doc.crop, rect(1.0, 1.0, 2.0, 1.0));
         let out = render(&frame(), &doc).unwrap();
         assert_eq!((out.width(), out.height()), (4, 2));
+    }
+
+    #[test]
+    fn measure_in_original_pixels() {
+        use crate::view::{self, View};
+        let mut doc = Doc::new(4000, 3000);
+        let (a, b) = (Pos2::new(100.0, 200.0), Pos2::new(400.0, 600.0));
+        assert_eq!(doc.measure(a, b), [300.0, 400.0, 500.0]);
+        // The same image points picked on screen at any zoom measure the same.
+        let vp = rect(0.0, 0.0, 1280.0, 720.0);
+        for view in [View::Fit, view::actual_size(doc.size_vec()), view::zoom_at(View::Fit, 7.0, Pos2::new(300.0, 100.0), doc.size_vec(), vp, 1.25)] {
+            let (dest, crop) = view::layout(view, doc.size_vec(), vp, 1.25);
+            let pick = |p| view::to_image(dest, crop, view::to_screen(dest, crop, p));
+            let [dx, dy, d] = doc.measure(pick(a), pick(b));
+            assert!((dx - 300.0).abs() < 0.05 && (dy - 400.0).abs() < 0.05 && (d - 500.0).abs() < 0.05, "{view:?}");
+        }
+        // Rotated: the same two image features are now 400 apart horizontally, 300 vertically.
+        doc.rotate_right();
+        let (ra, rb) = (Pos2::new(3000.0 - 200.0, 100.0), Pos2::new(3000.0 - 600.0, 400.0));
+        assert_eq!(doc.measure(ra, rb), [400.0, 300.0, 500.0]);
+        // Resized to half: still measured in original pixels.
+        doc.resize(1500, 2000);
+        assert_eq!(doc.measure((ra.to_vec2() / 2.0).to_pos2(), (rb.to_vec2() / 2.0).to_pos2()), [400.0, 300.0, 500.0]);
     }
 
     #[test]

@@ -46,6 +46,7 @@ enum Action {
     AdjustColor,
     AutoLevels,
     ResetAdjust,
+    Measure,
 }
 
 /// What dragging on the image does.
@@ -53,6 +54,7 @@ enum Action {
 enum Tool {
     Pan,
     Crop,
+    Measure,
 }
 
 /// What to do once the user agrees to discard unsaved edits.
@@ -145,6 +147,9 @@ pub struct App {
     /// Crop tool: where the drag started and the rect so far, in image px.
     drag_start: Option<Pos2>,
     crop_rect: Option<Rect>,
+    /// Measure tool: the two endpoints (image px) and which one is being dragged.
+    measure: Option<[Pos2; 2]>,
+    measure_drag: usize,
     resize_dialog: Option<ResizeDialog>,
     /// While the Adjust Color panel is open: the edits from before it opened.
     adjusting: Option<Doc>,
@@ -176,7 +181,7 @@ impl App {
             files: start.into_iter().collect(), index: 0,
             cache: HashMap::new(), preview: None, error: None, view: View::Fit,
             texture: None, tex_key: None, resized: None, generation: 0, anim_frame: 0, anim_due: None, anim_paused: false,
-            doc: None, undo: Vec::new(), redo: Vec::new(), saved: None, saving: None, tool: Tool::Pan, drag_start: None, crop_rect: None, resize_dialog: None, adjusting: None, pending: None,
+            doc: None, undo: Vec::new(), redo: Vec::new(), saved: None, saving: None, tool: Tool::Pan, drag_start: None, crop_rect: None, measure: None, measure_drag: 1, resize_dialog: None, adjusting: None, pending: None,
             title: String::new(),
             window_reported: false, preview_reported: None, full_reported: false, nav_start: None, close_next: false, status: None,
         }
@@ -278,7 +283,8 @@ impl App {
         f(&mut doc);
         if doc != before {
             if doc.geometry() != before.geometry() {
-                self.view = View::Fit;
+                // The measurement's points are in the old image coordinates.
+                (self.view, self.measure) = (View::Fit, None);
             }
             self.undo.push(before);
             self.redo.clear();
@@ -292,7 +298,7 @@ impl App {
         let Some(doc) = from.pop() else { return };
         to.push(current);
         if self.doc.as_ref().is_none_or(|d| d.geometry() != doc.geometry()) {
-            self.view = View::Fit;
+            (self.view, self.measure) = (View::Fit, None);
         }
         self.doc = Some(doc);
     }
@@ -351,6 +357,7 @@ impl App {
         self.redo.clear();
         self.tool = Tool::Pan;
         self.crop_rect = None;
+        self.measure = None;
         self.adjusting = None;
     }
 
@@ -478,6 +485,10 @@ impl App {
             ui.menu_button("Tools", |ui| {
                 let jpeg = self.current().and_then(|p| p.extension()).is_some_and(|e| e.eq_ignore_ascii_case("jpg") || e.eq_ignore_ascii_case("jpeg"));
                 item(ui, "Edit EXIF…", Action::EditExif, has_image && jpeg, actions);
+                let measuring = self.tool == Tool::Measure;
+                if ui.add_enabled(has_image, egui::Button::selectable(measuring, "Measure")).clicked() {
+                    actions.push(Action::Measure);
+                }
                 ui.add_enabled_ui(has_image, |ui| {
                     ui.menu_button("Adjust", |ui| {
                         // They all open the same panel.
@@ -682,6 +693,8 @@ impl eframe::App for App {
                     }
                 }
                 Action::ResetAdjust => self.edit(|d| d.adjust = Adjust::default()),
+                Action::Measure if self.tool == Tool::Measure => (self.tool, self.measure) = (Tool::Pan, None),
+                Action::Measure if self.doc().is_some() => (self.tool, self.crop_rect) = (Tool::Measure, None),
                 Action::RotateLeft => self.edit(Doc::rotate_left),
                 Action::RotateRight => self.edit(Doc::rotate_right),
                 Action::FlipHorizontal => self.edit(Doc::flip_horizontal),
@@ -696,7 +709,7 @@ impl eframe::App for App {
         }
         let enter = !typing && ctx.input(|i| i.key_pressed(Key::Enter));
         if esc && self.tool != Tool::Pan {
-            (self.tool, self.crop_rect) = (Tool::Pan, None);
+            (self.tool, self.crop_rect, self.measure) = (Tool::Pan, None, None);
         } else if esc && fullscreen {
             ctx.send_viewport_cmd(ViewportCommand::Fullscreen(false));
         }
@@ -719,17 +732,30 @@ impl eframe::App for App {
             match self.tool {
                 Tool::Pan if drag.dragged() => self.view = view::pan(self.view, drag.drag_delta(), img, viewport, ppp),
                 Tool::Pan => {}
-                Tool::Crop => {
+                Tool::Crop | Tool::Measure => {
                     if drag.hovered() {
                         ctx.set_cursor_icon(CursorIcon::Crosshair);
                     }
                     let (dest, vis) = view::layout(self.view, img, viewport, ppp);
-                    let at = |p: Pos2| view::to_image(dest, vis, p);
-                    if drag.drag_started() {
-                        self.drag_start = ctx.input(|i| i.pointer.press_origin()).map(at);
+                    let bounds = Rect::from_min_size(Pos2::ZERO, img);
+                    let at = |p: Pos2| bounds.clamp(view::to_image(dest, vis, p));
+                    let origin = ctx.input(|i| i.pointer.press_origin());
+                    if drag.drag_started() && let Some(o) = origin {
+                        self.drag_start = Some(at(o));
+                        // Measure: grab an endpoint near the press, or start a new line.
+                        let near = self.measure.and_then(|m| (0..2).find(|&i| view::to_screen(dest, vis, m[i]).distance(o) < 10.0));
+                        match near {
+                            Some(i) => self.measure_drag = i,
+                            None if self.tool == Tool::Measure => (self.measure, self.measure_drag) = (Some([at(o); 2]), 1),
+                            None => {}
+                        }
                     }
                     if drag.dragged() && let (Some(a), Some(p)) = (self.drag_start, drag.interact_pointer_pos()) {
-                        self.crop_rect = Some(Rect::from_two_pos(a, at(p)).intersect(Rect::from_min_size(Pos2::ZERO, img)));
+                        match (self.tool, &mut self.measure) {
+                            (Tool::Measure, Some(m)) => m[self.measure_drag] = at(p),
+                            (Tool::Crop, _) => self.crop_rect = Some(Rect::from_two_pos(a, at(p))),
+                            _ => {}
+                        }
                     }
                 }
             }
@@ -857,6 +883,24 @@ impl eframe::App for App {
                     }
                 }
                 bubble(ui.painter(), Pos2::new(viewport.center().x, viewport.top() + 24.0), "Drag to select · Enter to crop · Esc to cancel");
+            }
+            if self.tool == Tool::Measure {
+                let hint = match self.measure {
+                    Some(m) => {
+                        let [a, b] = m.map(|p| view::to_screen(dest, crop, p));
+                        let painter = ui.painter().with_clip_rect(viewport);
+                        // A dark halo keeps the guide line visible on light and dark images.
+                        painter.line_segment([a, b], egui::Stroke::new(3.0, Color32::from_black_alpha(160)));
+                        painter.line_segment([a, b], egui::Stroke::new(1.5, Color32::YELLOW));
+                        for p in [a, b] {
+                            painter.circle(p, 5.0, Color32::from_black_alpha(120), egui::Stroke::new(1.5, Color32::YELLOW));
+                        }
+                        let [dx, dy, d] = doc.measure(m[0], m[1]);
+                        format!("Distance: {d:.0} px · ΔX: {dx:.0} px · ΔY: {dy:.0} px")
+                    }
+                    None => "Drag to measure in image pixels · Esc to stop".into(),
+                };
+                bubble(ui.painter(), Pos2::new(viewport.center().x, viewport.top() + 24.0), &hint);
             }
 
             if self.timings {
