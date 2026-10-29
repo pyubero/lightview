@@ -231,6 +231,7 @@ impl App {
         // Otherwise egui's own Ctrl +/− scales the whole UI.
         cc.egui_ctx.options_mut(|o| o.zoom_with_keyboard = false);
         let mut recent: Vec<PathBuf> = cc.storage.and_then(|s| s.get_string("recent")).unwrap_or_default().lines().map(PathBuf::from).collect();
+        let show_toolbar = cc.storage.and_then(|s| s.get_string("toolbar")).is_some_and(|v| v == "shown");
         if let Some(path) = &start {
             push_recent(&mut recent, path);
         }
@@ -240,7 +241,7 @@ impl App {
             cache: HashMap::new(), preview: None, error: None, view: View::Fit,
             texture: None, tex_key: None, resized: None, generation: 0, anim_frame: 0, anim_due: None, anim_paused: false,
             doc: None, undo: Vec::new(), redo: Vec::new(), saved: None, saving: None, tool: Tool::Pan, drag_start: None, crop_rect: None, measure: None, measure_drag: 1,
-            show_toolbar: false, style: None, selected: None, grab: Grab::None, editing_text: None, focus_text: false, change_base: None, last_restyle: None, selection: None, element_textures: HashMap::new(),
+            show_toolbar, style: None, selected: None, grab: Grab::None, editing_text: None, focus_text: false, change_base: None, last_restyle: None, selection: None, element_textures: HashMap::new(),
             resize_dialog: None, adjusting: None, pending: None, show_ai_models: false, downloading: HashSet::new(),
             title: String::new(),
             window_reported: false, preview_reported: None, full_reported: false, nav_start: None, close_next: false, status: None,
@@ -1139,6 +1140,7 @@ impl eframe::App for App {
     fn save(&mut self, storage: &mut dyn eframe::Storage) {
         let recent: Vec<String> = self.recent.iter().map(|p| p.display().to_string()).collect();
         storage.set_string("recent", recent.join("\n"));
+        storage.set_string("toolbar", if self.show_toolbar { "shown" } else { "hidden" }.into());
         eframe::set_value(storage, settings::KEY, &self.settings);
     }
 
