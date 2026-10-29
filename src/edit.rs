@@ -134,7 +134,8 @@ impl Doc {
     /// The decoded-image rect that ends up at output rect `r`.
     pub fn to_source(&self, r: Rect) -> Rect {
         let scaled = Rect::from_min_max((r.min.to_vec2() / self.scale()).to_pos2(), (r.max.to_vec2() / self.scale()).to_pos2());
-        self.transform.to_source(scaled, self.crop.size()).translate(self.crop.min.to_vec2())
+        // Float rounding can land a hair outside the crop (and the image), which the resizer rejects.
+        self.transform.to_source(scaled, self.crop.size()).translate(self.crop.min.to_vec2()).intersect(self.crop)
     }
 
     /// Moves the markup along with a geometric edit.
@@ -452,6 +453,55 @@ mod tests {
         assert_eq!(out.dimensions(), (20, 20));
         assert_eq!(out.get_pixel(0, 0)[3], 0, "corner outside the ellipse is transparent");
         assert_eq!(out.get_pixel(10, 10).0, [200; 4], "centre kept");
+    }
+
+    #[test]
+    fn to_source_stays_inside_the_image() {
+        use crate::view::{self, View};
+        // Maximizing gives new viewport sizes and scales; float rounding in the mapping must never
+        // reach outside the decoded image, which fast_image_resize rejects (it used to panic).
+        let mut failures = Vec::new();
+        for (w, h) in [(4000u32, 2252u32), (4032, 2268), (4000, 3000), (2268, 4032), (7, 3), (6000, 4000)] {
+            let edits: [fn(&mut Doc); 7] = [
+                |_| {},
+                Doc::rotate_left,
+                Doc::rotate_right,
+                Doc::flip_horizontal,
+                |d| d.resize(d.size[0] / 3 + 1, d.size[1] / 3 + 1),
+                |d| d.resize(1999, 1125),
+                |d| {
+                    d.resize(d.size[0] * 2 / 3 + 1, d.size[1] * 2 / 3 + 1);
+                    d.crop_to(Rect::from_min_size(Pos2::new(1.0, 1.0), d.size_vec() / 2.0));
+                    d.rotate_right();
+                },
+            ];
+            for (e, edit) in edits.iter().enumerate() {
+                let mut doc = Doc::new(w, h);
+                edit(&mut doc);
+                let frame = Rect::from_min_size(Pos2::ZERO, Vec2::new(w as f32, h as f32));
+                let img = doc.size_vec();
+                for (vw, vh) in [(1280.0, 694.0), (1920.0, 1053.0), (2560.0, 1371.0), (1917.6, 1043.2), (1535.2, 822.4)] {
+                    for ppp in [1.0, 1.25, 1.5, 2.0] {
+                        let vp = Rect::from_min_size(Pos2::new(0.0, 23.2), Vec2::new(vw, vh));
+                        for view in [View::Fit, view::actual_size(img), view::zoom_at(View::Fit, 3.7, Pos2::new(vw * 0.95, vh * 0.9), img, vp, ppp)] {
+                            let (_, crop) = view::layout(view, img, vp, ppp);
+                            let src = doc.to_source(crop);
+                            if !frame.contains_rect(src) {
+                                failures.push(format!("{w}×{h} edit {e} {vw}×{vh}@{ppp} {view:?}: {src:?}"));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        assert!(failures.is_empty(), "{} cases outside the image, e.g. {:?}", failures.len(), &failures[..failures.len().min(3)]);
+        // And fast_image_resize itself accepts the mapped rect (a small image, so it's quick).
+        let mut doc = Doc::new(7, 3);
+        doc.resize(5, 2);
+        doc.rotate_right();
+        let (_, crop) = view::layout(View::Fit, doc.size_vec(), Rect::from_min_size(Pos2::ZERO, Vec2::new(1917.6, 1043.2)), 1.25);
+        let small = Frame { w: 7, h: 3, pixels: vec![0; 7 * 3 * 3], alpha: false, delay: Duration::ZERO };
+        resize(&small, doc.to_source(crop), 10, 10, ResizeAlg::Nearest);
     }
 
     #[test]
