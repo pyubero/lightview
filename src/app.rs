@@ -1026,9 +1026,13 @@ impl App {
         }
     }
 
-    /// The colour that erased pixels get: transparent if the image has alpha, else the background.
+    /// The colour that erased pixels get: transparent if the image has alpha or its format can
+    /// hold it (a PNG without an alpha channel too), else the background.
     fn erase_color(&self) -> Color32 {
-        let alpha = self.current().and_then(|p| self.cache.get(p)).is_some_and(|l| l.frames[0].alpha);
+        let format_alpha = self.current().and_then(|p| p.extension()).and_then(|e| e.to_str()).is_some_and(|e| {
+            ["png", "webp", "gif", "tif", "tiff"].contains(&e.to_ascii_lowercase().as_str())
+        });
+        let alpha = format_alpha || self.current().and_then(|p| self.cache.get(p)).is_some_and(|l| l.frames[0].alpha);
         let [r, g, b] = self.settings.background;
         if alpha { Color32::TRANSPARENT } else { Color32::from_rgb(r, g, b) }
     }
