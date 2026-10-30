@@ -85,7 +85,7 @@ when" says otherwise. `▸` marks a submenu.
 | Shapes ▸ | | | Rectangle, Rounded Rectangle, Ellipse, Line, Arrow. |
 | Text | | | Click to place, type; double-click (Select tool) to edit. |
 | Highlight | | | Translucent rectangle. |
-| Magnifier | | | Click to place a lens. |
+| Magnifier | | | A live lens follows the pointer; click to place it. |
 | — | | | |
 | AI Models… | | always | Choose, download (after accepting licences) or add models per task; GPU support. Real-ESRGAN and DarkIR are never downloaded: users convert them and copy them in (see `README.md`). |
 | Download AI Runtime… | | always; only shown while the runtime is missing | Downloads ONNX Runtime (after accepting its licence). |

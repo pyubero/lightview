@@ -144,7 +144,18 @@ impl Element {
         if shape == Shape::Highlight {
             style.color = Color32::from_rgba_unmultiplied(255, 235, 59, 100);
         }
+        // All tools share one style, and only a lens can do without a stroke.
+        if shape != Shape::Magnifier {
+            style.width = style.width.max(1.0);
+        }
         Element { shape, points: vec![at; if shape == Shape::Sketch { 1 } else { 2 }], text: String::new(), style, invert: false, image: None }
+    }
+
+    /// A magnifier at `at`, sized for an image of `image_size`.
+    pub fn lens(at: Pos2, image_size: Vec2, style: Style) -> Self {
+        let mut e = Element::new(Shape::Magnifier, at, style);
+        e.points[1] = at + Vec2::new(image_size.min_elem() / 8.0, 0.0);
+        e
     }
 
     /// Erases `selection` (or everything outside it) with `color`, in an image of size `bounds`.
@@ -508,7 +519,8 @@ pub fn flatten(img: &mut RgbaImage, elements: &[Element]) {
                         dst[d..d + 4].copy_from_slice(&src[s..s + 4]);
                     }
                 }
-                if let Some(path) = tiny_skia::PathBuilder::from_circle(c.x, c.y, radius) {
+                // tiny-skia draws width 0 as a hairline.
+                if s.width > 0.0 && let Some(path) = tiny_skia::PathBuilder::from_circle(c.x, c.y, radius) {
                     pixmap.stroke_path(&path, &paint, &stroke, id, None);
                 }
             }
@@ -660,7 +672,8 @@ fn style_ui(ui: &mut egui::Ui, shape: Shape, s: &mut Style) -> bool {
     ui.label(label);
     changed |= color_edit_button_srgba(ui, &mut s.color, Alpha::OnlyBlend).changed();
     if shape != Shape::Text && shape != Shape::Highlight {
-        changed |= ui.add(egui::DragValue::new(&mut s.width).range(1.0..=500.0).suffix(" px")).on_hover_text("Thickness").changed();
+        let min = if shape == Shape::Magnifier { 0.0 } else { 1.0 };
+        changed |= ui.add(egui::DragValue::new(&mut s.width).range(min..=500.0).suffix(" px")).on_hover_text("Thickness").changed();
     }
     match shape {
         Shape::Rect | Shape::RoundedRect | Shape::Ellipse => {
@@ -773,6 +786,22 @@ mod tests {
         // 10 px right of the centre shows what was 5 px right: still white; 10 px left: black.
         assert_eq!(img.get_pixel(60, 50)[0], 255);
         assert_eq!(img.get_pixel(40, 50)[0], 0);
+    }
+
+    #[test]
+    fn lens_without_stroke_has_no_ring() {
+        let mut img = white(100, 100);
+        let mut lens = element(Shape::Magnifier, (50.0, 50.0), (30.0, 50.0));
+        lens.style.width = 0.0;
+        flatten(&mut img, &[lens]);
+        assert!(img.pixels().all(|p| p.0 == [255, 255, 255, 255]));
+    }
+
+    #[test]
+    fn only_a_lens_can_have_no_stroke() {
+        let style = Style { width: 0.0, ..Style::for_image(Vec2::splat(100.0)) };
+        assert_eq!(Element::new(Shape::Sketch, Pos2::ZERO, style).style.width, 1.0);
+        assert_eq!(Element::lens(Pos2::ZERO, Vec2::splat(100.0), style).style.width, 0.0);
     }
 
     #[test]

@@ -874,10 +874,7 @@ impl App {
             Tool::Draw(shape @ (Shape::Text | Shape::Magnifier)) => {
                 if drag.clicked() && let Some(p) = pointer.map(at) {
                     self.finish_text();
-                    let mut e = Element::new(shape, p, style);
-                    if shape == Shape::Magnifier {
-                        e.points[1] = p + Vec2::new(bounds.width().min(bounds.height()) / 8.0, 0.0);
-                    }
+                    let e = if shape == Shape::Magnifier { Element::lens(p, bounds.size(), style) } else { Element::new(shape, p, style) };
                     let Some(d) = self.doc_mut() else { return };
                     d.elements.push(e);
                     let i = d.elements.len() - 1;
@@ -1537,6 +1534,7 @@ impl eframe::App for App {
         let full = self.current().and_then(|p| self.cache.get(p)).cloned();
         let full = full.as_deref();
 
+        let mut hovered_at = None;
         // Zoom and pan only once the full image is in (the preview has different pixel sizes).
         if let (Some(l), Some(doc)) = (full, &doc) {
             let img = doc.size_vec();
@@ -1615,6 +1613,7 @@ impl eframe::App for App {
                 }
             }
             }
+            hovered_at = drag.hover_pos().filter(|_| drag.hovered());
             let (factor, hover) = ctx.input(|i| (i.zoom_delta() * (i.smooth_scroll_delta.y / 200.0).exp(), i.pointer.hover_pos()));
             if factor != 1.0 && drag.hovered() {
                 self.view = view::zoom_at(self.view, factor, hover.unwrap_or(viewport.center()), img, viewport, ppp);
@@ -1745,10 +1744,16 @@ impl eframe::App for App {
                 painter.line_segment([Pos2::new(x, r.top()), Pos2::new(x, r.bottom())], egui::Stroke::new(2.0, Color32::WHITE));
                 painter.circle_filled(Pos2::new(x, r.center().y), 6.0, Color32::WHITE);
             }
+            // The magnifier samples the image texture: the whole frame (GPU) or the visible part (CPU).
+            let uv = |p: Pos2| if gpu { (source.source_point(p).to_vec2() / frame_size).to_pos2() } else { ((p - crop.min) / crop.size()).to_pos2() };
             if !doc.elements.is_empty() || self.editing_text.is_some() || !self.element_textures.is_empty() {
-                // The magnifier samples the image texture: the whole frame (GPU) or the visible part (CPU).
-                let uv = |p: Pos2| if gpu { (source.source_point(p).to_vec2() / frame_size).to_pos2() } else { ((p - crop.min) / crop.size()).to_pos2() };
                 self.paint_markup(ui, &doc, dest, crop, texture, &uv);
+            }
+            if let Some(p) = hovered_at.filter(|_| self.tool == Tool::Draw(Shape::Magnifier) && self.compare.is_none()) && let Some(style) = self.style {
+                // The lens a click here would place.
+                let size = doc.size_vec();
+                let lens = Element::lens(Rect::from_min_size(Pos2::ZERO, size).clamp(view::to_image(dest, crop, p)), size, style);
+                markup::paint(&ui.painter().with_clip_rect(dest), &lens, &|p| view::to_screen(dest, crop, p), dest.width() / crop.width(), texture, &uv, None);
             }
             if let Some(sel) = &self.selection {
                 let mut outline: Vec<Pos2> = sel.outline().into_iter().map(|p| view::to_screen(dest, crop, p)).collect();
