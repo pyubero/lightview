@@ -198,6 +198,9 @@ pub struct App {
     settings: Settings,
     show_info: bool,
     show_settings: bool,
+    /// The first-launch question while it's open: the checkbox's state.
+    default_prompt: Option<bool>,
+    default_result: Option<Result<(), String>>,
     inspector: Option<Inspector>,
     files: Vec<PathBuf>,
     index: usize,
@@ -278,16 +281,23 @@ pub struct App {
 impl App {
     /// `start` is already being decoded (see `load::start` in main).
     #[allow(clippy::too_many_arguments)]
-    pub fn new(cc: &eframe::CreationContext, t0: Instant, timings: bool, bench: bool, rx: mpsc::Receiver<Msg>, loader: Loader, notify: Notify, settings: Settings, start: Option<PathBuf>) -> Self {
+    pub fn new(cc: &eframe::CreationContext, t0: Instant, timings: bool, bench: bool, rx: mpsc::Receiver<Msg>, loader: Loader, notify: Notify, mut settings: Settings, start: Option<PathBuf>) -> Self {
         // Otherwise egui's own Ctrl +/− scales the whole UI.
         cc.egui_ctx.options_mut(|o| o.zoom_with_keyboard = false);
+        cc.egui_ctx.set_fonts(markup::font_definitions());
         let mut recent: Vec<PathBuf> = cc.storage.and_then(|s| s.get_string("recent")).unwrap_or_default().lines().map(PathBuf::from).collect();
         let show_toolbar = cc.storage.and_then(|s| s.get_string("toolbar")).is_some_and(|v| v == "shown");
         if let Some(path) = &start {
             push_recent(&mut recent, path);
         }
+        // Spawns xdg-mime, so only until the answer is known: this stays off normal startups.
+        let mut default_prompt = None;
+        if !settings.default_asked && settings::desktop_installed() {
+            settings.default_asked = settings::is_default();
+            default_prompt = (!settings.default_asked).then_some(true);
+        }
         App {
-            t0, timings, bench, rx, loader, notify, recent, settings, show_info: false, show_settings: false, inspector: None,
+            t0, timings, bench, rx, loader, notify, recent, settings, show_info: false, show_settings: false, default_prompt, default_result: None, inspector: None,
             files: start.into_iter().collect(), index: 0,
             cache: HashMap::new(), preview: None, error: None, view: View::Fit,
             texture: None, tex_key: None, resized: None, baked: None, generation: 0, anim_frame: 0, anim_due: None, anim_paused: false,
@@ -797,6 +807,18 @@ impl App {
             ui.heading("Settings");
             settings::ui(ui, &mut self.settings);
             ui.add_space(8.0);
+            if settings::desktop_installed() {
+                if ui.button("Make lightview the default image viewer").clicked() {
+                    self.default_result = Some(settings::make_default());
+                }
+                if let Some(result) = &self.default_result {
+                    ui.weak(match result {
+                        Ok(()) => "lightview is now the default image viewer",
+                        Err(e) => e,
+                    });
+                }
+                ui.add_space(8.0);
+            }
             ui.button("Close").clicked()
         });
         if modal.inner || modal.should_close() {
@@ -804,6 +826,29 @@ impl App {
         }
         if self.settings.sort != sort && let Some(path) = self.current() {
             load::relist(path, self.settings.sort, &self.notify);
+        }
+    }
+
+    /// Asked once, here and not by the package: a package runs as root, defaults are per user.
+    fn default_dialog(&mut self, ctx: &egui::Context) {
+        let Some(mut tick) = self.default_prompt else { return };
+        let modal = egui::Modal::new(egui::Id::unique("default-viewer")).show(ctx, |ui| {
+            ui.heading("Welcome to lightview");
+            ui.add_space(8.0);
+            ui.checkbox(&mut tick, "Make lightview my default image viewer");
+            ui.add_space(8.0);
+            ui.button("OK").clicked()
+        });
+        self.default_prompt = Some(tick);
+        if modal.inner || modal.should_close() {
+            self.default_prompt = None;
+            self.settings.default_asked = true;
+            if modal.inner && tick {
+                let result = settings::make_default();
+                // Settings is where the outcome is shown.
+                self.show_settings = result.is_err();
+                self.default_result = Some(result);
+            }
         }
     }
 
@@ -1163,7 +1208,7 @@ impl App {
         let estimate = format_duration(c.ms_per_mp * mp * 1.4 / 1000.0);
         // A bigger patch doesn't fit back into the image, so upscalers only do the whole image.
         let selection = self.selection.clone().filter(|s| !s.is_empty() && c.scale == 1);
-        let result = if c.scale > 1 { format!(" → {} × {} px", doc.size[0] * c.scale, doc.size[1] * c.scale) } else { String::new() };
+        let result = if c.scale > 1 { format!(", {} × {} px", doc.size[0] * c.scale, doc.size[1] * c.scale) } else { String::new() };
         let (whole, sel, discard) = egui::Area::new(egui::Id::unique("compare-bar")).fixed_pos(Pos2::new(viewport.center().x - 260.0, viewport.top() + 12.0)).show(ctx, |ui| {
             egui::Frame::popup(ui.style()).show(ui, |ui| {
                 ui.label(format!("{} preview of the visible area · drag to compare · Before | After", c.task.title()));
@@ -1836,6 +1881,7 @@ impl eframe::App for App {
         }
 
         self.settings_dialog(&ctx);
+        self.default_dialog(&ctx);
         self.resize_dialog(&ctx);
         self.ai_models_dialog(&ctx);
         self.license_dialog(&ctx);
@@ -1911,6 +1957,7 @@ mod tests {
     fn modal_blocks_image_hover() {
         fn hovered(modal: bool) -> bool {
             let ctx = egui::Context::default();
+            ctx.set_fonts(markup::font_definitions());
             let mut hovered = false;
             for _ in 0..4 {
                 let mut input = egui::RawInput::default();

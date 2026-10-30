@@ -39,6 +39,17 @@ Animated images can be viewed, but not saved yet.
 lightview runs on Linux, on both Wayland and X11. It has been developed and tested on Kubuntu with
 KDE Plasma. Windows isn't supported yet.
 
+### Ubuntu, Kubuntu, Mint, Pop!_OS, Debian 12 or newer (64-bit Intel/AMD)
+
+1. Download the `.deb` file from the [Releases](../../releases) page.
+2. Double-click it and choose Install.
+3. Open lightview from your applications menu. The first time, it asks whether to become your
+   default image viewer. You can change your mind later in Edit → Settings.
+
+To uninstall, remove lightview in your software centre, or run `sudo apt remove lightview`.
+
+### From source (any other distribution)
+
 You need a [Rust toolchain](https://rustup.rs) that supports the 2024 edition. From a checkout of
 this repository:
 
@@ -147,6 +158,11 @@ lightview --bench photo.jpg     # the same, quitting after the first full image
 
 ## Licence
 
-lightview doesn't have a licence yet.
+lightview is free software: you can redistribute it and/or modify it under the terms of the
+[GNU General Public License](LICENSE), version 3 or later. It comes with no warranty.
+
+The fonts built into lightview are Apache-2.0 and MIT licensed; see [`fonts/NOTICE.txt`](fonts/NOTICE.txt).
+The `.deb` includes their licences and those of the Rust crates, in
+`/usr/share/doc/lightview/copyright`.
 
 Third-party licences for the downloadable AI components are in [`licenses/`](licenses).

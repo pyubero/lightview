@@ -14,7 +14,7 @@ A simple, very fast image viewer written fully in Rust. It becomes the default i
 - Thumbnail grid or gallery mode
 - Deleting or moving files
 - AVIF, HEIC, SVG and camera RAW formats
-- Flatpak, Snap, AUR or any other packaging
+- Flatpak, Snap, AUR or any other packaging besides the .deb
 - Windows builds (the code shouldn't block them, but they aren't tested yet)
 - Draw: a separate, later phase
 

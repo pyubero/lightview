@@ -1,6 +1,6 @@
 use eframe::egui::{self, Color32, Pos2, Rect, Stroke, Vec2};
 use image::RgbaImage;
-use std::sync::{Arc, OnceLock};
+use std::sync::Arc;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Shape {
@@ -384,12 +384,25 @@ pub fn checker(rect: Rect, mask: Option<(egui::TextureId, Rect)>) -> egui::Mesh 
     mesh
 }
 
-/// egui's default proportional font, so saved text matches what's on screen.
+const ROBOTO: &[u8] = include_bytes!("../fonts/Roboto-Regular.ttf");
+
+/// The fonts of the whole UI. Apache-2.0 and MIT only: egui's default set isn't clearly GPL-compatible.
+pub fn font_definitions() -> egui::FontDefinitions {
+    use egui::{FontData, FontFamily, FontTweak};
+    let mut fonts = egui::FontDefinitions::default();
+    fonts.font_data.insert("Roboto".into(), Arc::new(FontData::from_static(ROBOTO)));
+    fonts.font_data.insert("Droid Sans Mono".into(), Arc::new(FontData::from_static(include_bytes!("../fonts/DroidSansMono.ttf"))));
+    let icons = FontData::from_static(include_bytes!("../fonts/emoji-icon-font.ttf")).tweak(FontTweak { scale: 0.90, ..Default::default() });
+    fonts.font_data.insert("emoji-icon-font".into(), Arc::new(icons));
+    let family = |names: &[&str]| names.iter().map(|n| n.to_string()).collect::<Vec<_>>();
+    fonts.families.insert(FontFamily::Proportional, family(&["Roboto", "emoji-icon-font"]));
+    fonts.families.insert(FontFamily::Monospace, family(&["Droid Sans Mono", "Roboto", "emoji-icon-font"]));
+    fonts
+}
+
+/// The UI's proportional font, so saved text matches what's on screen.
 fn font() -> Option<ab_glyph::FontRef<'static>> {
-    static FONT: OnceLock<Arc<egui::FontData>> = OnceLock::new();
-    let data = FONT.get_or_init(|| egui::FontDefinitions::default().font_data["Ubuntu-Light"].clone());
-    let bytes: &'static [u8] = (*data.font).as_ref();
-    ab_glyph::FontRef::try_from_slice(bytes).ok()
+    ab_glyph::FontRef::try_from_slice(ROBOTO).ok()
 }
 
 fn skia_color(c: Color32) -> tiny_skia::Color {

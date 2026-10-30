@@ -3,9 +3,13 @@ use eframe::egui;
 use fast_image_resize::{FilterType, ResizeAlg};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::process::Command;
 
 /// Key in eframe's storage (`~/.local/share/lightview/app.ron`).
 pub const KEY: &str = "settings";
+
+const DESKTOP_FILE: &str = "lightview.desktop";
+const MIME_TYPES: [&str; 5] = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/bmp"];
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Serialize, Deserialize)]
 pub enum Interpolation {
@@ -94,11 +98,13 @@ pub struct Settings {
     pub window_size: [f32; 2],
     pub sort: SortOrder,
     pub ai: AiSettings,
+    /// The first-launch "default image viewer" question has been dealt with.
+    pub default_asked: bool,
 }
 
 impl Default for Settings {
     fn default() -> Self {
-        Settings { gpu_scaling: false, interpolation: Interpolation::Bilinear, background: [0, 0, 0], window_size: [1280.0, 720.0], sort: SortOrder::Name, ai: AiSettings::default() }
+        Settings { gpu_scaling: false, interpolation: Interpolation::Bilinear, background: [0, 0, 0], window_size: [1280.0, 720.0], sort: SortOrder::Name, ai: AiSettings::default(), default_asked: false }
     }
 }
 
@@ -121,6 +127,21 @@ fn parse(app_ron: &str) -> Settings {
         .ok()
         .and_then(|kv| ron::from_str(kv.get(KEY)?).ok())
         .unwrap_or_default()
+}
+
+/// Whether a desktop entry exists for `xdg-mime` to point at (the .deb or `install.sh` put it there).
+pub fn desktop_installed() -> bool {
+    let home = std::env::var_os("HOME").map(|h| std::path::Path::new(&h).join(".local/share/applications").join(DESKTOP_FILE));
+    std::path::Path::new("/usr/share/applications").join(DESKTOP_FILE).exists() || home.is_some_and(|p| p.exists())
+}
+
+pub fn is_default() -> bool {
+    Command::new("xdg-mime").args(["query", "default", "image/jpeg"]).output().is_ok_and(|o| String::from_utf8_lossy(&o.stdout).trim() == DESKTOP_FILE)
+}
+
+/// Sets lightview as this user's default for the formats `install.sh` also claims.
+pub fn make_default() -> Result<(), String> {
+    crate::ai::run(Command::new("xdg-mime").args(["default", DESKTOP_FILE]).args(MIME_TYPES))
 }
 
 /// The Settings dialog body.
@@ -178,7 +199,7 @@ mod tests {
     fn storage_round_trip() {
         let mut ai = AiSettings { model: Some("mine.onnx".into()), ..AiSettings::default() };
         ai.overrides.insert("mine.onnx".into(), Preprocess::auto(512));
-        let s = Settings { gpu_scaling: true, interpolation: Interpolation::Lanczos3, background: [1, 2, 3], window_size: [800.0, 600.0], sort: SortOrder::DateModified, ai };
+        let s = Settings { gpu_scaling: true, interpolation: Interpolation::Lanczos3, background: [1, 2, 3], window_size: [800.0, 600.0], sort: SortOrder::DateModified, ai, default_asked: true };
         // eframe stores each value as a RON string inside a RON map.
         let kv = HashMap::from([(KEY.to_string(), ron::to_string(&s).unwrap()), ("recent".to_string(), "/a".to_string())]);
         assert_eq!(parse(&ron::to_string(&kv).unwrap()), s);
@@ -190,6 +211,7 @@ mod tests {
         let s = parse(&ron::to_string(&kv).unwrap());
         assert_eq!(s.ai.choice(Task::Background).map(String::as_str), Some("silueta.onnx"));
         assert_eq!((s.ai.denoise, s.ai.enhance, s.ai.notices_seen.len()), (None, None, 0));
+        assert!(!s.default_asked);
     }
 
     #[test]

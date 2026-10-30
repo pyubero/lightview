@@ -192,7 +192,7 @@ fn fetch(url: &str, sha256: &str, dest: &Path) -> Result<(), String> {
     result
 }
 
-fn run(cmd: &mut std::process::Command) -> Result<(), String> {
+pub fn run(cmd: &mut std::process::Command) -> Result<(), String> {
     let name = cmd.get_program().to_string_lossy().into_owned();
     let out = cmd.output().map_err(|e| format!("{name}: {e}"))?;
     if out.status.success() { Ok(()) } else { Err(format!("{name}: {}", String::from_utf8_lossy(&out.stderr).trim())) }
@@ -730,7 +730,7 @@ pub fn models_ui(ui: &mut egui::Ui, s: &mut AiSettings, installed: &[String], bu
     let mut out = ModelsOut::default();
     ui.heading("AI Models");
     if !runtime {
-        ui.colored_label(ui.visuals().warn_fg_color, "The AI runtime isn't installed yet: Tools → Download AI Runtime…");
+        ui.colored_label(ui.visuals().warn_fg_color, "The AI runtime isn't installed yet: Tools > Download AI Runtime…");
     }
     gpu_ui(ui, &mut s.use_gpu, busy.contains("gpu"), &mut out);
     let name = |f: &str| {
