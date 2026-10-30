@@ -125,8 +125,12 @@ mod tests {
     /// Every literal passed to `tr`/`trf` in the sources, as written there.
     fn keys_in_sources() -> BTreeSet<String> {
         let mut keys = BTreeSet::new();
-        for entry in std::fs::read_dir("src").unwrap() {
-            let path = entry.unwrap().path();
+        let mut files: Vec<_> = std::fs::read_dir("src").unwrap().map(|e| e.unwrap().path()).collect();
+        while let Some(path) = files.pop() {
+            if path.is_dir() {
+                files.extend(std::fs::read_dir(path).unwrap().map(|e| e.unwrap().path()));
+                continue;
+            }
             if path.ends_with("i18n.rs") {
                 continue;
             }
