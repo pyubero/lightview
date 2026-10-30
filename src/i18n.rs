@@ -56,7 +56,7 @@ impl Language {
 
 /// The desktop's language, the way gettext picks it; English if it isn't one of ours.
 pub fn system_language() -> Language {
-    let locale = ["LANGUAGE", "LC_ALL", "LC_MESSAGES", "LANG"].iter().filter_map(|v| std::env::var(v).ok()).find(|v| !v.is_empty());
+    let locale = ["LANGUAGE", "LC_ALL", "LC_MESSAGES", "LANG"].iter().filter_map(|v| std::env::var(v).ok()).find(|v| !v.is_empty()).or_else(crate::platform::locale);
     locale.map_or(Language::English, |l| Language::from_locale(&l))
 }
 

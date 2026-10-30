@@ -54,8 +54,7 @@ impl App {
             }
             ui.weak(format!("lightview {}", env!("CARGO_PKG_VERSION")));
             if ui.button(tr("Check for updates")).clicked() {
-                // shortcut: xdg-open is Linux only; use the platform's opener on Windows.
-                drop(std::process::Command::new("xdg-open").arg("https://github.com/pyubero/lightview/releases").spawn());
+                crate::platform::open("https://github.com/pyubero/lightview/releases");
             }
             ui.add_space(8.0);
             ui.button(tr("Close")).clicked()

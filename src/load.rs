@@ -311,7 +311,9 @@ pub fn set_exif_dpi(tiff: &mut [u8], dpi: u16) {
 /// Puts a file back from the Trash, to the place it was deleted from.
 pub fn restore_trashed(path: &Path) -> Result<(), String> {
     let items = trash::os_limited::list().map_err(|e| e.to_string())?;
-    let newest = items.into_iter().filter(|i| i.original_path() == path).max_by_key(|i| i.time_deleted);
+    // Compared canonically: on Windows `path` starts with `\\?\`, the Trash's paths don't.
+    let same = |i: &trash::TrashItem| Some(i.name.as_os_str()) == path.file_name() && i.original_parent.canonicalize().is_ok_and(|p| p.join(&i.name) == path);
+    let newest = items.into_iter().filter(same).max_by_key(|i| i.time_deleted);
     let item = newest.ok_or_else(|| crate::i18n::tr("It's no longer in the Trash").to_string())?;
     trash::os_limited::restore_all([item]).map_err(|e| e.to_string())
 }

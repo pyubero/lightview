@@ -21,3 +21,18 @@ pub fn open(target: impl AsRef<OsStr>) {
     let program = if cfg!(windows) { "explorer" } else { "xdg-open" };
     drop(command(program).arg(target).spawn());
 }
+
+/// The user's locale, like `es-ES`.
+// shortcut: this is the regional format, not the display language; use GetUserPreferredUILanguages if they often differ.
+#[cfg(windows)]
+pub fn locale() -> Option<String> {
+    let mut name = [0u16; 85]; // LOCALE_NAME_MAX_LENGTH
+    let len = unsafe { windows_sys::Win32::Globalization::GetUserDefaultLocaleName(name.as_mut_ptr(), name.len() as i32) };
+    (len > 0).then(|| String::from_utf16_lossy(&name[..len as usize - 1]))
+}
+
+/// Linux has no call for this: the language comes from the environment.
+#[cfg(not(windows))]
+pub fn locale() -> Option<String> {
+    None
+}
