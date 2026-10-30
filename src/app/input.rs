@@ -86,7 +86,7 @@ impl App {
             ctx.set_cursor_icon(CursorIcon::Crosshair);
         }
         let k = dest.width() / vis.width();
-        let bounds = Rect::from_min_size(Pos2::ZERO, doc.size_vec());
+        let bounds = doc.bounds();
         let at = |p: Pos2| bounds.clamp(view::to_image(dest, vis, p));
         let origin = ctx.input(|i| i.pointer.press_origin());
         let pointer = drag.interact_pointer_pos();
@@ -189,11 +189,11 @@ impl App {
     /// The shortcuts pressed this frame. Plain keys (arrows, F11) and undo belong to a text field while one has focus.
     pub(super) fn read_shortcuts(ctx: &egui::Context, typing: bool) -> Vec<Action> {
         ctx.input_mut(|i| {
-        SHORTCUTS
-            .iter()
-            .filter(|(sc, a)| !(typing && (sc.modifiers.is_none() || matches!(a, Action::Undo | Action::Redo | Action::SelectAll | Action::Deselect))) && i.consume_shortcut(sc))
-            .map(|(_, a)| a.clone())
-            .collect()
+            SHORTCUTS
+                .iter()
+                .filter(|(sc, a)| !(typing && (sc.modifiers.is_none() || matches!(a, Action::Undo | Action::Redo | Action::SelectAll | Action::Deselect))) && i.consume_shortcut(sc))
+                .map(|(_, a)| a.clone())
+                .collect()
         })
     }
 
@@ -255,7 +255,7 @@ impl App {
                     self.finish_text();
                     (self.tool, self.crop_rect, self.selected) = (Tool::Selection(*kind), None, None);
                 }
-                Action::SelectAll => self.selection = self.doc().map(|d| Selection::Rect(Rect::from_min_size(Pos2::ZERO, d.size_vec()))),
+                Action::SelectAll => self.selection = self.doc().map(|d| Selection::Rect(d.bounds())),
                 Action::Deselect => self.selection = None,
                 Action::Copy => self.copy_selection(ctx),
                 Action::Cut => {
@@ -266,7 +266,7 @@ impl App {
                 }
                 Action::Paste => match arboard::Clipboard::new().and_then(|mut c| c.get_image()) {
                     Ok(img) => self.paste(img.width as u32, img.height as u32, img.bytes.into_owned()),
-                    Err(e) => self.status = Some((trf("Nothing to paste: {e}", &[("e", &e)]), Instant::now())),
+                    Err(e) => self.set_status(trf("Nothing to paste: {e}", &[("e", &e)])),
                 },
                 Action::DeleteSelection => self.delete_selection(),
                 Action::DeleteImage => self.delete_prompt = true,
@@ -353,7 +353,7 @@ impl App {
         if drag.hovered() {
             ctx.set_cursor_icon(CursorIcon::Crosshair);
         }
-                let bounds = Rect::from_min_size(Pos2::ZERO, img);
+        let bounds = Rect::from_min_size(Pos2::ZERO, img);
         let at = |p: Pos2| bounds.clamp(view::to_image(dest, vis, p));
         if drag.clicked() {
             self.selection = None;
@@ -384,7 +384,7 @@ impl App {
         if drag.hovered() {
             ctx.set_cursor_icon(CursorIcon::Crosshair);
         }
-                let bounds = Rect::from_min_size(Pos2::ZERO, img);
+        let bounds = Rect::from_min_size(Pos2::ZERO, img);
         let at = |p: Pos2| bounds.clamp(view::to_image(dest, vis, p));
         let origin = ctx.input(|i| i.pointer.press_origin());
         if drag.drag_started() && let Some(o) = origin {

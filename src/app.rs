@@ -186,6 +186,11 @@ impl App {
         }
     }
 
+    /// Shows a short message at the bottom.
+    fn set_status(&mut self, text: impl Into<String>) {
+        self.status = Some((text.into(), Instant::now()));
+    }
+
     fn current(&self) -> Option<&PathBuf> {
         self.files.get(self.index)
     }
@@ -207,7 +212,7 @@ impl App {
 
     fn handle(&mut self, msg: Msg) {
         match msg {
-            Msg::Status(text) => self.status = Some((text, Instant::now())),
+            Msg::Status(text) => self.set_status(text),
             Msg::Progress(p) => {
                 if let Some(r) = &mut self.restoring {
                     r.progress = p;
@@ -224,12 +229,8 @@ impl App {
                         self.compare = texture.map(|texture| Compare { task: run.task, region, texture, split: 0.5, ms_per_mp, scale });
                     }
                     Ok((mut img, _)) => {
-                        if let Some(sel) = &run.selection
-                            && let Some(mask) = markup::polygon_mask(&sel.outline(), None, region.min, 1.0, img.width(), img.height())
-                        {
-                            for (px, m) in img.pixels_mut().zip(mask.data()) {
-                                px[3] = (px[3] as u32 * *m as u32 / 255) as u8;
-                            }
+                        if let Some(sel) = &run.selection {
+                            clip_to(&mut img, sel, region.min);
                         }
                         let style = Style::for_image(region.size());
                         let scale = (img.width() as f32 / region.width()).round().max(1.0);
@@ -243,31 +244,31 @@ impl App {
                                 d.elements.push(Element::pasted(Arc::new(img), region.min, region.size(), style));
                             }
                         });
-                        self.status = Some((trf("{task} done", &[("task", &run.task.title())]), Instant::now()));
+                        self.set_status(trf("{task} done", &[("task", &run.task.title())]));
                     }
-                    Err(e) if e == "cancelled" => self.status = Some((tr("Cancelled").into(), Instant::now())),
-                    Err(e) => self.status = Some((trf("{task} failed: {e}", &[("task", &run.task.title()), ("e", &e)]), Instant::now())),
+                    Err(e) if e == "cancelled" => self.set_status(tr("Cancelled")),
+                    Err(e) => self.set_status(trf("{task} failed: {e}", &[("task", &run.task.title()), ("e", &e)])),
                 }
             }
             Msg::Downloaded(file, result) => {
                 self.downloading.remove(&file);
-                self.status = Some((match result {
+                self.set_status(match result {
                     Ok(()) if file == "gpu" => tr("GPU support installed: restart lightview to use it").into(),
                     Ok(()) => trf("Downloaded {file}", &[("file", &file)]),
                     Err(e) => trf("Couldn't download {file}: {e}", &[("file", &file), ("e", &e)]),
-                }, Instant::now()));
+                });
             }
             Msg::Detected(file, result) => match result {
                 Ok(size) => {
                     let base = crate::ai::preset(&file, &self.settings.ai.overrides).unwrap_or(crate::ai::Preprocess::auto(size));
                     self.settings.ai.overrides.insert(file, crate::ai::Preprocess { size, ..base });
                 }
-                Err(e) => self.status = Some((trf("Couldn't read {file}: {e}", &[("file", &file), ("e", &e)]), Instant::now())),
+                Err(e) => self.set_status(trf("Couldn't read {file}: {e}", &[("file", &file), ("e", &e)])),
             },
             Msg::Cutout(path, result) => match result {
                 Ok((img, object)) if self.current() == Some(&path) => {
                     let Some(doc) = self.doc() else { return };
-                    let bounds = Rect::from_min_size(Pos2::ZERO, doc.size_vec());
+                    let bounds = doc.bounds();
                     let style = *self.style.get_or_insert_with(|| Style::for_image(doc.size_vec()));
                     // Erase everything, then put the cut-out back on top: one undo step.
                     self.edit(|d| {
@@ -277,10 +278,10 @@ impl App {
                             d.crop_to(r);
                         }
                     });
-                    self.status = Some((tr("Done").into(), Instant::now()));
+                    self.set_status(tr("Done"));
                 }
                 Ok(_) => {}
-                Err(e) => self.status = Some((trf("Couldn't process the image: {e}", &[("e", &e)]), Instant::now())),
+                Err(e) => self.set_status(trf("Couldn't process the image: {e}", &[("e", &e)])),
             },
             Msg::Open(path) => self.confirm(Pending::Open(path)),
             Msg::Folder(files) => {
@@ -316,10 +317,10 @@ impl App {
                     self.saved = saving;
                 }
                 let name = path.file_name().unwrap_or_default().to_string_lossy().into_owned();
-                self.status = Some((match &result {
+                self.set_status(match &result {
                     Ok(()) => trf("Saved {name}", &[("name", &name)]),
                     Err(e) => trf("Couldn't save {name}: {e}", &[("name", &name), ("e", &e)]),
-                }, Instant::now()));
+                });
                 let (Ok(()), Ok(path), Some(current)) = (result, std::fs::canonicalize(&path), self.current().cloned()) else { return };
                 if path == current {
                     // Overwrote the image on screen: show the saved version.
@@ -388,7 +389,7 @@ impl App {
         if undo && self.undo.is_empty() && let Some(path) = self.deleted.pop() {
             match load::restore_trashed(&path) {
                 Ok(()) => self.open(path),
-                Err(e) => self.status = Some((trf("Couldn't restore the image: {e}", &[("e", &e)]), Instant::now())),
+                Err(e) => self.set_status(trf("Couldn't restore the image: {e}", &[("e", &e)])),
             }
             return;
         }
@@ -545,7 +546,7 @@ impl App {
         // shortcut: renders the full edited image on the UI thread; move it to a thread if copying big images stutters.
         let Ok(img) = edit::render(&l.frames[self.anim_frame.min(l.frames.len() - 1)], &doc) else { return };
         let img = img.into_rgba8();
-        let bounds = Rect::from_min_size(Pos2::ZERO, doc.size_vec());
+        let bounds = doc.bounds();
         let sel = self.selection.clone().unwrap_or(Selection::Rect(bounds));
         let b = Rect::from_min_max(sel.bbox().min.floor(), sel.bbox().max.ceil()).intersect(bounds);
         let (x, y, w, h) = (b.min.x as u32, b.min.y as u32, b.width() as u32, b.height() as u32);
@@ -553,18 +554,16 @@ impl App {
             return;
         }
         let mut part = image::imageops::crop_imm(&img, x, y, w, h).to_image();
-        if !matches!(sel, Selection::Rect(_)) && let Some(mask) = markup::polygon_mask(&sel.outline(), None, b.min, 1.0, w, h) {
-            for (px, m) in part.pixels_mut().zip(mask.data()) {
-                px[3] = (px[3] as u32 * *m as u32 / 255) as u8;
-            }
+        if !matches!(sel, Selection::Rect(_)) {
+            clip_to(&mut part, &sel, b.min);
         }
         ctx.copy_image(egui::ColorImage::from_rgba_unmultiplied([w as usize, h as usize], part.as_raw()));
-        self.status = Some((trf("Copied {w} × {h} px", &[("w", &w), ("h", &h)]), Instant::now()));
+        self.set_status(trf("Copied {w} × {h} px", &[("w", &w), ("h", &h)]));
     }
 
     fn delete_selection(&mut self) {
         let (Some(sel), Some(doc)) = (self.selection.take(), self.doc()) else { return };
-        let (bounds, color) = (Rect::from_min_size(Pos2::ZERO, doc.size_vec()), self.erase_color());
+        let (bounds, color) = (doc.bounds(), self.erase_color());
         self.edit(|d| d.elements.push(Element::erase(&sel, false, bounds, color)));
     }
 
@@ -572,7 +571,7 @@ impl App {
     fn delete_image(&mut self) {
         let Some(path) = self.current().cloned() else { return };
         if let Err(e) = trash::delete(&path) {
-            self.status = Some((trf("Couldn't delete the image: {e}", &[("e", &e)]), Instant::now()));
+            self.set_status(trf("Couldn't delete the image: {e}", &[("e", &e)]));
             return;
         }
         self.files.remove(self.index);
@@ -587,12 +586,12 @@ impl App {
     /// Crops to the selection; for an ellipse or lasso, the outside is erased too.
     fn image_from_selection(&mut self) {
         let (Some(sel), Some(doc)) = (self.selection.take(), self.doc()) else { return };
-        let r = Rect::from_min_max(sel.bbox().min.round(), sel.bbox().max.round()).intersect(Rect::from_min_size(Pos2::ZERO, doc.size_vec()));
+        let r = Rect::from_min_max(sel.bbox().min.round(), sel.bbox().max.round()).intersect(doc.bounds());
         let color = self.erase_color();
         self.edit(|d| {
             d.crop_to(r);
             if !matches!(sel, Selection::Rect(_)) {
-                d.elements.push(Element::erase(&sel.translate(-r.min.to_vec2()), true, Rect::from_min_size(Pos2::ZERO, d.size_vec()), color));
+                d.elements.push(Element::erase(&sel.translate(-r.min.to_vec2()), true, d.bounds(), color));
             }
         });
     }
@@ -696,6 +695,14 @@ impl eframe::App for App {
             ctx.send_viewport_cmd(ViewportCommand::Title(title.clone()));
             self.title = title;
         }
+    }
+}
+
+/// Makes `img`, whose top-left corner is at `origin`, transparent outside `sel`.
+fn clip_to(img: &mut image::RgbaImage, sel: &Selection, origin: Pos2) {
+    let Some(mask) = markup::polygon_mask(&sel.outline(), None, origin, 1.0, img.width(), img.height()) else { return };
+    for (px, m) in img.pixels_mut().zip(mask.data()) {
+        px[3] = (px[3] as u32 * *m as u32 / 255) as u8;
     }
 }
 

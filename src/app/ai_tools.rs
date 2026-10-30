@@ -38,7 +38,7 @@ impl App {
         let task = crate::ai::Task::Background;
         let Some(file) = crate::ai::choose(self.settings.ai.choice(task), task, &crate::ai::installed()) else { return };
         let preset = crate::ai::preset(&file, &self.settings.ai.overrides);
-        self.status = Some((trf("Running {file}…", &[("file", &file)]), Instant::now()));
+        self.set_status(trf("Running {file}…", &[("file", &file)]));
         let notify = self.notify.clone();
         std::thread::spawn(move || {
             let result = edit::render(&l.frames[0], &doc).and_then(|img| {
@@ -61,7 +61,7 @@ impl App {
         let (Some(vis), Some(doc)) = (self.visible, self.doc()) else { return };
         let size = vis.size().min(Vec2::splat(256.0));
         let region = Rect::from_center_size(vis.center(), size);
-        let region = Rect::from_min_max(region.min.round(), region.max.round()).intersect(Rect::from_min_size(Pos2::ZERO, doc.size_vec()));
+        let region = Rect::from_min_max(region.min.round(), region.max.round()).intersect(doc.bounds());
         self.compare = None;
         self.run_restore(task, region, false, None);
     }
@@ -139,14 +139,13 @@ impl App {
             self.compare = None;
         }
         if whole {
-            self.run_restore(task, Rect::from_min_size(Pos2::ZERO, doc.size_vec()), true, None);
+            self.run_restore(task, doc.bounds(), true, None);
         } else if sel && let Some(s) = selection {
-            let b = Rect::from_min_max(s.bbox().min.floor(), s.bbox().max.ceil()).intersect(Rect::from_min_size(Pos2::ZERO, doc.size_vec()));
+            let b = Rect::from_min_max(s.bbox().min.floor(), s.bbox().max.ceil()).intersect(doc.bounds());
             self.run_restore(task, b, true, Some(s));
         }
     }
 
-    /// Shown before the first Enhance Image.
     /// The Enhance model about to be used, if its notice hasn't been shown yet.
     pub(super) fn unseen_notice(&self) -> Option<String> {
         let task = crate::ai::Task::Enhance;

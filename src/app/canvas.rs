@@ -203,84 +203,84 @@ impl App {
     /// The result on the right of the line, the original on the left.
     fn paint_compare(&self, ui: &egui::Ui, dest: Rect, crop: Rect) {
         let Some(c) = &self.compare else { return };
-            let r = Rect::from_two_pos(view::to_screen(dest, crop, c.region.min), view::to_screen(dest, crop, c.region.max));
-            let x = r.left() + r.width() * c.split;
-            let after = Rect::from_min_max(Pos2::new(x, r.top()), r.max);
-            ui.painter().with_clip_rect(after.intersect(dest)).image(c.texture.id(), r, Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)), Color32::WHITE);
-            let painter = ui.painter().with_clip_rect(dest);
-            painter.rect_stroke(r, 0.0, egui::Stroke::new(1.0, Color32::from_white_alpha(160)), egui::StrokeKind::Outside);
-            painter.line_segment([Pos2::new(x, r.top()), Pos2::new(x, r.bottom())], egui::Stroke::new(2.0, Color32::WHITE));
-            painter.circle_filled(Pos2::new(x, r.center().y), 6.0, Color32::WHITE);
+        let r = Rect::from_two_pos(view::to_screen(dest, crop, c.region.min), view::to_screen(dest, crop, c.region.max));
+        let x = r.left() + r.width() * c.split;
+        let after = Rect::from_min_max(Pos2::new(x, r.top()), r.max);
+        ui.painter().with_clip_rect(after.intersect(dest)).image(c.texture.id(), r, Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)), Color32::WHITE);
+        let painter = ui.painter().with_clip_rect(dest);
+        painter.rect_stroke(r, 0.0, egui::Stroke::new(1.0, Color32::from_white_alpha(160)), egui::StrokeKind::Outside);
+        painter.line_segment([Pos2::new(x, r.top()), Pos2::new(x, r.bottom())], egui::Stroke::new(2.0, Color32::WHITE));
+        painter.circle_filled(Pos2::new(x, r.center().y), 6.0, Color32::WHITE);
     }
 
     fn paint_selection(&self, ui: &egui::Ui, dest: Rect, crop: Rect) {
         let Some(sel) = &self.selection else { return };
-            let mut outline: Vec<Pos2> = sel.outline().into_iter().map(|p| view::to_screen(dest, crop, p)).collect();
-            outline.push(outline[0]);
-            // Marching-ants style: white dashes over a dark line, visible on any image.
-            let painter = ui.painter().with_clip_rect(dest.expand(1.0));
-            painter.add(egui::Shape::line(outline.clone(), egui::Stroke::new(1.0, Color32::from_black_alpha(200))));
-            painter.extend(egui::Shape::dashed_line(&outline, egui::Stroke::new(1.0, Color32::WHITE), 5.0, 4.0));
+        let mut outline: Vec<Pos2> = sel.outline().into_iter().map(|p| view::to_screen(dest, crop, p)).collect();
+        outline.push(outline[0]);
+        // Marching-ants style: white dashes over a dark line, visible on any image.
+        let painter = ui.painter().with_clip_rect(dest.expand(1.0));
+        painter.add(egui::Shape::line(outline.clone(), egui::Stroke::new(1.0, Color32::from_black_alpha(200))));
+        painter.extend(egui::Shape::dashed_line(&outline, egui::Stroke::new(1.0, Color32::WHITE), 5.0, 4.0));
     }
 
     fn paint_crop(&self, ui: &egui::Ui, dest: Rect, crop: Rect, viewport: Rect) {
-            let painter = ui.painter().with_clip_rect(dest);
-            let shade = Color32::from_black_alpha(140);
-            match self.crop_rect.map(|r| Rect::from_two_pos(view::to_screen(dest, crop, r.min), view::to_screen(dest, crop, r.max))) {
-                Some(r) => {
-                    // Darken everything outside the crop.
-                    for side in [
-                        Rect::from_x_y_ranges(dest.x_range(), dest.top()..=r.top()),
-                        Rect::from_x_y_ranges(dest.x_range(), r.bottom()..=dest.bottom()),
-                        Rect::from_x_y_ranges(dest.left()..=r.left(), r.y_range()),
-                        Rect::from_x_y_ranges(r.right()..=dest.right(), r.y_range()),
-                    ] {
-                        painter.rect_filled(side, 0.0, shade);
-                    }
-                    painter.rect_stroke(r, 0.0, egui::Stroke::new(1.0, Color32::WHITE), egui::StrokeKind::Middle);
+        let painter = ui.painter().with_clip_rect(dest);
+        let shade = Color32::from_black_alpha(140);
+        match self.crop_rect.map(|r| Rect::from_two_pos(view::to_screen(dest, crop, r.min), view::to_screen(dest, crop, r.max))) {
+            Some(r) => {
+                // Darken everything outside the crop.
+                for side in [
+                    Rect::from_x_y_ranges(dest.x_range(), dest.top()..=r.top()),
+                    Rect::from_x_y_ranges(dest.x_range(), r.bottom()..=dest.bottom()),
+                    Rect::from_x_y_ranges(dest.left()..=r.left(), r.y_range()),
+                    Rect::from_x_y_ranges(r.right()..=dest.right(), r.y_range()),
+                ] {
+                    painter.rect_filled(side, 0.0, shade);
                 }
-                None => {
-                    painter.rect_filled(dest, 0.0, shade);
-                }
+                painter.rect_stroke(r, 0.0, egui::Stroke::new(1.0, Color32::WHITE), egui::StrokeKind::Middle);
             }
-            bubble(ui.painter(), Pos2::new(viewport.center().x, viewport.top() + 24.0), tr("Drag to select · Enter to crop · Esc to cancel"));
+            None => {
+                painter.rect_filled(dest, 0.0, shade);
+            }
+        }
+        bubble(ui.painter(), Pos2::new(viewport.center().x, viewport.top() + 24.0), tr("Drag to select · Enter to crop · Esc to cancel"));
     }
 
     fn paint_measure(&self, ui: &egui::Ui, doc: &Doc, dest: Rect, crop: Rect, viewport: Rect) {
-            let hint = match self.measure {
-                Some(m) => {
-                    let [a, b] = m.map(|p| view::to_screen(dest, crop, p));
-                    let painter = ui.painter().with_clip_rect(viewport);
-                    // A dark halo keeps the guide line visible on light and dark images.
-                    painter.line_segment([a, b], egui::Stroke::new(3.0, Color32::from_black_alpha(160)));
-                    painter.line_segment([a, b], egui::Stroke::new(1.5, Color32::YELLOW));
-                    for p in [a, b] {
-                        painter.circle(p, 5.0, Color32::from_black_alpha(120), egui::Stroke::new(1.5, Color32::YELLOW));
-                    }
-                    let [dx, dy, d] = doc.measure(m[0], m[1]);
-                    trf("Distance: {d} px · ΔX: {dx} px · ΔY: {dy} px", &[("d", &format!("{d:.0}")), ("dx", &format!("{dx:.0}")), ("dy", &format!("{dy:.0}"))])
+        let hint = match self.measure {
+            Some(m) => {
+                let [a, b] = m.map(|p| view::to_screen(dest, crop, p));
+                let painter = ui.painter().with_clip_rect(viewport);
+                // A dark halo keeps the guide line visible on light and dark images.
+                painter.line_segment([a, b], egui::Stroke::new(3.0, Color32::from_black_alpha(160)));
+                painter.line_segment([a, b], egui::Stroke::new(1.5, Color32::YELLOW));
+                for p in [a, b] {
+                    painter.circle(p, 5.0, Color32::from_black_alpha(120), egui::Stroke::new(1.5, Color32::YELLOW));
                 }
-                None => tr("Drag to measure in image pixels · Esc to stop").into(),
-            };
-            bubble(ui.painter(), Pos2::new(viewport.center().x, viewport.top() + 24.0), &hint);
+                let [dx, dy, d] = doc.measure(m[0], m[1]);
+                trf("Distance: {d} px · ΔX: {dx} px · ΔY: {dy} px", &[("d", &format!("{d:.0}")), ("dx", &format!("{dx:.0}")), ("dy", &format!("{dy:.0}"))])
+            }
+            None => tr("Drag to measure in image pixels · Esc to stop").into(),
+        };
+        bubble(ui.painter(), Pos2::new(viewport.center().x, viewport.top() + 24.0), &hint);
     }
 
     fn report_timings(&mut self, ctx: &egui::Context, full: bool, frame_wh: [u32; 2]) {
-            if !full && self.preview_reported != Some(frame_wh) {
-                eprintln!("preview     {:.1} ms  ({}×{})", ms(self.t0), frame_wh[0], frame_wh[1]);
-                self.preview_reported = Some(frame_wh);
-            }
-            if full && !self.full_reported {
-                eprintln!("full image  {:.1} ms", ms(self.t0));
-                self.full_reported = true;
-                self.close_next = self.bench;
-                // The image reaches the screen after this frame; closing waits one more.
-                ctx.request_repaint();
-            }
-            if let Some(t) = self.nav_start.filter(|_| full) {
-                eprintln!("navigation  {:.1} ms", ms(t));
-                self.nav_start = None;
-            }
+        if !full && self.preview_reported != Some(frame_wh) {
+            eprintln!("preview     {:.1} ms  ({}×{})", ms(self.t0), frame_wh[0], frame_wh[1]);
+            self.preview_reported = Some(frame_wh);
+        }
+        if full && !self.full_reported {
+            eprintln!("full image  {:.1} ms", ms(self.t0));
+            self.full_reported = true;
+            self.close_next = self.bench;
+            // The image reaches the screen after this frame; closing waits one more.
+            ctx.request_repaint();
+        }
+        if let Some(t) = self.nav_start.filter(|_| full) {
+            eprintln!("navigation  {:.1} ms", ms(t));
+            self.nav_start = None;
+        }
     }
 
     /// The short message at the bottom, for as long as it lasts.

@@ -4,7 +4,6 @@ use crate::i18n::{tr, trf};
 use crate::load::{self, Msg};
 use crate::settings;
 use eframe::egui::{self, Rect};
-use std::time::Instant;
 
 /// A download waiting for the user to accept its licence.
 #[derive(Clone, Copy)]
@@ -172,11 +171,11 @@ impl App {
                     }
                     Download::Gpu => {
                         self.downloading.insert("gpu".into());
-                        self.status = Some((trf("Downloading GPU support ({mb} MB)…", &[("mb", &crate::ai::GPU_DOWNLOAD_MB)]), Instant::now()));
+                        self.set_status(trf("Downloading GPU support ({mb} MB)…", &[("mb", &crate::ai::GPU_DOWNLOAD_MB)]));
                         std::thread::spawn(move || notify.send(Msg::Downloaded("gpu".into(), crate::ai::download_gpu())));
                     }
                     Download::Runtime => {
-                        self.status = Some((tr("Downloading the AI runtime…").into(), Instant::now()));
+                        self.set_status(tr("Downloading the AI runtime…"));
                         std::thread::spawn(move || {
                             notify.send(Msg::Status(match crate::ai::download_runtime() {
                                 Ok(()) => tr("Installed the AI runtime").into(),

@@ -117,6 +117,10 @@ impl Doc {
         Vec2::new(self.size[0] as f32, self.size[1] as f32)
     }
 
+    pub fn bounds(&self) -> Rect {
+        Rect::from_min_size(Pos2::ZERO, self.size_vec())
+    }
+
     /// The crop and the transform: what decides the view's layout.
     pub fn geometry(&self) -> (Rect, Transform, [u32; 2]) {
         (self.crop, self.transform, self.size)
@@ -191,7 +195,7 @@ impl Doc {
 
     /// Crops to `r` (output px, rounded to whole pixels), keeping the pixel scale.
     pub fn crop_to(&mut self, r: Rect) {
-        let r = Rect::from_min_max(r.min.round(), r.max.round()).intersect(Rect::from_min_size(Pos2::ZERO, self.size_vec()));
+        let r = Rect::from_min_max(r.min.round(), r.max.round()).intersect(self.bounds());
         if r.width() < 1.0 || r.height() < 1.0 {
             return;
         }
