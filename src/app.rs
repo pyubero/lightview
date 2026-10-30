@@ -57,6 +57,7 @@ enum Action {
     Cut,
     Paste,
     DeleteSelection,
+    DeleteImage,
     /// Remove Background, and crop to the subject when true.
     Cutout(bool),
     /// Denoise or Enhance Image: shows a before/after preview first.
@@ -226,6 +227,9 @@ pub struct App {
     doc: Option<Doc>,
     undo: Vec<Doc>,
     redo: Vec<Doc>,
+    /// Images moved to the Trash this session, newest last; Ctrl+Z brings them back.
+    deleted: Vec<PathBuf>,
+    delete_prompt: bool,
     /// The edits last saved to a copy, and the ones being saved now.
     saved: Option<Doc>,
     saving: Option<Doc>,
@@ -302,7 +306,7 @@ impl App {
             files: start.into_iter().collect(), index: 0,
             cache: HashMap::new(), preview: None, error: None, view: View::Fit,
             texture: None, tex_key: None, resized: None, baked: None, generation: 0, anim_frame: 0, anim_due: None, anim_paused: false,
-            doc: None, undo: Vec::new(), redo: Vec::new(), saved: None, saving: None, tool: Tool::Pan, drag_start: None, crop_rect: None, measure: None, measure_drag: 1,
+            doc: None, undo: Vec::new(), redo: Vec::new(), deleted: Vec::new(), delete_prompt: false, saved: None, saving: None, tool: Tool::Pan, drag_start: None, crop_rect: None, measure: None, measure_drag: 1,
             show_toolbar, style: None, selected: None, grab: Grab::None, editing_text: None, focus_text: false, change_base: None, last_restyle: None, selection: None, element_textures: HashMap::new(),
             resize_dialog: None, adjusting: None, pending: None, show_ai_models: false, license_prompt: None, restoring: None, compare: None, enhance_notice: None, visible: None, downloading: HashSet::new(),
             title: String::new(),
@@ -554,6 +558,13 @@ impl App {
     }
 
     fn undo_redo(&mut self, undo: bool) {
+        if undo && self.undo.is_empty() && let Some(path) = self.deleted.pop() {
+            match load::restore_trashed(&path) {
+                Ok(()) => self.open(path),
+                Err(e) => self.status = Some((trf("Couldn't restore the image: {e}", &[("e", &e)]), Instant::now())),
+            }
+            return;
+        }
         let Some(current) = self.doc() else { return };
         let (from, to) = if undo { (&mut self.undo, &mut self.redo) } else { (&mut self.redo, &mut self.undo) };
         let Some(doc) = from.pop() else { return };
@@ -695,9 +706,13 @@ impl App {
                 item(ui, tr("Close"), Action::Close, true, actions);
                 ui.separator();
                 item(ui, tr("Save As…"), Action::SaveAs, can_save, actions);
+                ui.separator();
+                if ui.add_enabled(self.current().is_some(), egui::Button::new(tr("Delete Image…")).shortcut_text("Delete")).clicked() {
+                    actions.push(Action::DeleteImage);
+                }
             });
             ui.menu_button(tr("Edit"), |ui| {
-                item(ui, tr("Undo"), Action::Undo, !self.undo.is_empty(), actions);
+                item(ui, tr("Undo"), Action::Undo, !(self.undo.is_empty() && self.deleted.is_empty()), actions);
                 item(ui, tr("Redo"), Action::Redo, !self.redo.is_empty(), actions);
                 ui.separator();
                 let selected = self.selection.is_some();
@@ -890,7 +905,7 @@ impl App {
             _ => (defaults, None),
         };
         let pick = self.pick();
-        let out = egui::Panel::top("markup").show(ui, |ui| markup::toolbar_ui(ui, pick, &mut style, styled, !self.undo.is_empty(), !self.redo.is_empty())).inner;
+        let out = egui::Panel::top("markup").show(ui, |ui| markup::toolbar_ui(ui, pick, &mut style, styled, !(self.undo.is_empty() && self.deleted.is_empty()), !self.redo.is_empty())).inner;
         if out.style_changed {
             match self.selected {
                 Some(i) => self.restyle(i, style),
@@ -1091,6 +1106,22 @@ impl App {
         let (Some(sel), Some(doc)) = (self.selection.take(), self.doc()) else { return };
         let (bounds, color) = (Rect::from_min_size(Pos2::ZERO, doc.size_vec()), self.erase_color());
         self.edit(|d| d.elements.push(Element::erase(&sel, false, bounds, color)));
+    }
+
+    /// Moves the current image to the Trash. If that fails the file stays where it is.
+    fn delete_image(&mut self) {
+        let Some(path) = self.current().cloned() else { return };
+        if let Err(e) = trash::delete(&path) {
+            self.status = Some((trf("Couldn't delete the image: {e}", &[("e", &e)]), Instant::now()));
+            return;
+        }
+        self.files.remove(self.index);
+        self.index = self.index.min(self.files.len().saturating_sub(1));
+        self.cache.remove(&path);
+        self.recent.retain(|p| *p != path);
+        self.deleted.push(path);
+        self.reset_shown();
+        self.request_decodes();
     }
 
     /// Crops to the selection; for an ellipse or lasso, the outside is erased too.
@@ -1400,6 +1431,31 @@ impl App {
         }
     }
 
+    /// Always asks before moving the current image to the Trash.
+    fn delete_dialog(&mut self, ctx: &egui::Context) {
+        if !self.delete_prompt {
+            return;
+        }
+        let name = self.current().and_then(|p| p.file_name()).unwrap_or_default().to_string_lossy().into_owned();
+        let dirty = self.dirty();
+        let modal = egui::Modal::new(egui::Id::unique("delete")).show(ctx, |ui| {
+            ui.heading(tr("Delete image?"));
+            ui.label(trf("{name} will be moved to the Trash.", &[("name", &name)]));
+            if dirty {
+                ui.label(trf("Your edits to {name} haven't been saved.", &[("name", &name)]));
+            }
+            ui.add_space(6.0);
+            confirm_buttons(ui)
+        });
+        let (delete, cancel) = modal.inner;
+        if delete {
+            self.delete_prompt = false;
+            self.delete_image();
+        } else if cancel || modal.should_close() {
+            self.delete_prompt = false;
+        }
+    }
+
     fn make_title(&self) -> String {
         let Some(path) = self.current() else { return "lightview".into() };
         let name = path.file_name().unwrap_or_default().to_string_lossy();
@@ -1408,6 +1464,17 @@ impl App {
             None => name.into_owned(),
         }
     }
+}
+
+/// Continue and Cancel, with Continue focused so that Enter accepts.
+fn confirm_buttons(ui: &mut egui::Ui) -> (bool, bool) {
+    ui.horizontal(|ui| {
+        let (accept, cancel) = (ui.button(tr("Continue")), ui.button(tr("Cancel")));
+        if !cancel.has_focus() {
+            accept.request_focus();
+        }
+        (accept.clicked(), cancel.clicked())
+    }).inner
 }
 
 impl eframe::App for App {
@@ -1529,6 +1596,7 @@ impl eframe::App for App {
                     Err(e) => self.status = Some((trf("Nothing to paste: {e}", &[("e", &e)]), Instant::now())),
                 },
                 Action::DeleteSelection => self.delete_selection(),
+                Action::DeleteImage => self.delete_prompt = true,
                 Action::Cutout(crop) => self.cutout(*crop),
                 Action::Restore(task) if *task == crate::ai::Task::Enhance && let Some(file) = self.unseen_notice() => self.enhance_notice = Some(file),
                 Action::Restore(task) => self.preview_restore(*task),
@@ -1551,7 +1619,8 @@ impl eframe::App for App {
             self.paste(img.size[0] as u32, img.size[1] as u32, pixels);
         }
         let enter = !typing && ctx.input(|i| i.key_pressed(Key::Enter));
-        let delete = !typing && ctx.input(|i| i.key_pressed(Key::Delete) || i.key_pressed(Key::Backspace));
+        let delete_key = !typing && ctx.input(|i| i.key_pressed(Key::Delete));
+        let delete = delete_key || !typing && ctx.input(|i| i.key_pressed(Key::Backspace));
         if esc && !typing && let Some(before) = self.change_base.take() {
             // Cancel the drawing in progress.
             (self.doc, self.grab) = (Some(before), Grab::None);
@@ -1569,8 +1638,10 @@ impl eframe::App for App {
         }
         if delete && self.tool == Tool::Select && let Some(i) = self.selected.take() {
             self.edit(|d| drop(d.elements.remove(i)));
-        } else if delete {
+        } else if delete && self.selection.is_some() {
             self.delete_selection();
+        } else if delete_key && self.current().is_some() {
+            self.delete_prompt = true;
         }
 
         self.inspector(ui);
@@ -1892,6 +1963,7 @@ impl eframe::App for App {
         self.compare_bar(&ctx, viewport);
         self.adjust_panel(&ctx);
         self.discard_dialog(&ctx);
+        self.delete_dialog(&ctx);
 
         let title = self.make_title();
         if title != self.title {
@@ -1978,6 +2050,27 @@ mod tests {
         }
         assert!(hovered(false));
         assert!(!hovered(true));
+    }
+
+    #[test]
+    fn enter_accepts_the_focused_button() {
+        fn press(tab_first: bool) -> (bool, bool) {
+            let ctx = egui::Context::default();
+            ctx.set_fonts(markup::font_definitions());
+            let key = |key| egui::Event::Key { key, physical_key: None, pressed: true, repeat: false, modifiers: Modifiers::NONE };
+            let mut result = (false, false);
+            let keys: &[Option<Key>] = if tab_first { &[None, None, Some(Key::Tab), None, Some(Key::Enter)] } else { &[None, None, Some(Key::Enter)] };
+            for k in keys {
+                let mut input = egui::RawInput::default();
+                input.screen_rect = Some(Rect::from_min_size(Pos2::ZERO, Vec2::splat(400.0)));
+                input.events.extend(k.map(key));
+                let mut output = ctx.run_ui(input, |ui| result = confirm_buttons(ui));
+                output.textures_delta.clear();
+            }
+            result
+        }
+        assert_eq!(press(false), (true, false));
+        assert_eq!(press(true), (false, true));
     }
 
     #[test]

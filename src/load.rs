@@ -306,6 +306,14 @@ pub fn set_exif_dpi(tiff: &mut [u8], dpi: u16) {
     }
 }
 
+/// Puts a file back from the Trash, to the place it was deleted from.
+pub fn restore_trashed(path: &Path) -> Result<(), String> {
+    let items = trash::os_limited::list().map_err(|e| e.to_string())?;
+    let newest = items.into_iter().filter(|i| i.original_path() == path).max_by_key(|i| i.time_deleted);
+    let item = newest.ok_or_else(|| crate::i18n::tr("It's no longer in the Trash").to_string())?;
+    trash::os_limited::restore_all([item]).map_err(|e| e.to_string())
+}
+
 /// The supported images in `path`'s folder: by name in file-manager order, or oldest first.
 fn list_folder(path: &Path, sort: SortOrder) -> Vec<PathBuf> {
     let dir = path.parent().unwrap_or(Path::new("."));
@@ -368,6 +376,21 @@ fn natural_cmp(a: &str, b: &str) -> Ordering {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // Uses the real Trash: `cargo test trash_round_trip -- --ignored`.
+    #[test]
+    #[ignore]
+    fn trash_round_trip() {
+        let path = std::env::temp_dir().join(format!("lightview-trash-{}.txt", std::process::id()));
+        std::fs::write(&path, "image").unwrap();
+        let path = std::fs::canonicalize(&path).unwrap();
+        trash::delete(&path).unwrap();
+        assert!(!path.exists());
+        restore_trashed(&path).unwrap();
+        assert_eq!(std::fs::read_to_string(&path).unwrap(), "image");
+        std::fs::remove_file(&path).unwrap();
+        assert!(restore_trashed(&path).is_err());
+    }
 
     #[test]
     fn natural_order() {

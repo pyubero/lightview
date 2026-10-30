@@ -39,10 +39,12 @@ Copied {w} × {h} px	Kopiert: {w} × {h} px
 Copy	Kopieren
 Copyright	Urheberrecht
 Couldn't add the model: {e}	Das Modell konnte nicht hinzugefügt werden: {e}
+Couldn't delete the image: {e}	Bild konnte nicht gelöscht werden: {e}
 Couldn't download {file}: {e}	{file} konnte nicht heruntergeladen werden: {e}
 Couldn't install the AI runtime: {e}	Die KI-Laufzeit konnte nicht installiert werden: {e}
 Couldn't process the image: {e}	Das Bild konnte nicht verarbeitet werden: {e}
 Couldn't read {file}: {e}	{file} konnte nicht gelesen werden: {e}
+Couldn't restore the image: {e}	Bild konnte nicht wiederhergestellt werden: {e}
 Couldn't save {name}: {e}	{name} konnte nicht gespeichert werden: {e}
 Crop	Zuschneiden
 Cut	Ausschneiden
@@ -51,6 +53,8 @@ DarkIR — dark and night photos, same size	DarkIR — dunkle Fotos und Nachtauf
 Date modified	Änderungsdatum
 Date taken	Aufnahmedatum
 Default window size	Standard-Fenstergröße
+Delete image?	Bild löschen?
+Delete Image…	Bild löschen…
 Delete Selection	Auswahl löschen
 Denoise	Rauschen entfernen
 Denoise and Enhance run about 10× faster on a GTX 1050	Rauschen entfernen und Bild verbessern laufen auf einer GTX 1050 etwa 10× schneller
@@ -112,6 +116,7 @@ Input size	Eingabegröße
 Installed the AI runtime	KI-Laufzeit installiert
 Interpolation	Interpolation
 It also makes the image {k}× bigger ({pixels}× the pixels), which takes a while for a big photo.	Außerdem wird das Bild {k}× größer ({pixels}× so viele Pixel), was bei einem großen Foto eine Weile dauert.
+It's no longer in the Trash	Es ist nicht mehr im Papierkorb
 Keep aspect ratio	Seitenverhältnis beibehalten
 Language	Sprache
 Lasso	Lasso
@@ -248,6 +253,7 @@ the written file didn't check out: {label} wasn't saved	die geschriebene Datei h
 this file's EXIF couldn't be processed	die EXIF-Daten dieser Datei konnten nicht verarbeitet werden
 {format}, {count} frames	{format}, {count} Einzelbilder
 {name} is already installed	{name} ist bereits installiert
+{name} will be moved to the Trash.	{name} wird in den Papierkorb verschoben.
 {task} done	{task}: fertig
 {task} failed: {e}	{task}: fehlgeschlagen: {e}
 {task} on the GPU	{task} auf der GPU

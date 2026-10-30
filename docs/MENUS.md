@@ -12,11 +12,13 @@ when" says otherwise. `▸` marks a submenu.
 | Close | Ctrl+W | always | Closes the window (asks first if there are unsaved edits). |
 | — | | | |
 | Save As… | Ctrl+Shift+S | a still image is loaded | Saves a copy with all edits; the format follows the extension (JPEG at quality 90 with EXIF kept, PNG, lossless WebP, BMP, TIFF, GIF). |
+| — | | | |
+| Delete Image… | Delete | an image is open | Asks first (Enter accepts), then moves the file to the Trash. Ctrl+Z restores it. |
 
 ## Edit
 | Item | Shortcut | Enabled when | Does |
 |---|---|---|---|
-| Undo | Ctrl+Z | there's something to undo | |
+| Undo | Ctrl+Z | there's something to undo | Edits on the current image first, then the last image deleted this session. |
 | Redo | Ctrl+Shift+Z | there's something to redo | |
 | — | | | |
 | Cut | Ctrl+X | there's a selection | Copy, then Delete Selection. |
@@ -100,6 +102,6 @@ thickness, fill, font size, zoom) · Undo · Redo · Done.
 |---|---|
 | Enter | Applies the crop (Crop tool). |
 | Esc | Cancels the drawing in progress, else leaves the current tool, else leaves full screen. |
-| Delete / Backspace | Deletes the selected element (Select tool), else the selection. |
+| Delete / Backspace | Deletes the selected element (Select tool), else the selection; with neither, Delete (not Backspace) offers to delete the image. |
 | Mouse wheel / pinch | Zoom at the pointer. |
 | Drag | Pans (or uses the current tool). |

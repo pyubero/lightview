@@ -77,6 +77,7 @@ Format: `YYYY-MM-DD — decision — reason`
 - 2026-10-30 — UI fonts are Roboto + Droid Sans Mono (Apache-2.0) + emoji-icon-font (MIT) from `fonts/`, with eframe's `default_fonts` off — egui's Ubuntu and OFL fonts aren't clearly GPL-compatible; Roboto has no `→`, so UI labels avoid it.
 - 2026-10-30 — distribution (user's choices): a .deb built with plain `dpkg-deb` by GitHub Actions, no custom wizard (downloaded binaries aren't executable, so a wizard would fail at step one); Debian family only; default viewer asked at first launch and in Settings, because a package runs as root and defaults are per user — simplest flow for a Windows newcomer.
 - 2026-10-29 — menus File · Edit · View · Image · Tools, each action once (no Export submenu, Crop = crop to selection when there is one, Settings in Edit with Ctrl+,, no Draw menu) — the menus built from the draft repeated features.
+- 2026-10-30 — deleting an image always asks first and moves it to the system Trash with the `trash` crate (no permanent delete); Ctrl+Z undoes edits first, then restores the last deleted image, for that session; Delete still means element/selection first — recoverable, works on other drives, and the crate covers the Windows port.
 - 2026-10-30 — app icon = aperture in kingfisher colours (user's choice): one SVG in hicolor/scalable via `Icon=lightview`, plus an embedded 256 px PNG for X11 — on Wayland the panel finds it through the app id and `.desktop` file, and winit ignores window icons.
 
 ## Self-Update Rule
