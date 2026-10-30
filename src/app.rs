@@ -102,9 +102,8 @@ pub struct App {
     /// Images moved to the Trash this session, newest last; Ctrl+Z brings them back.
     deleted: Vec<PathBuf>,
     delete_prompt: bool,
-    /// The edits last saved to a copy, and the ones being saved now.
+    /// The edits last saved to a copy.
     saved: Option<Doc>,
-    saving: Option<Doc>,
     tool: Tool,
     /// Crop tool: where the drag started and the rect so far, in image px.
     drag_start: Option<Pos2>,
@@ -136,6 +135,8 @@ pub struct App {
     /// The download whose licences are being shown, and which one (they come one at a time).
     license_prompt: Option<(Download, usize)>,
     restoring: Option<Restoring>,
+    /// How many Denoise / Enhance runs were started: the last run's id.
+    restore_runs: u64,
     compare: Option<Compare>,
     /// Enhance Image waiting for the user to read its model's notice: the model file.
     enhance_notice: Option<String>,
@@ -178,9 +179,9 @@ impl App {
             files: start.into_iter().collect(), index: 0,
             cache: HashMap::new(), preview: None, error: None, view: View::Fit,
             texture: None, tex_key: None, resized: None, baked: None, generation: 0, anim_frame: 0, anim_due: None, anim_paused: false,
-            doc: None, undo: Vec::new(), redo: Vec::new(), deleted: Vec::new(), delete_prompt: false, saved: None, saving: None, tool: Tool::Pan, drag_start: None, crop_rect: None, measure: None, measure_drag: 1,
+            doc: None, undo: Vec::new(), redo: Vec::new(), deleted: Vec::new(), delete_prompt: false, saved: None, tool: Tool::Pan, drag_start: None, crop_rect: None, measure: None, measure_drag: 1,
             show_toolbar, style: None, selected: None, grab: Grab::None, editing_text: None, focus_text: false, change_base: None, last_restyle: None, selection: None, element_textures: HashMap::new(),
-            resize_dialog: None, adjusting: None, pending: None, show_ai_models: false, license_prompt: None, restoring: None, compare: None, enhance_notice: None, visible: None, downloading: HashSet::new(),
+            resize_dialog: None, adjusting: None, pending: None, show_ai_models: false, license_prompt: None, restoring: None, restore_runs: 0, compare: None, enhance_notice: None, visible: None, downloading: HashSet::new(),
             title: String::new(),
             window_reported: false, preview_reported: None, full_reported: false, nav_start: None, close_next: false, status: None,
         }
@@ -213,13 +214,13 @@ impl App {
     fn handle(&mut self, msg: Msg) {
         match msg {
             Msg::Status(text) => self.set_status(text),
-            Msg::Progress(p) => {
-                if let Some(r) = &mut self.restoring {
+            Msg::Progress(id, p) => {
+                if let Some(r) = self.restoring.as_mut().filter(|r| r.id == id) {
                     r.progress = p;
                 }
             }
-            Msg::Restored(path, region, whole, result) => {
-                let Some(run) = self.restoring.take() else { return };
+            Msg::Restored(id, path, region, whole, result) => {
+                let Some(run) = self.restoring.take_if(|r| r.id == id) else { return };
                 match result {
                     Ok(_) if self.current() != Some(&path) => {}
                     Ok((img, ms_per_mp)) if !whole => {
@@ -311,10 +312,11 @@ impl App {
                     self.error = Some(e);
                 }
             }
-            Msg::Saved(path, result) => {
-                let saving = self.saving.take();
-                if result.is_ok() && saving.is_some() {
-                    self.saved = saving;
+            Msg::Saved(path, result, written) => {
+                if let (Ok(()), Some((source, doc))) = (&result, written)
+                    && self.current() == Some(&source)
+                {
+                    self.saved = Some(doc);
                 }
                 let name = path.file_name().unwrap_or_default().to_string_lossy().into_owned();
                 self.set_status(match &result {
@@ -453,7 +455,7 @@ impl App {
         self.anim_frame = 0;
         self.anim_due = None;
         self.anim_paused = false;
-        (self.doc, self.saved, self.saving) = (None, None, None);
+        (self.doc, self.saved) = (None, None);
         self.undo.clear();
         self.redo.clear();
         self.tool = Tool::Pan;
@@ -493,12 +495,11 @@ impl App {
             dialog = dialog.set_directory(dir);
         }
         let notify = self.notify.clone();
-        self.saving = Some(doc.clone());
         // The system dialog asks before replacing an existing file.
         std::thread::spawn(move || {
             if let Some(dest) = dialog.save_file() {
                 let result = save::save(&frame, &doc, &source, &dest);
-                notify.send(Msg::Saved(dest, result));
+                notify.send(Msg::Saved(dest, result, Some((source, doc))));
             }
         });
     }
@@ -524,7 +525,7 @@ impl App {
         std::thread::spawn(move || {
             if let Some(dest) = file_dialog.save_file() {
                 let result = exif_edit::write_copy(&source, &dest, &original, &values, remove_gps);
-                notify.send(Msg::Saved(dest, result));
+                notify.send(Msg::Saved(dest, result, None));
             }
         });
     }
@@ -724,6 +725,52 @@ pub fn ms(t: Instant) -> f64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// An app showing a decoded 2×1 image.
+    fn app_with_image() -> (App, PathBuf) {
+        let (tx, rx) = mpsc::channel();
+        let notify = Notify { tx, ctx: Arc::default() };
+        let loader = Loader::new(notify.clone(), 0, [100, 100]);
+        let settings = Settings { default_asked: true, ..Settings::default() };
+        let cc = eframe::CreationContext::_new_kittest(egui::Context::default());
+        let mut app = App::new(&cc, Instant::now(), false, false, rx, loader, notify, settings, None);
+        let path = PathBuf::from("/a.png");
+        let frame = Frame { w: 2, h: 1, pixels: vec![0; 6], alpha: false, delay: std::time::Duration::ZERO };
+        app.cache.insert(path.clone(), Arc::new(Loaded { frames: vec![frame], file_size: 6 }));
+        app.files = vec![path.clone()];
+        (app, path)
+    }
+
+    #[test]
+    fn only_the_edits_written_count_as_saved() {
+        let (mut app, path) = app_with_image();
+        app.edit(Doc::rotate_left);
+        let doc = app.doc.clone().unwrap();
+        let dest = PathBuf::from("/nonexistent/copy.jpg");
+        // An EXIF copy, a failed save, and a Save As of the image shown before navigating.
+        app.handle(Msg::Saved(dest.clone(), Ok(()), None));
+        assert!(app.dirty());
+        app.handle(Msg::Saved(dest.clone(), Err("disk full".into()), Some((path.clone(), doc.clone()))));
+        assert!(app.dirty());
+        app.handle(Msg::Saved(dest.clone(), Ok(()), Some(("/b.png".into(), doc.clone()))));
+        assert!(app.dirty());
+        app.handle(Msg::Saved(dest, Ok(()), Some((path, doc))));
+        assert!(!app.dirty());
+    }
+
+    #[test]
+    fn a_cancelled_restore_leaves_the_next_run_alone() {
+        let (mut app, path) = app_with_image();
+        app.restoring = Some(Restoring { id: 2, task: crate::ai::Task::Denoise, progress: 0.0, started: Instant::now(), cancel: Arc::default(), selection: None });
+        app.handle(Msg::Progress(1, 0.5));
+        app.handle(Msg::Restored(1, path.clone(), Rect::ZERO, false, Err("cancelled".into())));
+        assert_eq!(app.restoring.as_ref().map(|r| r.progress), Some(0.0));
+        assert!(app.status.is_none());
+        app.handle(Msg::Progress(2, 0.5));
+        assert_eq!(app.restoring.as_ref().map(|r| r.progress), Some(0.5));
+        app.handle(Msg::Restored(2, path, Rect::ZERO, false, Err("cancelled".into())));
+        assert!(app.restoring.is_none());
+    }
 
     /// Clipboard between two processes (needs a desktop session):
     /// `cargo test clipboard_copy -- --ignored & sleep 3; cargo test clipboard_paste -- --ignored`

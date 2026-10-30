@@ -10,6 +10,8 @@ use std::time::Instant;
 
 /// A Denoise / Enhance run in progress.
 pub(super) struct Restoring {
+    /// Tells this run's messages from those of a cancelled run still winding down.
+    pub(super) id: u64,
     pub(super) task: crate::ai::Task,
     pub(super) progress: f32,
     pub(super) started: Instant,
@@ -74,19 +76,21 @@ impl App {
             return;
         }
         let cancel = Arc::new(AtomicBool::new(false));
-        self.restoring = Some(Restoring { task, progress: 0.0, started: Instant::now(), cancel: cancel.clone(), selection });
+        self.restore_runs += 1;
+        let id = self.restore_runs;
+        self.restoring = Some(Restoring { id, task, progress: 0.0, started: Instant::now(), cancel: cancel.clone(), selection });
         let notify = self.notify.clone();
         std::thread::spawn(move || {
             let started = Instant::now();
             let result = edit::render(&l.frames[0], &doc).and_then(|img| {
                 let img = img.into_rgba8();
                 let part = image::imageops::crop_imm(&img, region.min.x as u32, region.min.y as u32, region.width() as u32, region.height() as u32).to_image();
-                let progress = |p: f32| notify.send(Msg::Progress(p));
+                let progress = |p: f32| notify.send(Msg::Progress(id, p));
                 let out = crate::ai::restore(&file, &part, &progress, &cancel)?;
                 let mp = (out.width() * out.height()) as f64 / 1e6;
                 Ok((out, started.elapsed().as_secs_f64() * 1000.0 / mp))
             });
-            notify.send(Msg::Restored(path, region, whole, result));
+            notify.send(Msg::Restored(id, path, region, whole, result));
         });
     }
 

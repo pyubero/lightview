@@ -1,3 +1,4 @@
+use crate::edit::Doc;
 use crate::settings::SortOrder;
 use crate::turbo;
 use eframe::egui;
@@ -36,17 +37,18 @@ pub enum Msg {
     Preview(PathBuf, Frame),
     Full(PathBuf, Loaded),
     Error(PathBuf, String),
-    /// A Save As finished (successfully or not) writing this path.
-    Saved(PathBuf, Result<(), String>),
+    /// A save finished (successfully or not) writing this path. Save As also says which image
+    /// and edits it wrote; an EXIF copy wrote no edits.
+    Saved(PathBuf, Result<(), String>, Option<(PathBuf, Doc)>),
     /// Background removal finished for this image: the cut-out, and the subject's bounds
     /// when cropping to it.
     Cutout(PathBuf, Result<(image::RgbaImage, Option<egui::Rect>), String>),
     Status(String),
-    /// Denoise / Enhance: how far the run is (0–1).
-    Progress(f32),
-    /// Denoise / Enhance finished `region` (output px) of this image: the result and how long
-    /// it took per megapixel. `whole` is false for the preview.
-    Restored(PathBuf, egui::Rect, bool, Result<(image::RgbaImage, f64), String>),
+    /// Denoise / Enhance run `id`: how far it is (0–1).
+    Progress(u64, f32),
+    /// Denoise / Enhance run `id` finished `region` (output px) of this image: the result and how
+    /// long it took per megapixel. `whole` is false for the preview.
+    Restored(u64, PathBuf, egui::Rect, bool, Result<(image::RgbaImage, f64), String>),
     /// A model download finished.
     Downloaded(String, Result<(), String>),
     /// A model's input size was read.
