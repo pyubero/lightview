@@ -82,7 +82,7 @@ lightview                # open an empty window
 lightview photo.jpg      # open an image
 ```
 
-[`MENUS.md`](MENUS.md) lists every menu item and shortcut.
+[`MENUS.md`](docs/MENUS.md) lists every menu item and shortcut.
 
 Settings are saved in `~/.local/share/lightview/app.ron`.
 
@@ -152,9 +152,9 @@ lightview --bench photo.jpg     # the same, quitting after the first full image
 
 | Document | Contents |
 |---|---|
-| [`PROJECT_BRIEF.md`](PROJECT_BRIEF.md) | Goals, scope, performance targets and early milestones |
-| [`ROADMAP-v2.md`](ROADMAP-v2.md) | The roadmap for editing and AI features |
-| [`MENUS.md`](MENUS.md) | Every menu item and shortcut |
+| [`PROJECT_BRIEF.md`](docs/PROJECT_BRIEF.md) | Goals, scope, performance targets and early milestones |
+| [`ROADMAP-v2.md`](docs/ROADMAP-v2.md) | The roadmap for editing and AI features |
+| [`MENUS.md`](docs/MENUS.md) | Every menu item and shortcut |
 
 ## Licence
 

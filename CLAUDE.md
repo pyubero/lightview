@@ -4,7 +4,7 @@
 - lightview: a minimal image viewer for Linux, written fully in Rust, meant to be the user's default image app (Windows later).
 - Motivation: an image viewer that opens instantly and feels snappy, with no bloat.
 - Goals: first image on screen in under 100 ms (12 MP JPEG, cold start); instant next/prev; v1 is view only.
-- Approach: egui/eframe (OpenGL) + the `image` crate, decoding on a background thread, neighbouring images decoded ahead; full spec in `PROJECT_BRIEF.md`.
+- Approach: egui/eframe (OpenGL) + the `image` crate, decoding on a background thread, neighbouring images decoded ahead; full spec in `docs/PROJECT_BRIEF.md`.
 
 ## Principles (do not remove or weaken these)
 1. **Think Before Coding** — surface assumptions, ambiguity, and simpler alternatives before writing anything; stop and ask if something's unclear.
@@ -15,7 +15,7 @@
 ## Project Notes
 *(Project-specific facts Claude has learned go here — commands, gotchas, conventions. Keep entries short, one line each.)*
 
-- Scope and targets live in `PROJECT_BRIEF.md`; read it first.
+- Scope and targets live in `docs/PROJECT_BRIEF.md`; read it first.
 - Dev machine: Kubuntu, KDE Plasma on Wayland, i7-8750H with turbo OFF (`intel_pstate/no_turbo=1`), so timings are pessimistic.
 - Build/test: `cargo test`, `cargo build --release`. `--timings` prints window/preview/full/navigation ms; `--bench` does the same and quits after the first full image.
 - Modules: `main.rs` startup, `app.rs` UI/state/input, `load.rs` decode pool + EXIF + folder listing, `view.rs` zoom/pan math, `edit.rs` the edit state (`Doc`: crop → transform → size → colour) and `render` for saving, `inspector.rs` the sidebar (EXIF sections in `exif_edit.rs`), `markup.rs` markup elements: egui painting, tiny-skia/ab_glyph flattening, toolbar.
@@ -65,7 +65,7 @@ Format: `YYYY-MM-DD — decision — reason`
 - 2026-10-29 — M19 (user's choice): optional NVIDIA GPU support (ORT CUDA 12 build + NVIDIA PyPI libs, ~1.5 GB, pinned) because it's ~10× faster on the GTX 1050; CUDA 12 not 13 (13 drops Pascal); the CUDA libs are dlopen'ed first because the CUDA provider has no RUNPATH; CPU fallback with the reason shown.
 - 2026-10-29 — Enhance = BSRGAN 4× (user's choice): third-party fp16 ONNX (FuryTMP) since no trusted conversion exists; SCUNet GAN removed; results 4× bigger for now; upscalers use 256 px tiles (4 GB GPU) and tile outputs are written without blending (memory).
 - 2026-10-29 — DarkIR (user's choices): converted ourselves in a separate repo `lightview-models`, offered under Enhance; models now carry `max_tile` (DarkIR 1024: its FFT block is global per tile) and their own first-use notice.
-- 2026-10-29 — v2 roadmap (`ROADMAP-v2.md`, user's choices): edits as an undoable edit list applied only when saving a copy; AI tools last, behind an optional `ai` cargo feature; no JPEG 2000 (no pure-Rust encoder), TIFF added; selection = rectangle/ellipse/lasso, no smart lasso; rotate/flip now saved; GIF export added; ask before dropping unsaved edits; paste = movable element so Selection follows Draw; arboard/tiny-skia/ab_glyph/ort approved — keep the original safe and the default build small.
+- 2026-10-29 — v2 roadmap (`docs/ROADMAP-v2.md`, user's choices): edits as an undoable edit list applied only when saving a copy; AI tools last, behind an optional `ai` cargo feature; no JPEG 2000 (no pure-Rust encoder), TIFF added; selection = rectangle/ellipse/lasso, no smart lasso; rotate/flip now saved; GIF export added; ask before dropping unsaved edits; paste = movable element so Selection follows Draw; arboard/tiny-skia/ab_glyph/ort approved — keep the original safe and the default build small.
 - 2026-10-30 — `lightview-models` publishes no ONNX files (user's choice): Real-ESRGAN and DarkIR stay out of `CATALOG`; users convert them and copy them into the models folder, and lightview recognises them by file name (`SELF_CONVERTED`) for task, tile size and notice — no release to depend on.
 - 2026-10-30 — a shrunk image is shown from a cached frame resized to its output size (`edit::bake`, Lanczos3 as on save), fed into the normal draw path; enlarging stays on the decoded pixels — the view must match the saved file, and baking big upscales would cost memory.
 - 2026-10-30 — GPL-3.0-or-later (user's choice; all 217 crates are compatible); crate and font notices are generated into the .deb by `third-party-notices.py` at package time so they can't go stale; no .deb signature, since nothing checks one outside an apt repository and the install warning is accepted.
