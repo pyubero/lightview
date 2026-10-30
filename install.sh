@@ -14,6 +14,6 @@ install -Dm644 icon/aperture.svg "$HOME/.local/share/icons/hicolor/scalable/apps
 mkdir -p "$HOME/.local/share/applications"
 sed "s|^Exec=lightview|Exec=$HOME/.local/bin/lightview|" lightview.desktop > "$HOME/.local/share/applications/lightview.desktop"
 update-desktop-database "$HOME/.local/share/applications" 2>/dev/null || true
-xdg-mime default lightview.desktop image/jpeg image/png image/gif image/webp image/bmp
+xdg-mime default lightview.desktop image/jpeg image/png image/gif image/webp image/bmp image/tiff
 
 echo "Installed. Default for JPEG is now: $(xdg-mime query default image/jpeg)"

@@ -7,7 +7,7 @@ when" says otherwise. `▸` marks a submenu.
 ## File
 | Item | Shortcut | Enabled when | Does |
 |---|---|---|---|
-| Open… | Ctrl+O | always | System file dialog; lists jpg, jpeg, png, gif, webp, bmp. |
+| Open… | Ctrl+O | always | System file dialog; lists jpg, jpeg, png, gif, webp, bmp, tif, tiff. |
 | Open Recent ▸ | | always | The last 10 files opened explicitly (hover shows the full path); "No recent files" when empty. |
 | Close | Ctrl+W | always | Closes the window (asks first if there are unsaved edits). |
 | — | | | |

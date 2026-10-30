@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.pyubero.lightview</id>
+  <name>lightview</name>
+  <summary>A simple, fast image viewer</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+  <developer id="io.github.pyubero">
+    <name>Pablo Yubero</name>
+  </developer>
+  <description>
+    <p>
+      lightview opens images quickly, moves through a folder without waiting, and keeps your
+      originals safe: edits are only written to a file when you choose to save a copy.
+    </p>
+    <p>
+      It also offers light editing, EXIF editing and optional local AI tools that remove
+      backgrounds, reduce noise and enhance photos.
+    </p>
+  </description>
+  <launchable type="desktop-id">lightview.desktop</launchable>
+  <url type="homepage">https://github.com/pyubero/lightview</url>
+  <content_rating type="oars-1.1"/>
+  <provides>
+    <binary>lightview</binary>
+  </provides>
+  <releases>
+    <release version="0.1.0" date="2026-10-30"/>
+  </releases>
+</component>

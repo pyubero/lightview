@@ -2,7 +2,9 @@
 name = "lightview"
 version = "0.1.0"
 edition = "2024"
+description = "A simple, fast image viewer"
 license = "GPL-3.0-or-later"
+repository = "https://github.com/pyubero/lightview"
 
 [dependencies]
 ab_glyph = "0.2.32"

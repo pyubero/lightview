@@ -11,7 +11,7 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, Condvar, Mutex, OnceLock, mpsc};
 use std::time::Duration;
 
-pub const EXTENSIONS: [&str; 6] = ["jpg", "jpeg", "png", "gif", "webp", "bmp"];
+pub const EXTENSIONS: [&str; 8] = ["jpg", "jpeg", "png", "gif", "webp", "bmp", "tif", "tiff"];
 
 #[derive(Clone)]
 pub struct Frame {
@@ -390,6 +390,18 @@ mod tests {
         assert_eq!(std::fs::read_to_string(&path).unwrap(), "image");
         std::fs::remove_file(&path).unwrap();
         assert!(restore_trashed(&path).is_err());
+    }
+
+    #[test]
+    fn opens_tiff() {
+        let path = std::env::temp_dir().join(format!("lightview-{}.tif", std::process::id()));
+        let img = image::RgbImage::from_fn(3, 2, |x, y| image::Rgb([x as u8 * 40, y as u8 * 40, 200]));
+        img.save(&path).unwrap();
+        let loaded = load(&path, [100, 100], |_| {});
+        std::fs::remove_file(&path).unwrap();
+        let f = &loaded.unwrap().frames[0];
+        assert_eq!((f.w, f.h), (3, 2));
+        assert_eq!(&f.pixels[f.pixels.len() - 3..], [80, 40, 200]);
     }
 
     #[test]

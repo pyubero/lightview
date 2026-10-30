@@ -10,7 +10,7 @@ use std::process::Command;
 pub const KEY: &str = "settings";
 
 const DESKTOP_FILE: &str = "lightview.desktop";
-const MIME_TYPES: [&str; 5] = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/bmp"];
+const MIME_TYPES: [&str; 6] = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/bmp", "image/tiff"];
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Serialize, Deserialize)]
 pub enum Interpolation {

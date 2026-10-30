@@ -31,7 +31,7 @@ when you choose to save.
 | WebP | Yes | Yes (lossless) |
 | GIF | Yes | Yes |
 | BMP | Yes | Yes |
-| TIFF | No | Yes |
+| TIFF | Yes (first page) | Yes |
 
 Animated images can be viewed, but not saved yet.
 
