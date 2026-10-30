@@ -162,6 +162,15 @@ const SHORTCUTS: [(KeyboardShortcut, Action); 19] = [
     (ctrl(Key::Comma), Action::Settings),
 ];
 
+/// What a baked frame holds; it's rebuilt when this changes.
+#[derive(Clone, Copy, PartialEq)]
+struct BakeKey {
+    generation: u64,
+    anim_frame: usize,
+    crop: Rect,
+    size: [u32; 2],
+}
+
 /// What the current texture holds; it's rebuilt when this changes.
 #[derive(Clone, Copy, PartialEq)]
 struct TexKey {
@@ -174,6 +183,7 @@ struct TexKey {
     crop: [f32; 4],
     size: [u32; 2],
     adjust: Adjust,
+    baked: Option<BakeKey>,
 }
 
 pub struct App {
@@ -201,6 +211,8 @@ pub struct App {
     tex_key: Option<TexKey>,
     /// The CPU path's resized pixels before colour adjustments, and what they hold.
     resized: Option<(TexKey, Vec<u8>)>,
+    /// The current frame at its output size, while the edits shrink it.
+    baked: Option<(BakeKey, Arc<Frame>)>,
     /// Bumped whenever what's shown changes source (navigation, preview → full).
     generation: u64,
     anim_frame: usize,
@@ -278,7 +290,7 @@ impl App {
             t0, timings, bench, rx, loader, notify, recent, settings, show_info: false, show_settings: false, inspector: None,
             files: start.into_iter().collect(), index: 0,
             cache: HashMap::new(), preview: None, error: None, view: View::Fit,
-            texture: None, tex_key: None, resized: None, generation: 0, anim_frame: 0, anim_due: None, anim_paused: false,
+            texture: None, tex_key: None, resized: None, baked: None, generation: 0, anim_frame: 0, anim_due: None, anim_paused: false,
             doc: None, undo: Vec::new(), redo: Vec::new(), saved: None, saving: None, tool: Tool::Pan, drag_start: None, crop_rect: None, measure: None, measure_drag: 1,
             show_toolbar, style: None, selected: None, grab: Grab::None, editing_text: None, focus_text: false, change_base: None, last_restyle: None, selection: None, element_textures: HashMap::new(),
             resize_dialog: None, adjusting: None, pending: None, show_ai_models: false, license_prompt: None, restoring: None, compare: None, enhance_notice: None, visible: None, downloading: HashSet::new(),
@@ -1643,6 +1655,15 @@ impl eframe::App for App {
             (Some(l), Some(doc)) => (Some(&l.frames[self.anim_frame]), self.view, doc),
             _ => (self.preview.as_ref(), View::Fit, self.preview.as_ref().map(|f| Doc::new(f.w, f.h)).unwrap_or(Doc::new(1, 1))),
         };
+        // A shrunk image is shown from its resized pixels: the decoded ones still hold the lost detail.
+        let bake_key = frame.filter(|_| doc.shrinks()).map(|_| BakeKey { generation: self.generation, anim_frame: self.anim_frame, crop: doc.crop, size: doc.plain_size() });
+        if let (Some(key), Some(frame)) = (bake_key, frame) && self.baked.as_ref().map(|b| b.0) != Some(key) {
+            self.baked = Some((key, Arc::new(edit::bake(frame, &doc))));
+        }
+        let baked = bake_key.and_then(|_| self.baked.as_ref()).map(|b| b.1.clone());
+        let frame = baked.as_deref().or(frame);
+        let source = baked.is_some().then(|| doc.on_baked());
+        let source = source.as_ref().unwrap_or(&doc);
         if let Some(frame) = frame {
             let frame_size = Vec2::new(frame.w as f32, frame.h as f32);
             let (dest, crop) = view::layout(view, doc.size_vec(), viewport, ppp);
@@ -1651,11 +1672,11 @@ impl eframe::App for App {
             // shortcut: colour adjustments only run on the CPU path; add a shader if GPU users miss smooth zoom while adjusting.
             let gpu = self.settings.gpu_scaling && frame.w.max(frame.h) as usize <= ctx.input(|i| i.max_texture_side) && doc.adjust.is_identity();
             let key = if gpu {
-                TexKey { generation: self.generation, anim_frame: self.anim_frame, gpu, interpolation, transform: Transform::default(), crop: [0.0; 4], size: [frame.w, frame.h], adjust: Adjust::default() }
+                TexKey { generation: self.generation, anim_frame: self.anim_frame, gpu, interpolation, transform: Transform::default(), crop: [0.0; 4], size: [frame.w, frame.h], adjust: Adjust::default(), baked: bake_key }
             } else {
-                let src = doc.to_source(crop);
+                let src = source.to_source(crop);
                 let size = [(dest.width() * ppp).round().max(1.0) as u32, (dest.height() * ppp).round().max(1.0) as u32];
-                TexKey { generation: self.generation, anim_frame: self.anim_frame, gpu, interpolation, transform: doc.transform, crop: [src.min.x, src.min.y, src.width(), src.height()], size, adjust: doc.adjust }
+                TexKey { generation: self.generation, anim_frame: self.anim_frame, gpu, interpolation, transform: doc.transform, crop: [src.min.x, src.min.y, src.width(), src.height()], size, adjust: doc.adjust, baked: bake_key }
             };
             if self.tex_key != Some(key) {
                 let (image, options) = if gpu {
@@ -1702,7 +1723,7 @@ impl eframe::App for App {
                 let shown = [crop.left_top(), crop.right_top(), crop.right_bottom(), crop.left_bottom()];
                 let screen = [dest.left_top(), dest.right_top(), dest.right_bottom(), dest.left_bottom()];
                 for (pos, p) in screen.into_iter().zip(shown) {
-                    let uv = (doc.source_point(p).to_vec2() / frame_size).to_pos2();
+                    let uv = (source.source_point(p).to_vec2() / frame_size).to_pos2();
                     mesh.vertices.push(egui::epaint::Vertex { pos, uv, color: Color32::WHITE });
                 }
                 mesh.add_triangle(0, 1, 2);
@@ -1726,7 +1747,7 @@ impl eframe::App for App {
             }
             if !doc.elements.is_empty() || self.editing_text.is_some() || !self.element_textures.is_empty() {
                 // The magnifier samples the image texture: the whole frame (GPU) or the visible part (CPU).
-                let uv = |p: Pos2| if gpu { (doc.source_point(p).to_vec2() / frame_size).to_pos2() } else { ((p - crop.min) / crop.size()).to_pos2() };
+                let uv = |p: Pos2| if gpu { (source.source_point(p).to_vec2() / frame_size).to_pos2() } else { ((p - crop.min) / crop.size()).to_pos2() };
                 self.paint_markup(ui, &doc, dest, crop, texture, &uv);
             }
             if let Some(sel) = &self.selection {

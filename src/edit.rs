@@ -121,6 +121,22 @@ impl Doc {
         (self.crop, self.transform, self.size)
     }
 
+    /// The output size before the transform.
+    pub fn plain_size(&self) -> [u32; 2] {
+        if self.transform.rot % 2 == 1 { [self.size[1], self.size[0]] } else { self.size }
+    }
+
+    /// Whether the output has fewer pixels than the source on some axis.
+    pub fn shrinks(&self) -> bool {
+        self.scale().min_elem() < 1.0
+    }
+
+    /// This doc on the pixels from `bake`, which already hold the crop and the size.
+    pub fn on_baked(&self) -> Doc {
+        let [w, h] = self.plain_size();
+        Doc { crop: Rect::from_min_size(Pos2::ZERO, Vec2::new(w as f32, h as f32)), ..self.clone() }
+    }
+
     /// Output px per transformed-crop px, on each axis.
     fn scale(&self) -> Vec2 {
         self.size_vec() / self.transform.size(self.crop.size())
@@ -212,6 +228,13 @@ pub fn resize(frame: &Frame, crop: Rect, w: u32, h: u32, alg: ResizeAlg) -> Vec<
     dst.into_vec()
 }
 
+/// `frame` resized as `render` does it, so a shrunk image shows what saving it would write.
+pub fn bake(frame: &Frame, doc: &Doc) -> Frame {
+    let [w, h] = doc.plain_size();
+    let pixels = resize(frame, doc.crop, w, h, ResizeAlg::Convolution(FilterType::Lanczos3));
+    Frame { w, h, pixels, alpha: frame.alpha, delay: frame.delay }
+}
+
 /// One axis of a crop, as the resizer wants it: start and length inside `0..len`. The resizer
 /// adds them up itself and refuses anything past the edge, and float rounding can put a crop that
 /// ends at the edge a hair past it, so the length is trimmed until the sum fits.
@@ -235,7 +258,7 @@ pub fn to_dynamic(alpha: bool, w: u32, h: u32, pixels: Vec<u8>) -> Option<Dynami
 
 /// The full-size edited image, for saving.
 pub fn render(frame: &Frame, doc: &Doc) -> Result<DynamicImage, String> {
-    let [w, h] = if doc.transform.rot % 2 == 1 { [doc.size[1], doc.size[0]] } else { doc.size };
+    let [w, h] = doc.plain_size();
     let img = if doc.crop.size() == Vec2::new(w as f32, h as f32) && doc.crop.min == doc.crop.min.round() {
         // Same scale: copy the pixels exactly instead of resampling.
         let img = to_dynamic(frame.alpha, frame.w, frame.h, frame.pixels.clone()).ok_or("bad frame")?;
@@ -645,6 +668,46 @@ mod tests {
             a.apply(&mut px.clone(), 3);
         }
         eprintln!("adjust 1280×960: {:.1} ms per step", t.elapsed().as_secs_f64() * 100.0);
+    }
+
+    #[test]
+    fn baked_frame_renders_like_the_original() {
+        for (alpha, channels) in [(false, 3), (true, 4)] {
+            let frame = Frame { w: 40, h: 30, pixels: (0..40 * 30 * channels).map(|i| (i * 7 % 251) as u8).collect(), alpha, delay: Duration::ZERO };
+            let edits: [fn(&mut Doc); 3] = [
+                |d| d.resize(5, 5),
+                |d| {
+                    d.rotate_right();
+                    d.flip_horizontal();
+                    d.resize(9, 20);
+                },
+                |d| {
+                    d.resize(20, 15);
+                    d.crop_to(rect(3.0, 2.0, 16.0, 12.0));
+                },
+            ];
+            for edit in edits {
+                let mut doc = Doc::new(40, 30);
+                edit(&mut doc);
+                assert!(doc.shrinks());
+                let baked = bake(&frame, &doc);
+                assert_eq!([baked.w, baked.h], doc.plain_size());
+                let (shown, saved) = (render(&baked, &doc.on_baked()).unwrap(), render(&frame, &doc).unwrap());
+                assert_eq!(shown.as_bytes(), saved.as_bytes());
+            }
+        }
+    }
+
+    #[test]
+    fn only_shrinking_shrinks() {
+        let mut doc = Doc::new(40, 30);
+        assert!(!doc.shrinks());
+        doc.rotate_right();
+        assert!(!doc.shrinks());
+        doc.resize(60, 80);
+        assert!(!doc.shrinks());
+        doc.resize(60, 20);
+        assert!(doc.shrinks());
     }
 
     #[test]
