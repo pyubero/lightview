@@ -1604,7 +1604,7 @@ impl eframe::App for App {
             }
             }
             let (factor, hover) = ctx.input(|i| (i.zoom_delta() * (i.smooth_scroll_delta.y / 200.0).exp(), i.pointer.hover_pos()));
-            if factor != 1.0 {
+            if factor != 1.0 && drag.hovered() {
                 self.view = view::zoom_at(self.view, factor, hover.unwrap_or(viewport.center()), img, viewport, ppp);
             }
             for action in &actions {
@@ -1879,6 +1879,31 @@ pub fn ms(t: Instant) -> f64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // Scroll zoom relies on this: a modal must stop the image being hovered.
+    #[test]
+    fn modal_blocks_image_hover() {
+        fn hovered(modal: bool) -> bool {
+            let ctx = egui::Context::default();
+            let mut hovered = false;
+            for _ in 0..4 {
+                let mut input = egui::RawInput::default();
+                input.screen_rect = Some(Rect::from_min_size(Pos2::ZERO, Vec2::splat(400.0)));
+                input.events.push(egui::Event::PointerMoved(Pos2::new(20.0, 20.0)));
+                let mut output = ctx.run_ui(input, |ui| {
+                    let viewport = ui.available_rect_before_wrap();
+                    hovered = ui.interact(viewport, ui.scope_id().with("image"), Sense::click_and_drag()).hovered();
+                    if modal {
+                        egui::Modal::new(egui::Id::unique("dialog")).show(ui.ctx(), |ui| ui.label("dialog"));
+                    }
+                });
+                output.textures_delta.clear();
+            }
+            hovered
+        }
+        assert!(hovered(false));
+        assert!(!hovered(true));
+    }
 
     #[test]
     fn resize_with_transform() {
