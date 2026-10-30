@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="512" height="512" viewBox="0 0 512 512">
+  <title>aperture.svg</title>
+  <g id="Layer_1" data-name="Layer 1">
+    <path d="M112 16 L400 16 C453.019 16 496 58.981 496 112 L496 400 C496 453.019 453.019 496 400 496 L112 496 C58.981 496 16 453.019 16 400 L16 112 C16 58.981 58.981 16 112 16 Z" fill="#0e2233"/>
+    <g>
+      <path d="M326 256 L398.5 381.6 C353.624 432.491 285.016 455.589 218.5 442.2 L291 316.6 Z" fill="#0b5fa5" stroke="#0e2233" stroke-width="7" stroke-linejoin="round"/>
+      <path d="M291 316.622 L218.477 442.209 C151.967 428.791 97.659 380.923 75.996 316.624 L221.019 316.611 Z" fill="#1583c6" stroke="#0e2233" stroke-width="7" stroke-linejoin="round"/>
+      <path d="M221 316.622 L75.977 316.609 C54.342 252.3 68.643 181.335 113.496 130.424 L186.019 256.011 Z" fill="#2bc0e4" stroke="#0e2233" stroke-width="7" stroke-linejoin="round"/>
+      <path d="M186 256 L113.5 130.4 C158.376 79.509 226.984 56.411 293.5 69.8 L221 195.4 Z" fill="#f4a340" stroke="#0e2233" stroke-width="7" stroke-linejoin="round"/>
+      <path d="M221 195.378 L293.523 69.791 C360.033 83.209 414.341 131.077 436.004 195.376 L290.981 195.389 Z" fill="#e8742a" stroke="#0e2233" stroke-width="7" stroke-linejoin="round"/>
+      <path d="M291 195.378 L436.023 195.391 C457.658 259.7 443.357 330.665 398.504 381.576 L325.981 255.989 Z" fill="#c9541a" stroke="#0e2233" stroke-width="7" stroke-linejoin="round"/>
+    </g>
+  </g>
+</svg>

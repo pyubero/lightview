@@ -11,6 +11,7 @@ stage=target/deb
 rm -rf "$stage"
 install -Dsm755 target/release/lightview "$stage/usr/bin/lightview"
 install -Dm644 lightview.desktop "$stage/usr/share/applications/lightview.desktop"
+install -Dm644 icon/aperture.svg "$stage/usr/share/icons/hicolor/scalable/apps/lightview.svg"
 mkdir -p "$stage/usr/share/doc/lightview" "$stage/DEBIAN"
 {
     printf 'lightview\nCopyright (C) 2026 Pablo Yubero\nLicensed under the GNU General Public License, version 3 or later.\n\n'

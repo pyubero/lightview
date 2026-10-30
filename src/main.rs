@@ -44,7 +44,9 @@ fn main() -> eframe::Result {
     }
 
     let options = eframe::NativeOptions {
-        viewport: egui::ViewportBuilder::default().with_inner_size(settings.window_size),
+        viewport: egui::ViewportBuilder::default()
+            .with_inner_size(settings.window_size)
+            .with_icon(eframe::icon_data::from_png_bytes(include_bytes!("../icon/lightview-256.png")).unwrap()),
         // Always open at the default size (brief); persistence is only for app data.
         persist_window: false,
         ..Default::default()

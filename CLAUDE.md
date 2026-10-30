@@ -35,6 +35,7 @@
 - GPU: installed on the dev machine in `~/.local/share/lightview/gpu` (`cargo test install_gpu -- --ignored`). Check: `LIGHTVIEW_AI=crop.png LIGHTVIEW_AI_MODEL=<file> cargo test --release gpu_restore -- --ignored --nocapture` (GPU vs CPU result and timing); `CUDA_VISIBLE_DEVICES=""` forces the fall-back. `/tmp` is a 7.8 GB tmpfs: keep big downloads out of the scratchpad.
 - Model conversions live in `../lightview-models` (own git repo). Python here is 3.14 only; PyTorch 2.5.1 needs a conda 3.12 env (`conda create -p <scratch>/env python=3.12`). Python's urllib can hang on this machine; use curl for downloads.
 - Metadata checks: exiftool isn't installed (running a downloaded copy is blocked); compare with `python3 -I` + PIL 12.3 and `LIGHTVIEW_INSPECT=photo.jpg cargo test print_inspector -- --ignored --nocapture`.
+- SVG to PNG: `ksvgtopng <w> <h> in.svg out.png` (no inkscape/rsvg here); it's Qt SVG Tiny, so no filters, masks or `clipPath`. `icon/aperture.svg` is the app icon, installed as `lightview.svg`; after changing it, re-render `icon/lightview-256.png` (embedded for X11): `ksvgtopng 256 256 icon/aperture.svg icon/lightview-256.png`.
 - Headless egui tests: `Context::run_ui` with `RawInput`; call `output.textures_delta.clear()` each frame or it panics on drop. Pointer state needs a few frames (`modal_blocks_image_hover` in `app.rs`).
 - egui right panels: content wider than the panel's max moves its left edge right, over the content, so keep sidebar content wrapping; `Grid` cells and `ui.horizontal` don't wrap by default (`Label::wrap()`, `horizontal_wrapped`).
 - tiny-skia strokes width 0 as a hairline, egui draws nothing: guard in `markup::flatten` or the saved file differs from the screen.
@@ -76,6 +77,7 @@ Format: `YYYY-MM-DD — decision — reason`
 - 2026-10-30 — UI fonts are Roboto + Droid Sans Mono (Apache-2.0) + emoji-icon-font (MIT) from `fonts/`, with eframe's `default_fonts` off — egui's Ubuntu and OFL fonts aren't clearly GPL-compatible; Roboto has no `→`, so UI labels avoid it.
 - 2026-10-30 — distribution (user's choices): a .deb built with plain `dpkg-deb` by GitHub Actions, no custom wizard (downloaded binaries aren't executable, so a wizard would fail at step one); Debian family only; default viewer asked at first launch and in Settings, because a package runs as root and defaults are per user — simplest flow for a Windows newcomer.
 - 2026-10-29 — menus File · Edit · View · Image · Tools, each action once (no Export submenu, Crop = crop to selection when there is one, Settings in Edit with Ctrl+,, no Draw menu) — the menus built from the draft repeated features.
+- 2026-10-30 — app icon = aperture in kingfisher colours (user's choice): one SVG in hicolor/scalable via `Icon=lightview`, plus an embedded 256 px PNG for X11 — on Wayland the panel finds it through the app id and `.desktop` file, and winit ignores window icons.
 
 ## Self-Update Rule
 Before finishing your turn:
