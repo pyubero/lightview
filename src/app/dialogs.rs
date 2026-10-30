@@ -1,0 +1,308 @@
+use super::App;
+use crate::edit;
+use crate::i18n::{tr, trf};
+use crate::load::{self, Msg};
+use crate::settings;
+use eframe::egui;
+use std::time::Instant;
+
+/// A download waiting for the user to accept its licence.
+#[derive(Clone, Copy)]
+pub(super) enum Download {
+    /// An index into `ai::CATALOG`.
+    Model(usize),
+    Runtime,
+    /// ONNX Runtime's GPU build and NVIDIA's CUDA libraries.
+    Gpu,
+}
+
+impl App {
+    pub(super) fn settings_dialog(&mut self, ctx: &egui::Context) {
+        if !self.show_settings {
+            return;
+        }
+        let sort = self.settings.sort;
+        let modal = egui::Modal::new(egui::Id::unique("settings")).show(ctx, |ui| {
+            ui.heading(tr("Settings"));
+            settings::ui(ui, &mut self.settings);
+            ui.add_space(8.0);
+            if settings::desktop_installed() {
+                if ui.button(tr("Make lightview the default image viewer")).clicked() {
+                    self.default_result = Some(settings::make_default());
+                }
+                if let Some(result) = &self.default_result {
+                    ui.weak(match result {
+                        Ok(()) => tr("lightview is now the default image viewer"),
+                        Err(e) => e,
+                    });
+                }
+                ui.add_space(8.0);
+            }
+            ui.weak(format!("lightview {}", env!("CARGO_PKG_VERSION")));
+            if ui.button(tr("Check for updates")).clicked() {
+                // shortcut: xdg-open is Linux only; use the platform's opener on Windows.
+                drop(std::process::Command::new("xdg-open").arg("https://github.com/pyubero/lightview/releases").spawn());
+            }
+            ui.add_space(8.0);
+            ui.button(tr("Close")).clicked()
+        });
+        if modal.inner || modal.should_close() {
+            self.show_settings = false;
+        }
+        if self.settings.sort != sort && let Some(path) = self.current() {
+            load::relist(path, self.settings.sort, &self.notify);
+        }
+    }
+
+    /// Asked once, here and not by the package: a package runs as root, defaults are per user.
+    pub(super) fn default_dialog(&mut self, ctx: &egui::Context) {
+        let Some(mut tick) = self.default_prompt else { return };
+        let modal = egui::Modal::new(egui::Id::unique("default-viewer")).show(ctx, |ui| {
+            ui.heading(tr("Welcome to lightview"));
+            ui.add_space(8.0);
+            ui.checkbox(&mut tick, tr("Make lightview my default image viewer"));
+            ui.add_space(8.0);
+            ui.button(tr("OK")).clicked()
+        });
+        self.default_prompt = Some(tick);
+        if modal.inner || modal.should_close() {
+            self.default_prompt = None;
+            self.settings.default_asked = true;
+            if modal.inner && tick {
+                let result = settings::make_default();
+                // Settings is where the outcome is shown.
+                self.show_settings = result.is_err();
+                self.default_result = Some(result);
+            }
+        }
+    }
+
+    /// Auto Levels for the visible part of the current image.
+    pub(super) fn auto_levels(&self) -> Option<[[u8; 2]; 3]> {
+        let frame = &self.cache.get(self.current()?)?.frames[0];
+        Some(edit::auto_levels(frame, self.doc()?.crop))
+    }
+
+    /// The Adjust Color panel: the sliders change the edits live, and Done makes them one undo step.
+    pub(super) fn adjust_panel(&mut self, ctx: &egui::Context) {
+        let (Some(before), Some(mut doc)) = (self.adjusting.clone(), self.doc()) else { return };
+        let levels = self.auto_levels();
+        let mut open = true;
+        let choice = egui::Window::new(tr("Adjust Color")).open(&mut open).resizable(false).collapsible(false).show(ctx, |ui| {
+            edit::adjust_ui(ui, &mut doc.adjust, || levels.unwrap_or([[0, 255]; 3]))
+        }).and_then(|r| r.inner).flatten();
+        let adjust = doc.adjust;
+        self.doc = Some(doc);
+        if choice.is_some() || !open {
+            // Back to before the panel opened, then Done applies the result as one edit.
+            self.adjusting = None;
+            self.doc = Some(before);
+            if choice == Some(true) {
+                self.edit(|d| d.adjust = adjust);
+            }
+        }
+    }
+
+    pub(super) fn ai_models_dialog(&mut self, ctx: &egui::Context) {
+        if !self.show_ai_models {
+            return;
+        }
+        let (installed, runtime) = (crate::ai::installed(), crate::ai::runtime_installed());
+        let modal = egui::Modal::new(egui::Id::unique("ai-models")).show(ctx, |ui| crate::ai::models_ui(ui, &mut self.settings.ai, &installed, &self.downloading, runtime));
+        let close = modal.should_close();
+        let out = modal.inner;
+        if out.close || close {
+            self.show_ai_models = false;
+        }
+        let notify = self.notify.clone();
+        if let Some(i) = out.download {
+            self.license_prompt = Some((Download::Model(i), 0));
+        } else if out.download_gpu {
+            self.license_prompt = Some((Download::Gpu, 0));
+        } else if let Some(file) = out.detect {
+            // Opening a big model takes a moment, so not on the UI thread.
+            std::thread::spawn(move || notify.send(Msg::Detected(file.clone(), crate::ai::input_size(&file))));
+        } else if out.add {
+            std::thread::spawn(move || {
+                if let Some(src) = rfd::FileDialog::new().add_filter(tr("ONNX model"), &["onnx"]).pick_file() {
+                    notify.send(Msg::Status(match crate::ai::add_model(&src) {
+                        Ok(name) => trf("Added {name}", &[("name", &name)]),
+                        Err(e) => trf("Couldn't add the model: {e}", &[("e", &e)]),
+                    }));
+                }
+            });
+        }
+    }
+
+    /// Shows the download's licence; the download starts only once it's accepted.
+    pub(super) fn license_dialog(&mut self, ctx: &egui::Context) {
+        let Some((download, step)) = self.license_prompt else { return };
+        let (title, licenses, note) = match download {
+            Download::Model(i) => (tr(crate::ai::CATALOG[i].label), crate::ai::CATALOG[i].licenses, crate::ai::CATALOG[i].converted_by.map(tr)),
+            Download::Runtime => (tr("AI runtime (ONNX Runtime)"), std::slice::from_ref(&crate::ai::RUNTIME_LICENSE), None),
+            Download::Gpu => (tr("GPU support"), &crate::ai::GPU_LICENSES[..], Some(tr("Downloaded from Microsoft (ONNX Runtime) and NVIDIA (CUDA libraries, via their official PyPI packages)."))),
+        };
+        let modal = egui::Modal::new(egui::Id::unique("license")).show(ctx, |ui| crate::ai::license_ui(ui, title, &licenses[step], step, licenses.len(), note));
+        let close = modal.should_close();
+        match modal.inner {
+            Some(true) if step + 1 < licenses.len() => self.license_prompt = Some((download, step + 1)),
+            Some(true) => {
+                self.license_prompt = None;
+                let notify = self.notify.clone();
+                match download {
+                    Download::Model(i) => {
+                        let known = &crate::ai::CATALOG[i];
+                        self.downloading.insert(known.file.to_string());
+                        std::thread::spawn(move || notify.send(Msg::Downloaded(known.file.to_string(), crate::ai::download(known))));
+                    }
+                    Download::Gpu => {
+                        self.downloading.insert("gpu".into());
+                        self.status = Some((trf("Downloading GPU support ({mb} MB)…", &[("mb", &crate::ai::GPU_DOWNLOAD_MB)]), Instant::now()));
+                        std::thread::spawn(move || notify.send(Msg::Downloaded("gpu".into(), crate::ai::download_gpu())));
+                    }
+                    Download::Runtime => {
+                        self.status = Some((tr("Downloading the AI runtime…").into(), Instant::now()));
+                        std::thread::spawn(move || {
+                            notify.send(Msg::Status(match crate::ai::download_runtime() {
+                                Ok(()) => tr("Installed the AI runtime").into(),
+                                Err(e) => trf("Couldn't install the AI runtime: {e}", &[("e", &e)]),
+                            }));
+                        });
+                    }
+                }
+            }
+            Some(false) => self.license_prompt = None,
+            None if close => self.license_prompt = None,
+            None => {}
+        }
+    }
+
+    pub(super) fn resize_dialog(&mut self, ctx: &egui::Context) {
+        let Some(dialog) = &mut self.resize_dialog else { return };
+        let modal = egui::Modal::new(egui::Id::unique("resize")).show(ctx, |ui| edit::resize_ui(ui, dialog));
+        match modal.inner {
+            Some(true) => {
+                let (size, dpi) = dialog.result();
+                self.resize_dialog = None;
+                self.edit(|d| {
+                    d.resize(size[0], size[1]);
+                    d.dpi = dpi.or(d.dpi);
+                });
+            }
+            Some(false) => self.resize_dialog = None,
+            None if modal.should_close() => self.resize_dialog = None,
+            None => {}
+        }
+    }
+
+    /// Asks before an action that would lose unsaved edits.
+    pub(super) fn discard_dialog(&mut self, ctx: &egui::Context) {
+        if self.pending.is_none() {
+            return;
+        }
+        let name = self.current().and_then(|p| p.file_name()).unwrap_or_default().to_string_lossy().into_owned();
+        let modal = egui::Modal::new(egui::Id::unique("discard")).show(ctx, |ui| {
+            ui.heading(tr("Discard edits?"));
+            ui.label(trf("Your edits to {name} haven't been saved.", &[("name", &name)]));
+            ui.add_space(6.0);
+            ui.horizontal(|ui| (ui.button(tr("Discard")).clicked(), ui.button(tr("Cancel")).clicked())).inner
+        });
+        let (discard, cancel) = modal.inner;
+        if discard && let Some(p) = self.pending.take() {
+            self.doc = None;
+            self.confirm(p);
+        } else if cancel || modal.should_close() {
+            self.pending = None;
+        }
+    }
+
+    /// Always asks before moving the current image to the Trash.
+    pub(super) fn delete_dialog(&mut self, ctx: &egui::Context) {
+        if !self.delete_prompt {
+            return;
+        }
+        let name = self.current().and_then(|p| p.file_name()).unwrap_or_default().to_string_lossy().into_owned();
+        let dirty = self.dirty();
+        let modal = egui::Modal::new(egui::Id::unique("delete")).show(ctx, |ui| {
+            ui.heading(tr("Delete image?"));
+            ui.label(trf("{name} will be moved to the Trash.", &[("name", &name)]));
+            if dirty {
+                ui.label(trf("Your edits to {name} haven't been saved.", &[("name", &name)]));
+            }
+            ui.add_space(6.0);
+            confirm_buttons(ui)
+        });
+        let (delete, cancel) = modal.inner;
+        if delete {
+            self.delete_prompt = false;
+            self.delete_image();
+        } else if cancel || modal.should_close() {
+            self.delete_prompt = false;
+        }
+    }
+}
+
+/// Continue and Cancel, with Continue focused so that Enter accepts.
+fn confirm_buttons(ui: &mut egui::Ui) -> (bool, bool) {
+    ui.horizontal(|ui| {
+        let (accept, cancel) = (ui.button(tr("Continue")), ui.button(tr("Cancel")));
+        if !cancel.has_focus() {
+            accept.request_focus();
+        }
+        (accept.clicked(), cancel.clicked())
+    }).inner
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::markup;
+    use eframe::egui::{Key, Modifiers, Pos2, Rect, Sense, Vec2};
+
+    // Scroll zoom relies on this: a modal must stop the image being hovered.
+    #[test]
+    fn modal_blocks_image_hover() {
+        fn hovered(modal: bool) -> bool {
+            let ctx = egui::Context::default();
+            ctx.set_fonts(markup::font_definitions());
+            let mut hovered = false;
+            for _ in 0..4 {
+                let mut input = egui::RawInput::default();
+                input.screen_rect = Some(Rect::from_min_size(Pos2::ZERO, Vec2::splat(400.0)));
+                input.events.push(egui::Event::PointerMoved(Pos2::new(20.0, 20.0)));
+                let mut output = ctx.run_ui(input, |ui| {
+                    let viewport = ui.available_rect_before_wrap();
+                    hovered = ui.interact(viewport, ui.scope_id().with("image"), Sense::click_and_drag()).hovered();
+                    if modal {
+                        egui::Modal::new(egui::Id::unique("dialog")).show(ui.ctx(), |ui| ui.label("dialog"));
+                    }
+                });
+                output.textures_delta.clear();
+            }
+            hovered
+        }
+        assert!(hovered(false));
+        assert!(!hovered(true));
+    }
+
+    #[test]
+    fn enter_accepts_the_focused_button() {
+        fn press(tab_first: bool) -> (bool, bool) {
+            let ctx = egui::Context::default();
+            ctx.set_fonts(markup::font_definitions());
+            let key = |key| egui::Event::Key { key, physical_key: None, pressed: true, repeat: false, modifiers: Modifiers::NONE };
+            let mut result = (false, false);
+            let keys: &[Option<Key>] = if tab_first { &[None, None, Some(Key::Tab), None, Some(Key::Enter)] } else { &[None, None, Some(Key::Enter)] };
+            for k in keys {
+                let mut input = egui::RawInput::default();
+                input.screen_rect = Some(Rect::from_min_size(Pos2::ZERO, Vec2::splat(400.0)));
+                input.events.extend(k.map(key));
+                let mut output = ctx.run_ui(input, |ui| result = confirm_buttons(ui));
+                output.textures_delta.clear();
+            }
+            result
+        }
+        assert_eq!(press(false), (true, false));
+        assert_eq!(press(true), (false, true));
+    }
+}
