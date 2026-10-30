@@ -18,7 +18,7 @@
 - Scope and targets live in `docs/PROJECT_BRIEF.md`; read it first.
 - Dev machine: Kubuntu, KDE Plasma on Wayland, i7-8750H with turbo OFF (`intel_pstate/no_turbo=1`), so timings are pessimistic.
 - Build/test: `cargo test`, `cargo build --release`. `--timings` prints window/preview/full/navigation ms; `--bench` does the same and quits after the first full image.
-- Modules: `main.rs` startup, `app.rs` UI/state/input, `load.rs` decode pool + EXIF + folder listing, `view.rs` zoom/pan math, `edit.rs` the edit state (`Doc`: crop → transform → size → colour) and `render` for saving, `inspector.rs` the sidebar (EXIF sections in `exif_edit.rs`), `markup.rs` markup elements: egui painting, tiny-skia/ab_glyph flattening, toolbar.
+- Modules: `main.rs` startup, `app.rs` state + `ui()` steps (`app/`: `menu.rs` actions/shortcuts/menus, `input.rs` input + action dispatch, `canvas.rs` texture + painting, `dialogs.rs`, `ai_tools.rs`), `load.rs` decode pool + EXIF + folder listing, `view.rs` zoom/pan math, `edit.rs` the edit state (`Doc`: crop → transform → size → colour) and `render` for saving, `inspector.rs` the sidebar (EXIF sections in `exif_edit.rs`), `markup.rs` markup elements: egui painting, tiny-skia/ab_glyph flattening, toolbar.
 - Install / set as default viewer: `./install.sh` (binary → `~/.local/bin`, desktop file → `~/.local/share/applications`, `xdg-mime default`).
 - Package: `./package-deb.sh` writes `lightview_<version>_amd64.deb`; pushing a `v*` tag matching `Cargo.toml` makes `.github/workflows/release.yml` build it on ubuntu-22.04 (glibc 2.35 floor) and publish a release. `xdg-mime` prints a harmless `qtpaths: not found` here.
 - Translations: wrap new UI text in `tr`/`trf` (`tr_key` inside `const` tables, shown through `tr`) and add a line to all five `locales/*.tsv`; a test fails until they match. `--bench` saves settings on exit, so use a throwaway `XDG_DATA_HOME` when testing languages.
@@ -36,7 +36,7 @@
 - Model conversions live in `../lightview-models` (own git repo). Python here is 3.14 only; PyTorch 2.5.1 needs a conda 3.12 env (`conda create -p <scratch>/env python=3.12`). Python's urllib can hang on this machine; use curl for downloads.
 - Metadata checks: exiftool isn't installed (running a downloaded copy is blocked); compare with `python3 -I` + PIL 12.3 and `LIGHTVIEW_INSPECT=photo.jpg cargo test print_inspector -- --ignored --nocapture`.
 - SVG to PNG: `ksvgtopng <w> <h> in.svg out.png` (no inkscape/rsvg here); it's Qt SVG Tiny, so no filters, masks or `clipPath`. `icon/aperture.svg` is the app icon, installed as `lightview.svg`; after changing it, re-render `icon/lightview-256.png` (embedded for X11): `ksvgtopng 256 256 icon/aperture.svg icon/lightview-256.png`.
-- Headless egui tests: `Context::run_ui` with `RawInput`; call `output.textures_delta.clear()` each frame or it panics on drop. Pointer state needs a few frames (`modal_blocks_image_hover` in `app.rs`).
+- Headless egui tests: `Context::run_ui` with `RawInput`; call `output.textures_delta.clear()` each frame or it panics on drop. Pointer state needs a few frames (`modal_blocks_image_hover` in `app/dialogs.rs`).
 - egui right panels: content wider than the panel's max moves its left edge right, over the content, so keep sidebar content wrapping; `Grid` cells and `ui.horizontal` don't wrap by default (`Label::wrap()`, `horizontal_wrapped`).
 - tiny-skia strokes width 0 as a hairline, egui draws nothing: guard in `markup::flatten` or the saved file differs from the screen.
 - M1 result (2026-10-28): eframe alone takes 115–200 ms to the first frame; a 12 MP JPEG takes ~360–410 ms to decode in a fresh process (~190 ms warm) → P1 is ~420 ms, so the 100 ms target is missed.
@@ -79,6 +79,7 @@ Format: `YYYY-MM-DD — decision — reason`
 - 2026-10-29 — menus File · Edit · View · Image · Tools, each action once (no Export submenu, Crop = crop to selection when there is one, Settings in Edit with Ctrl+,, no Draw menu) — the menus built from the draft repeated features.
 - 2026-10-30 — version and a "Check for updates" button (opens the Releases page) sit at the bottom of Settings: no sixth menu and no automatic update check; AppStream metainfo ships in the .deb only.
 - 2026-10-30 — deleting an image always asks first and moves it to the system Trash with the `trash` crate (no permanent delete); Ctrl+Z undoes edits first, then restores the last deleted image, for that session; Delete still means element/selection first — recoverable, works on other drives, and the crate covers the Windows port.
+- 2026-10-30 — `app.rs` split into child modules `src/app/*.rs`, not sibling files — only children see `App`'s private fields; `App` stays one flat struct, no sub-structs, no dialog trait.
 - 2026-10-30 — app icon = aperture in kingfisher colours (user's choice): one SVG in hicolor/scalable via `Icon=lightview`, plus an embedded 256 px PNG for X11 — on Wayland the panel finds it through the app id and `.desktop` file, and winit ignores window icons.
 
 ## Self-Update Rule

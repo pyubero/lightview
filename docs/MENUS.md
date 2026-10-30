@@ -1,6 +1,6 @@
 # lightview menus
 
-The menu bar as built in `src/app.rs` (`menu_bar`). The bar is hidden in full screen. Each action
+The menu bar as built in `src/app/menu.rs` (`menu_bar`). The bar is hidden in full screen. Each action
 appears in exactly one menu. Items are greyed out until an image is fully loaded, unless "Enabled
 when" says otherwise. `▸` marks a submenu.
 

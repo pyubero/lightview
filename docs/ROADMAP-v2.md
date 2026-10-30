@@ -27,7 +27,7 @@ Numbering continues from v1.
 - Menus follow the draft: File, Edit, View, Tools, Draw, Settings. A menu item appears only once its feature works. Items that don't exist yet are left out, not greyed out.
 - View → Previous / Next Image (← / →), Zoom In / Out (Ctrl + / Ctrl −), Actual Size, Fit to Window, Full Screen.
 - View → Animation: Play, Pause, Next Frame, Previous Frame (for GIF/WebP).
-- Where: `app.rs` (`menu_bar`, `Action`, `SHORTCUTS`).
+- Where: `app/menu.rs` (`menu_bar`, `Action`, `SHORTCUTS`).
 - **Done when** every menu item works and `cargo test` passes.
 - **Menu cleanup ✅ (2026-10-29):** the draft listed some features in several menus. Now each action appears once, in File · Edit · View · Image · Tools (see `MENUS.md`). The Export submenu is gone (Save As already picks the format). Crop crops to the selection when there is one. Image changes and AI moved to Image, Draw merged into Tools, Settings moved to Edit (Ctrl+,). EXIF editing and the image description are reached from the inspector (Ctrl+I).
 
