@@ -1,10 +1,36 @@
-use super::{App, Tool};
-use crate::edit::{self, Doc};
-use crate::load::Frame;
-use crate::markup;
+use super::{App, Tool, ms};
+use crate::edit::{self, Adjust, Doc};
+use crate::i18n::{tr, trf};
+use crate::load::{Frame, Loaded};
+use crate::markup::{self, Element, Shape};
 use crate::settings::Interpolation;
-use crate::view::{self, Transform};
-use eframe::egui::{self, Color32, ColorImage, Pos2, Rect, TextureOptions, Vec2};
+use crate::view::{self, Transform, View};
+use eframe::egui::{self, Color32, ColorImage, Pos2, Rect, TextureFilter, TextureOptions, Vec2};
+use std::sync::Arc;
+
+/// What a baked frame holds; it's rebuilt when this changes.
+#[derive(Clone, Copy, PartialEq)]
+pub(super) struct BakeKey {
+    generation: u64,
+    anim_frame: usize,
+    crop: Rect,
+    size: [u32; 2],
+}
+
+/// What the current texture holds; it's rebuilt when this changes.
+#[derive(Clone, Copy, PartialEq)]
+pub(super) struct TexKey {
+    generation: u64,
+    anim_frame: usize,
+    /// GPU scaling uploads the whole frame, so transform/crop/size don't matter then.
+    gpu: bool,
+    interpolation: Interpolation,
+    transform: Transform,
+    crop: [f32; 4],
+    size: [u32; 2],
+    adjust: Adjust,
+    baked: Option<BakeKey>,
+}
 
 impl App {
     /// Draws the markup over the image, plus the selection and the text being typed.
@@ -47,6 +73,226 @@ impl App {
         }
         if response.lost_focus() {
             self.finish_text();
+        }
+    }
+
+    /// Draws the current image (or its preview, or the error) and everything over it.
+    pub(super) fn draw(&mut self, ui: &egui::Ui, full: Option<&Loaded>, doc: Option<Doc>, hovered_at: Option<Pos2>, viewport: Rect) {
+        let ctx = ui.ctx();
+        let ppp = ctx.pixels_per_point();
+        let preview = self.preview.clone();
+        let (frame, view, doc) = match (full, doc) {
+            (Some(l), Some(doc)) => (Some(&l.frames[self.anim_frame]), self.view, doc),
+            _ => (preview.as_deref(), View::Fit, preview.as_ref().map(|f| Doc::new(f.w, f.h)).unwrap_or(Doc::new(1, 1))),
+        };
+        // A shrunk image is shown from its resized pixels: the decoded ones still hold the lost detail.
+        let bake_key = frame.filter(|_| doc.shrinks()).map(|_| BakeKey { generation: self.generation, anim_frame: self.anim_frame, crop: doc.crop, size: doc.plain_size() });
+        if let (Some(key), Some(frame)) = (bake_key, frame) && self.baked.as_ref().map(|b| b.0) != Some(key) {
+            self.baked = Some((key, Arc::new(edit::bake(frame, &doc))));
+        }
+        let baked = bake_key.and_then(|_| self.baked.as_ref()).map(|b| b.1.clone());
+        let frame = baked.as_deref().or(frame);
+        let source = baked.is_some().then(|| doc.on_baked());
+        let source = source.as_ref().unwrap_or(&doc);
+        let Some(frame) = frame else {
+            if let Some(e) = &self.error {
+                ui.painter().text(viewport.center(), egui::Align2::CENTER_CENTER, trf("Can't open this image:\n{e}", &[("e", &e)]), egui::FontId::proportional(14.0), Color32::GRAY);
+            }
+            return;
+        };
+        let frame_size = Vec2::new(frame.w as f32, frame.h as f32);
+        let (dest, crop) = view::layout(view, doc.size_vec(), viewport, ppp);
+        let interpolation = self.settings.interpolation();
+        // Images bigger than the GPU's texture limit always take the CPU path.
+        // shortcut: colour adjustments only run on the CPU path; add a shader if GPU users miss smooth zoom while adjusting.
+        let gpu = self.settings.gpu_scaling && frame.w.max(frame.h) as usize <= ctx.input(|i| i.max_texture_side) && doc.adjust.is_identity();
+        let key = if gpu {
+            TexKey { generation: self.generation, anim_frame: self.anim_frame, gpu, interpolation, transform: Transform::default(), crop: [0.0; 4], size: [frame.w, frame.h], adjust: Adjust::default(), baked: bake_key }
+        } else {
+            let src = source.to_source(crop);
+            let size = [(dest.width() * ppp).round().max(1.0) as u32, (dest.height() * ppp).round().max(1.0) as u32];
+            TexKey { generation: self.generation, anim_frame: self.anim_frame, gpu, interpolation, transform: doc.transform, crop: [src.min.x, src.min.y, src.width(), src.height()], size, adjust: doc.adjust, baked: bake_key }
+        };
+        self.upload_texture(ctx, frame, key, &doc);
+        let texture = self.texture.as_ref().unwrap().id();
+        if frame.alpha {
+            // Transparent parts show as a checkerboard, not as the background.
+            let painter = ui.painter().with_clip_rect(dest.intersect(viewport));
+            painter.add(markup::checker(dest.intersect(viewport), None));
+        }
+        if gpu {
+            // Each screen corner samples the source point the transform maps it from.
+            let mut mesh = egui::Mesh::with_texture(texture);
+            let shown = [crop.left_top(), crop.right_top(), crop.right_bottom(), crop.left_bottom()];
+            let screen = [dest.left_top(), dest.right_top(), dest.right_bottom(), dest.left_bottom()];
+            for (pos, p) in screen.into_iter().zip(shown) {
+                let uv = (source.source_point(p).to_vec2() / frame_size).to_pos2();
+                mesh.vertices.push(egui::epaint::Vertex { pos, uv, color: Color32::WHITE });
+            }
+            mesh.add_triangle(0, 1, 2);
+            mesh.add_triangle(0, 2, 3);
+            ui.painter().add(mesh);
+        } else {
+            ui.painter().image(texture, dest, Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)), Color32::WHITE);
+        }
+        let frame_wh = [frame.w, frame.h];
+        self.visible = full.is_some().then_some(crop);
+        self.paint_compare(ui, dest, crop);
+        // The magnifier samples the image texture: the whole frame (GPU) or the visible part (CPU).
+        let uv = |p: Pos2| if gpu { (source.source_point(p).to_vec2() / frame_size).to_pos2() } else { ((p - crop.min) / crop.size()).to_pos2() };
+        if !doc.elements.is_empty() || self.editing_text.is_some() || !self.element_textures.is_empty() {
+            self.paint_markup(ui, &doc, dest, crop, texture, &uv);
+        }
+        if let Some(p) = hovered_at.filter(|_| self.tool == Tool::Draw(Shape::Magnifier) && self.compare.is_none()) && let Some(style) = self.style {
+            // The lens a click here would place.
+            let size = doc.size_vec();
+            let lens = Element::lens(Rect::from_min_size(Pos2::ZERO, size).clamp(view::to_image(dest, crop, p)), size, style);
+            markup::paint(&ui.painter().with_clip_rect(dest), &lens, &|p| view::to_screen(dest, crop, p), dest.width() / crop.width(), texture, &uv, None);
+        }
+        self.paint_selection(ui, dest, crop);
+        if self.tool == Tool::Crop {
+            self.paint_crop(ui, dest, crop, viewport);
+        }
+        if self.tool == Tool::Measure {
+            self.paint_measure(ui, &doc, dest, crop, viewport);
+        }
+        if self.timings {
+            self.report_timings(ctx, full.is_some(), frame_wh);
+        }
+    }
+
+    /// Makes the texture hold what `key` describes, if it doesn't yet.
+    fn upload_texture(&mut self, ctx: &egui::Context, frame: &Frame, key: TexKey, doc: &Doc) {
+        if self.tex_key == Some(key) {
+            return;
+        }
+        let (gpu, interpolation) = (key.gpu, key.interpolation);
+        let (image, options) = if gpu {
+            let options = match interpolation {
+                Interpolation::Nearest => TextureOptions::NEAREST,
+                // Mipmaps keep big images from aliasing when shrunk.
+                _ => TextureOptions { mipmap_mode: Some(TextureFilter::Linear), ..TextureOptions::LINEAR },
+            };
+            (to_color_image(frame.alpha, [frame.w as usize, frame.h as usize], &frame.pixels), options)
+        } else {
+            // shortcut: resize runs on the UI thread every pan/zoom frame; GPU scaling is the smooth path.
+            let unadjusted = TexKey { adjust: Adjust::default(), ..key };
+            if self.resized.as_ref().map(|r| r.0) != Some(unadjusted) {
+                let [x, y, w, h] = key.crop;
+                self.resized = Some((unadjusted, resize(frame, Rect::from_min_size(Pos2::new(x, y), Vec2::new(w, h)), key.size, doc.transform, interpolation)));
+            }
+            let pixels = &self.resized.as_ref().unwrap().1;
+            let size = [key.size[0] as usize, key.size[1] as usize];
+            let image = if doc.adjust.is_identity() {
+                to_color_image(frame.alpha, size, pixels)
+            } else {
+                // Only the adjustment re-runs while a slider moves.
+                let mut pixels = pixels.clone();
+                doc.adjust.apply(&mut pixels, if frame.alpha { 4 } else { 3 });
+                to_color_image(frame.alpha, size, &pixels)
+            };
+            (image, TextureOptions::LINEAR)
+        };
+        match &mut self.texture {
+            Some(t) => t.set(image, options),
+            None => self.texture = Some(ctx.load_texture("image", image, options)),
+        }
+        self.tex_key = Some(key);
+    }
+
+    /// The result on the right of the line, the original on the left.
+    fn paint_compare(&self, ui: &egui::Ui, dest: Rect, crop: Rect) {
+        let Some(c) = &self.compare else { return };
+            let r = Rect::from_two_pos(view::to_screen(dest, crop, c.region.min), view::to_screen(dest, crop, c.region.max));
+            let x = r.left() + r.width() * c.split;
+            let after = Rect::from_min_max(Pos2::new(x, r.top()), r.max);
+            ui.painter().with_clip_rect(after.intersect(dest)).image(c.texture.id(), r, Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)), Color32::WHITE);
+            let painter = ui.painter().with_clip_rect(dest);
+            painter.rect_stroke(r, 0.0, egui::Stroke::new(1.0, Color32::from_white_alpha(160)), egui::StrokeKind::Outside);
+            painter.line_segment([Pos2::new(x, r.top()), Pos2::new(x, r.bottom())], egui::Stroke::new(2.0, Color32::WHITE));
+            painter.circle_filled(Pos2::new(x, r.center().y), 6.0, Color32::WHITE);
+    }
+
+    fn paint_selection(&self, ui: &egui::Ui, dest: Rect, crop: Rect) {
+        let Some(sel) = &self.selection else { return };
+            let mut outline: Vec<Pos2> = sel.outline().into_iter().map(|p| view::to_screen(dest, crop, p)).collect();
+            outline.push(outline[0]);
+            // Marching-ants style: white dashes over a dark line, visible on any image.
+            let painter = ui.painter().with_clip_rect(dest.expand(1.0));
+            painter.add(egui::Shape::line(outline.clone(), egui::Stroke::new(1.0, Color32::from_black_alpha(200))));
+            painter.extend(egui::Shape::dashed_line(&outline, egui::Stroke::new(1.0, Color32::WHITE), 5.0, 4.0));
+    }
+
+    fn paint_crop(&self, ui: &egui::Ui, dest: Rect, crop: Rect, viewport: Rect) {
+            let painter = ui.painter().with_clip_rect(dest);
+            let shade = Color32::from_black_alpha(140);
+            match self.crop_rect.map(|r| Rect::from_two_pos(view::to_screen(dest, crop, r.min), view::to_screen(dest, crop, r.max))) {
+                Some(r) => {
+                    // Darken everything outside the crop.
+                    for side in [
+                        Rect::from_x_y_ranges(dest.x_range(), dest.top()..=r.top()),
+                        Rect::from_x_y_ranges(dest.x_range(), r.bottom()..=dest.bottom()),
+                        Rect::from_x_y_ranges(dest.left()..=r.left(), r.y_range()),
+                        Rect::from_x_y_ranges(r.right()..=dest.right(), r.y_range()),
+                    ] {
+                        painter.rect_filled(side, 0.0, shade);
+                    }
+                    painter.rect_stroke(r, 0.0, egui::Stroke::new(1.0, Color32::WHITE), egui::StrokeKind::Middle);
+                }
+                None => {
+                    painter.rect_filled(dest, 0.0, shade);
+                }
+            }
+            bubble(ui.painter(), Pos2::new(viewport.center().x, viewport.top() + 24.0), tr("Drag to select · Enter to crop · Esc to cancel"));
+    }
+
+    fn paint_measure(&self, ui: &egui::Ui, doc: &Doc, dest: Rect, crop: Rect, viewport: Rect) {
+            let hint = match self.measure {
+                Some(m) => {
+                    let [a, b] = m.map(|p| view::to_screen(dest, crop, p));
+                    let painter = ui.painter().with_clip_rect(viewport);
+                    // A dark halo keeps the guide line visible on light and dark images.
+                    painter.line_segment([a, b], egui::Stroke::new(3.0, Color32::from_black_alpha(160)));
+                    painter.line_segment([a, b], egui::Stroke::new(1.5, Color32::YELLOW));
+                    for p in [a, b] {
+                        painter.circle(p, 5.0, Color32::from_black_alpha(120), egui::Stroke::new(1.5, Color32::YELLOW));
+                    }
+                    let [dx, dy, d] = doc.measure(m[0], m[1]);
+                    trf("Distance: {d} px · ΔX: {dx} px · ΔY: {dy} px", &[("d", &format!("{d:.0}")), ("dx", &format!("{dx:.0}")), ("dy", &format!("{dy:.0}"))])
+                }
+                None => tr("Drag to measure in image pixels · Esc to stop").into(),
+            };
+            bubble(ui.painter(), Pos2::new(viewport.center().x, viewport.top() + 24.0), &hint);
+    }
+
+    fn report_timings(&mut self, ctx: &egui::Context, full: bool, frame_wh: [u32; 2]) {
+            if !full && self.preview_reported != Some(frame_wh) {
+                eprintln!("preview     {:.1} ms  ({}×{})", ms(self.t0), frame_wh[0], frame_wh[1]);
+                self.preview_reported = Some(frame_wh);
+            }
+            if full && !self.full_reported {
+                eprintln!("full image  {:.1} ms", ms(self.t0));
+                self.full_reported = true;
+                self.close_next = self.bench;
+                // The image reaches the screen after this frame; closing waits one more.
+                ctx.request_repaint();
+            }
+            if let Some(t) = self.nav_start.filter(|_| full) {
+                eprintln!("navigation  {:.1} ms", ms(t));
+                self.nav_start = None;
+            }
+    }
+
+    /// The short message at the bottom, for as long as it lasts.
+    pub(super) fn show_status(&mut self, ui: &egui::Ui, viewport: Rect) {
+        let ctx = ui.ctx();
+        let Some((text, at)) = &self.status else { return };
+        const SHOWN: std::time::Duration = std::time::Duration::from_secs(4);
+        if at.elapsed() < SHOWN {
+            bubble(ui.painter(), Pos2::new(viewport.center().x, viewport.bottom() - 24.0), text);
+            ctx.request_repaint_after(SHOWN - at.elapsed());
+        } else {
+            self.status = None;
         }
     }
 }

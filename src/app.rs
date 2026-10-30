@@ -1,13 +1,13 @@
 use crate::i18n::{tr, trf};
-use crate::edit::{self, Adjust, Doc, ResizeDialog};
+use crate::edit::{self, Doc, ResizeDialog};
 use crate::exif_edit;
 use crate::inspector::{self, Inspector};
 use crate::load::{self, Frame, Loaded, Loader, Msg, Notify};
 use crate::markup::{self, Element, Selection, Shape, Style};
 use crate::save;
-use crate::settings::{self, Interpolation, Settings};
-use crate::view::{self, Transform, View};
-use eframe::egui::{self, Color32, CursorIcon, Key, Pos2, Rect, Sense, TextureFilter, TextureHandle, TextureOptions, Vec2, ViewportCommand};
+use crate::settings::{self, Settings};
+use crate::view::View;
+use eframe::egui::{self, Color32, Key, Pos2, Rect, TextureHandle, TextureOptions, Vec2, ViewportCommand};
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 use std::sync::atomic::Ordering;
@@ -21,9 +21,9 @@ mod input;
 mod menu;
 
 use ai_tools::{Compare, Restoring};
-use canvas::{bubble, resize, to_color_image};
+use canvas::{BakeKey, TexKey};
 use dialogs::Download;
-use menu::{Action, SHORTCUTS};
+use menu::Action;
 
 const RECENT_MAX: usize = 10;
 
@@ -60,30 +60,6 @@ enum Pending {
     Close,
 }
 
-/// What a baked frame holds; it's rebuilt when this changes.
-#[derive(Clone, Copy, PartialEq)]
-struct BakeKey {
-    generation: u64,
-    anim_frame: usize,
-    crop: Rect,
-    size: [u32; 2],
-}
-
-/// What the current texture holds; it's rebuilt when this changes.
-#[derive(Clone, Copy, PartialEq)]
-struct TexKey {
-    generation: u64,
-    anim_frame: usize,
-    /// GPU scaling uploads the whole frame, so transform/crop/size don't matter then.
-    gpu: bool,
-    interpolation: Interpolation,
-    transform: Transform,
-    crop: [f32; 4],
-    size: [u32; 2],
-    adjust: Adjust,
-    baked: Option<BakeKey>,
-}
-
 pub struct App {
     t0: Instant,
     timings: bool,
@@ -105,7 +81,7 @@ pub struct App {
     /// Decoded images for current ±1 only.
     // Arc so a frame can hold the current image while calling `&mut self` methods.
     cache: HashMap<PathBuf, Arc<Loaded>>,
-    preview: Option<Frame>,
+    preview: Option<Arc<Frame>>,
     error: Option<String>,
     view: View,
     texture: Option<TextureHandle>,
@@ -316,7 +292,7 @@ impl App {
             }
             Msg::Preview(path, frame) => {
                 if self.current() == Some(&path) && !self.cache.contains_key(&path) {
-                    self.preview = Some(frame);
+                    self.preview = Some(Arc::new(frame));
                     self.generation += 1;
                 }
             }
@@ -679,137 +655,21 @@ impl eframe::App for App {
             self.pending = Some(Pending::Close);
         }
 
-        // Plain keys (arrows, F11) and undo belong to a text field while one has focus.
         let typing = ctx.egui_wants_keyboard_input();
-        let mut actions: Vec<Action> = ctx.input_mut(|i| {
-            SHORTCUTS
-                .iter()
-                .filter(|(sc, a)| !(typing && (sc.modifiers.is_none() || matches!(a, Action::Undo | Action::Redo | Action::SelectAll | Action::Deselect))) && i.consume_shortcut(sc))
-                .map(|(_, a)| a.clone())
-                .collect()
-        });
+        let mut actions = App::read_shortcuts(&ctx, typing);
         let (esc, fullscreen) = ctx.input(|i| (i.key_pressed(Key::Escape), i.viewport().fullscreen.unwrap_or(false)));
-        let mut pasted = None;
-        if !typing {
-            ctx.input(|i| {
-                for event in &i.events {
-                    match event {
-                        egui::Event::Copy => actions.push(Action::Copy),
-                        egui::Event::Cut => actions.push(Action::Cut),
-                        egui::Event::PasteImage(img) => pasted = Some(img.clone()),
-                        // Text on the clipboard: there may be an image too.
-                        egui::Event::Paste(_) => actions.push(Action::Paste),
-                        _ => {}
-                    }
-                }
-            });
-        }
+        let pasted = if typing { None } else { App::read_clipboard(&ctx, &mut actions) };
         if !fullscreen {
             egui::Panel::top("menu").show(ui, |ui| self.menu_bar(ui, &mut actions));
             if self.show_toolbar {
                 self.toolbar(ui, &mut actions);
             }
         }
-        for action in &actions {
-            match action {
-                Action::Open => self.open_dialog(),
-                Action::SaveAs => self.save_dialog(),
-                Action::OpenRecent(path) => self.confirm(Pending::Open(path.clone())),
-                Action::Close => self.confirm(Pending::Close),
-                Action::Undo => self.undo_redo(true),
-                Action::Redo => self.undo_redo(false),
-                Action::Crop if self.selection.is_some() => self.image_from_selection(),
-                Action::Crop if self.doc().is_some() => (self.tool, self.crop_rect) = (Tool::Crop, None),
-                Action::Resize => self.resize_dialog = self.doc().map(|d| ResizeDialog::new(&d)),
-                Action::Info => self.show_info = !self.show_info,
-                Action::Settings => self.show_settings = true,
-                Action::AdjustColor => {
-                    if self.adjusting.is_none() {
-                        self.adjusting = self.doc();
-                    }
-                }
-                Action::AutoLevels => {
-                    if let Some(levels) = self.auto_levels() {
-                        self.edit(|d| d.adjust.levels = Some(levels));
-                    }
-                }
-                Action::ResetAdjust => self.edit(|d| d.adjust = Adjust::default()),
-                Action::Measure if self.tool == Tool::Measure => (self.tool, self.measure) = (Tool::Pan, None),
-                Action::Measure if self.doc().is_some() => (self.tool, self.crop_rect) = (Tool::Measure, None),
-                Action::ShowToolbar => {
-                    self.show_toolbar = !self.show_toolbar;
-                    if !self.show_toolbar {
-                        self.finish_text();
-                        (self.tool, self.selected) = (Tool::Pan, None);
-                    }
-                }
-                Action::Pick(pick) if self.doc().is_some() => self.set_pick(*pick),
-                Action::Describe => self.show_info = true,
-                Action::SelectTool(kind) if self.doc().is_some() => {
-                    self.finish_text();
-                    (self.tool, self.crop_rect, self.selected) = (Tool::Selection(*kind), None, None);
-                }
-                Action::SelectAll => self.selection = self.doc().map(|d| Selection::Rect(Rect::from_min_size(Pos2::ZERO, d.size_vec()))),
-                Action::Deselect => self.selection = None,
-                Action::Copy => self.copy_selection(&ctx),
-                Action::Cut => {
-                    if self.selection.is_some() {
-                        self.copy_selection(&ctx);
-                        self.delete_selection();
-                    }
-                }
-                Action::Paste => match arboard::Clipboard::new().and_then(|mut c| c.get_image()) {
-                    Ok(img) => self.paste(img.width as u32, img.height as u32, img.bytes.into_owned()),
-                    Err(e) => self.status = Some((trf("Nothing to paste: {e}", &[("e", &e)]), Instant::now())),
-                },
-                Action::DeleteSelection => self.delete_selection(),
-                Action::DeleteImage => self.delete_prompt = true,
-                Action::Cutout(crop) => self.cutout(*crop),
-                Action::Restore(task) if *task == crate::ai::Task::Enhance && let Some(file) = self.unseen_notice() => self.enhance_notice = Some(file),
-                Action::Restore(task) => self.preview_restore(*task),
-                Action::DownloadRuntime => self.license_prompt = Some((Download::Runtime, 0)),
-                Action::AiModels => self.show_ai_models = true,
-                Action::RotateLeft => self.edit(Doc::rotate_left),
-                Action::RotateRight => self.edit(Doc::rotate_right),
-                Action::FlipHorizontal => self.edit(Doc::flip_horizontal),
-                Action::FlipVertical => self.edit(Doc::flip_vertical),
-                Action::Fullscreen => ctx.send_viewport_cmd(ViewportCommand::Fullscreen(!fullscreen)),
-                Action::PrevImage => self.confirm(Pending::Navigate(-1)),
-                Action::NextImage => self.confirm(Pending::Navigate(1)),
-                Action::Play => (self.anim_paused, self.anim_due) = (false, None),
-                Action::Pause => self.anim_paused = true,
-                _ => {} // zoom and frame-step actions are applied below, once the image is known
-            }
-        }
+        self.run_actions(&actions, &ctx, fullscreen);
         if let Some(img) = pasted {
-            let pixels = img.pixels.iter().flat_map(|c| c.to_srgba_unmultiplied()).collect();
-            self.paste(img.size[0] as u32, img.size[1] as u32, pixels);
+            self.paste_event(&img);
         }
-        let enter = !typing && ctx.input(|i| i.key_pressed(Key::Enter));
-        let delete_key = !typing && ctx.input(|i| i.key_pressed(Key::Delete));
-        let delete = delete_key || !typing && ctx.input(|i| i.key_pressed(Key::Backspace));
-        if esc && !typing && let Some(before) = self.change_base.take() {
-            // Cancel the drawing in progress.
-            (self.doc, self.grab) = (Some(before), Grab::None);
-        } else if esc && !typing && self.tool != Tool::Pan {
-            if matches!(self.tool, Tool::Selection(_)) {
-                self.selection = None;
-            }
-            (self.tool, self.crop_rect, self.measure, self.selected) = (Tool::Pan, None, None, None);
-        } else if esc && !typing && fullscreen {
-            ctx.send_viewport_cmd(ViewportCommand::Fullscreen(false));
-        }
-        if enter && self.tool == Tool::Crop && let Some(r) = self.crop_rect.take() {
-            self.edit(|d| d.crop_to(r));
-            self.tool = Tool::Pan;
-        }
-        if delete && self.tool == Tool::Select && let Some(i) = self.selected.take() {
-            self.edit(|d| drop(d.elements.remove(i)));
-        } else if delete && self.selection.is_some() {
-            self.delete_selection();
-        } else if delete_key && self.current().is_some() {
-            self.delete_prompt = true;
-        }
+        self.handle_keys(&ctx, typing, esc, fullscreen);
 
         self.inspector(ui);
         let viewport = ui.available_rect_before_wrap();
@@ -822,315 +682,14 @@ impl eframe::App for App {
         let mut hovered_at = None;
         // Zoom and pan only once the full image is in (the preview has different pixel sizes).
         if let (Some(l), Some(doc)) = (full, &doc) {
-            let img = doc.size_vec();
-            let drag = ui.interact(viewport, ui.scope_id().with("image"), Sense::click_and_drag());
-            if let Some(c) = &mut self.compare {
-                // Dragging moves the before/after line instead of using the tool.
-                let (dest, vis) = view::layout(self.view, img, viewport, ppp);
-                if drag.dragged() && let Some(p) = drag.interact_pointer_pos() {
-                    let left = view::to_screen(dest, vis, c.region.min).x;
-                    let right = view::to_screen(dest, vis, c.region.max).x;
-                    c.split = ((p.x - left) / (right - left).max(1.0)).clamp(0.0, 1.0);
-                }
-            } else {
-            match self.tool {
-                Tool::Pan if drag.dragged() => self.view = view::pan(self.view, drag.drag_delta(), img, viewport, ppp),
-                Tool::Pan => {}
-                Tool::Select | Tool::Draw(_) => {
-                    let (dest, vis) = view::layout(self.view, img, viewport, ppp);
-                    self.markup_input(&ctx, &drag, dest, vis, doc);
-                }
-                Tool::Selection(kind) => {
-                    if drag.hovered() {
-                        ctx.set_cursor_icon(CursorIcon::Crosshair);
-                    }
-                    let (dest, vis) = view::layout(self.view, img, viewport, ppp);
-                    let bounds = Rect::from_min_size(Pos2::ZERO, img);
-                    let at = |p: Pos2| bounds.clamp(view::to_image(dest, vis, p));
-                    if drag.clicked() {
-                        self.selection = None;
-                    }
-                    if drag.drag_started() && let Some(o) = ctx.input(|i| i.pointer.press_origin()) {
-                        self.drag_start = Some(at(o));
-                        self.selection = (kind == SelKind::Lasso).then(|| Selection::Lasso(vec![at(o)]));
-                    }
-                    if drag.dragged() && let (Some(a), Some(p)) = (self.drag_start, drag.interact_pointer_pos().map(at)) {
-                        let k = dest.width() / vis.width();
-                        match (kind, &mut self.selection) {
-                            (SelKind::Lasso, Some(Selection::Lasso(points))) => {
-                                if points.last().is_none_or(|q| q.distance(p) * k >= 2.0) {
-                                    points.push(p);
-                                }
-                            }
-                            (SelKind::Ellipse, sel) => *sel = Some(Selection::Ellipse(Rect::from_two_pos(a, p))),
-                            (_, sel) => *sel = Some(Selection::Rect(Rect::from_two_pos(a, p))),
-                        }
-                    }
-                    if drag.drag_stopped() && self.selection.as_ref().is_some_and(Selection::is_empty) {
-                        self.selection = None;
-                    }
-                }
-                Tool::Crop | Tool::Measure => {
-                    if drag.hovered() {
-                        ctx.set_cursor_icon(CursorIcon::Crosshair);
-                    }
-                    let (dest, vis) = view::layout(self.view, img, viewport, ppp);
-                    let bounds = Rect::from_min_size(Pos2::ZERO, img);
-                    let at = |p: Pos2| bounds.clamp(view::to_image(dest, vis, p));
-                    let origin = ctx.input(|i| i.pointer.press_origin());
-                    if drag.drag_started() && let Some(o) = origin {
-                        self.drag_start = Some(at(o));
-                        // Measure: grab an endpoint near the press, or start a new line.
-                        let near = self.measure.and_then(|m| (0..2).find(|&i| view::to_screen(dest, vis, m[i]).distance(o) < 10.0));
-                        match near {
-                            Some(i) => self.measure_drag = i,
-                            None if self.tool == Tool::Measure => (self.measure, self.measure_drag) = (Some([at(o); 2]), 1),
-                            None => {}
-                        }
-                    }
-                    if drag.dragged() && let (Some(a), Some(p)) = (self.drag_start, drag.interact_pointer_pos()) {
-                        match (self.tool, &mut self.measure) {
-                            (Tool::Measure, Some(m)) => m[self.measure_drag] = at(p),
-                            (Tool::Crop, _) => self.crop_rect = Some(Rect::from_two_pos(a, at(p))),
-                            _ => {}
-                        }
-                    }
-                }
-            }
-            }
+            let drag = self.image_input(ui, doc, viewport, ppp);
             hovered_at = drag.hover_pos().filter(|_| drag.hovered());
-            let (factor, hover) = ctx.input(|i| (i.zoom_delta() * (i.smooth_scroll_delta.y / 200.0).exp(), i.pointer.hover_pos()));
-            if factor != 1.0 && drag.hovered() {
-                self.view = view::zoom_at(self.view, factor, hover.unwrap_or(viewport.center()), img, viewport, ppp);
-            }
-            for action in &actions {
-                self.view = match action {
-                    Action::ZoomIn => view::zoom_at(self.view, 1.25, viewport.center(), img, viewport, ppp),
-                    Action::ZoomOut => view::zoom_at(self.view, 0.8, viewport.center(), img, viewport, ppp),
-                    Action::Fit => View::Fit,
-                    Action::ActualSize => view::actual_size(img),
-                    _ => self.view,
-                };
-            }
-
-            // Animation.
-            let frames = &l.frames;
-            for action in &actions {
-                let step = match action {
-                    Action::NextFrame => 1,
-                    Action::PrevFrame => frames.len() - 1,
-                    _ => continue,
-                };
-                self.anim_frame = (self.anim_frame + step) % frames.len();
-                self.anim_paused = true;
-            }
-            if frames.len() > 1 && !self.anim_paused {
-                let now = Instant::now();
-                let due = *self.anim_due.get_or_insert(now + frames[self.anim_frame].delay);
-                if now >= due {
-                    self.anim_frame = (self.anim_frame + 1) % frames.len();
-                    self.anim_due = Some(now + frames[self.anim_frame].delay);
-                }
-                ctx.request_repaint_after(self.anim_due.unwrap() - now);
-            }
+            self.zoom(&ctx, &drag, &actions, doc.size_vec(), viewport, ppp);
+            self.animate(&ctx, l, &actions);
         }
-
-        let (frame, view, doc) = match (full, doc) {
-            (Some(l), Some(doc)) => (Some(&l.frames[self.anim_frame]), self.view, doc),
-            _ => (self.preview.as_ref(), View::Fit, self.preview.as_ref().map(|f| Doc::new(f.w, f.h)).unwrap_or(Doc::new(1, 1))),
-        };
-        // A shrunk image is shown from its resized pixels: the decoded ones still hold the lost detail.
-        let bake_key = frame.filter(|_| doc.shrinks()).map(|_| BakeKey { generation: self.generation, anim_frame: self.anim_frame, crop: doc.crop, size: doc.plain_size() });
-        if let (Some(key), Some(frame)) = (bake_key, frame) && self.baked.as_ref().map(|b| b.0) != Some(key) {
-            self.baked = Some((key, Arc::new(edit::bake(frame, &doc))));
-        }
-        let baked = bake_key.and_then(|_| self.baked.as_ref()).map(|b| b.1.clone());
-        let frame = baked.as_deref().or(frame);
-        let source = baked.is_some().then(|| doc.on_baked());
-        let source = source.as_ref().unwrap_or(&doc);
-        if let Some(frame) = frame {
-            let frame_size = Vec2::new(frame.w as f32, frame.h as f32);
-            let (dest, crop) = view::layout(view, doc.size_vec(), viewport, ppp);
-            let interpolation = self.settings.interpolation();
-            // Images bigger than the GPU's texture limit always take the CPU path.
-            // shortcut: colour adjustments only run on the CPU path; add a shader if GPU users miss smooth zoom while adjusting.
-            let gpu = self.settings.gpu_scaling && frame.w.max(frame.h) as usize <= ctx.input(|i| i.max_texture_side) && doc.adjust.is_identity();
-            let key = if gpu {
-                TexKey { generation: self.generation, anim_frame: self.anim_frame, gpu, interpolation, transform: Transform::default(), crop: [0.0; 4], size: [frame.w, frame.h], adjust: Adjust::default(), baked: bake_key }
-            } else {
-                let src = source.to_source(crop);
-                let size = [(dest.width() * ppp).round().max(1.0) as u32, (dest.height() * ppp).round().max(1.0) as u32];
-                TexKey { generation: self.generation, anim_frame: self.anim_frame, gpu, interpolation, transform: doc.transform, crop: [src.min.x, src.min.y, src.width(), src.height()], size, adjust: doc.adjust, baked: bake_key }
-            };
-            if self.tex_key != Some(key) {
-                let (image, options) = if gpu {
-                    let options = match interpolation {
-                        Interpolation::Nearest => TextureOptions::NEAREST,
-                        // Mipmaps keep big images from aliasing when shrunk.
-                        _ => TextureOptions { mipmap_mode: Some(TextureFilter::Linear), ..TextureOptions::LINEAR },
-                    };
-                    (to_color_image(frame.alpha, [frame.w as usize, frame.h as usize], &frame.pixels), options)
-                } else {
-                    // shortcut: resize runs on the UI thread every pan/zoom frame; GPU scaling is the smooth path.
-                    let unadjusted = TexKey { adjust: Adjust::default(), ..key };
-                    if self.resized.as_ref().map(|r| r.0) != Some(unadjusted) {
-                        let [x, y, w, h] = key.crop;
-                        self.resized = Some((unadjusted, resize(frame, Rect::from_min_size(Pos2::new(x, y), Vec2::new(w, h)), key.size, doc.transform, interpolation)));
-                    }
-                    let pixels = &self.resized.as_ref().unwrap().1;
-                    let size = [key.size[0] as usize, key.size[1] as usize];
-                    let image = if doc.adjust.is_identity() {
-                        to_color_image(frame.alpha, size, pixels)
-                    } else {
-                        // Only the adjustment re-runs while a slider moves.
-                        let mut pixels = pixels.clone();
-                        doc.adjust.apply(&mut pixels, if frame.alpha { 4 } else { 3 });
-                        to_color_image(frame.alpha, size, &pixels)
-                    };
-                    (image, TextureOptions::LINEAR)
-                };
-                match &mut self.texture {
-                    Some(t) => t.set(image, options),
-                    None => self.texture = Some(ctx.load_texture("image", image, options)),
-                }
-                self.tex_key = Some(key);
-            }
-            let texture = self.texture.as_ref().unwrap().id();
-            if frame.alpha {
-                // Transparent parts show as a checkerboard, not as the background.
-                let painter = ui.painter().with_clip_rect(dest.intersect(viewport));
-                painter.add(markup::checker(dest.intersect(viewport), None));
-            }
-            if gpu {
-                // Each screen corner samples the source point the transform maps it from.
-                let mut mesh = egui::Mesh::with_texture(texture);
-                let shown = [crop.left_top(), crop.right_top(), crop.right_bottom(), crop.left_bottom()];
-                let screen = [dest.left_top(), dest.right_top(), dest.right_bottom(), dest.left_bottom()];
-                for (pos, p) in screen.into_iter().zip(shown) {
-                    let uv = (source.source_point(p).to_vec2() / frame_size).to_pos2();
-                    mesh.vertices.push(egui::epaint::Vertex { pos, uv, color: Color32::WHITE });
-                }
-                mesh.add_triangle(0, 1, 2);
-                mesh.add_triangle(0, 2, 3);
-                ui.painter().add(mesh);
-            } else {
-                ui.painter().image(texture, dest, Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)), Color32::WHITE);
-            }
-            let frame_wh = [frame.w, frame.h];
-            self.visible = full.is_some().then_some(crop);
-            if let Some(c) = &self.compare {
-                // The result on the right of the line, the original on the left.
-                let r = Rect::from_two_pos(view::to_screen(dest, crop, c.region.min), view::to_screen(dest, crop, c.region.max));
-                let x = r.left() + r.width() * c.split;
-                let after = Rect::from_min_max(Pos2::new(x, r.top()), r.max);
-                ui.painter().with_clip_rect(after.intersect(dest)).image(c.texture.id(), r, Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)), Color32::WHITE);
-                let painter = ui.painter().with_clip_rect(dest);
-                painter.rect_stroke(r, 0.0, egui::Stroke::new(1.0, Color32::from_white_alpha(160)), egui::StrokeKind::Outside);
-                painter.line_segment([Pos2::new(x, r.top()), Pos2::new(x, r.bottom())], egui::Stroke::new(2.0, Color32::WHITE));
-                painter.circle_filled(Pos2::new(x, r.center().y), 6.0, Color32::WHITE);
-            }
-            // The magnifier samples the image texture: the whole frame (GPU) or the visible part (CPU).
-            let uv = |p: Pos2| if gpu { (source.source_point(p).to_vec2() / frame_size).to_pos2() } else { ((p - crop.min) / crop.size()).to_pos2() };
-            if !doc.elements.is_empty() || self.editing_text.is_some() || !self.element_textures.is_empty() {
-                self.paint_markup(ui, &doc, dest, crop, texture, &uv);
-            }
-            if let Some(p) = hovered_at.filter(|_| self.tool == Tool::Draw(Shape::Magnifier) && self.compare.is_none()) && let Some(style) = self.style {
-                // The lens a click here would place.
-                let size = doc.size_vec();
-                let lens = Element::lens(Rect::from_min_size(Pos2::ZERO, size).clamp(view::to_image(dest, crop, p)), size, style);
-                markup::paint(&ui.painter().with_clip_rect(dest), &lens, &|p| view::to_screen(dest, crop, p), dest.width() / crop.width(), texture, &uv, None);
-            }
-            if let Some(sel) = &self.selection {
-                let mut outline: Vec<Pos2> = sel.outline().into_iter().map(|p| view::to_screen(dest, crop, p)).collect();
-                outline.push(outline[0]);
-                // Marching-ants style: white dashes over a dark line, visible on any image.
-                let painter = ui.painter().with_clip_rect(dest.expand(1.0));
-                painter.add(egui::Shape::line(outline.clone(), egui::Stroke::new(1.0, Color32::from_black_alpha(200))));
-                painter.extend(egui::Shape::dashed_line(&outline, egui::Stroke::new(1.0, Color32::WHITE), 5.0, 4.0));
-            }
-            if self.tool == Tool::Crop {
-                let painter = ui.painter().with_clip_rect(dest);
-                let shade = Color32::from_black_alpha(140);
-                match self.crop_rect.map(|r| Rect::from_two_pos(view::to_screen(dest, crop, r.min), view::to_screen(dest, crop, r.max))) {
-                    Some(r) => {
-                        // Darken everything outside the crop.
-                        for side in [
-                            Rect::from_x_y_ranges(dest.x_range(), dest.top()..=r.top()),
-                            Rect::from_x_y_ranges(dest.x_range(), r.bottom()..=dest.bottom()),
-                            Rect::from_x_y_ranges(dest.left()..=r.left(), r.y_range()),
-                            Rect::from_x_y_ranges(r.right()..=dest.right(), r.y_range()),
-                        ] {
-                            painter.rect_filled(side, 0.0, shade);
-                        }
-                        painter.rect_stroke(r, 0.0, egui::Stroke::new(1.0, Color32::WHITE), egui::StrokeKind::Middle);
-                    }
-                    None => {
-                        painter.rect_filled(dest, 0.0, shade);
-                    }
-                }
-                bubble(ui.painter(), Pos2::new(viewport.center().x, viewport.top() + 24.0), tr("Drag to select · Enter to crop · Esc to cancel"));
-            }
-            if self.tool == Tool::Measure {
-                let hint = match self.measure {
-                    Some(m) => {
-                        let [a, b] = m.map(|p| view::to_screen(dest, crop, p));
-                        let painter = ui.painter().with_clip_rect(viewport);
-                        // A dark halo keeps the guide line visible on light and dark images.
-                        painter.line_segment([a, b], egui::Stroke::new(3.0, Color32::from_black_alpha(160)));
-                        painter.line_segment([a, b], egui::Stroke::new(1.5, Color32::YELLOW));
-                        for p in [a, b] {
-                            painter.circle(p, 5.0, Color32::from_black_alpha(120), egui::Stroke::new(1.5, Color32::YELLOW));
-                        }
-                        let [dx, dy, d] = doc.measure(m[0], m[1]);
-                        trf("Distance: {d} px · ΔX: {dx} px · ΔY: {dy} px", &[("d", &format!("{d:.0}")), ("dx", &format!("{dx:.0}")), ("dy", &format!("{dy:.0}"))])
-                    }
-                    None => tr("Drag to measure in image pixels · Esc to stop").into(),
-                };
-                bubble(ui.painter(), Pos2::new(viewport.center().x, viewport.top() + 24.0), &hint);
-            }
-
-            if self.timings {
-                if full.is_none() && self.preview_reported != Some(frame_wh) {
-                    eprintln!("preview     {:.1} ms  ({}×{})", ms(self.t0), frame_wh[0], frame_wh[1]);
-                    self.preview_reported = Some(frame_wh);
-                }
-                if full.is_some() && !self.full_reported {
-                    eprintln!("full image  {:.1} ms", ms(self.t0));
-                    self.full_reported = true;
-                    self.close_next = self.bench;
-                    // The image reaches the screen after this frame; closing waits one more.
-                    ctx.request_repaint();
-                }
-                if let Some(t) = self.nav_start.filter(|_| full.is_some()) {
-                    eprintln!("navigation  {:.1} ms", ms(t));
-                    self.nav_start = None;
-                }
-            }
-        } else if let Some(e) = &self.error {
-            ui.painter().text(viewport.center(), egui::Align2::CENTER_CENTER, trf("Can't open this image:\n{e}", &[("e", &e)]), egui::FontId::proportional(14.0), Color32::GRAY);
-        }
-
-        if let Some((text, at)) = &self.status {
-            const SHOWN: std::time::Duration = std::time::Duration::from_secs(4);
-            if at.elapsed() < SHOWN {
-                bubble(ui.painter(), Pos2::new(viewport.center().x, viewport.bottom() - 24.0), text);
-                ctx.request_repaint_after(SHOWN - at.elapsed());
-            } else {
-                self.status = None;
-            }
-        }
-
-        self.settings_dialog(&ctx);
-        self.default_dialog(&ctx);
-        self.resize_dialog(&ctx);
-        self.ai_models_dialog(&ctx);
-        self.license_dialog(&ctx);
-        self.enhance_notice_dialog(&ctx);
-        self.restore_progress(&ctx, viewport);
-        self.compare_bar(&ctx, viewport);
-        self.adjust_panel(&ctx);
-        self.discard_dialog(&ctx);
-        self.delete_dialog(&ctx);
+        self.draw(ui, full, doc, hovered_at, viewport);
+        self.show_status(ui, viewport);
+        self.dialogs(&ctx, viewport);
 
         let title = self.make_title();
         if title != self.title {

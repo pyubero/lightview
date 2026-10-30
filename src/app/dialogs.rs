@@ -3,7 +3,7 @@ use crate::edit;
 use crate::i18n::{tr, trf};
 use crate::load::{self, Msg};
 use crate::settings;
-use eframe::egui;
+use eframe::egui::{self, Rect};
 use std::time::Instant;
 
 /// A download waiting for the user to accept its licence.
@@ -17,6 +17,21 @@ pub(super) enum Download {
 }
 
 impl App {
+    /// Whichever dialogs and floating bars are open.
+    pub(super) fn dialogs(&mut self, ctx: &egui::Context, viewport: Rect) {
+        self.settings_dialog(ctx);
+        self.default_dialog(ctx);
+        self.resize_dialog(ctx);
+        self.ai_models_dialog(ctx);
+        self.license_dialog(ctx);
+        self.enhance_notice_dialog(ctx);
+        self.restore_progress(ctx, viewport);
+        self.compare_bar(ctx, viewport);
+        self.adjust_panel(ctx);
+        self.discard_dialog(ctx);
+        self.delete_dialog(ctx);
+    }
+
     pub(super) fn settings_dialog(&mut self, ctx: &egui::Context) {
         if !self.show_settings {
             return;
