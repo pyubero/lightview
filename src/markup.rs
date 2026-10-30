@@ -1,3 +1,4 @@
+use crate::i18n::{tr, tr_key};
 use eframe::egui::{self, Color32, Pos2, Rect, Stroke, Vec2};
 use image::RgbaImage;
 use std::sync::Arc;
@@ -96,11 +97,11 @@ pub fn polygon_mask(polygon: &[Pos2], outside: Option<Rect>, origin: Pos2, scale
 
 /// The Shapes submenu.
 pub const SHAPES: [(Shape, &str); 5] = [
-    (Shape::Rect, "Rectangle"),
-    (Shape::RoundedRect, "Rounded Rectangle"),
-    (Shape::Ellipse, "Ellipse"),
-    (Shape::Line, "Line"),
-    (Shape::Arrow, "Arrow"),
+    (Shape::Rect, tr_key("Rectangle")),
+    (Shape::RoundedRect, tr_key("Rounded Rectangle")),
+    (Shape::Ellipse, tr_key("Ellipse")),
+    (Shape::Line, tr_key("Line")),
+    (Shape::Arrow, tr_key("Arrow")),
 ];
 
 /// Sizes are in image pixels, so markup keeps its size on the image at any zoom.
@@ -640,13 +641,13 @@ pub fn toolbar_ui(ui: &mut egui::Ui, current: Option<Pick>, style: &mut Style, s
                 out.pick = Some(pick);
             }
         };
-        tool(ui, Pick::Select, "Select");
-        tool(ui, Pick::Draw(Shape::Sketch), "Sketch");
+        tool(ui, Pick::Select, tr("Select"));
+        tool(ui, Pick::Draw(Shape::Sketch), tr("Sketch"));
         let shape = SHAPES.iter().find(|(s, _)| current == Some(Pick::Draw(*s)));
-        let shapes = egui::Button::selectable(shape.is_some(), format!("{} ⏷", shape.map_or("Shapes", |(_, name)| name)));
+        let shapes = egui::Button::selectable(shape.is_some(), format!("{} ⏷", shape.map_or(tr("Shapes"), |(_, name)| tr(name))));
         egui::containers::menu::MenuButton::from_button(shapes).ui(ui, |ui| {
             for (s, name) in SHAPES {
-                if ui.button(name).clicked() {
+                if ui.button(tr(name)).clicked() {
                     out.pick = Some(Pick::Draw(s));
                 }
             }
@@ -656,19 +657,19 @@ pub fn toolbar_ui(ui: &mut egui::Ui, current: Option<Pick>, style: &mut Style, s
                 out.pick = Some(pick);
             }
         };
-        tool(ui, Pick::Draw(Shape::Text), "Text");
-        tool(ui, Pick::Draw(Shape::Highlight), "Highlight");
-        tool(ui, Pick::Draw(Shape::Magnifier), "Magnifier");
-        tool(ui, Pick::Measure, "Measure");
-        out.describe = ui.button("Description").on_hover_text("Edit the image description").clicked();
+        tool(ui, Pick::Draw(Shape::Text), tr("Text"));
+        tool(ui, Pick::Draw(Shape::Highlight), tr("Highlight"));
+        tool(ui, Pick::Draw(Shape::Magnifier), tr("Magnifier"));
+        tool(ui, Pick::Measure, tr("Measure"));
+        out.describe = ui.button(tr("Description")).on_hover_text(tr("Edit the image description")).clicked();
         if let Some(shape) = styled {
             ui.separator();
             out.style_changed = style_ui(ui, shape, style);
         }
         ui.separator();
-        out.undo = ui.add_enabled(can_undo, egui::Button::new("Undo")).clicked();
-        out.redo = ui.add_enabled(can_redo, egui::Button::new("Redo")).clicked();
-        out.done = ui.button("Done").clicked();
+        out.undo = ui.add_enabled(can_undo, egui::Button::new(tr("Undo"))).clicked();
+        out.redo = ui.add_enabled(can_redo, egui::Button::new(tr("Redo"))).clicked();
+        out.done = ui.button(tr("Done")).clicked();
     });
     out
 }
@@ -678,20 +679,20 @@ fn style_ui(ui: &mut egui::Ui, shape: Shape, s: &mut Style) -> bool {
     use egui::color_picker::{Alpha, color_edit_button_srgba};
     let mut changed = false;
     let label = match shape {
-        Shape::Text => "Text colour",
-        Shape::Highlight => "Colour",
-        _ => "Stroke",
+        Shape::Text => tr("Text colour"),
+        Shape::Highlight => tr("Colour"),
+        _ => tr("Stroke"),
     };
     ui.label(label);
     changed |= color_edit_button_srgba(ui, &mut s.color, Alpha::OnlyBlend).changed();
     if shape != Shape::Text && shape != Shape::Highlight {
         let min = if shape == Shape::Magnifier { 0.0 } else { 1.0 };
-        changed |= ui.add(egui::DragValue::new(&mut s.width).range(min..=500.0).suffix(" px")).on_hover_text("Thickness").changed();
+        changed |= ui.add(egui::DragValue::new(&mut s.width).range(min..=500.0).suffix(" px")).on_hover_text(tr("Thickness")).changed();
     }
     match shape {
         Shape::Rect | Shape::RoundedRect | Shape::Ellipse => {
             let mut filled = s.fill.is_some();
-            if ui.checkbox(&mut filled, "Fill").changed() {
+            if ui.checkbox(&mut filled, tr("Fill")).changed() {
                 s.fill = filled.then(|| s.color.gamma_multiply(0.5));
                 changed = true;
             }
@@ -700,10 +701,10 @@ fn style_ui(ui: &mut egui::Ui, shape: Shape, s: &mut Style) -> bool {
             }
         }
         Shape::Text => {
-            changed |= ui.add(egui::DragValue::new(&mut s.font_size).range(4.0..=2000.0).suffix(" px")).on_hover_text("Font size").changed();
+            changed |= ui.add(egui::DragValue::new(&mut s.font_size).range(4.0..=2000.0).suffix(" px")).on_hover_text(tr("Font size")).changed();
         }
         Shape::Magnifier => {
-            ui.label("Zoom");
+            ui.label(tr("Zoom"));
             changed |= ui.add(egui::Slider::new(&mut s.zoom, 1.25..=8.0).suffix("×")).changed();
         }
         _ => {}

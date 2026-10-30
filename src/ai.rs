@@ -1,5 +1,6 @@
 //! AI background removal (optionally cropped to the subject). ONNX Runtime and the models aren't
 //! shipped: Tools → Download AI Runtime… / Download … Model… install them on request.
+use crate::i18n::{tr, tr_key, trf};
 use crate::settings::AiSettings;
 use eframe::egui::{self, Pos2, Rect};
 use image::{DynamicImage, GrayImage, RgbaImage, imageops::FilterType};
@@ -17,7 +18,7 @@ const RUNTIME_MEMBER: &str = "onnxruntime-linux-x64-1.31.1/lib/libonnxruntime.so
 const RUNTIME_FILE: &str = "libonnxruntime.so.1.31.1";
 
 fn data_dir() -> Result<PathBuf, String> {
-    eframe::storage_dir("lightview").ok_or_else(|| "no data folder".to_string())
+    eframe::storage_dir("lightview").ok_or_else(|| tr("no data folder").to_string())
 }
 
 /// `~/.local/share/lightview/lib/libonnxruntime.so.1.31.1`.
@@ -117,7 +118,7 @@ pub fn download_gpu() -> Result<(), String> {
             std::fs::remove_file(&archive).map_err(|e| e.to_string())?;
         }
         if !CUDA_LIBS.iter().all(|l| tmp.join(l).is_file()) {
-            return Err("a GPU library was missing from the download".into());
+            return Err(tr("a GPU library was missing from the download").into());
         }
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::rename(&tmp, &dir).map_err(|e| e.to_string())
@@ -184,7 +185,7 @@ fn fetch(url: &str, sha256: &str, dest: &Path) -> Result<(), String> {
     let result = run(std::process::Command::new("curl").args(["-L", "--fail", "--silent", "--show-error", "-o"]).arg(dest).arg(url)).and_then(|()| {
         let out = std::process::Command::new("sha256sum").arg(dest).output().map_err(|e| format!("sha256sum: {e}"))?;
         let sum = String::from_utf8_lossy(&out.stdout);
-        if sum.split_whitespace().next() == Some(sha256) { Ok(()) } else { Err("the download didn't match its checksum".into()) }
+        if sum.split_whitespace().next() == Some(sha256) { Ok(()) } else { Err(tr("the download didn't match its checksum").into()) }
     });
     if result.is_err() {
         let _ = std::fs::remove_file(dest);
@@ -265,9 +266,9 @@ impl Task {
 
     pub fn title(self) -> &'static str {
         match self {
-            Task::Background => "Remove Background",
-            Task::Denoise => "Denoise",
-            Task::Enhance => "Enhance Image",
+            Task::Background => tr("Remove Background"),
+            Task::Denoise => tr("Denoise"),
+            Task::Enhance => tr("Enhance Image"),
         }
     }
 }
@@ -326,24 +327,24 @@ const RELEASES: &str = "https://github.com/danielgatis/rembg/releases/download/v
 const SCUNET: &str = "https://huggingface.co/Heliosoph/scunet-onnx/resolve/6d11417ee2fbcc73783c502a238ac115097754fe";
 const SWINIR: &str = "https://huggingface.co/Heliosoph/swinir-onnx/resolve/a4a77e2c33c32cfa4f39953b2aa87afec7f34aef";
 const BSRGAN: &str = "https://huggingface.co/FuryTMP/BSRGANx4_fp16/resolve/9359c20a3c91f930cdba220a31129ff9f8997791";
-const HELIOSOPH: Option<&str> = Some("Converted to ONNX by Heliosoph LLC from the authors' published weights.");
+const HELIOSOPH: Option<&str> = Some(tr_key("Converted to ONNX by Heliosoph LLC from the authors' published weights."));
 const SCUNET_LICENSES: &[License] = &[SCUNET_LICENSE, HELIOSOPH_SCUNET_LICENSE];
 
 /// In order of preference within each task: the first one installed is that task's default.
 pub const CATALOG: [Known; 13] = [
-    Known { file: "silueta.onnx", label: "Silueta — small and fast", task: Task::Background, mb: 44, sha256: "75da6c8d2f8096ec743d071951be73b4a8bc7b3e51d9a6625d63644f90ffeedb", base: RELEASES, data: None, pre: Some(U2NET), converted_by: None, scale: 1, max_tile: 512, notice: None, licenses: &[U2NET_LICENSE, REMBG_LICENSE] },
-    Known { file: "u2netp.onnx", label: "U²-Net small — fastest", task: Task::Background, mb: 5, sha256: "309c8469258dda742793dce0ebea8e6dd393174f89934733ecc8b14c76f4ddd8", base: RELEASES, data: None, pre: Some(U2NET), converted_by: None, scale: 1, max_tile: 512, notice: None, licenses: &[U2NET_LICENSE] },
-    Known { file: "u2net.onnx", label: "U²-Net — general", task: Task::Background, mb: 176, sha256: "8d10d2f3bb75ae3b6d527c77944fc5e7dcd94b29809d47a739a7a728a912b491", base: RELEASES, data: None, pre: Some(U2NET), converted_by: None, scale: 1, max_tile: 512, notice: None, licenses: &[U2NET_LICENSE] },
-    Known { file: "u2net_human_seg.onnx", label: "U²-Net people — portraits", task: Task::Background, mb: 176, sha256: "01eb6a29a5c4d8edb30b56adad9bb3a2a0535338e480724a213e0acfd2d1c73c", base: RELEASES, data: None, pre: Some(U2NET), converted_by: None, scale: 1, max_tile: 512, notice: None, licenses: &[U2NET_LICENSE] },
-    Known { file: "isnet-general-use.onnx", label: "IS-Net — general, clean edges", task: Task::Background, mb: 179, sha256: "60920e99c45464f2ba57bee2ad08c919a52bbf852739e96947fbb4358c0d964a", base: RELEASES, data: None, pre: Some(ISNET), converted_by: None, scale: 1, max_tile: 512, notice: None, licenses: &[DIS_LICENSE] },
-    Known { file: "isnet-anime.onnx", label: "IS-Net anime — illustrations", task: Task::Background, mb: 176, sha256: "f15622d853e8260172812b657053460e20806f04b9e05147d49af7bed31a6e99", base: RELEASES, data: None, pre: Some(ISNET), converted_by: None, scale: 1, max_tile: 512, notice: None, licenses: &[ANIME_LICENSE] },
-    Known { file: "BiRefNet-general-bb_swin_v1_tiny-epoch_232.onnx", label: "BiRefNet lite — best quality, slow", task: Task::Background, mb: 224, sha256: "5600024376f572a557870a5eb0afb1e5961636bef4e1e22132025467d0f03333", base: RELEASES, data: None, pre: Some(BIREFNET), converted_by: None, scale: 1, max_tile: 512, notice: None, licenses: &[BIREFNET_LICENSE] },
-    Known { file: "scunet_color_real_psnr.onnx", label: "SCUNet — noise and JPEG artifacts (recommended)", task: Task::Denoise, mb: 77, sha256: "231be201ab413dbc999d7951caa9844846b93a12a40a41e037d6b5888ed4e88c", base: SCUNET, data: Some(("scunet_color_real_psnr.onnx.data", "98825ea1210b641c71e5f052f582c70c49fd44b35387ebe2c034268c17df3feb")), pre: None, converted_by: HELIOSOPH, scale: 1, max_tile: 512, notice: None, licenses: SCUNET_LICENSES },
-    Known { file: "scunet_color_15.onnx", label: "SCUNet σ15 — light noise", task: Task::Denoise, mb: 77, sha256: "228dfb72f8b5e23d35c0a92048b46ada31676b34e90a1ced6d221377861ffd6b", base: SCUNET, data: Some(("scunet_color_15.onnx.data", "4f2cdeeade2744b8fefdae9d572c8c71d84bc153e4863579c5f8fe680a3b1c74")), pre: None, converted_by: HELIOSOPH, scale: 1, max_tile: 512, notice: None, licenses: SCUNET_LICENSES },
-    Known { file: "scunet_color_25.onnx", label: "SCUNet σ25 — moderate noise", task: Task::Denoise, mb: 77, sha256: "76170f1fcb84d3b3d38c4e7133a658bbbb70504e3dc5e4e4d1f7b0c395c093be", base: SCUNET, data: Some(("scunet_color_25.onnx.data", "f46aa0f533e5bb8b2485a6531a205e270f4a7be2447880a12d97f5f00b1e70c9")), pre: None, converted_by: HELIOSOPH, scale: 1, max_tile: 512, notice: None, licenses: SCUNET_LICENSES },
-    Known { file: "scunet_color_50.onnx", label: "SCUNet σ50 — heavy noise", task: Task::Denoise, mb: 77, sha256: "691b995af0700809ddf882265de4a68373b2d2af9d4a89daca662b828686229d", base: SCUNET, data: Some(("scunet_color_50.onnx.data", "a12e0931304ea43d3367d5f5848099e46fdafe07fd2126ed207ceca02989d446")), pre: None, converted_by: HELIOSOPH, scale: 1, max_tile: 512, notice: None, licenses: SCUNET_LICENSES },
-    Known { file: "swinir_denoising_color_25.onnx", label: "SwinIR σ25 — moderate noise, very slow", task: Task::Denoise, mb: 55, sha256: "5fb427215c6a893b4c4aa27b6ab0aad66742fb9cb7ab24f65eff27b09cc2ea74", base: SWINIR, data: None, pre: None, converted_by: HELIOSOPH, scale: 1, max_tile: 512, notice: None, licenses: &[SWINIR_LICENSE, HELIOSOPH_SWINIR_LICENSE] },
-    Known { file: "BSRGANx4_fp16.onnx", label: "BSRGAN 4× — upscales and sharpens, may invent detail", task: Task::Enhance, mb: 33, sha256: "9682732b50a4ab4d78a3c84220702b4063e11cccb2bf50ca27ea2b572dedd173", base: BSRGAN, data: None, pre: None, converted_by: Some("ONNX export (half precision) by FuryTMP on Hugging Face; its origin isn't verified."), scale: 4, max_tile: 256, notice: None, licenses: &[BSRGAN_LICENSE] },
+    Known { file: "silueta.onnx", label: tr_key("Silueta — small and fast"), task: Task::Background, mb: 44, sha256: "75da6c8d2f8096ec743d071951be73b4a8bc7b3e51d9a6625d63644f90ffeedb", base: RELEASES, data: None, pre: Some(U2NET), converted_by: None, scale: 1, max_tile: 512, notice: None, licenses: &[U2NET_LICENSE, REMBG_LICENSE] },
+    Known { file: "u2netp.onnx", label: tr_key("U²-Net small — fastest"), task: Task::Background, mb: 5, sha256: "309c8469258dda742793dce0ebea8e6dd393174f89934733ecc8b14c76f4ddd8", base: RELEASES, data: None, pre: Some(U2NET), converted_by: None, scale: 1, max_tile: 512, notice: None, licenses: &[U2NET_LICENSE] },
+    Known { file: "u2net.onnx", label: tr_key("U²-Net — general"), task: Task::Background, mb: 176, sha256: "8d10d2f3bb75ae3b6d527c77944fc5e7dcd94b29809d47a739a7a728a912b491", base: RELEASES, data: None, pre: Some(U2NET), converted_by: None, scale: 1, max_tile: 512, notice: None, licenses: &[U2NET_LICENSE] },
+    Known { file: "u2net_human_seg.onnx", label: tr_key("U²-Net people — portraits"), task: Task::Background, mb: 176, sha256: "01eb6a29a5c4d8edb30b56adad9bb3a2a0535338e480724a213e0acfd2d1c73c", base: RELEASES, data: None, pre: Some(U2NET), converted_by: None, scale: 1, max_tile: 512, notice: None, licenses: &[U2NET_LICENSE] },
+    Known { file: "isnet-general-use.onnx", label: tr_key("IS-Net — general, clean edges"), task: Task::Background, mb: 179, sha256: "60920e99c45464f2ba57bee2ad08c919a52bbf852739e96947fbb4358c0d964a", base: RELEASES, data: None, pre: Some(ISNET), converted_by: None, scale: 1, max_tile: 512, notice: None, licenses: &[DIS_LICENSE] },
+    Known { file: "isnet-anime.onnx", label: tr_key("IS-Net anime — illustrations"), task: Task::Background, mb: 176, sha256: "f15622d853e8260172812b657053460e20806f04b9e05147d49af7bed31a6e99", base: RELEASES, data: None, pre: Some(ISNET), converted_by: None, scale: 1, max_tile: 512, notice: None, licenses: &[ANIME_LICENSE] },
+    Known { file: "BiRefNet-general-bb_swin_v1_tiny-epoch_232.onnx", label: tr_key("BiRefNet lite — best quality, slow"), task: Task::Background, mb: 224, sha256: "5600024376f572a557870a5eb0afb1e5961636bef4e1e22132025467d0f03333", base: RELEASES, data: None, pre: Some(BIREFNET), converted_by: None, scale: 1, max_tile: 512, notice: None, licenses: &[BIREFNET_LICENSE] },
+    Known { file: "scunet_color_real_psnr.onnx", label: tr_key("SCUNet — noise and JPEG artifacts (recommended)"), task: Task::Denoise, mb: 77, sha256: "231be201ab413dbc999d7951caa9844846b93a12a40a41e037d6b5888ed4e88c", base: SCUNET, data: Some(("scunet_color_real_psnr.onnx.data", "98825ea1210b641c71e5f052f582c70c49fd44b35387ebe2c034268c17df3feb")), pre: None, converted_by: HELIOSOPH, scale: 1, max_tile: 512, notice: None, licenses: SCUNET_LICENSES },
+    Known { file: "scunet_color_15.onnx", label: tr_key("SCUNet σ15 — light noise"), task: Task::Denoise, mb: 77, sha256: "228dfb72f8b5e23d35c0a92048b46ada31676b34e90a1ced6d221377861ffd6b", base: SCUNET, data: Some(("scunet_color_15.onnx.data", "4f2cdeeade2744b8fefdae9d572c8c71d84bc153e4863579c5f8fe680a3b1c74")), pre: None, converted_by: HELIOSOPH, scale: 1, max_tile: 512, notice: None, licenses: SCUNET_LICENSES },
+    Known { file: "scunet_color_25.onnx", label: tr_key("SCUNet σ25 — moderate noise"), task: Task::Denoise, mb: 77, sha256: "76170f1fcb84d3b3d38c4e7133a658bbbb70504e3dc5e4e4d1f7b0c395c093be", base: SCUNET, data: Some(("scunet_color_25.onnx.data", "f46aa0f533e5bb8b2485a6531a205e270f4a7be2447880a12d97f5f00b1e70c9")), pre: None, converted_by: HELIOSOPH, scale: 1, max_tile: 512, notice: None, licenses: SCUNET_LICENSES },
+    Known { file: "scunet_color_50.onnx", label: tr_key("SCUNet σ50 — heavy noise"), task: Task::Denoise, mb: 77, sha256: "691b995af0700809ddf882265de4a68373b2d2af9d4a89daca662b828686229d", base: SCUNET, data: Some(("scunet_color_50.onnx.data", "a12e0931304ea43d3367d5f5848099e46fdafe07fd2126ed207ceca02989d446")), pre: None, converted_by: HELIOSOPH, scale: 1, max_tile: 512, notice: None, licenses: SCUNET_LICENSES },
+    Known { file: "swinir_denoising_color_25.onnx", label: tr_key("SwinIR σ25 — moderate noise, very slow"), task: Task::Denoise, mb: 55, sha256: "5fb427215c6a893b4c4aa27b6ab0aad66742fb9cb7ab24f65eff27b09cc2ea74", base: SWINIR, data: None, pre: None, converted_by: HELIOSOPH, scale: 1, max_tile: 512, notice: None, licenses: &[SWINIR_LICENSE, HELIOSOPH_SWINIR_LICENSE] },
+    Known { file: "BSRGANx4_fp16.onnx", label: tr_key("BSRGAN 4× — upscales and sharpens, may invent detail"), task: Task::Enhance, mb: 33, sha256: "9682732b50a4ab4d78a3c84220702b4063e11cccb2bf50ca27ea2b572dedd173", base: BSRGAN, data: None, pre: None, converted_by: Some(tr_key("ONNX export (half precision) by FuryTMP on Hugging Face; its origin isn't verified.")), scale: 4, max_tile: 256, notice: None, licenses: &[BSRGAN_LICENSE] },
 ];
 
 const FROM_LIGHTVIEW_MODELS: Known = Known { file: "", label: "", task: Task::Enhance, mb: 0, sha256: "", base: "", data: None, pre: None, converted_by: None, scale: 4, max_tile: 256, notice: None, licenses: &[] };
@@ -355,11 +356,11 @@ pub const LIGHTVIEW_MODELS_URL: &str = "https://github.com/pyubero/lightview-mod
 /// files into the models folder, so they're never offered for download. Lightview only recognises
 /// them by file name, for their task, tile size and notice. In order of preference, after `CATALOG`.
 pub const SELF_CONVERTED: [Known; 5] = [
-    Known { file: "RealESRGAN_x4plus_fp32.onnx", label: "Real-ESRGAN 4× — upscales, smooth, may invent detail", mb: 67, ..FROM_LIGHTVIEW_MODELS },
-    Known { file: "RealESRGAN_x4plus_fp16.onnx", label: "Real-ESRGAN 4× half precision", mb: 34, ..FROM_LIGHTVIEW_MODELS },
-    Known { file: "realesr-general-x4v3_fp32.onnx", label: "Real-ESRGAN general 4× — fast, softer", mb: 5, ..FROM_LIGHTVIEW_MODELS },
-    Known { file: "realesr-general-x4v3_fp16.onnx", label: "Real-ESRGAN general 4× half precision", mb: 3, ..FROM_LIGHTVIEW_MODELS },
-    Known { file: "DarkIR_384.onnx", label: "DarkIR — dark and night photos, same size", mb: 14, scale: 1, max_tile: 1024, notice: Some("DarkIR brightens dark and night photos and removes their noise and blur. On a well-lit photo it overexposes."), ..FROM_LIGHTVIEW_MODELS },
+    Known { file: "RealESRGAN_x4plus_fp32.onnx", label: tr_key("Real-ESRGAN 4× — upscales, smooth, may invent detail"), mb: 67, ..FROM_LIGHTVIEW_MODELS },
+    Known { file: "RealESRGAN_x4plus_fp16.onnx", label: tr_key("Real-ESRGAN 4× half precision"), mb: 34, ..FROM_LIGHTVIEW_MODELS },
+    Known { file: "realesr-general-x4v3_fp32.onnx", label: tr_key("Real-ESRGAN general 4× — fast, softer"), mb: 5, ..FROM_LIGHTVIEW_MODELS },
+    Known { file: "realesr-general-x4v3_fp16.onnx", label: tr_key("Real-ESRGAN general 4× half precision"), mb: 3, ..FROM_LIGHTVIEW_MODELS },
+    Known { file: "DarkIR_384.onnx", label: tr_key("DarkIR — dark and night photos, same size"), mb: 14, scale: 1, max_tile: 1024, notice: Some(tr_key("DarkIR brightens dark and night photos and removes their noise and blur. On a well-lit photo it overexposes.")), ..FROM_LIGHTVIEW_MODELS },
 ];
 
 fn models_dir() -> Result<PathBuf, String> {
@@ -439,11 +440,11 @@ fn download_to(dir: &Path, k: &Known) -> Result<(), String> {
 
 /// Copies a model file the user picked into the models folder; never replaces one.
 pub fn add_model(src: &Path) -> Result<String, String> {
-    let name = src.file_name().and_then(|n| n.to_str()).filter(|n| n.to_ascii_lowercase().ends_with(".onnx")).ok_or("pick an .onnx file")?.to_string();
+    let name = src.file_name().and_then(|n| n.to_str()).filter(|n| n.to_ascii_lowercase().ends_with(".onnx")).ok_or(tr("pick an .onnx file"))?.to_string();
     let dir = models_dir()?;
     let dest = dir.join(&name);
     if dest.exists() {
-        return Err(format!("{name} is already installed"));
+        return Err(trf("{name} is already installed", &[("name", &name)]));
     }
     std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
     let tmp = dir.join(format!("{name}.part"));
@@ -572,14 +573,14 @@ fn tiled(img: &RgbaImage, tile: usize, overlap: usize, mut run: impl FnMut(Vec<f
         if out.is_none() {
             let scale = ((res.len() / (3 * plane)) as f64).sqrt().round() as usize;
             if scale == 0 || 3 * plane * scale * scale != res.len() {
-                return Err("the model's output isn't a whole multiple of its input".into());
+                return Err(tr("the model's output isn't a whole multiple of its input").into());
             }
             out = Some((scale, with_alpha_of(img, scale)));
         }
         let (scale, result) = out.as_mut().unwrap();
         let (s, ts) = (*scale, tile * *scale);
         if res.len() != 3 * ts * ts {
-            return Err("the model's output changed size between tiles".into());
+            return Err(tr("the model's output changed size between tiles").into());
         }
         let ((ax, bx), (ay, by)) = (ox[xi], oy[yi]);
         for y in ay * s..by * s {
@@ -613,7 +614,7 @@ fn with_alpha_of(img: &RgbaImage, scale: usize) -> RgbaImage {
 /// The model's input size, from its first input's shape (…, H, W); 1024 when it's dynamic.
 pub fn input_size(file: &str) -> Result<u32, String> {
     let session = session(file)?;
-    let shape = session.inputs().first().and_then(|i| i.dtype().tensor_shape()).ok_or("the model has no image input")?;
+    let shape = session.inputs().first().and_then(|i| i.dtype().tensor_shape()).ok_or(tr("the model has no image input"))?;
     let dims: Vec<i64> = shape.iter().copied().collect();
     Ok(match dims.as_slice() {
         [.., h, w] if h == w && *h > 0 => *h as u32,
@@ -629,7 +630,7 @@ pub fn mask(file: &str, pre: &Preprocess, img: &RgbaImage) -> Result<GrayImage, 
     let tensor = ort::value::Tensor::from_array(([1usize, 3, s, s], input)).map_err(|e| e.to_string())?;
     let outputs = session.run(ort::inputs![tensor]).map_err(|e| e.to_string())?;
     let (_, pred) = outputs[0].try_extract_tensor::<f32>().map_err(|e| e.to_string())?;
-    let pred = pred.get(..s * s).ok_or("the model's output doesn't match its input size")?;
+    let pred = pred.get(..s * s).ok_or(tr("the model's output doesn't match its input size"))?;
     Ok(to_mask(pred, pre.size, pre.sigmoid, img.width(), img.height()))
 }
 
@@ -650,16 +651,15 @@ fn input(pre: &Preprocess, img: &RgbaImage) -> Vec<f32> {
 /// One licence of a download (`step` of `count`, from 0). Some(true) accepts it, Some(false) cancels.
 /// The text scrolls within the window's height, so the buttons stay on screen.
 pub fn license_ui(ui: &mut egui::Ui, title: &str, l: &License, step: usize, count: usize, note: Option<&str>) -> Option<bool> {
-    let of = if count > 1 { format!(" ({} of {count})", step + 1) } else { String::new() };
-    ui.heading(format!("Licence{of} — {title}"));
-    ui.label("Please read and accept the licence before downloading.");
+    ui.heading(if count > 1 { trf("Licence ({step} of {count}) — {title}", &[("step", &(step + 1)), ("count", &count), ("title", &title)]) } else { trf("Licence — {title}", &[("title", &title)]) });
+    ui.label(tr("Please read and accept the licence before downloading."));
     if let Some(note) = note {
         ui.weak(note);
     }
     ui.add_space(6.0);
     ui.horizontal(|ui| {
         ui.strong(format!("{} — {}", l.project, l.spdx));
-        if ui.button("Open project page").clicked() {
+        if ui.button(tr("Open project page")).clicked() {
             // shortcut: xdg-open is Linux only.
             drop(std::process::Command::new("xdg-open").arg(l.url).spawn());
         }
@@ -671,8 +671,8 @@ pub fn license_ui(ui: &mut egui::Ui, title: &str, l: &License, step: usize, coun
     });
     ui.add_space(6.0);
     ui.horizontal(|ui| {
-        let accept = ui.button(if step + 1 < count { "Accept and Continue" } else { "Accept and Download" }).clicked();
-        let cancel = ui.button("Cancel").clicked();
+        let accept = ui.button(if step + 1 < count { tr("Accept and Continue") } else { tr("Accept and Download") }).clicked();
+        let cancel = ui.button(tr("Cancel")).clicked();
         accept.then_some(true).or(cancel.then_some(false))
     })
     .inner
@@ -684,31 +684,31 @@ fn gpu_ui(ui: &mut egui::Ui, use_gpu: &mut bool, downloading: bool, out: &mut Mo
         return;
     }
     ui.add_space(4.0);
-    ui.strong("GPU (NVIDIA)");
+    ui.strong(tr("GPU (NVIDIA)"));
     if gpu_installed() {
-        ui.checkbox(use_gpu, "Use the GPU").on_hover_text("Denoise and Enhance run about 10× faster on a GTX 1050");
+        ui.checkbox(use_gpu, tr("Use the GPU")).on_hover_text(tr("Denoise and Enhance run about 10× faster on a GTX 1050"));
         if gpu_needs_restart() {
-            ui.colored_label(ui.visuals().warn_fg_color, "Restart lightview to start using the GPU.");
+            ui.colored_label(ui.visuals().warn_fg_color, tr("Restart lightview to start using the GPU."));
         } else if let Some(e) = gpu_error().filter(|_| *use_gpu) {
-            ui.colored_label(ui.visuals().warn_fg_color, format!("The GPU couldn't be used, so the CPU is: {}", short_error(&e)));
+            ui.colored_label(ui.visuals().warn_fg_color, trf("The GPU couldn't be used, so the CPU is: {e}", &[("e", &short_error(&e))]));
         }
     } else {
         ui.horizontal(|ui| {
-            ui.label(format!("Run the AI tools on the graphics card ({} MB download, NVIDIA's CUDA libraries).", GPU_DOWNLOAD_MB));
-            out.download_gpu = ui.add_enabled(!downloading, egui::Button::new(if downloading { "Downloading…" } else { "Download GPU Support" })).clicked();
+            ui.label(trf("Run the AI tools on the graphics card ({mb} MB download, NVIDIA's CUDA libraries).", &[("mb", &GPU_DOWNLOAD_MB)]));
+            out.download_gpu = ui.add_enabled(!downloading, egui::Button::new(if downloading { tr("Downloading…") } else { tr("Download GPU Support") })).clicked();
         });
     }
 }
 
 /// The paragraphs of the notice shown before an Enhance model is first used.
 pub fn enhance_notice(file: &str) -> Vec<String> {
-    const GENERATIVE: &str = "Enhance Image uses generative AI. To make the image look better it may invent or alter fine details, such as textures, text or faces, that weren't in the original.";
+    const GENERATIVE: &str = tr_key("Enhance Image uses generative AI. To make the image look better it may invent or alter fine details, such as textures, text or faces, that weren't in the original.");
     let k = known(file);
-    let mut lines = vec![k.and_then(|k| k.notice).unwrap_or(GENERATIVE).to_string()];
+    let mut lines = vec![tr(k.and_then(|k| k.notice).unwrap_or(GENERATIVE)).to_string()];
     if let Some(k) = k.filter(|k| k.scale > 1) {
-        lines.push(format!("It also makes the image {}× bigger ({}× the pixels), which takes a while for a big photo.", k.scale, k.scale * k.scale));
+        lines.push(trf("It also makes the image {k}× bigger ({pixels}× the pixels), which takes a while for a big photo.", &[("k", &k.scale), ("pixels", &(k.scale * k.scale))]));
     }
-    lines.push("For a faithful clean-up, use Denoise instead.".into());
+    lines.push(tr("For a faithful clean-up, use Denoise instead.").into());
     lines
 }
 
@@ -728,15 +728,15 @@ pub struct ModelsOut {
 /// preprocessing) and the catalog to download from. `busy` holds files being downloaded.
 pub fn models_ui(ui: &mut egui::Ui, s: &mut AiSettings, installed: &[String], busy: &HashSet<String>, runtime: bool) -> ModelsOut {
     let mut out = ModelsOut::default();
-    ui.heading("AI Models");
+    ui.heading(tr("AI Models"));
     if !runtime {
-        ui.colored_label(ui.visuals().warn_fg_color, "The AI runtime isn't installed yet: Tools > Download AI Runtime…");
+        ui.colored_label(ui.visuals().warn_fg_color, tr("The AI runtime isn't installed yet: Tools > Download AI Runtime…"));
     }
     gpu_ui(ui, &mut s.use_gpu, busy.contains("gpu"), &mut out);
     let name = |f: &str| {
         let mb = models_dir().ok().and_then(|d| std::fs::metadata(d.join(f)).ok()).map_or(0, |m| m.len().div_ceil(1_000_000));
         match known(f) {
-            Some(k) => format!("{} ({} MB)", k.label, k.mb),
+            Some(k) => format!("{} ({} MB)", tr(k.label), k.mb),
             None => format!("{f} ({mb} MB)"),
         }
     };
@@ -747,10 +747,10 @@ pub fn models_ui(ui: &mut egui::Ui, s: &mut AiSettings, installed: &[String], bu
             let models = for_task(task, installed);
             let current = choose(s.choice(task), task, installed);
             if models.is_empty() {
-                ui.weak("No model installed yet.");
+                ui.weak(tr("No model installed yet."));
             } else {
                 ui.horizontal(|ui| {
-                    ui.label("Model");
+                    ui.label(tr("Model"));
                     egui::ComboBox::from_id_salt(("ai-model", task.title())).selected_text(current.as_deref().map(name).unwrap_or_default()).show_ui(ui, |ui| {
                         for f in &models {
                             if ui.selectable_label(current.as_ref() == Some(f), name(f)).on_hover_text(f).clicked() {
@@ -760,24 +760,24 @@ pub fn models_ui(ui: &mut egui::Ui, s: &mut AiSettings, installed: &[String], bu
                     });
                 });
                 if task == Task::Background {
-                    ui.weak("Used by Remove Background and Remove Background and Crop.");
+                    ui.weak(tr("Used by Remove Background and Remove Background and Crop."));
                     for f in &models {
-                        egui::CollapsingHeader::new(format!("Preprocessing: {f}")).id_salt(("pre", f)).show(ui, |ui| preprocess_ui(ui, s, f, runtime, &mut out));
+                        egui::CollapsingHeader::new(trf("Preprocessing: {file}", &[("file", &f)])).id_salt(("pre", f)).show(ui, |ui| preprocess_ui(ui, s, f, runtime, &mut out));
                     }
                 }
             }
             if task == Task::Enhance {
-                ui.weak("Real-ESRGAN and DarkIR can't be downloaded here. Convert them yourself with lightview-models, then copy the .onnx files into the models folder:");
+                ui.weak(tr("Real-ESRGAN and DarkIR can't be downloaded here. Convert them yourself with lightview-models, then copy the .onnx files into the models folder:"));
                 ui.hyperlink(LIGHTVIEW_MODELS_URL);
             }
             let mut available: Vec<(usize, &Known)> = CATALOG.iter().enumerate().filter(|(_, k)| k.task == task && !installed.iter().any(|f| f == k.file)).collect();
             available.sort_by_key(|(_, k)| k.mb);
             egui::Grid::new(("catalog-grid", task.title())).num_columns(3).spacing([16.0, 6.0]).show(ui, |ui| {
                 for (i, k) in available {
-                    ui.label(k.label);
+                    ui.label(tr(k.label));
                     ui.label(format!("{} MB", k.mb));
                     let downloading = busy.contains(k.file);
-                    if ui.add_enabled(!downloading, egui::Button::new(if downloading { "Downloading…" } else { "Download" })).clicked() {
+                    if ui.add_enabled(!downloading, egui::Button::new(if downloading { tr("Downloading…") } else { tr("Download") })).clicked() {
                         out.download = Some(i);
                     }
                     ui.end_row();
@@ -787,11 +787,11 @@ pub fn models_ui(ui: &mut egui::Ui, s: &mut AiSettings, installed: &[String], bu
     });
     ui.add_space(8.0);
     ui.horizontal(|ui| {
-        out.add = ui.button("Add model file…").clicked();
-        if ui.button("Open models folder").clicked() {
+        out.add = ui.button(tr("Add model file…")).clicked();
+        if ui.button(tr("Open models folder")).clicked() {
             open_folder();
         }
-        out.close = ui.button("Close").clicked();
+        out.close = ui.button(tr("Close")).clicked();
     });
     out
 }
@@ -800,15 +800,15 @@ pub fn models_ui(ui: &mut egui::Ui, s: &mut AiSettings, installed: &[String], bu
 fn preprocess_ui(ui: &mut egui::Ui, s: &mut AiSettings, f: &str, runtime: bool, out: &mut ModelsOut) {
     let current = preset(f, &s.overrides);
     if current.is_none() {
-        ui.weak("Size read from the model when it runs; the usual normalisation.");
+        ui.weak(tr("Size read from the model when it runs; the usual normalisation."));
     }
     let mut p = current.unwrap_or(Preprocess::auto(1024));
     let before = p;
     egui::Grid::new(("pre-grid", f)).num_columns(2).spacing([12.0, 6.0]).show(ui, |ui| {
-        ui.label("Input size");
+        ui.label(tr("Input size"));
         ui.add(egui::DragValue::new(&mut p.size).range(32..=4096).suffix(" px"));
         ui.end_row();
-        for (label, values, range) in [("Mean (R, G, B)", &mut p.mean, 0.0..=1.0), ("Std (R, G, B)", &mut p.std, 0.001..=10.0)] {
+        for (label, values, range) in [(tr("Mean (R, G, B)"), &mut p.mean, 0.0..=1.0), (tr("Std (R, G, B)"), &mut p.std, 0.001..=10.0)] {
             ui.label(label);
             ui.horizontal(|ui| {
                 for v in values.iter_mut() {
@@ -817,18 +817,18 @@ fn preprocess_ui(ui: &mut egui::Ui, s: &mut AiSettings, f: &str, runtime: bool, 
             });
             ui.end_row();
         }
-        ui.label("Output");
-        ui.checkbox(&mut p.sigmoid, "Apply sigmoid (the model outputs logits)");
+        ui.label(tr("Output"));
+        ui.checkbox(&mut p.sigmoid, tr("Apply sigmoid (the model outputs logits)"));
         ui.end_row();
     });
     if p != before {
         s.overrides.insert(f.to_string(), p);
     }
     ui.horizontal(|ui| {
-        if ui.add_enabled(runtime, egui::Button::new("Detect size")).on_hover_text("Read the input size from the model").clicked() {
+        if ui.add_enabled(runtime, egui::Button::new(tr("Detect size"))).on_hover_text(tr("Read the input size from the model")).clicked() {
             out.detect = Some(f.to_string());
         }
-        if ui.add_enabled(s.overrides.contains_key(f), egui::Button::new("Reset to default")).clicked() {
+        if ui.add_enabled(s.overrides.contains_key(f), egui::Button::new(tr("Reset to default"))).clicked() {
             s.overrides.remove(f);
         }
     });

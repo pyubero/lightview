@@ -129,6 +129,12 @@ Numbering continues from v1.
 - Real-ESRGAN x4plus and realesr-general-x4v3 (fp32 and fp16) are converted there too, and run on 256 px tiles.
 - `lightview-models` publishes no ONNX files, so these five aren't in the catalog: each user converts them and copies them into the models folder. Lightview recognises them by file name (`SELF_CONVERTED` in `ai.rs`) and lists them under Enhance. See `README.md`.
 
+### 20. Multilingual UI ✅ (2026-10-30)
+- English, Spanish (Spain), French, German, Italian and Portuguese (Portugal), chosen in Edit → Settings and applied at once. First launch takes the system language if it's one of the six, otherwise English.
+- The English text is the key: `tr`/`trf` in `src/i18n.rs` look it up in `locales/*.tsv`. Text in `const` tables is marked with `tr_key` and shown through `tr`.
+- Licence texts, error detail from the OS or libraries, shortcuts and format names stay English.
+- **Done when** tests show every string in the code exists in all five tables with matching placeholders and drawable characters.
+
 ## Future ideas
 - Convert the best FOSS restoration and upscaling models (BSRGAN, Real-ESRGAN, …) to ONNX ourselves, with documented scripts in a separate repo that users run themselves, instead of relying on third-party uploads. Done for DarkIR and Real-ESRGAN (18c); BSRGAN is still the third-party upload.
 - **Diffusion restorers (DiffBIR, HYPIR), looked at 2026-10-29, not adopted.** Both are by XPixelGroup and built on Stable Diffusion 2.1.

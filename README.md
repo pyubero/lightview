@@ -17,6 +17,8 @@ when you choose to save.
 - **Markup.** Freehand sketching, shapes, arrows, text, highlights, a magnifier and a measuring tool.
 - **Metadata.** An inspector sidebar for image information, and EXIF editing for JPEGs, which always
   saves to a copy.
+- **Six languages.** English, Spanish, French, German, Italian and Portuguese. lightview starts in
+  your system's language and you can change it in Edit → Settings.
 - **Optional AI tools.** Background removal, denoising, and upscaling or low-light enhancement. They
   run locally on your machine, and nothing is installed until you ask for it.
 

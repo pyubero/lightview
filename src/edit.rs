@@ -1,3 +1,4 @@
+use crate::i18n::tr;
 use crate::load::Frame;
 use crate::markup::{self, Element};
 use crate::view::Transform;
@@ -288,10 +289,10 @@ pub fn render(frame: &Frame, doc: &Doc) -> Result<DynamicImage, String> {
 pub fn adjust_ui(ui: &mut egui::Ui, a: &mut Adjust, auto_levels: impl FnOnce() -> [[u8; 2]; 3]) -> Option<bool> {
     egui::Grid::new("adjust-grid").num_columns(2).spacing([16.0, 8.0]).show(ui, |ui| {
         for (label, value, range) in [
-            ("Exposure", &mut a.exposure, -3.0..=3.0),
-            ("Contrast", &mut a.contrast, -1.0..=1.0),
-            ("Saturation", &mut a.saturation, -1.0..=1.0),
-            ("Tint", &mut a.tint, -1.0..=1.0),
+            (tr("Exposure"), &mut a.exposure, -3.0..=3.0),
+            (tr("Contrast"), &mut a.contrast, -1.0..=1.0),
+            (tr("Saturation"), &mut a.saturation, -1.0..=1.0),
+            (tr("Tint"), &mut a.tint, -1.0..=1.0),
         ] {
             ui.label(label);
             ui.add(egui::Slider::new(value, range).fixed_decimals(2));
@@ -300,17 +301,17 @@ pub fn adjust_ui(ui: &mut egui::Ui, a: &mut Adjust, auto_levels: impl FnOnce() -
     });
     ui.horizontal(|ui| {
         let mut levels = a.levels.is_some();
-        if ui.checkbox(&mut levels, "Auto Levels").changed() {
+        if ui.checkbox(&mut levels, tr("Auto Levels")).changed() {
             a.levels = levels.then(auto_levels);
         }
-        if ui.button("Reset").clicked() {
+        if ui.button(tr("Reset")).clicked() {
             *a = Adjust::default();
         }
     });
     ui.add_space(6.0);
     ui.horizontal(|ui| {
-        let done = ui.button("Done").clicked();
-        let cancel = ui.button("Cancel").clicked();
+        let done = ui.button(tr("Done")).clicked();
+        let cancel = ui.button(tr("Cancel")).clicked();
         done.then_some(true).or(cancel.then_some(false))
     }).inner
 }
@@ -363,37 +364,37 @@ impl ResizeDialog {
 
 /// The Resize dialog body: Some(true) to resize, Some(false) to cancel.
 pub fn resize_ui(ui: &mut egui::Ui, d: &mut ResizeDialog) -> Option<bool> {
-    ui.heading("Resize");
+    ui.heading(tr("Resize"));
     egui::Grid::new("resize-grid").num_columns(2).spacing([16.0, 8.0]).show(ui, |ui| {
         let (mut w, mut h, mut percent) = (d.w, d.h, d.percent);
-        ui.label("Width");
+        ui.label(tr("Width"));
         if ui.add(egui::DragValue::new(&mut w).range(1..=65535).suffix(" px")).changed() {
             d.set_width(w);
         }
         ui.end_row();
-        ui.label("Height");
+        ui.label(tr("Height"));
         if ui.add(egui::DragValue::new(&mut h).range(1..=65535).suffix(" px")).changed() {
             d.set_height(h);
         }
         ui.end_row();
         ui.label("");
-        if ui.checkbox(&mut d.keep_aspect, "Keep aspect ratio").changed() && d.keep_aspect {
+        if ui.checkbox(&mut d.keep_aspect, tr("Keep aspect ratio")).changed() && d.keep_aspect {
             d.set_width(d.w);
         }
         ui.end_row();
-        ui.label("Percentage");
+        ui.label(tr("Percentage"));
         if ui.add(egui::DragValue::new(&mut percent).range(1.0..=1000.0).speed(0.5).suffix(" %")).changed() {
             d.set_percent(percent);
         }
         ui.end_row();
-        ui.label("Resolution");
-        ui.add(egui::DragValue::new(&mut d.dpi).range(1..=4800).suffix(" dpi")).on_hover_text("Saved in JPEG files");
+        ui.label(tr("Resolution"));
+        ui.add(egui::DragValue::new(&mut d.dpi).range(1..=4800).suffix(" dpi")).on_hover_text(tr("Saved in JPEG files"));
         ui.end_row();
     });
     ui.add_space(6.0);
     ui.horizontal(|ui| {
-        let ok = ui.button("Resize").clicked();
-        let cancel = ui.button("Cancel").clicked();
+        let ok = ui.button(tr("Resize")).clicked();
+        let cancel = ui.button(tr("Cancel")).clicked();
         ok.then_some(true).or(cancel.then_some(false))
     }).inner
 }

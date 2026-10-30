@@ -1,3 +1,4 @@
+use crate::i18n::{tr, tr_key, trf};
 use crate::save::write_atomic;
 use eframe::egui;
 use image::{ImageDecoder, ImageReader};
@@ -11,12 +12,12 @@ use std::path::{Path, PathBuf};
 
 /// The editable fields: label and the tag they map to.
 const FIELDS: [(&str, fn(String) -> ExifTag); 6] = [
-    ("Description", ExifTag::ImageDescription),
-    ("Artist", ExifTag::Artist),
-    ("Copyright", ExifTag::Copyright),
-    ("Date taken", ExifTag::DateTimeOriginal),
-    ("Camera make", ExifTag::Make),
-    ("Camera model", ExifTag::Model),
+    (tr_key("Description"), ExifTag::ImageDescription),
+    (tr_key("Artist"), ExifTag::Artist),
+    (tr_key("Copyright"), ExifTag::Copyright),
+    (tr_key("Date taken"), ExifTag::DateTimeOriginal),
+    (tr_key("Camera make"), ExifTag::Make),
+    (tr_key("Camera model"), ExifTag::Model),
 ];
 const DESCRIPTION: usize = 0;
 const DATE: usize = 3;
@@ -44,7 +45,7 @@ pub struct Dialog {
 fn guarded<T>(f: impl FnOnce() -> Result<T, std::io::Error>) -> Result<T, String> {
     match catch_unwind(AssertUnwindSafe(f)) {
         Ok(result) => result.map_err(|e| e.to_string()),
-        Err(_) => Err("this file's EXIF couldn't be processed".into()),
+        Err(_) => Err(tr("this file's EXIF couldn't be processed").into()),
     }
 }
 
@@ -58,7 +59,7 @@ fn metadata(jpeg: &Vec<u8>) -> Result<Metadata, String> {
         .and_then(|r| r.into_decoder().ok()?.exif_metadata().ok()?)
         .is_some_and(|e| !e.is_empty());
     if has_exif && (&m).into_iter().next().is_none() {
-        return Err("couldn't read this file's EXIF safely".into());
+        return Err(tr("couldn't read this file's EXIF safely").into());
     }
     Ok(m)
 }
@@ -99,7 +100,7 @@ fn summary(m: &Metadata) -> Vec<(&'static str, String)> {
     if let Some(mm) = rationals(m, &ExifTag::FocalLength(Vec::new())) {
         exposure.push(format!("{mm:.1} mm"));
     }
-    [("Camera", camera), ("Lens", string_value(m, &ExifTag::LensModel(String::new()))), ("Exposure", exposure.join(" · "))]
+    [(tr_key("Camera"), camera), (tr_key("Lens"), string_value(m, &ExifTag::LensModel(String::new()))), (tr_key("Exposure"), exposure.join(" · "))]
         .into_iter()
         .filter(|(_, v)| !v.is_empty())
         .collect()
@@ -180,16 +181,16 @@ fn apply(jpeg: &mut Vec<u8>, original: &Values, values: &Values, remove_gps: boo
     guarded(|| m.write_to_vec(jpeg, FileExtension::JPEG))?;
 
     // Check the written file: values as asked, location gone if asked, image still decodes.
-    let check = metadata(jpeg).map_err(|e| format!("the written file didn't check out: {e}"))?;
+    let check = metadata(jpeg).map_err(|e| trf("the written file didn't check out: {e}", &[("e", &e)]))?;
     for (i, (label, tag)) in FIELDS.iter().enumerate() {
         if string_value(&check, &tag(String::new())) != values[i].trim() {
-            return Err(format!("the written file didn't check out: {label} wasn't saved"));
+            return Err(trf("the written file didn't check out: {label} wasn't saved", &[("label", &tr(label))]));
         }
     }
     if remove_gps && (&check).into_iter().any(|t| t.get_group() == ExifTagGroup::GPS) {
-        return Err("the written file didn't check out: the location wasn't removed".into());
+        return Err(tr("the written file didn't check out: the location wasn't removed").into());
     }
-    image::load_from_memory(jpeg).map_err(|e| format!("the written file didn't check out: {e}"))?;
+    image::load_from_memory(jpeg).map_err(|e| trf("the written file didn't check out: {e}", &[("e", &e)]))?;
     Ok(())
 }
 
@@ -197,11 +198,11 @@ fn apply(jpeg: &mut Vec<u8>, original: &Values, values: &Values, remove_gps: boo
 pub fn write_copy(source: &Path, dest: &Path, original: &Values, values: &Values, remove_gps: bool) -> Result<(), String> {
     let ext = dest.extension().and_then(|e| e.to_str()).unwrap_or_default().to_ascii_lowercase();
     if ext != "jpg" && ext != "jpeg" {
-        return Err("the copy must be a .jpg file".into());
+        return Err(tr("the copy must be a .jpg file").into());
     }
     let dest_canonical = dest.parent().and_then(|d| std::fs::canonicalize(d).ok()).map(|d| d.join(dest.file_name().unwrap_or_default()));
     if dest_canonical == std::fs::canonicalize(source).ok() {
-        return Err("choose a new name: the original is never modified".into());
+        return Err(tr("choose a new name: the original is never modified").into());
     }
     let mut jpeg = std::fs::read(source).map_err(|e| e.to_string())?;
     apply(&mut jpeg, original, values, remove_gps)?;
@@ -233,23 +234,23 @@ pub fn sections_ui(ui: &mut egui::Ui, d: &mut Dialog) -> bool {
     egui::CollapsingHeader::new("EXIF").default_open(true).show(ui, |ui| {
         egui::Grid::new("exif-grid").num_columns(2).spacing([12.0, 6.0]).show(ui, |ui| {
             for (label, value) in &d.summary {
-                ui.label(*label);
+                ui.label(tr(label));
                 ui.label(value);
                 ui.end_row();
             }
             for (i, (label, _)) in FIELDS.iter().enumerate().filter(|(i, _)| *i != DESCRIPTION) {
-                ui.label(*label);
+                ui.label(tr(label));
                 ui.vertical(|ui| {
                     let hint = if i == DATE { "YYYY:MM:DD HH:MM:SS" } else { "" };
                     ui.add(egui::TextEdit::singleline(&mut d.values[i]).hint_text(hint).desired_width(f32::INFINITY));
                     if i == DATE && !valid_date(&d.values[i]) {
-                        ui.colored_label(ui.visuals().error_fg_color, "Use YYYY:MM:DD HH:MM:SS");
+                        ui.colored_label(ui.visuals().error_fg_color, tr("Use YYYY:MM:DD HH:MM:SS"));
                     }
                 });
                 ui.end_row();
             }
         });
-        egui::CollapsingHeader::new(format!("Other tags ({})", d.others.len())).show(ui, |ui| {
+        egui::CollapsingHeader::new(trf("Other tags ({count})", &[("count", &d.others.len())])).show(ui, |ui| {
             egui::ScrollArea::vertical().max_height(200.0).show(ui, |ui| {
                 for tag in &d.others {
                     ui.monospace(tag);
@@ -257,39 +258,39 @@ pub fn sections_ui(ui: &mut egui::Ui, d: &mut Dialog) -> bool {
             });
         });
     });
-    egui::CollapsingHeader::new("Location").default_open(true).show(ui, |ui| match d.gps {
+    egui::CollapsingHeader::new(tr("Location")).default_open(true).show(ui, |ui| match d.gps {
         Some((lat, lon)) => {
             ui.label(format_location((lat, lon)));
             ui.horizontal(|ui| {
                 // shortcut: xdg-open is Linux only; use the platform's opener on Windows.
                 let open = |url: String| drop(std::process::Command::new("xdg-open").arg(url).spawn());
-                if ui.button("Open in Google Maps").clicked() {
+                if ui.button(tr("Open in Google Maps")).clicked() {
                     open(format!("https://www.google.com/maps?q={lat},{lon}"));
                 }
                 if ui.button("OpenStreetMap").clicked() {
                     open(format!("https://www.openstreetmap.org/?mlat={lat}&mlon={lon}#map=16/{lat}/{lon}"));
                 }
             });
-            ui.checkbox(&mut d.remove_gps, "Remove location from the copy");
+            ui.checkbox(&mut d.remove_gps, tr("Remove location from the copy"));
         }
         None => {
-            ui.weak("No location in this file");
+            ui.weak(tr("No location in this file"));
         }
     });
-    egui::CollapsingHeader::new("Accessibility").default_open(true).show(ui, |ui| {
-        ui.label("Image description");
-        ui.add(egui::TextEdit::multiline(&mut d.values[DESCRIPTION]).hint_text("Describe the image for people who can't see it").desired_rows(3).desired_width(f32::INFINITY));
+    egui::CollapsingHeader::new(tr("Accessibility")).default_open(true).show(ui, |ui| {
+        ui.label(tr("Image description"));
+        ui.add(egui::TextEdit::multiline(&mut d.values[DESCRIPTION]).hint_text(tr("Describe the image for people who can't see it")).desired_rows(3).desired_width(f32::INFINITY));
     });
     ui.add_space(6.0);
     let changed = d.changed();
     let save = ui.horizontal(|ui| {
-        let save = ui.add_enabled(changed && valid_date(&d.values[DATE]), egui::Button::new("Save copy…")).clicked();
-        if ui.add_enabled(changed, egui::Button::new("Revert")).clicked() {
+        let save = ui.add_enabled(changed && valid_date(&d.values[DATE]), egui::Button::new(tr("Save copy…"))).clicked();
+        if ui.add_enabled(changed, egui::Button::new(tr("Revert"))).clicked() {
             (d.values, d.remove_gps) = (d.original.clone(), false);
         }
         save
     }).inner;
-    ui.weak("Saves a copy of the file with this metadata (without other edits). Camera maker notes are removed.");
+    ui.weak(tr("Saves a copy of the file with this metadata (without other edits). Camera maker notes are removed."));
     save
 }
 

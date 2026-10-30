@@ -2,7 +2,17 @@
 Type=Application
 Name=lightview
 GenericName=Image Viewer
+GenericName[es]=Visor de imágenes
+GenericName[fr]=Visionneuse d'images
+GenericName[de]=Bildbetrachter
+GenericName[it]=Visualizzatore di immagini
+GenericName[pt]=Visualizador de imagens
 Comment=A simple, fast image viewer
+Comment[es]=Un visor de imágenes sencillo y rápido
+Comment[fr]=Une visionneuse d'images simple et rapide
+Comment[de]=Ein einfacher, schneller Bildbetrachter
+Comment[it]=Un visualizzatore di immagini semplice e veloce
+Comment[pt]=Um visualizador de imagens simples e rápido
 Exec=lightview %f
 Icon=image-x-generic
 Terminal=false

@@ -1,3 +1,4 @@
+use crate::i18n::{tr, trf};
 use crate::edit::{self, Adjust, Doc, ResizeDialog};
 use crate::exif_edit;
 use crate::inspector::{self, Inspector};
@@ -366,18 +367,18 @@ impl App {
                                 d.elements.push(Element::pasted(Arc::new(img), region.min, region.size(), style));
                             }
                         });
-                        self.status = Some((format!("{} done", run.task.title()), Instant::now()));
+                        self.status = Some((trf("{task} done", &[("task", &run.task.title())]), Instant::now()));
                     }
-                    Err(e) if e == "cancelled" => self.status = Some(("Cancelled".into(), Instant::now())),
-                    Err(e) => self.status = Some((format!("{} failed: {e}", run.task.title()), Instant::now())),
+                    Err(e) if e == "cancelled" => self.status = Some((tr("Cancelled").into(), Instant::now())),
+                    Err(e) => self.status = Some((trf("{task} failed: {e}", &[("task", &run.task.title()), ("e", &e)]), Instant::now())),
                 }
             }
             Msg::Downloaded(file, result) => {
                 self.downloading.remove(&file);
                 self.status = Some((match result {
-                    Ok(()) if file == "gpu" => "GPU support installed: restart lightview to use it".into(),
-                    Ok(()) => format!("Downloaded {file}"),
-                    Err(e) => format!("Couldn't download {file}: {e}"),
+                    Ok(()) if file == "gpu" => tr("GPU support installed: restart lightview to use it").into(),
+                    Ok(()) => trf("Downloaded {file}", &[("file", &file)]),
+                    Err(e) => trf("Couldn't download {file}: {e}", &[("file", &file), ("e", &e)]),
                 }, Instant::now()));
             }
             Msg::Detected(file, result) => match result {
@@ -385,7 +386,7 @@ impl App {
                     let base = crate::ai::preset(&file, &self.settings.ai.overrides).unwrap_or(crate::ai::Preprocess::auto(size));
                     self.settings.ai.overrides.insert(file, crate::ai::Preprocess { size, ..base });
                 }
-                Err(e) => self.status = Some((format!("Couldn't read {file}: {e}"), Instant::now())),
+                Err(e) => self.status = Some((trf("Couldn't read {file}: {e}", &[("file", &file), ("e", &e)]), Instant::now())),
             },
             Msg::Cutout(path, result) => match result {
                 Ok((img, object)) if self.current() == Some(&path) => {
@@ -400,10 +401,10 @@ impl App {
                             d.crop_to(r);
                         }
                     });
-                    self.status = Some(("Done".into(), Instant::now()));
+                    self.status = Some((tr("Done").into(), Instant::now()));
                 }
                 Ok(_) => {}
-                Err(e) => self.status = Some((format!("Couldn't process the image: {e}"), Instant::now())),
+                Err(e) => self.status = Some((trf("Couldn't process the image: {e}", &[("e", &e)]), Instant::now())),
             },
             Msg::Open(path) => self.confirm(Pending::Open(path)),
             Msg::Folder(files) => {
@@ -440,8 +441,8 @@ impl App {
                 }
                 let name = path.file_name().unwrap_or_default().to_string_lossy().into_owned();
                 self.status = Some((match &result {
-                    Ok(()) => format!("Saved {name}"),
-                    Err(e) => format!("Couldn't save {name}: {e}"),
+                    Ok(()) => trf("Saved {name}", &[("name", &name)]),
+                    Err(e) => trf("Couldn't save {name}: {e}", &[("name", &name), ("e", &e)]),
                 }, Instant::now()));
                 let (Ok(()), Ok(path), Some(current)) = (result, std::fs::canonicalize(&path), self.current().cloned()) else { return };
                 if path == current {
@@ -630,7 +631,7 @@ impl App {
     }
 
     fn open_dialog(&self) {
-        let mut dialog = rfd::FileDialog::new().add_filter("Images", &load::EXTENSIONS);
+        let mut dialog = rfd::FileDialog::new().add_filter(tr("Images"), &load::EXTENSIONS);
         if let Some(dir) = self.current().and_then(|p| p.parent()) {
             dialog = dialog.set_directory(dir);
         }
@@ -678,11 +679,11 @@ impl App {
             }
         }
         egui::MenuBar::new().ui(ui, |ui| {
-            ui.menu_button("File", |ui| {
-                item(ui, "Open…", Action::Open, true, actions);
-                ui.menu_button("Open Recent", |ui| {
+            ui.menu_button(tr("File"), |ui| {
+                item(ui, tr("Open…"), Action::Open, true, actions);
+                ui.menu_button(tr("Open Recent"), |ui| {
                     if self.recent.is_empty() {
-                        ui.add_enabled(false, egui::Button::new("No recent files"));
+                        ui.add_enabled(false, egui::Button::new(tr("No recent files")));
                     }
                     for path in &self.recent {
                         let name = path.file_name().unwrap_or_default().to_string_lossy();
@@ -691,108 +692,108 @@ impl App {
                         }
                     }
                 });
-                item(ui, "Close", Action::Close, true, actions);
+                item(ui, tr("Close"), Action::Close, true, actions);
                 ui.separator();
-                item(ui, "Save As…", Action::SaveAs, can_save, actions);
+                item(ui, tr("Save As…"), Action::SaveAs, can_save, actions);
             });
-            ui.menu_button("Edit", |ui| {
-                item(ui, "Undo", Action::Undo, !self.undo.is_empty(), actions);
-                item(ui, "Redo", Action::Redo, !self.redo.is_empty(), actions);
+            ui.menu_button(tr("Edit"), |ui| {
+                item(ui, tr("Undo"), Action::Undo, !self.undo.is_empty(), actions);
+                item(ui, tr("Redo"), Action::Redo, !self.redo.is_empty(), actions);
                 ui.separator();
                 let selected = self.selection.is_some();
                 // Ctrl+C/X/V come as clipboard events, not key presses.
                 for (label, action, enabled, keys) in [
-                    ("Cut", Action::Cut, selected, "Ctrl+X"),
-                    ("Copy", Action::Copy, has_image, "Ctrl+C"),
-                    ("Paste", Action::Paste, has_image, "Ctrl+V"),
+                    (tr("Cut"), Action::Cut, selected, "Ctrl+X"),
+                    (tr("Copy"), Action::Copy, has_image, "Ctrl+C"),
+                    (tr("Paste"), Action::Paste, has_image, "Ctrl+V"),
                 ] {
                     if ui.add_enabled(enabled, egui::Button::new(label).shortcut_text(keys)).clicked() {
                         actions.push(action);
                     }
                 }
-                item(ui, "Delete Selection", Action::DeleteSelection, selected, actions);
+                item(ui, tr("Delete Selection"), Action::DeleteSelection, selected, actions);
                 ui.separator();
-                item(ui, "Select All", Action::SelectAll, has_image, actions);
-                item(ui, "Deselect", Action::Deselect, selected, actions);
+                item(ui, tr("Select All"), Action::SelectAll, has_image, actions);
+                item(ui, tr("Deselect"), Action::Deselect, selected, actions);
                 ui.separator();
-                item(ui, "Settings…", Action::Settings, true, actions);
+                item(ui, tr("Settings…"), Action::Settings, true, actions);
             });
-            ui.menu_button("View", |ui| {
-                item(ui, "Previous Image", Action::PrevImage, self.index > 0, actions);
-                item(ui, "Next Image", Action::NextImage, self.index + 1 < self.files.len(), actions);
+            ui.menu_button(tr("View"), |ui| {
+                item(ui, tr("Previous Image"), Action::PrevImage, self.index > 0, actions);
+                item(ui, tr("Next Image"), Action::NextImage, self.index + 1 < self.files.len(), actions);
                 ui.separator();
-                item(ui, "Zoom In", Action::ZoomIn, has_image, actions);
-                item(ui, "Zoom Out", Action::ZoomOut, has_image, actions);
-                item(ui, "Actual Size", Action::ActualSize, has_image, actions);
-                item(ui, "Fit to Window", Action::Fit, has_image, actions);
+                item(ui, tr("Zoom In"), Action::ZoomIn, has_image, actions);
+                item(ui, tr("Zoom Out"), Action::ZoomOut, has_image, actions);
+                item(ui, tr("Actual Size"), Action::ActualSize, has_image, actions);
+                item(ui, tr("Fit to Window"), Action::Fit, has_image, actions);
                 ui.separator();
-                item(ui, "Enter Full Screen", Action::Fullscreen, true, actions);
+                item(ui, tr("Enter Full Screen"), Action::Fullscreen, true, actions);
                 ui.separator();
-                let label = if self.show_info { "Hide Image Information" } else { "Show Image Information" };
+                let label = if self.show_info { tr("Hide Image Information") } else { tr("Show Image Information") };
                 item(ui, label, Action::Info, has_image, actions);
                 ui.separator();
                 let animated = loaded.is_some_and(|l| l.frames.len() > 1);
                 ui.add_enabled_ui(animated, |ui| {
-                    ui.menu_button("Animation", |ui| {
-                        item(ui, "Play Animation", Action::Play, self.anim_paused, actions);
-                        item(ui, "Pause Animation", Action::Pause, !self.anim_paused, actions);
-                        item(ui, "Next Frame", Action::NextFrame, true, actions);
-                        item(ui, "Previous Frame", Action::PrevFrame, true, actions);
+                    ui.menu_button(tr("Animation"), |ui| {
+                        item(ui, tr("Play Animation"), Action::Play, self.anim_paused, actions);
+                        item(ui, tr("Pause Animation"), Action::Pause, !self.anim_paused, actions);
+                        item(ui, tr("Next Frame"), Action::NextFrame, true, actions);
+                        item(ui, tr("Previous Frame"), Action::PrevFrame, true, actions);
                     });
                 });
             });
-            ui.menu_button("Image", |ui| {
-                item(ui, "Crop", Action::Crop, has_image, actions);
-                item(ui, "Resize…", Action::Resize, has_image, actions);
+            ui.menu_button(tr("Image"), |ui| {
+                item(ui, tr("Crop"), Action::Crop, has_image, actions);
+                item(ui, tr("Resize…"), Action::Resize, has_image, actions);
                 ui.separator();
-                item(ui, "Rotate Left", Action::RotateLeft, has_image, actions);
-                item(ui, "Rotate Right", Action::RotateRight, has_image, actions);
-                item(ui, "Flip Horizontally", Action::FlipHorizontal, has_image, actions);
-                item(ui, "Flip Vertically", Action::FlipVertical, has_image, actions);
+                item(ui, tr("Rotate Left"), Action::RotateLeft, has_image, actions);
+                item(ui, tr("Rotate Right"), Action::RotateRight, has_image, actions);
+                item(ui, tr("Flip Horizontally"), Action::FlipHorizontal, has_image, actions);
+                item(ui, tr("Flip Vertically"), Action::FlipVertical, has_image, actions);
                 ui.separator();
-                item(ui, "Adjust Color…", Action::AdjustColor, has_image, actions);
-                item(ui, "Auto Levels", Action::AutoLevels, has_image, actions);
-                item(ui, "Reset Color Adjustments", Action::ResetAdjust, has_image, actions);
+                item(ui, tr("Adjust Color…"), Action::AdjustColor, has_image, actions);
+                item(ui, tr("Auto Levels"), Action::AutoLevels, has_image, actions);
+                item(ui, tr("Reset Color Adjustments"), Action::ResetAdjust, has_image, actions);
                 ui.separator();
-                ui.weak("AI Image Processing");
+                ui.weak(tr("AI Image Processing"));
                 let runtime = crate::ai::runtime_installed();
                 let models = crate::ai::installed();
                 use crate::ai::Task;
                 let ready = |task| has_image && runtime && self.restoring.is_none() && crate::ai::choose(self.settings.ai.choice(task), task, &models).is_some();
-                item(ui, "Remove Background", Action::Cutout(false), ready(Task::Background), actions);
-                item(ui, "Remove Background and Crop", Action::Cutout(true), ready(Task::Background), actions);
-                item(ui, "Denoise", Action::Restore(Task::Denoise), ready(Task::Denoise), actions);
-                item(ui, "Enhance Image", Action::Restore(Task::Enhance), ready(Task::Enhance), actions);
+                item(ui, tr("Remove Background"), Action::Cutout(false), ready(Task::Background), actions);
+                item(ui, tr("Remove Background and Crop"), Action::Cutout(true), ready(Task::Background), actions);
+                item(ui, tr("Denoise"), Action::Restore(Task::Denoise), ready(Task::Denoise), actions);
+                item(ui, tr("Enhance Image"), Action::Restore(Task::Enhance), ready(Task::Enhance), actions);
             });
-            ui.menu_button("Tools", |ui| {
-                let label = if self.show_toolbar { "Hide Drawing Toolbar" } else { "Show Drawing Toolbar" };
+            ui.menu_button(tr("Tools"), |ui| {
+                let label = if self.show_toolbar { tr("Hide Drawing Toolbar") } else { tr("Show Drawing Toolbar") };
                 item(ui, label, Action::ShowToolbar, has_image, actions);
                 ui.separator();
-                for (label, kind) in [("Rectangular Selection", SelKind::Rect), ("Elliptical Selection", SelKind::Ellipse), ("Lasso", SelKind::Lasso)] {
+                for (label, kind) in [(tr("Rectangular Selection"), SelKind::Rect), (tr("Elliptical Selection"), SelKind::Ellipse), (tr("Lasso"), SelKind::Lasso)] {
                     if ui.add_enabled(has_image, egui::Button::selectable(self.tool == Tool::Selection(kind), label)).clicked() {
                         actions.push(Action::SelectTool(kind));
                     }
                 }
                 let measuring = self.tool == Tool::Measure;
-                if ui.add_enabled(has_image, egui::Button::selectable(measuring, "Measure")).clicked() {
+                if ui.add_enabled(has_image, egui::Button::selectable(measuring, tr("Measure"))).clicked() {
                     actions.push(Action::Measure);
                 }
                 ui.separator();
-                item(ui, "Sketch", Action::Pick(Pick::Draw(Shape::Sketch)), has_image, actions);
+                item(ui, tr("Sketch"), Action::Pick(Pick::Draw(Shape::Sketch)), has_image, actions);
                 ui.add_enabled_ui(has_image, |ui| {
-                    ui.menu_button("Shapes", |ui| {
-                        for (shape, name) in markup::SHAPES {
+                    ui.menu_button(tr("Shapes"), |ui| {
+                        for (shape, name) in markup::SHAPES.map(|(shape, name)| (shape, tr(name))) {
                             item(ui, name, Action::Pick(Pick::Draw(shape)), true, actions);
                         }
                     });
                 });
-                item(ui, "Text", Action::Pick(Pick::Draw(Shape::Text)), has_image, actions);
-                item(ui, "Highlight", Action::Pick(Pick::Draw(Shape::Highlight)), has_image, actions);
-                item(ui, "Magnifier", Action::Pick(Pick::Draw(Shape::Magnifier)), has_image, actions);
+                item(ui, tr("Text"), Action::Pick(Pick::Draw(Shape::Text)), has_image, actions);
+                item(ui, tr("Highlight"), Action::Pick(Pick::Draw(Shape::Highlight)), has_image, actions);
+                item(ui, tr("Magnifier"), Action::Pick(Pick::Draw(Shape::Magnifier)), has_image, actions);
                 ui.separator();
-                item(ui, "AI Models…", Action::AiModels, true, actions);
+                item(ui, tr("AI Models…"), Action::AiModels, true, actions);
                 if !crate::ai::runtime_installed() {
-                    item(ui, "Download AI Runtime…", Action::DownloadRuntime, true, actions);
+                    item(ui, tr("Download AI Runtime…"), Action::DownloadRuntime, true, actions);
                 }
             });
         });
@@ -804,22 +805,22 @@ impl App {
         }
         let sort = self.settings.sort;
         let modal = egui::Modal::new(egui::Id::unique("settings")).show(ctx, |ui| {
-            ui.heading("Settings");
+            ui.heading(tr("Settings"));
             settings::ui(ui, &mut self.settings);
             ui.add_space(8.0);
             if settings::desktop_installed() {
-                if ui.button("Make lightview the default image viewer").clicked() {
+                if ui.button(tr("Make lightview the default image viewer")).clicked() {
                     self.default_result = Some(settings::make_default());
                 }
                 if let Some(result) = &self.default_result {
                     ui.weak(match result {
-                        Ok(()) => "lightview is now the default image viewer",
+                        Ok(()) => tr("lightview is now the default image viewer"),
                         Err(e) => e,
                     });
                 }
                 ui.add_space(8.0);
             }
-            ui.button("Close").clicked()
+            ui.button(tr("Close")).clicked()
         });
         if modal.inner || modal.should_close() {
             self.show_settings = false;
@@ -833,11 +834,11 @@ impl App {
     fn default_dialog(&mut self, ctx: &egui::Context) {
         let Some(mut tick) = self.default_prompt else { return };
         let modal = egui::Modal::new(egui::Id::unique("default-viewer")).show(ctx, |ui| {
-            ui.heading("Welcome to lightview");
+            ui.heading(tr("Welcome to lightview"));
             ui.add_space(8.0);
-            ui.checkbox(&mut tick, "Make lightview my default image viewer");
+            ui.checkbox(&mut tick, tr("Make lightview my default image viewer"));
             ui.add_space(8.0);
-            ui.button("OK").clicked()
+            ui.button(tr("OK")).clicked()
         });
         self.default_prompt = Some(tick);
         if modal.inner || modal.should_close() {
@@ -1083,7 +1084,7 @@ impl App {
             }
         }
         ctx.copy_image(egui::ColorImage::from_rgba_unmultiplied([w as usize, h as usize], part.as_raw()));
-        self.status = Some((format!("Copied {w} × {h} px"), Instant::now()));
+        self.status = Some((trf("Copied {w} × {h} px", &[("w", &w), ("h", &h)]), Instant::now()));
     }
 
     fn delete_selection(&mut self) {
@@ -1124,7 +1125,7 @@ impl App {
         let task = crate::ai::Task::Background;
         let Some(file) = crate::ai::choose(self.settings.ai.choice(task), task, &crate::ai::installed()) else { return };
         let preset = crate::ai::preset(&file, &self.settings.ai.overrides);
-        self.status = Some((format!("Running {file}…"), Instant::now()));
+        self.status = Some((trf("Running {file}…", &[("file", &file)]), Instant::now()));
         let notify = self.notify.clone();
         std::thread::spawn(move || {
             let result = edit::render(&l.frames[0], &doc).and_then(|img| {
@@ -1134,7 +1135,7 @@ impl App {
                     None => crate::ai::Preprocess::auto(crate::ai::input_size(&file)?),
                 };
                 let mask = crate::ai::mask(&file, &pre, &img)?;
-                let object = if crop { Some(crate::ai::bbox(&mask).ok_or("no subject found")?) } else { None };
+                let object = if crop { Some(crate::ai::bbox(&mask).ok_or(tr("no subject found"))?) } else { None };
                 Ok((crate::ai::cutout(&img, &mask), object))
             });
             notify.send(Msg::Cutout(path, result));
@@ -1180,15 +1181,16 @@ impl App {
     fn restore_progress(&mut self, ctx: &egui::Context, viewport: Rect) {
         let Some(r) = &self.restoring else { return };
         let left = (r.progress > 0.02).then(|| r.started.elapsed().as_secs_f64() * (1.0 - r.progress as f64) / r.progress as f64);
-        let on = if crate::ai::on_gpu() { " on the GPU" } else { "" };
-        let label = format!("{}{on}… {:.0} %{}", r.task.title(), r.progress * 100.0, left.map_or(String::new(), |s| format!(" · about {} left", format_duration(s))));
+        let name = if crate::ai::on_gpu() { trf("{task} on the GPU", &[("task", &r.task.title())]) } else { r.task.title().to_string() };
+        let left = left.map_or(String::new(), |s| format!(" · {}", trf("about {time} left", &[("time", &format_duration(s))])));
+        let label = format!("{name}… {:.0} %{left}", r.progress * 100.0);
         let cancel = egui::Area::new(egui::Id::unique("restore-progress")).fixed_pos(Pos2::new(viewport.center().x - 200.0, viewport.bottom() - 64.0)).show(ctx, |ui| {
             egui::Frame::popup(ui.style()).show(ui, |ui| {
                 ui.set_width(400.0);
                 ui.label(label);
                 ui.horizontal(|ui| {
                     ui.add(egui::ProgressBar::new(r.progress).desired_width(320.0));
-                    ui.button("Cancel").clicked()
+                    ui.button(tr("Cancel")).clicked()
                 }).inner
             }).inner
         }).inner;
@@ -1211,11 +1213,11 @@ impl App {
         let result = if c.scale > 1 { format!(", {} × {} px", doc.size[0] * c.scale, doc.size[1] * c.scale) } else { String::new() };
         let (whole, sel, discard) = egui::Area::new(egui::Id::unique("compare-bar")).fixed_pos(Pos2::new(viewport.center().x - 260.0, viewport.top() + 12.0)).show(ctx, |ui| {
             egui::Frame::popup(ui.style()).show(ui, |ui| {
-                ui.label(format!("{} preview of the visible area · drag to compare · Before | After", c.task.title()));
+                ui.label(trf("{task} preview of the visible area · drag to compare · Before | After", &[("task", &c.task.title())]));
                 ui.horizontal(|ui| {
-                    let whole = ui.button(format!("Apply to Whole Image{result} (about {estimate})")).clicked();
-                    let sel = selection.is_some() && ui.button("Apply to Selection").clicked();
-                    (whole, sel, ui.button("Discard").clicked())
+                    let whole = ui.button(trf("Apply to Whole Image{size} (about {estimate})", &[("size", &result), ("estimate", &estimate)])).clicked();
+                    let sel = selection.is_some() && ui.button(tr("Apply to Selection")).clicked();
+                    (whole, sel, ui.button(tr("Discard")).clicked())
                 }).inner
             }).inner
         }).inner;
@@ -1242,12 +1244,12 @@ impl App {
     fn enhance_notice_dialog(&mut self, ctx: &egui::Context) {
         let Some(file) = self.enhance_notice.clone() else { return };
         let modal = egui::Modal::new(egui::Id::unique("enhance-notice")).show(ctx, |ui| {
-            ui.heading("Enhance Image");
+            ui.heading(tr("Enhance Image"));
             for line in crate::ai::enhance_notice(&file) {
                 ui.label(line);
             }
             ui.add_space(6.0);
-            ui.horizontal(|ui| (ui.button("Continue").clicked(), ui.button("Cancel").clicked())).inner
+            ui.horizontal(|ui| (ui.button(tr("Continue")).clicked(), ui.button(tr("Cancel")).clicked())).inner
         });
         let (go, cancel) = modal.inner;
         if go {
@@ -1270,7 +1272,7 @@ impl App {
         let (Some(before), Some(mut doc)) = (self.adjusting.clone(), self.doc()) else { return };
         let levels = self.auto_levels();
         let mut open = true;
-        let choice = egui::Window::new("Adjust Color").open(&mut open).resizable(false).collapsible(false).show(ctx, |ui| {
+        let choice = egui::Window::new(tr("Adjust Color")).open(&mut open).resizable(false).collapsible(false).show(ctx, |ui| {
             edit::adjust_ui(ui, &mut doc.adjust, || levels.unwrap_or([[0, 255]; 3]))
         }).and_then(|r| r.inner).flatten();
         let adjust = doc.adjust;
@@ -1306,10 +1308,10 @@ impl App {
             std::thread::spawn(move || notify.send(Msg::Detected(file.clone(), crate::ai::input_size(&file))));
         } else if out.add {
             std::thread::spawn(move || {
-                if let Some(src) = rfd::FileDialog::new().add_filter("ONNX model", &["onnx"]).pick_file() {
+                if let Some(src) = rfd::FileDialog::new().add_filter(tr("ONNX model"), &["onnx"]).pick_file() {
                     notify.send(Msg::Status(match crate::ai::add_model(&src) {
-                        Ok(name) => format!("Added {name}"),
-                        Err(e) => format!("Couldn't add the model: {e}"),
+                        Ok(name) => trf("Added {name}", &[("name", &name)]),
+                        Err(e) => trf("Couldn't add the model: {e}", &[("e", &e)]),
                     }));
                 }
             });
@@ -1320,9 +1322,9 @@ impl App {
     fn license_dialog(&mut self, ctx: &egui::Context) {
         let Some((download, step)) = self.license_prompt else { return };
         let (title, licenses, note) = match download {
-            Download::Model(i) => (crate::ai::CATALOG[i].label, crate::ai::CATALOG[i].licenses, crate::ai::CATALOG[i].converted_by),
-            Download::Runtime => ("AI runtime (ONNX Runtime)", std::slice::from_ref(&crate::ai::RUNTIME_LICENSE), None),
-            Download::Gpu => ("GPU support", &crate::ai::GPU_LICENSES[..], Some("Downloaded from Microsoft (ONNX Runtime) and NVIDIA (CUDA libraries, via their official PyPI packages).")),
+            Download::Model(i) => (tr(crate::ai::CATALOG[i].label), crate::ai::CATALOG[i].licenses, crate::ai::CATALOG[i].converted_by.map(tr)),
+            Download::Runtime => (tr("AI runtime (ONNX Runtime)"), std::slice::from_ref(&crate::ai::RUNTIME_LICENSE), None),
+            Download::Gpu => (tr("GPU support"), &crate::ai::GPU_LICENSES[..], Some(tr("Downloaded from Microsoft (ONNX Runtime) and NVIDIA (CUDA libraries, via their official PyPI packages)."))),
         };
         let modal = egui::Modal::new(egui::Id::unique("license")).show(ctx, |ui| crate::ai::license_ui(ui, title, &licenses[step], step, licenses.len(), note));
         let close = modal.should_close();
@@ -1339,15 +1341,15 @@ impl App {
                     }
                     Download::Gpu => {
                         self.downloading.insert("gpu".into());
-                        self.status = Some((format!("Downloading GPU support ({} MB)…", crate::ai::GPU_DOWNLOAD_MB), Instant::now()));
+                        self.status = Some((trf("Downloading GPU support ({mb} MB)…", &[("mb", &crate::ai::GPU_DOWNLOAD_MB)]), Instant::now()));
                         std::thread::spawn(move || notify.send(Msg::Downloaded("gpu".into(), crate::ai::download_gpu())));
                     }
                     Download::Runtime => {
-                        self.status = Some(("Downloading the AI runtime…".into(), Instant::now()));
+                        self.status = Some((tr("Downloading the AI runtime…").into(), Instant::now()));
                         std::thread::spawn(move || {
                             notify.send(Msg::Status(match crate::ai::download_runtime() {
-                                Ok(()) => "Installed the AI runtime".into(),
-                                Err(e) => format!("Couldn't install the AI runtime: {e}"),
+                                Ok(()) => tr("Installed the AI runtime").into(),
+                                Err(e) => trf("Couldn't install the AI runtime: {e}", &[("e", &e)]),
                             }));
                         });
                     }
@@ -1384,10 +1386,10 @@ impl App {
         }
         let name = self.current().and_then(|p| p.file_name()).unwrap_or_default().to_string_lossy().into_owned();
         let modal = egui::Modal::new(egui::Id::unique("discard")).show(ctx, |ui| {
-            ui.heading("Discard edits?");
-            ui.label(format!("Your edits to {name} haven't been saved."));
+            ui.heading(tr("Discard edits?"));
+            ui.label(trf("Your edits to {name} haven't been saved.", &[("name", &name)]));
             ui.add_space(6.0);
-            ui.horizontal(|ui| (ui.button("Discard").clicked(), ui.button("Cancel").clicked())).inner
+            ui.horizontal(|ui| (ui.button(tr("Discard")).clicked(), ui.button(tr("Cancel")).clicked())).inner
         });
         let (discard, cancel) = modal.inner;
         if discard && let Some(p) = self.pending.take() {
@@ -1524,7 +1526,7 @@ impl eframe::App for App {
                 }
                 Action::Paste => match arboard::Clipboard::new().and_then(|mut c| c.get_image()) {
                     Ok(img) => self.paste(img.width as u32, img.height as u32, img.bytes.into_owned()),
-                    Err(e) => self.status = Some((format!("Nothing to paste: {e}"), Instant::now())),
+                    Err(e) => self.status = Some((trf("Nothing to paste: {e}", &[("e", &e)]), Instant::now())),
                 },
                 Action::DeleteSelection => self.delete_selection(),
                 Action::Cutout(crop) => self.cutout(*crop),
@@ -1828,7 +1830,7 @@ impl eframe::App for App {
                         painter.rect_filled(dest, 0.0, shade);
                     }
                 }
-                bubble(ui.painter(), Pos2::new(viewport.center().x, viewport.top() + 24.0), "Drag to select · Enter to crop · Esc to cancel");
+                bubble(ui.painter(), Pos2::new(viewport.center().x, viewport.top() + 24.0), tr("Drag to select · Enter to crop · Esc to cancel"));
             }
             if self.tool == Tool::Measure {
                 let hint = match self.measure {
@@ -1842,9 +1844,9 @@ impl eframe::App for App {
                             painter.circle(p, 5.0, Color32::from_black_alpha(120), egui::Stroke::new(1.5, Color32::YELLOW));
                         }
                         let [dx, dy, d] = doc.measure(m[0], m[1]);
-                        format!("Distance: {d:.0} px · ΔX: {dx:.0} px · ΔY: {dy:.0} px")
+                        trf("Distance: {d} px · ΔX: {dx} px · ΔY: {dy} px", &[("d", &format!("{d:.0}")), ("dx", &format!("{dx:.0}")), ("dy", &format!("{dy:.0}"))])
                     }
-                    None => "Drag to measure in image pixels · Esc to stop".into(),
+                    None => tr("Drag to measure in image pixels · Esc to stop").into(),
                 };
                 bubble(ui.painter(), Pos2::new(viewport.center().x, viewport.top() + 24.0), &hint);
             }
@@ -1867,7 +1869,7 @@ impl eframe::App for App {
                 }
             }
         } else if let Some(e) = &self.error {
-            ui.painter().text(viewport.center(), egui::Align2::CENTER_CENTER, format!("Can't open this image:\n{e}"), egui::FontId::proportional(14.0), Color32::GRAY);
+            ui.painter().text(viewport.center(), egui::Align2::CENTER_CENTER, trf("Can't open this image:\n{e}", &[("e", &e)]), egui::FontId::proportional(14.0), Color32::GRAY);
         }
 
         if let Some((text, at)) = &self.status {

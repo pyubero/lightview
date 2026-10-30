@@ -2,6 +2,7 @@ mod ai;
 mod app;
 mod edit;
 mod exif_edit;
+mod i18n;
 mod inspector;
 mod load;
 mod markup;
@@ -30,7 +31,8 @@ fn main() -> eframe::Result {
         std::process::exit(1);
     }));
 
-    let settings = settings::load();
+    let mut settings = settings::load();
+    i18n::set(*settings.language.get_or_insert_with(i18n::system_language));
 
     // Decoding starts before the window exists so it overlaps OpenGL/eframe setup.
     let (tx, rx) = mpsc::channel();

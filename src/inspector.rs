@@ -1,3 +1,4 @@
+use crate::i18n::{tr, trf};
 use crate::app::format_size;
 use crate::edit::Doc;
 use crate::exif_edit;
@@ -22,11 +23,11 @@ impl Inspector {
         let jpeg = path.extension().and_then(|e| e.to_str()).is_some_and(|e| e.eq_ignore_ascii_case("jpg") || e.eq_ignore_ascii_case("jpeg"));
         let icc = ImageReader::open(path).ok().and_then(|r| r.with_guessed_format().ok()?.into_decoder().ok()?.icc_profile().ok()?);
         let profile = match icc {
-            Some(icc) => icc_description(&icc).unwrap_or_else(|| "Embedded (unnamed)".into()),
-            None => "None (sRGB assumed)".into(),
+            Some(icc) => icc_description(&icc).unwrap_or_else(|| tr("Embedded (unnamed)").into()),
+            None => tr("None (sRGB assumed)").into(),
         };
         // shortcut: EXIF is read for JPEGs only, like EXIF editing; little_exif can also read PNG/WebP if wanted.
-        let exif = if jpeg { exif_edit::read(path) } else { Err("EXIF is shown for JPEG files only".into()) };
+        let exif = if jpeg { exif_edit::read(path) } else { Err(tr("EXIF is shown for JPEG files only").into()) };
         let jfif_dpi = jpeg.then(|| std::fs::File::open(path).ok()).flatten().and_then(|mut f| {
             let mut head = [0u8; 18];
             std::io::Read::read_exact(&mut f, &mut head).ok()?;
@@ -41,22 +42,22 @@ pub fn ui(ui: &mut egui::Ui, ins: &mut Inspector, loaded: &Loaded, doc: Option<&
     let mut save = false;
     // Fill the sidebar's width: shrinking to the content made the sidebar shrink with it.
     egui::ScrollArea::vertical().auto_shrink([false, true]).show(ui, |ui| {
-        egui::CollapsingHeader::new("General").default_open(true).show(ui, |ui| {
+        egui::CollapsingHeader::new(tr("General")).default_open(true).show(ui, |ui| {
             let (w, h) = (loaded.frames[0].w, loaded.frames[0].h);
             let ext = ins.path.extension().unwrap_or_default().to_string_lossy().to_uppercase();
             let mut dimensions = format!("{w} × {h} px");
             if let Some(d) = doc.filter(|d| d.size != [w, h]) {
-                dimensions += &format!(" (edited: {} × {})", d.size[0], d.size[1]);
+                dimensions += &format!(" ({})", trf("edited: {w} × {h}", &[("w", &d.size[0]), ("h", &d.size[1])]));
             }
             let resolution = ins.exif.as_ref().ok().and_then(|e| e.resolution.clone()).or(ins.jfif_dpi.clone()).unwrap_or("—".into());
             let rows = [
-                ("Name", ins.path.file_name().unwrap_or_default().to_string_lossy().into_owned()),
-                ("Folder", ins.path.parent().map(|p| p.display().to_string()).unwrap_or_default()),
-                ("Format", if loaded.frames.len() > 1 { format!("{ext}, {} frames", loaded.frames.len()) } else { ext }),
-                ("File size", format_size(loaded.file_size)),
-                ("Dimensions", dimensions),
-                ("Resolution", resolution),
-                ("Colour profile", ins.profile.clone()),
+                (tr("Name"), ins.path.file_name().unwrap_or_default().to_string_lossy().into_owned()),
+                (tr("Folder"), ins.path.parent().map(|p| p.display().to_string()).unwrap_or_default()),
+                (tr("Format"), if loaded.frames.len() > 1 { trf("{format}, {count} frames", &[("format", &ext), ("count", &loaded.frames.len())]) } else { ext }),
+                (tr("File size"), format_size(loaded.file_size)),
+                (tr("Dimensions"), dimensions),
+                (tr("Resolution"), resolution),
+                (tr("Colour profile"), ins.profile.clone()),
             ];
             egui::Grid::new("general-grid").num_columns(2).spacing([12.0, 6.0]).show(ui, |ui| {
                 for (k, v) in rows {

@@ -1,0 +1,254 @@
+AI Image Processing	Procesado de imagen con IA
+AI Models	Modelos de IA
+AI Models…	Modelos de IA…
+AI runtime (ONNX Runtime)	Motor de IA (ONNX Runtime)
+Accept and Continue	Aceptar y continuar
+Accept and Download	Aceptar y descargar
+Accessibility	Accesibilidad
+Actual Size	Tamaño real
+Add model file…	Añadir archivo de modelo…
+Added {name}	Añadido: {name}
+Adjust Color	Ajustar color
+Adjust Color…	Ajustar color…
+Animation	Animación
+Applies the next time lightview starts	Se aplica la próxima vez que se inicie lightview
+Apply sigmoid (the model outputs logits)	Aplicar sigmoide (el modelo devuelve logits)
+Apply to Selection	Aplicar a la selección
+Apply to Whole Image{size} (about {estimate})	Aplicar a toda la imagen{size} (unos {estimate})
+Arrow	Flecha
+Artist	Autor
+Auto Levels	Niveles automáticos
+BSRGAN 4× — upscales and sharpens, may invent detail	BSRGAN 4× — amplía y enfoca, puede inventar detalles
+Background colour	Color de fondo
+BiRefNet lite — best quality, slow	BiRefNet lite — la mejor calidad, lento
+Bicubic	Bicúbica
+Bilinear	Bilineal
+Camera	Cámara
+Camera make	Marca de la cámara
+Camera model	Modelo de la cámara
+Can't open this image:\n{e}	No se puede abrir esta imagen:\n{e}
+Cancel	Cancelar
+Cancelled	Cancelado
+Close	Cerrar
+Colour	Color
+Colour profile	Perfil de color
+Continue	Continuar
+Contrast	Contraste
+Converted to ONNX by Heliosoph LLC from the authors' published weights.	Convertido a ONNX por Heliosoph LLC a partir de los pesos publicados por los autores.
+Copied {w} × {h} px	Copiado: {w} × {h} px
+Copy	Copiar
+Copyright	Derechos de autor
+Couldn't add the model: {e}	No se ha podido añadir el modelo: {e}
+Couldn't download {file}: {e}	No se ha podido descargar {file}: {e}
+Couldn't install the AI runtime: {e}	No se ha podido instalar el motor de IA: {e}
+Couldn't process the image: {e}	No se ha podido procesar la imagen: {e}
+Couldn't read {file}: {e}	No se ha podido leer {file}: {e}
+Couldn't save {name}: {e}	No se ha podido guardar {name}: {e}
+Crop	Recortar
+Cut	Cortar
+DarkIR brightens dark and night photos and removes their noise and blur. On a well-lit photo it overexposes.	DarkIR aclara las fotos oscuras y nocturnas y elimina su ruido y desenfoque. En una foto bien iluminada, la sobreexpone.
+DarkIR — dark and night photos, same size	DarkIR — fotos oscuras y nocturnas, mismo tamaño
+Date modified	Fecha de modificación
+Date taken	Fecha de captura
+Default window size	Tamaño de ventana predeterminado
+Delete Selection	Eliminar selección
+Denoise	Reducir ruido
+Denoise and Enhance run about 10× faster on a GTX 1050	Reducir ruido y Mejorar imagen van unas 10× más rápido en una GTX 1050
+Describe the image for people who can't see it	Describe la imagen para quienes no pueden verla
+Description	Descripción
+Deselect	Deseleccionar
+Detect size	Detectar tamaño
+Dimensions	Dimensiones
+Discard	Descartar
+Discard edits?	¿Descartar los cambios?
+Distance: {d} px · ΔX: {dx} px · ΔY: {dy} px	Distancia: {d} px · ΔX: {dx} px · ΔY: {dy} px
+Done	Hecho
+Download	Descargar
+Download AI Runtime…	Descargar motor de IA…
+Download GPU Support	Descargar soporte para GPU
+Downloaded from Microsoft (ONNX Runtime) and NVIDIA (CUDA libraries, via their official PyPI packages).	Se descarga de Microsoft (ONNX Runtime) y NVIDIA (bibliotecas CUDA, mediante sus paquetes oficiales de PyPI).
+Downloaded {file}	Descargado: {file}
+Downloading GPU support ({mb} MB)…	Descargando el soporte para GPU ({mb} MB)…
+Downloading the AI runtime…	Descargando el motor de IA…
+Downloading…	Descargando…
+Drag to measure in image pixels · Esc to stop	Arrastra para medir en píxeles de la imagen · Esc para salir
+Drag to select · Enter to crop · Esc to cancel	Arrastra para seleccionar · Intro para recortar · Esc para cancelar
+EXIF is shown for JPEG files only	Los datos EXIF solo se muestran en archivos JPEG
+Edit	Editar
+Edit the image description	Editar la descripción de la imagen
+Ellipse	Elipse
+Elliptical Selection	Selección elíptica
+Embedded (unnamed)	Incrustado (sin nombre)
+Enhance Image	Mejorar imagen
+Enhance Image uses generative AI. To make the image look better it may invent or alter fine details, such as textures, text or faces, that weren't in the original.	Mejorar imagen usa IA generativa. Para que la imagen se vea mejor, puede inventar o alterar detalles finos, como texturas, texto o caras, que no estaban en el original.
+Enter Full Screen	Pantalla completa
+Exposure	Exposición
+File	Archivo
+File name	Nombre de archivo
+File size	Tamaño de archivo
+Fill	Relleno
+Fit to Window	Ajustar a la ventana
+Flip Horizontally	Voltear horizontalmente
+Flip Vertically	Voltear verticalmente
+Folder	Carpeta
+Font size	Tamaño de letra
+For a faithful clean-up, use Denoise instead.	Para una limpieza fiel al original, usa Reducir ruido.
+Format	Formato
+GPU (NVIDIA)	GPU (NVIDIA)
+GPU image scaling	Escalado de imagen por GPU
+GPU support	Soporte para GPU
+GPU support installed: restart lightview to use it	Soporte para GPU instalado: reinicia lightview para usarlo
+General	General
+Height	Alto
+Hide Drawing Toolbar	Ocultar barra de dibujo
+Hide Image Information	Ocultar información de la imagen
+Highlight	Resaltar
+IS-Net anime — illustrations	IS-Net anime — ilustraciones
+IS-Net — general, clean edges	IS-Net — general, bordes limpios
+Image	Imagen
+Image description	Descripción de la imagen
+Images	Imágenes
+Input size	Tamaño de entrada
+Installed the AI runtime	Motor de IA instalado
+Interpolation	Interpolación
+It also makes the image {k}× bigger ({pixels}× the pixels), which takes a while for a big photo.	También hace la imagen {k}× más grande ({pixels}× los píxeles), lo que tarda un rato con una foto grande.
+Keep aspect ratio	Mantener proporciones
+Language	Idioma
+Lasso	Lazo
+Lens	Objetivo
+Licence ({step} of {count}) — {title}	Licencia ({step} de {count}) — {title}
+Licence — {title}	Licencia — {title}
+Line	Línea
+Location	Ubicación
+Magnifier	Lupa
+Make lightview my default image viewer	Hacer de lightview mi visor de imágenes predeterminado
+Make lightview the default image viewer	Hacer de lightview el visor de imágenes predeterminado
+Mean (R, G, B)	Media (R, G, B)
+Measure	Medir
+Model	Modelo
+Name	Nombre
+Nearest	Vecino más cercano
+Next Frame	Fotograma siguiente
+Next Image	Imagen siguiente
+No location in this file	Este archivo no tiene ubicación
+No model installed yet.	Aún no hay ningún modelo instalado.
+No recent files	No hay archivos recientes
+None (sRGB assumed)	Ninguno (se asume sRGB)
+Nothing to paste: {e}	Nada que pegar: {e}
+OK	Aceptar
+ONNX export (half precision) by FuryTMP on Hugging Face; its origin isn't verified.	Exportación ONNX (media precisión) de FuryTMP en Hugging Face; su origen no está verificado.
+ONNX model	Modelo ONNX
+Open Recent	Abrir reciente
+Open in Google Maps	Abrir en Google Maps
+Open models folder	Abrir carpeta de modelos
+Open project page	Abrir página del proyecto
+Open…	Abrir…
+Other tags ({count})	Otras etiquetas ({count})
+Output	Salida
+Paste	Pegar
+Pause Animation	Pausar animación
+Percentage	Porcentaje
+Play Animation	Reproducir animación
+Please read and accept the licence before downloading.	Lee y acepta la licencia antes de descargar.
+Preprocessing: {file}	Preprocesado: {file}
+Previous Frame	Fotograma anterior
+Previous Image	Imagen anterior
+Read the input size from the model	Leer el tamaño de entrada del modelo
+Real-ESRGAN 4× half precision	Real-ESRGAN 4× media precisión
+Real-ESRGAN 4× — upscales, smooth, may invent detail	Real-ESRGAN 4× — amplía, resultado suave, puede inventar detalles
+Real-ESRGAN and DarkIR can't be downloaded here. Convert them yourself with lightview-models, then copy the .onnx files into the models folder:	Real-ESRGAN y DarkIR no se pueden descargar aquí. Conviértelos tú mismo con lightview-models y copia los archivos .onnx en la carpeta de modelos:
+Real-ESRGAN general 4× half precision	Real-ESRGAN general 4× media precisión
+Real-ESRGAN general 4× — fast, softer	Real-ESRGAN general 4× — rápido, más suave
+Rectangle	Rectángulo
+Rectangular Selection	Selección rectangular
+Redo	Rehacer
+Remove Background	Quitar fondo
+Remove Background and Crop	Quitar fondo y recortar
+Remove location from the copy	Quitar la ubicación de la copia
+Reset	Restablecer
+Reset Color Adjustments	Restablecer ajustes de color
+Reset to default	Restablecer valores predeterminados
+Resize	Cambiar tamaño
+Resize…	Cambiar tamaño…
+Resolution	Resolución
+Restart lightview to start using the GPU.	Reinicia lightview para empezar a usar la GPU.
+Revert	Revertir
+Rotate Left	Girar a la izquierda
+Rotate Right	Girar a la derecha
+Rounded Rectangle	Rectángulo redondeado
+Run the AI tools on the graphics card ({mb} MB download, NVIDIA's CUDA libraries).	Ejecuta las herramientas de IA en la tarjeta gráfica (descarga de {mb} MB, bibliotecas CUDA de NVIDIA).
+Running {file}…	Ejecutando {file}…
+SCUNet σ15 — light noise	SCUNet σ15 — ruido ligero
+SCUNet σ25 — moderate noise	SCUNet σ25 — ruido moderado
+SCUNet σ50 — heavy noise	SCUNet σ50 — ruido intenso
+SCUNet — noise and JPEG artifacts (recommended)	SCUNet — ruido y artefactos JPEG (recomendado)
+Saturation	Saturación
+Save As…	Guardar como…
+Save copy…	Guardar copia…
+Saved in JPEG files	Se guarda en archivos JPEG
+Saved {name}	Guardado: {name}
+Saves a copy of the file with this metadata (without other edits). Camera maker notes are removed.	Guarda una copia del archivo con estos metadatos (sin otras ediciones). Se eliminan las notas del fabricante de la cámara.
+Select	Seleccionar
+Select All	Seleccionar todo
+Settings	Ajustes
+Settings…	Ajustes…
+Shapes	Formas
+Show Drawing Toolbar	Mostrar barra de dibujo
+Show Image Information	Mostrar información de la imagen
+Silueta — small and fast	Silueta — pequeño y rápido
+Size read from the model when it runs; the usual normalisation.	Tamaño leído del modelo al ejecutarlo; normalización habitual.
+Sketch	Boceto
+Smoother zooming and panning. Uses more GPU memory and makes switching images a little slower.	Zoom y desplazamiento más suaves. Usa más memoria de GPU y hace algo más lento el cambio de imagen.
+Sort order	Orden
+Std (R, G, B)	Desv. estándar (R, G, B)
+Stroke	Trazo
+SwinIR σ25 — moderate noise, very slow	SwinIR σ25 — ruido moderado, muy lento
+Text	Texto
+Text colour	Color del texto
+The AI runtime isn't installed yet: Tools > Download AI Runtime…	El motor de IA aún no está instalado: Herramientas > Descargar motor de IA…
+The GPU couldn't be used, so the CPU is: {e}	No se ha podido usar la GPU, así que se usa la CPU: {e}
+Thickness	Grosor
+Tint	Matiz
+Tools	Herramientas
+Undo	Deshacer
+Use YYYY:MM:DD HH:MM:SS	Usa AAAA:MM:DD HH:MM:SS
+Use the GPU	Usar la GPU
+Used by Remove Background and Remove Background and Crop.	Lo usan Quitar fondo y Quitar fondo y recortar.
+Uses Bilinear while GPU scaling is on	Usa Bilineal mientras el escalado por GPU esté activo
+U²-Net people — portraits	U²-Net personas — retratos
+U²-Net small — fastest	U²-Net pequeño — el más rápido
+U²-Net — general	U²-Net — general
+View	Ver
+Welcome to lightview	Te damos la bienvenida a lightview
+Width	Ancho
+Your edits to {name} haven't been saved.	Los cambios en {name} no se han guardado.
+Zoom	Zoom
+Zoom In	Acercar
+Zoom Out	Alejar
+a GPU library was missing from the download	faltaba una biblioteca de GPU en la descarga
+about {time} left	quedan unos {time}
+can't save as .{ext}: use .jpg, .png, .webp, .bmp, .tif or .gif	no se puede guardar como .{ext}: usa .jpg, .png, .webp, .bmp, .tif o .gif
+choose a new name: the original is never modified	elige otro nombre: el original nunca se modifica
+couldn't read this file's EXIF safely	no se han podido leer con seguridad los datos EXIF de este archivo
+edited: {w} × {h}	editada: {w} × {h}
+lightview is now the default image viewer	lightview es ahora el visor de imágenes predeterminado
+no data folder	no hay carpeta de datos
+no frames	sin fotogramas
+no subject found	no se ha encontrado ningún sujeto
+pick an .onnx file	elige un archivo .onnx
+the copy must be a .jpg file	la copia debe ser un archivo .jpg
+the download didn't match its checksum	la descarga no coincide con su suma de comprobación
+the model has no image input	el modelo no tiene entrada de imagen
+the model's output changed size between tiles	la salida del modelo cambió de tamaño entre bloques
+the model's output doesn't match its input size	la salida del modelo no coincide con su tamaño de entrada
+the model's output isn't a whole multiple of its input	la salida del modelo no es un múltiplo entero de su entrada
+the written file didn't check out: the location wasn't removed	el archivo escrito no ha superado la comprobación: no se ha quitado la ubicación
+the written file didn't check out: {e}	el archivo escrito no ha superado la comprobación: {e}
+the written file didn't check out: {label} wasn't saved	el archivo escrito no ha superado la comprobación: {label} no se ha guardado
+this file's EXIF couldn't be processed	no se han podido procesar los datos EXIF de este archivo
+{format}, {count} frames	{format}, {count} fotogramas
+{name} is already installed	{name} ya está instalado
+{task} done	{task}: terminado
+{task} failed: {e}	{task}: error: {e}
+{task} on the GPU	{task} en la GPU
+{task} preview of the visible area · drag to compare · Before | After	{task}: vista previa de la zona visible · arrastra para comparar · Antes | Después

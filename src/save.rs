@@ -1,3 +1,4 @@
+use crate::i18n::trf;
 use crate::edit::{self, Doc};
 use crate::load::{Frame, drop_exif_thumbnail, set_exif_dpi};
 use image::codecs::{bmp::BmpEncoder, gif::GifEncoder, jpeg::{JpegEncoder, PixelDensity}, png::PngEncoder, tiff::TiffEncoder, webp::WebPEncoder};
@@ -26,7 +27,7 @@ pub const FORMATS: [(&str, &[&str]); 6] = [
 pub fn save(frame: &Frame, doc: &Doc, source: &Path, dest: &Path) -> Result<(), String> {
     let ext = dest.extension().and_then(|e| e.to_str()).unwrap_or_default().to_ascii_lowercase();
     if !FORMATS.iter().any(|(_, exts)| exts.contains(&ext.as_str())) {
-        return Err(format!("can't save as .{ext}: use .jpg, .png, .webp, .bmp, .tif or .gif"));
+        return Err(trf("can't save as .{ext}: use .jpg, .png, .webp, .bmp, .tif or .gif", &[("ext", &ext)]));
     }
     let img = edit::render(frame, doc)?;
     let mut exif = source_exif(source);

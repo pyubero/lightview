@@ -1,4 +1,5 @@
 use crate::ai::{Preprocess, Task};
+use crate::i18n::{self, Language, tr};
 use eframe::egui;
 use fast_image_resize::{FilterType, ResizeAlg};
 use serde::{Deserialize, Serialize};
@@ -29,6 +30,15 @@ impl Interpolation {
             Self::Bilinear => ResizeAlg::Convolution(FilterType::Bilinear),
             Self::Bicubic => ResizeAlg::Convolution(FilterType::CatmullRom),
             Self::Lanczos3 => ResizeAlg::Convolution(FilterType::Lanczos3),
+        }
+    }
+
+    fn name(self) -> &'static str {
+        match self {
+            Self::Nearest => tr("Nearest"),
+            Self::Bilinear => tr("Bilinear"),
+            Self::Bicubic => tr("Bicubic"),
+            Self::Lanczos3 => "Lanczos3",
         }
     }
 
@@ -98,13 +108,15 @@ pub struct Settings {
     pub window_size: [f32; 2],
     pub sort: SortOrder,
     pub ai: AiSettings,
+    /// None until first launch, which takes the system language.
+    pub language: Option<Language>,
     /// The first-launch "default image viewer" question has been dealt with.
     pub default_asked: bool,
 }
 
 impl Default for Settings {
     fn default() -> Self {
-        Settings { gpu_scaling: false, interpolation: Interpolation::Bilinear, background: [0, 0, 0], window_size: [1280.0, 720.0], sort: SortOrder::Name, ai: AiSettings::default(), default_asked: false }
+        Settings { gpu_scaling: false, interpolation: Interpolation::Bilinear, background: [0, 0, 0], window_size: [1280.0, 720.0], sort: SortOrder::Name, ai: AiSettings::default(), language: None, default_asked: false }
     }
 }
 
@@ -147,45 +159,57 @@ pub fn make_default() -> Result<(), String> {
 /// The Settings dialog body.
 pub fn ui(ui: &mut egui::Ui, s: &mut Settings) {
     egui::Grid::new("settings-grid").num_columns(2).spacing([16.0, 10.0]).show(ui, |ui| {
-        ui.label("GPU image scaling");
-        ui.checkbox(&mut s.gpu_scaling, "").on_hover_text("Smoother zooming and panning. Uses more GPU memory and makes switching images a little slower.");
-        ui.end_row();
-
-        ui.label("Interpolation");
-        ui.vertical(|ui| {
-            egui::ComboBox::from_id_salt("interpolation").selected_text(format!("{:?}", s.interpolation)).show_ui(ui, |ui| {
-                for i in Interpolation::ALL {
-                    ui.selectable_value(&mut s.interpolation, i, format!("{i:?}"));
+        ui.label(tr("Language"));
+        let current = s.language.unwrap_or(Language::English);
+        egui::ComboBox::from_id_salt("language").selected_text(current.name()).show_ui(ui, |ui| {
+            for language in Language::ALL {
+                if ui.selectable_label(current == language, language.name()).clicked() {
+                    s.language = Some(language);
+                    i18n::set(language);
                 }
-            });
-            if s.interpolation() != s.interpolation {
-                ui.weak("Uses Bilinear while GPU scaling is on");
             }
         });
         ui.end_row();
 
-        ui.label("Background colour");
+        ui.label(tr("GPU image scaling"));
+        ui.checkbox(&mut s.gpu_scaling, "").on_hover_text(tr("Smoother zooming and panning. Uses more GPU memory and makes switching images a little slower."));
+        ui.end_row();
+
+        ui.label(tr("Interpolation"));
+        ui.vertical(|ui| {
+            egui::ComboBox::from_id_salt("interpolation").selected_text(s.interpolation.name()).show_ui(ui, |ui| {
+                for i in Interpolation::ALL {
+                    ui.selectable_value(&mut s.interpolation, i, i.name());
+                }
+            });
+            if s.interpolation() != s.interpolation {
+                ui.weak(tr("Uses Bilinear while GPU scaling is on"));
+            }
+        });
+        ui.end_row();
+
+        ui.label(tr("Background colour"));
         ui.color_edit_button_srgb(&mut s.background);
         ui.end_row();
 
-        ui.label("Default window size");
+        ui.label(tr("Default window size"));
         ui.vertical(|ui| {
             ui.horizontal(|ui| {
                 ui.add(egui::DragValue::new(&mut s.window_size[0]).range(320.0..=7680.0).suffix(" px"));
                 ui.label("×");
                 ui.add(egui::DragValue::new(&mut s.window_size[1]).range(240.0..=4320.0).suffix(" px"));
             });
-            ui.weak("Applies the next time lightview starts");
+            ui.weak(tr("Applies the next time lightview starts"));
         });
         ui.end_row();
 
-        ui.label("Sort order");
+        ui.label(tr("Sort order"));
         egui::ComboBox::from_id_salt("sort").selected_text(match s.sort {
-            SortOrder::Name => "File name",
-            SortOrder::DateModified => "Date modified",
+            SortOrder::Name => tr("File name"),
+            SortOrder::DateModified => tr("Date modified"),
         }).show_ui(ui, |ui| {
-            ui.selectable_value(&mut s.sort, SortOrder::Name, "File name");
-            ui.selectable_value(&mut s.sort, SortOrder::DateModified, "Date modified");
+            ui.selectable_value(&mut s.sort, SortOrder::Name, tr("File name"));
+            ui.selectable_value(&mut s.sort, SortOrder::DateModified, tr("Date modified"));
         });
         ui.end_row();
     });
@@ -199,7 +223,7 @@ mod tests {
     fn storage_round_trip() {
         let mut ai = AiSettings { model: Some("mine.onnx".into()), ..AiSettings::default() };
         ai.overrides.insert("mine.onnx".into(), Preprocess::auto(512));
-        let s = Settings { gpu_scaling: true, interpolation: Interpolation::Lanczos3, background: [1, 2, 3], window_size: [800.0, 600.0], sort: SortOrder::DateModified, ai, default_asked: true };
+        let s = Settings { gpu_scaling: true, interpolation: Interpolation::Lanczos3, background: [1, 2, 3], window_size: [800.0, 600.0], sort: SortOrder::DateModified, ai, language: Some(Language::German), default_asked: true };
         // eframe stores each value as a RON string inside a RON map.
         let kv = HashMap::from([(KEY.to_string(), ron::to_string(&s).unwrap()), ("recent".to_string(), "/a".to_string())]);
         assert_eq!(parse(&ron::to_string(&kv).unwrap()), s);
@@ -211,7 +235,7 @@ mod tests {
         let s = parse(&ron::to_string(&kv).unwrap());
         assert_eq!(s.ai.choice(Task::Background).map(String::as_str), Some("silueta.onnx"));
         assert_eq!((s.ai.denoise, s.ai.enhance, s.ai.notices_seen.len()), (None, None, 0));
-        assert!(!s.default_asked);
+        assert!(!s.default_asked && s.language.is_none());
     }
 
     #[test]

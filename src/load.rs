@@ -160,7 +160,7 @@ fn load(path: &Path, target: [u32; 2], on_preview: impl Fn(Frame) + Sync) -> Res
             to_frame(DynamicImage::ImageRgba8(f.into_buffer()), Duration::from_millis(ms.into()))
         }).collect();
         if frames.is_empty() {
-            return Err("no frames".into());
+            return Err(crate::i18n::tr("no frames").into());
         }
         return Ok(Loaded { frames, file_size });
     }
