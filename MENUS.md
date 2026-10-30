@@ -87,7 +87,7 @@ when" says otherwise. `▸` marks a submenu.
 | Highlight | | | Translucent rectangle. |
 | Magnifier | | | Click to place a lens. |
 | — | | | |
-| AI Models… | | always | Choose, download (after accepting licences) or add models per task; GPU support. |
+| AI Models… | | always | Choose, download (after accepting licences) or add models per task; GPU support. Real-ESRGAN and DarkIR are never downloaded: users convert them and copy them in (see `README.md`). |
 | Download AI Runtime… | | always; only shown while the runtime is missing | Downloads ONNX Runtime (after accepting its licence). |
 
 ## Drawing toolbar (Tools → Show Drawing Toolbar)

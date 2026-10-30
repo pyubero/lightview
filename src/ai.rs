@@ -272,12 +272,13 @@ impl Task {
     }
 }
 
-/// A model lightview can download, pinned by checksum.
+/// A model lightview knows by file name: downloadable from `CATALOG`, pinned by checksum, or
+/// copied in by the user (`SELF_CONVERTED`).
 pub struct Known {
     pub file: &'static str,
     pub label: &'static str,
     pub task: Task,
-    /// Download size, both files together.
+    /// Size, both files together.
     pub mb: u32,
     sha256: &'static str,
     /// Where `file` (and `data`) are downloaded from.
@@ -345,12 +346,33 @@ pub const CATALOG: [Known; 13] = [
     Known { file: "BSRGANx4_fp16.onnx", label: "BSRGAN 4× — upscales and sharpens, may invent detail", task: Task::Enhance, mb: 33, sha256: "9682732b50a4ab4d78a3c84220702b4063e11cccb2bf50ca27ea2b572dedd173", base: BSRGAN, data: None, pre: None, converted_by: Some("ONNX export (half precision) by FuryTMP on Hugging Face; its origin isn't verified."), scale: 4, max_tile: 256, notice: None, licenses: &[BSRGAN_LICENSE] },
 ];
 
+const FROM_LIGHTVIEW_MODELS: Known = Known { file: "", label: "", task: Task::Enhance, mb: 0, sha256: "", base: "", data: None, pre: None, converted_by: None, scale: 4, max_tile: 256, notice: None, licenses: &[] };
+
+/// Where users convert the `SELF_CONVERTED` models.
+pub const LIGHTVIEW_MODELS_URL: &str = "https://github.com/pyubero/lightview-models";
+
+/// Models nobody publishes as ONNX: each user converts them with lightview-models and copies the
+/// files into the models folder, so they're never offered for download. Lightview only recognises
+/// them by file name, for their task, tile size and notice. In order of preference, after `CATALOG`.
+pub const SELF_CONVERTED: [Known; 5] = [
+    Known { file: "RealESRGAN_x4plus_fp32.onnx", label: "Real-ESRGAN 4× — upscales, smooth, may invent detail", mb: 67, ..FROM_LIGHTVIEW_MODELS },
+    Known { file: "RealESRGAN_x4plus_fp16.onnx", label: "Real-ESRGAN 4× half precision", mb: 34, ..FROM_LIGHTVIEW_MODELS },
+    Known { file: "realesr-general-x4v3_fp32.onnx", label: "Real-ESRGAN general 4× — fast, softer", mb: 5, ..FROM_LIGHTVIEW_MODELS },
+    Known { file: "realesr-general-x4v3_fp16.onnx", label: "Real-ESRGAN general 4× half precision", mb: 3, ..FROM_LIGHTVIEW_MODELS },
+    Known { file: "DarkIR_384.onnx", label: "DarkIR — dark and night photos, same size", mb: 14, scale: 1, max_tile: 1024, notice: Some("DarkIR brightens dark and night photos and removes their noise and blur. On a well-lit photo it overexposes."), ..FROM_LIGHTVIEW_MODELS },
+];
+
 fn models_dir() -> Result<PathBuf, String> {
     Ok(data_dir()?.join("models"))
 }
 
+/// Every model lightview knows by name, in order of preference.
+fn recognised() -> impl Iterator<Item = &'static Known> {
+    CATALOG.iter().chain(&SELF_CONVERTED)
+}
+
 pub fn known(file: &str) -> Option<&'static Known> {
-    CATALOG.iter().find(|k| k.file == file)
+    recognised().find(|k| k.file == file)
 }
 
 /// The `*.onnx` files in the models folder, sorted.
@@ -370,18 +392,18 @@ fn list_models(dir: &Path) -> Vec<String> {
     files
 }
 
-/// The installed models that can do `task`: its catalog models, and any model lightview doesn't know.
+/// The installed models that can do `task`: those it knows for `task`, and any model it doesn't know.
 pub fn for_task(task: Task, installed: &[String]) -> Vec<String> {
     installed.iter().filter(|f| known(f).is_none_or(|k| k.task == task)).cloned().collect()
 }
 
-/// The model `task` uses: the user's choice if it's installed, else the first installed
-/// catalog model for it; background removal also falls back to any model it can use.
+/// The model `task` uses: the user's choice if it's installed, else the first installed model
+/// known for it; background removal also falls back to any model it can use.
 pub fn choose(choice: Option<&String>, task: Task, installed: &[String]) -> Option<String> {
     choice
         .filter(|f| installed.contains(f))
         .cloned()
-        .or_else(|| CATALOG.iter().find(|k| k.task == task && installed.iter().any(|f| f == k.file)).map(|k| k.file.to_string()))
+        .or_else(|| recognised().find(|k| k.task == task && installed.iter().any(|f| f == k.file)).map(|k| k.file.to_string()))
         .or_else(|| if task == Task::Background { for_task(task, installed).into_iter().next() } else { None })
 }
 
@@ -744,6 +766,10 @@ pub fn models_ui(ui: &mut egui::Ui, s: &mut AiSettings, installed: &[String], bu
                     }
                 }
             }
+            if task == Task::Enhance {
+                ui.weak("Real-ESRGAN and DarkIR can't be downloaded here. Convert them yourself with lightview-models, then copy the .onnx files into the models folder:");
+                ui.hyperlink(LIGHTVIEW_MODELS_URL);
+            }
             let mut available: Vec<(usize, &Known)> = CATALOG.iter().enumerate().filter(|(_, k)| k.task == task && !installed.iter().any(|f| f == k.file)).collect();
             available.sort_by_key(|(_, k)| k.mb);
             egui::Grid::new(("catalog-grid", task.title())).num_columns(3).spacing([16.0, 6.0]).show(ui, |ui| {
@@ -1026,6 +1052,24 @@ mod tests {
         assert_eq!(choose(None, Task::Denoise, &installed(&["silueta.onnx", "mine.onnx"])), None);
         assert_eq!(choose(Some(&"mine.onnx".into()), Task::Denoise, &mixed).as_deref(), Some("mine.onnx"));
         assert_eq!(for_task(Task::Enhance, &mixed), ["BSRGANx4_fp16.onnx", "mine.onnx"]);
+    }
+
+    #[test]
+    fn self_converted_models() {
+        for k in &SELF_CONVERTED {
+            assert!(CATALOG.iter().all(|c| c.file != k.file), "{}", k.file);
+            let alone = [k.file.to_string()];
+            assert_eq!(for_task(Task::Enhance, &alone), alone);
+            assert!(for_task(Task::Background, &alone).is_empty() && for_task(Task::Denoise, &alone).is_empty());
+            assert_eq!(choose(None, Task::Enhance, &alone).as_deref(), Some(k.file));
+            assert_eq!(choose(None, Task::Background, &alone), None);
+            assert_eq!(k.max_tile, if k.scale > 1 { 256 } else { 1024 }, "{}", k.file);
+            assert_eq!(enhance_notice(k.file).iter().any(|l| l.contains("4× bigger")), k.scale == 4, "{}", k.file);
+        }
+        // The catalog's model stays the default, and DarkIR is never preferred over an upscaler.
+        let all: Vec<String> = SELF_CONVERTED.iter().map(|k| k.file.to_string()).chain(["BSRGANx4_fp16.onnx".to_string()]).collect();
+        assert_eq!(choose(None, Task::Enhance, &all).as_deref(), Some("BSRGANx4_fp16.onnx"));
+        assert_eq!(choose(None, Task::Enhance, &all[..5]).as_deref(), Some("RealESRGAN_x4plus_fp32.onnx"));
     }
 
     #[test]

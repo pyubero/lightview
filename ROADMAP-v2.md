@@ -122,14 +122,15 @@ Numbering continues from v1.
 - Measured: ~1.6 s per 256 px tile on a GTX 1050, ~21 s on the CPU; a 12 MP photo is ~250 tiles (≈ 7 min GPU, > 1 h CPU). A pasted image is shown at most 4096 px across on screen.
 - Later: for photos over 4 MP, offer to shrink 2× or 4× first, for a 2× or 1× result.
 
-### 18c. DarkIR for Enhance (in progress)
+### 18c. Self-converted models: DarkIR and Real-ESRGAN for Enhance ✅ (2026-10-30)
 - DarkIR-m (CVPR 2025, CIDAUT AI; code MIT, weights CC-BY-4.0) brightens dark and night photos and removes noise and blur, at the same size. Converted to ONNX in the separate `lightview-models` repo (`../lightview-models`): pinned sources, the complex-FFT block rewritten as real matrix products (matches to ~4e-6), ONNX matches PyTorch to ~1e-6.
 - Its FFT block looks at the whole tile, so it runs on 1024 px tiles (`Known::max_tile`), 1.2 GB on a 4 GB GPU, ~5.4 s/MP there, ~23 s/MP on the CPU.
 - The Enhance notice is per model and shown once per model.
-- **Left:** publish `DarkIR_384.onnx` as release `darkir-v1` of the `lightview-models` GitHub repo, then add its catalog entry (URL + SHA-256 `a6d5104f…`) and licences.
+- Real-ESRGAN x4plus and realesr-general-x4v3 (fp32 and fp16) are converted there too, and run on 256 px tiles.
+- `lightview-models` publishes no ONNX files, so these five aren't in the catalog: each user converts them and copies them into the models folder. Lightview recognises them by file name (`SELF_CONVERTED` in `ai.rs`) and lists them under Enhance. See `README.md`.
 
 ## Future ideas
-- Convert the best FOSS restoration and upscaling models (BSRGAN, Real-ESRGAN, …) to ONNX ourselves, with documented scripts, and publish them from a separate repo, instead of relying on third-party uploads.
+- Convert the best FOSS restoration and upscaling models (BSRGAN, Real-ESRGAN, …) to ONNX ourselves, with documented scripts in a separate repo that users run themselves, instead of relying on third-party uploads. Done for DarkIR and Real-ESRGAN (18c); BSRGAN is still the third-party upload.
 - **Diffusion restorers (DiffBIR, HYPIR), looked at 2026-10-29, not adopted.** Both are by XPixelGroup and built on Stable Diffusion 2.1.
   - **HYPIR** (SIGGRAPH 2025): one forward pass per tile, a ~1 GB LoRA on the SD 2.1 base. Its README adds a *Non-Commercial Use Only* declaration from SupPixel (the company behind SUPIR, dropped for the same reason). As ONNX: the UNet with the LoRA merged in, plus the VAE; the prompt is fixed, so the text encoder can be dropped. About 1.9 GB (fp16) or 3.8 GB (fp32).
   - **DiffBIR v2.1** (ECCV 2024): Apache-2.0 code on the SD 2.1 base (OpenRAIL++, commercial use allowed with use restrictions). 50 diffusion steps per tile plus a SwinIR pre-pass, so it would need a sampler in Rust. About 2.6 GB (fp16) or 5 GB (fp32) as ONNX, from about 7 GB of original weights.
