@@ -235,7 +235,7 @@ pub fn sections_ui(ui: &mut egui::Ui, d: &mut Dialog) -> bool {
         egui::Grid::new("exif-grid").num_columns(2).spacing([12.0, 6.0]).show(ui, |ui| {
             for (label, value) in &d.summary {
                 ui.label(tr(label));
-                ui.label(value);
+                ui.add(egui::Label::new(value).wrap());
                 ui.end_row();
             }
             for (i, (label, _)) in FIELDS.iter().enumerate().filter(|(i, _)| *i != DESCRIPTION) {
@@ -261,7 +261,7 @@ pub fn sections_ui(ui: &mut egui::Ui, d: &mut Dialog) -> bool {
     egui::CollapsingHeader::new(tr("Location")).default_open(true).show(ui, |ui| match d.gps {
         Some((lat, lon)) => {
             ui.label(format_location((lat, lon)));
-            ui.horizontal(|ui| {
+            ui.horizontal_wrapped(|ui| {
                 // shortcut: xdg-open is Linux only; use the platform's opener on Windows.
                 let open = |url: String| drop(std::process::Command::new("xdg-open").arg(url).spawn());
                 if ui.button(tr("Open in Google Maps")).clicked() {
@@ -283,7 +283,7 @@ pub fn sections_ui(ui: &mut egui::Ui, d: &mut Dialog) -> bool {
     });
     ui.add_space(6.0);
     let changed = d.changed();
-    let save = ui.horizontal(|ui| {
+    let save = ui.horizontal_wrapped(|ui| {
         let save = ui.add_enabled(changed && valid_date(&d.values[DATE]), egui::Button::new(tr("Save copy…"))).clicked();
         if ui.add_enabled(changed, egui::Button::new(tr("Revert"))).clicked() {
             (d.values, d.remove_gps) = (d.original.clone(), false);
@@ -343,6 +343,36 @@ mod tests {
         assert_eq!(d.gps.map(format_location).as_deref(), Some("40.4167° N, 3.7000° W"));
         assert!(d.gps.unwrap().1 < 0.0, "west is negative");
         assert_eq!(d.summary, [("Camera", "Acme".to_string())]);
+    }
+
+    // Content wider than a right panel moves the panel's left edge, past the expander arrows.
+    #[test]
+    fn sections_keep_the_panel_width() {
+        fn image_area_right(d: &mut Dialog, width: f32) -> f32 {
+            let ctx = egui::Context::default();
+            ctx.set_fonts(crate::markup::font_definitions());
+            let mut right = 0.0;
+            for _ in 0..4 {
+                let mut input = egui::RawInput::default();
+                input.screen_rect = Some(egui::Rect::from_min_size(egui::Pos2::ZERO, egui::vec2(1280.0, 720.0)));
+                let mut output = ctx.run_ui(input, |ui| {
+                    egui::Panel::right("inspector").size_range(240.0..=320.0).default_size(width).resizable(true).show(ui, |ui| {
+                        egui::ScrollArea::vertical().auto_shrink([false, true]).show(ui, |ui| sections_ui(ui, d));
+                    });
+                    right = ui.available_rect_before_wrap().right();
+                });
+                output.textures_delta.clear();
+            }
+            right
+        }
+        let mut d = read_vec(&sample_jpeg(), "panel");
+        d.summary = vec![
+            ("Lens", "EF24-70mm f/2.8L II USM with a rather long lens description".to_string()),
+            ("Exposure", "1/250 s · f/2.8 · ISO 100 · 24.0 mm".to_string()),
+        ];
+        for width in [240.0, 320.0] {
+            assert_eq!(image_area_right(&mut d, width), 1280.0 - width);
+        }
     }
 
     #[test]

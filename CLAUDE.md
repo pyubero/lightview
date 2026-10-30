@@ -36,6 +36,7 @@
 - Model conversions live in `../lightview-models` (own git repo). Python here is 3.14 only; PyTorch 2.5.1 needs a conda 3.12 env (`conda create -p <scratch>/env python=3.12`). Python's urllib can hang on this machine; use curl for downloads.
 - Metadata checks: exiftool isn't installed (running a downloaded copy is blocked); compare with `python3 -I` + PIL 12.3 and `LIGHTVIEW_INSPECT=photo.jpg cargo test print_inspector -- --ignored --nocapture`.
 - Headless egui tests: `Context::run_ui` with `RawInput`; call `output.textures_delta.clear()` each frame or it panics on drop. Pointer state needs a few frames (`modal_blocks_image_hover` in `app.rs`).
+- egui right panels: content wider than the panel's max moves its left edge right, over the content, so keep sidebar content wrapping; `Grid` cells and `ui.horizontal` don't wrap by default (`Label::wrap()`, `horizontal_wrapped`).
 - tiny-skia strokes width 0 as a hairline, egui draws nothing: guard in `markup::flatten` or the saved file differs from the screen.
 - M1 result (2026-10-28): eframe alone takes 115–200 ms to the first frame; a 12 MP JPEG takes ~360–410 ms to decode in a fresh process (~190 ms warm) → P1 is ~420 ms, so the 100 ms target is missed.
 
