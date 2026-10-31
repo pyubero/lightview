@@ -3,6 +3,7 @@
 
 mod ai;
 mod app;
+mod curves;
 mod edit;
 mod exif_edit;
 mod i18n;

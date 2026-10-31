@@ -10,6 +10,9 @@ Add model file…	Modelldatei hinzufügen…
 Added {name}	Hinzugefügt: {name}
 Adjust Color	Farbe anpassen
 Adjust Color…	Farbe anpassen…
+Adjust Curves	Kurven anpassen
+Adjust Curves…	Kurven anpassen…
+All channels together: overall brightness	Alle Kanäle zusammen: Gesamthelligkeit
 Animation	Animation
 Applies the next time lightview starts	Gilt ab dem nächsten Start von lightview
 Apply sigmoid (the model outputs logits)	Sigmoid anwenden (das Modell gibt Logits aus)
@@ -23,6 +26,7 @@ Background colour	Hintergrundfarbe
 BiRefNet lite — best quality, slow	BiRefNet lite — beste Qualität, langsam
 Bicubic	Bikubisch
 Bilinear	Bilinear
+Blue: how much blue each pixel has	Blau: wie viel Blau jedes Pixel hat
 Camera	Kamera
 Camera make	Kamerahersteller
 Camera model	Kameramodell
@@ -31,6 +35,8 @@ Cancel	Abbrechen
 Cancelled	Abgebrochen
 Check for updates	Nach Updates suchen
 Close	Schließen
+Click to add a point, drag to move it, right-click to remove it	Klicken fügt einen Punkt hinzu, Ziehen verschiebt ihn, Rechtsklick entfernt ihn
+Color space	Farbraum
 Colour	Farbe
 Colour profile	Farbprofil
 Continue	Fortfahren
@@ -104,10 +110,12 @@ GPU image scaling	Bildskalierung per GPU
 GPU support	GPU-Unterstützung
 GPU support installed: restart lightview to use it	GPU-Unterstützung installiert: Starten Sie lightview neu, um sie zu nutzen
 General	Allgemein
+Green: how much green each pixel has	Grün: wie viel Grün jedes Pixel hat
 Height	Höhe
 Hide Drawing Toolbar	Zeichenleiste ausblenden
 Hide Image Information	Bildinformationen ausblenden
 Highlight	Hervorheben
+Hue: the color itself, such as red or blue	Farbton: die Farbe selbst, etwa Rot oder Blau
 IS-Net anime — illustrations	IS-Net anime — Illustrationen
 IS-Net — general, clean edges	IS-Net — allgemein, saubere Kanten
 Image	Bild
@@ -124,6 +132,7 @@ Lasso	Lasso
 Lens	Objektiv
 Licence ({step} of {count}) — {title}	Lizenz ({step} von {count}) — {title}
 Licence — {title}	Lizenz — {title}
+Lightness: from black, through color, to white	Helligkeit: von Schwarz über Farbe bis Weiß
 Line	Linie
 Location	Standort
 Magnifier	Lupe
@@ -167,6 +176,7 @@ Real-ESRGAN general 4× half precision	Real-ESRGAN allgemein 4× halbe Genauigke
 Real-ESRGAN general 4× — fast, softer	Real-ESRGAN allgemein 4× — schnell, weicher
 Rectangle	Rechteck
 Rectangular Selection	Rechteckige Auswahl
+Red: how much red each pixel has	Rot: wie viel Rot jedes Pixel hat
 Redo	Wiederholen
 Remove Background	Hintergrund entfernen
 Remove Background and Crop	Hintergrund entfernen und zuschneiden
@@ -189,6 +199,7 @@ SCUNet σ25 — moderate noise	SCUNet σ25 — mittleres Rauschen
 SCUNet σ50 — heavy noise	SCUNet σ50 — starkes Rauschen
 SCUNet — noise and JPEG artifacts (recommended)	SCUNet — Rauschen und JPEG-Artefakte (empfohlen)
 Saturation	Sättigung
+Saturation: from grey to vivid color	Sättigung: von Grau bis zur kräftigen Farbe
 Save As…	Speichern unter…
 Save copy…	Kopie speichern…
 Saved in JPEG files	Wird in JPEG-Dateien gespeichert
@@ -224,6 +235,7 @@ Uses Bilinear while GPU scaling is on	Verwendet Bilinear, solange die GPU-Skalie
 U²-Net people — portraits	U²-Net Personen — Porträts
 U²-Net small — fastest	U²-Net klein — am schnellsten
 U²-Net — general	U²-Net — allgemein
+Value: from black to full color	Hellwert: von Schwarz bis zur vollen Farbe
 View	Ansicht
 Welcome to lightview	Willkommen bei lightview
 Width	Breite

@@ -233,6 +233,13 @@ impl App {
                     if self.adjusting.is_none() {
                         self.adjusting = self.doc();
                     }
+                    self.curve_panel = None;
+                }
+                Action::AdjustCurves => {
+                    if self.adjusting.is_none() {
+                        self.adjusting = self.doc();
+                    }
+                    self.curve_panel.get_or_insert_default();
                 }
                 Action::AutoLevels => {
                     if let Some([exposure, contrast]) = self.auto_levels() {

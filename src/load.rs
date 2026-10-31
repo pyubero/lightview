@@ -12,7 +12,7 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, Condvar, Mutex, OnceLock, mpsc};
 use std::time::Duration;
 
-pub const EXTENSIONS: [&str; 9] = ["jpg", "jpeg", "png", "gif", "webp", "bmp", "tif", "tiff", "svg"];
+pub const EXTENSIONS: [&str; 10] = ["jpg", "jpeg", "png", "gif", "webp", "bmp", "tif", "tiff", "svg", "ico"];
 
 #[derive(Clone)]
 pub struct Frame {
@@ -435,6 +435,17 @@ mod tests {
         std::fs::remove_file(&path).unwrap();
         assert_eq!((loaded.frames[0].w, loaded.frames[0].h), (3, 2));
         assert!(loaded.svg.is_some() && broken.is_err());
+    }
+
+    #[test]
+    fn opens_ico_with_its_transparency() {
+        let path = std::env::temp_dir().join(format!("lightview-{}.ico", std::process::id()));
+        image::RgbaImage::from_fn(3, 2, |x, _| image::Rgba([200, 100, 50, x as u8 * 100])).save(&path).unwrap();
+        let loaded = load(&path, [100, 100], |_| {});
+        std::fs::remove_file(&path).unwrap();
+        let f = &loaded.unwrap().frames[0];
+        assert_eq!((f.w, f.h, f.alpha), (3, 2, true));
+        assert_eq!(&f.pixels[f.pixels.len() - 4..], [200, 100, 50, 200]);
     }
 
     #[test]

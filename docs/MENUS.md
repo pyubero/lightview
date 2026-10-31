@@ -64,6 +64,7 @@ when" says otherwise. `▸` marks a submenu.
 | Flip Vertically | | | |
 | — | | | |
 | Adjust Color… | | | Panel with Exposure, Contrast, Saturation, Tint and Auto Levels; Done makes it one undo step. |
+| Adjust Curves… | | | Panel with a curve per channel in RGB, HSL or HSV, over a histogram, and a line describing the channel; Done makes it one undo step. |
 | Auto Levels | | | Applies at once. |
 | Reset Color Adjustments | | | Applies at once. |
 | — | | | |

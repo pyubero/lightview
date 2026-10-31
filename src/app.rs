@@ -1,3 +1,4 @@
+use crate::curves::CurvePanel;
 use crate::i18n::{tr, trf};
 use crate::edit::{self, Doc, ResizeDialog};
 use crate::exif_edit;
@@ -136,8 +137,10 @@ pub struct App {
     /// Textures for Erase and Image elements, by `Element::texture_key`.
     element_textures: HashMap<u64, TextureHandle>,
     resize_dialog: Option<ResizeDialog>,
-    /// While the Adjust Color panel is open: the edits from before it opened.
+    /// While Adjust Color or Adjust Curves is open: the edits from before it opened.
     adjusting: Option<Doc>,
+    /// Some while the open panel is Adjust Curves rather than Adjust Color.
+    curve_panel: Option<CurvePanel>,
     pending: Option<Pending>,
     show_ai_models: bool,
     /// The download whose licences are being shown, and which one (they come one at a time).
@@ -190,7 +193,7 @@ impl App {
             texture: None, tex_key: None, resized: None, baked: None, sharp: None, sharp_wanted: 1, flat: None, generation: 0, anim_frame: 0, anim_due: None, anim_paused: false,
             doc: None, undo: Vec::new(), redo: Vec::new(), deleted: Vec::new(), delete_prompt: false, saved: None, tool: Tool::Pan, drag_start: None, right_pan: false, crop_rect: None, measure: None, measure_drag: 1,
             show_toolbar, style: None, selected: None, grab: Grab::None, editing_text: None, focus_text: false, change_base: None, last_restyle: None, selection: None, element_textures: HashMap::new(),
-            resize_dialog: None, adjusting: None, pending: None, show_ai_models: false, license_prompt: None, restoring: None, restore_runs: 0, compare: None, enhance_notice: None, visible: None, downloading: HashSet::new(),
+            resize_dialog: None, adjusting: None, curve_panel: None, pending: None, show_ai_models: false, license_prompt: None, restoring: None, restore_runs: 0, compare: None, enhance_notice: None, visible: None, downloading: HashSet::new(),
             title: String::new(),
             window_reported: false, preview_reported: None, full_reported: false, nav_start: None, close_next: false, status: None,
         }
@@ -1076,6 +1079,21 @@ mod tests {
         // Without flattening it's drawn on top again, from a new texture.
         app.adjusting = app.doc();
         assert!(!draw(&mut app).flat);
+    }
+
+    #[test]
+    fn curves_panel_runs_on_a_real_app() {
+        let (mut app, _) = app_with_image();
+        app.adjusting = app.doc();
+        app.curve_panel = Some(CurvePanel::default());
+        let ctx = egui::Context::default();
+        ctx.set_fonts(markup::font_definitions());
+        for _ in 0..3 {
+            let mut output = ctx.run_ui(egui::RawInput::default(), |ui| app.adjust_panel(ui.ctx()));
+            output.textures_delta.clear();
+        }
+        assert!(app.curve_panel.is_some() && app.adjusting.is_some(), "still open");
+        assert_eq!(app.doc().unwrap().adjust, edit::Adjust::default(), "just opening it changes nothing");
     }
 
     /// Clipboard between two processes (needs a desktop session):

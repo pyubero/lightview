@@ -32,6 +32,7 @@ pub(super) enum Action {
     Crop,
     Resize,
     AdjustColor,
+    AdjustCurves,
     AutoLevels,
     ResetAdjust,
     Measure,
@@ -181,6 +182,7 @@ impl App {
                 item(ui, tr("Flip Vertically"), Action::FlipVertical, has_image, actions);
                 ui.separator();
                 item(ui, tr("Adjust Color…"), Action::AdjustColor, has_image, actions);
+                item(ui, tr("Adjust Curves…"), Action::AdjustCurves, has_image, actions);
                 item(ui, tr("Auto Levels"), Action::AutoLevels, has_image, actions);
                 item(ui, tr("Reset Color Adjustments"), Action::ResetAdjust, has_image, actions);
                 ui.separator();

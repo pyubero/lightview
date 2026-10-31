@@ -1,3 +1,4 @@
+use crate::curves::Curves;
 use crate::i18n::tr;
 use crate::load::Frame;
 use crate::markup::{self, Element};
@@ -33,11 +34,18 @@ pub struct Adjust {
     pub saturation: f32,
     /// −1 (green) to 1 (magenta).
     pub tint: f32,
+    /// After the above, before saturation.
+    pub curves: Curves,
 }
 
 impl Adjust {
     pub fn is_identity(&self) -> bool {
         *self == Adjust::default()
+    }
+
+    /// The sliders at zero; the curves stay, since they have their own panel.
+    fn sliders_reset(&self) -> Adjust {
+        Adjust { curves: self.curves, ..Adjust::default() }
     }
 
     /// Adjusts RGB (`channels` 3) or RGBA (4) pixels in place.
@@ -47,17 +55,20 @@ impl Adjust {
         }
         let gain = 2f32.powf(self.exposure);
         let tint = [1.0 + self.tint * 0.1, 1.0 - self.tint * 0.1, 1.0 + self.tint * 0.1];
-        // Exposure, tint and contrast are per channel, so they fit in lookup tables.
+        // Exposure, tint, contrast and RGB curves are per channel, so they fit in lookup tables.
+        let curves = self.curves.rgb_luts();
         let luts: [[u8; 256]; 3] = std::array::from_fn(|c| {
             std::array::from_fn(|v| {
                 let x = v as f32 / 255.0 * gain * tint[c];
-                (((x - 0.5) * (1.0 + self.contrast) + 0.5).clamp(0.0, 1.0) * 255.0).round() as u8
+                curves[c][(((x - 0.5) * (1.0 + self.contrast) + 0.5).clamp(0.0, 1.0) * 255.0).round() as usize]
             })
         });
+        let colors = self.curves.color_tables();
         // Fixed point (×256), so the per-pixel loop stays cheap enough for live sliders.
         let sat = ((1.0 + self.saturation) * 256.0).round() as i32;
         let pass = |px: &mut [u8]| {
-            let [r, g, b] = [luts[0][px[0] as usize], luts[1][px[1] as usize], luts[2][px[2] as usize]];
+            let rgb = [luts[0][px[0] as usize], luts[1][px[1] as usize], luts[2][px[2] as usize]];
+            let [r, g, b] = colors.as_ref().map_or(rgb, |c| c.map(rgb));
             if sat == 256 {
                 (px[0], px[1], px[2]) = (r, g, b);
             } else {
@@ -345,10 +356,15 @@ pub fn adjust_ui(ui: &mut egui::Ui, a: &mut Adjust, auto_levels: impl FnOnce() -
             }
         }
         if ui.button(tr("Reset")).clicked() {
-            *a = Adjust::default();
+            *a = a.sliders_reset();
         }
     });
     ui.add_space(6.0);
+    done_cancel(ui)
+}
+
+/// The colour panels' last row: Some(true) for Done, Some(false) for Cancel.
+pub fn done_cancel(ui: &mut egui::Ui) -> Option<bool> {
     ui.horizontal(|ui| {
         let done = ui.button(tr("Done")).clicked();
         let cancel = ui.button(tr("Cancel")).clicked();
@@ -690,6 +706,13 @@ mod tests {
     }
 
     #[test]
+    fn slider_reset_keeps_curves() {
+        let curves = crate::curves::Curves::sample();
+        let a = Adjust { exposure: 1.0, tint: 0.5, curves, ..Adjust::default() };
+        assert_eq!(a.sliders_reset(), Adjust { curves, ..Adjust::default() });
+    }
+
+    #[test]
     fn auto_levels_stretches() {
         // Values 50..=200 on every channel.
         let pixels: Vec<u8> = (0..151u8).flat_map(|i| [50 + i; 3]).collect();
@@ -720,7 +743,7 @@ mod tests {
     #[ignore]
     fn adjust_speed() {
         let big = Frame { w: 4000, h: 3000, pixels: (0..4000 * 3000 * 3).map(|i| (i % 251) as u8).collect(), alpha: false, delay: Duration::ZERO };
-        let a = Adjust { exposure: 0.5, contrast: 0.2, saturation: 0.3, tint: 0.1 };
+        let a = Adjust { exposure: 0.5, contrast: 0.2, saturation: 0.3, tint: 0.1, ..Adjust::default() };
         // The app keeps the resized pixels, so a slider step only re-runs the adjustment.
         let px = resize(&big, rect(0.0, 0.0, 4000.0, 3000.0), 1280, 960, ResizeAlg::Convolution(FilterType::Bilinear));
         let t = std::time::Instant::now();
@@ -728,6 +751,12 @@ mod tests {
             a.apply(&mut px.clone(), 3);
         }
         eprintln!("adjust 1280×960: {:.1} ms per step", t.elapsed().as_secs_f64() * 100.0);
+        let a = Adjust { curves: crate::curves::Curves::sample(), ..a };
+        let t = std::time::Instant::now();
+        for _ in 0..10 {
+            a.apply(&mut px.clone(), 3);
+        }
+        eprintln!("with HSL curves: {:.1} ms per step", t.elapsed().as_secs_f64() * 100.0);
     }
 
     #[test]
@@ -740,6 +769,7 @@ mod tests {
             changed.rotate_right();
             changed.resize(60, 80);
             changed.adjust.exposure = 0.5;
+            changed.adjust.curves = crate::curves::Curves::sample();
             for mut doc in [plain, changed] {
                 let mut e = Element::new(Shape::Rect, Pos2::new(2.0, 2.0), Style::for_image(doc.size_vec()));
                 e.points[1] = Pos2::new(20.0, 20.0);

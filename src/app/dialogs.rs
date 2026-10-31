@@ -1,4 +1,5 @@
 use super::App;
+use crate::curves::curves_ui;
 use crate::edit;
 use crate::i18n::{tr, trf};
 use crate::load::{self, Msg};
@@ -96,19 +97,26 @@ impl App {
         Some(edit::auto_levels(frame, self.doc()?.crop))
     }
 
-    /// The Adjust Color panel: the sliders change the edits live, and Done makes them one undo step.
+    /// The Adjust Color or Adjust Curves panel: it changes the edits live, and Done makes them one undo step.
     pub(super) fn adjust_panel(&mut self, ctx: &egui::Context) {
         let (Some(before), Some(mut doc)) = (self.adjusting.clone(), self.doc()) else { return };
         let mut open = true;
-        let choice = egui::Window::new(tr("Adjust Color")).open(&mut open).resizable(false).collapsible(false).show(ctx, |ui| {
-            edit::adjust_ui(ui, &mut doc.adjust, || self.auto_levels())
+        let mut curves = self.curve_panel.take();
+        let frame = self.current().and_then(|c| self.cache.get(c)).map(|l| &l.frames[0]);
+        let title = if curves.is_some() { tr("Adjust Curves") } else { tr("Adjust Color") };
+        let choice = egui::Window::new(title).open(&mut open).resizable(false).collapsible(false).show(ctx, |ui| match &mut curves {
+            Some(panel) => curves_ui(ui, &mut doc.adjust, panel, frame, doc.crop),
+            None => edit::adjust_ui(ui, &mut doc.adjust, || self.auto_levels()),
         }).and_then(|r| r.inner).flatten();
-        let adjust = doc.adjust;
+        let mut adjust = doc.adjust;
         self.doc = Some(doc);
+        self.curve_panel = curves;
         if choice.is_some() || !open {
             // Back to before the panel opened, then Done applies the result as one edit.
             self.adjusting = None;
+            self.curve_panel = None;
             self.doc = Some(before);
+            adjust.curves.keep_active();
             if choice == Some(true) {
                 self.edit(|d| d.adjust = adjust);
             }
