@@ -8,6 +8,8 @@ A fast, not-so-minimal image viewer for Linux, with experimental Windows builds,
 It opens quickly, moves through a folder without waiting, and keeps your originals safe: edits are
 only ever written to a file when you choose to save.
 
+![lightview showing a photo of snowy mountains](screenshots/screenshot-general.jpg)
+
 ## Features
 
 - **Instant browsing.** Images are decoded on background threads and the neighbouring images are
@@ -43,6 +45,15 @@ only ever written to a file when you choose to save.
 
 Animated images can be viewed, but not saved yet.
 
+## Screenshots
+
+Adjust Curves, with the inspector sidebar open:
+
+![The Adjust Curves panel over a photo of a painting](screenshots/screenshot-adjust_curves.jpg)
+
+Enhance Image previews the visible area first. Drag the divider to compare before and after:
+
+![The Enhance Image before and after preview on an old photo](screenshots/screenshot-enhance_image_preview.jpg)
 
 ## Installation
 
