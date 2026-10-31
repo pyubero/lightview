@@ -16,7 +16,6 @@
       <Directory Id="INSTALLFOLDER" Name="lightview">
         <Component Id="App" Bitness="always64">
           <File Id="LightviewExe" Source="$(var.Dist)\lightview.exe" KeyPath="yes" />
-          <File Source="$(var.Dist)\turbojpeg.dll" />
           <File Source="$(var.Dist)\LICENSES.txt" />
           <File Source="$(var.Dist)\libjpeg-turbo-LICENSE.md" />
           <File Source="$(var.Dist)\libjpeg-turbo-README.ijg" />
@@ -53,6 +52,11 @@
           <RegistryValue Root="HKLM" Key="Software\lightview\Capabilities\FileAssociations" Name=".ico" Value="lightview.Image" Type="string" />
           <RegistryValue Root="HKLM" Key="Software\RegisteredApplications" Name="lightview" Value="Software\lightview\Capabilities" Type="string" />
         </Component>
+
+        <!-- Its own component: an automatic GUID allows only one versioned file per component. -->
+        <Component Id="TurboJpeg" Bitness="always64">
+          <File Source="$(var.Dist)\turbojpeg.dll" />
+        </Component>
       </Directory>
     </StandardDirectory>
 
@@ -65,6 +69,7 @@
 
     <Feature Id="Main">
       <ComponentRef Id="App" />
+      <ComponentRef Id="TurboJpeg" />
       <ComponentRef Id="StartMenu" />
     </Feature>
   </Package>
