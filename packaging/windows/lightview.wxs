@@ -17,6 +17,7 @@
         <Component Id="App" Bitness="always64">
           <File Id="LightviewExe" Source="$(var.Dist)\lightview.exe" KeyPath="yes" />
           <File Source="$(var.Dist)\turbojpeg.dll" />
+          <File Source="$(var.Dist)\LICENSES.txt" />
           <File Source="$(var.Dist)\libjpeg-turbo-LICENSE.md" />
           <File Source="$(var.Dist)\libjpeg-turbo-README.ijg" />
 

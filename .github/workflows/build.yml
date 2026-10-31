@@ -1,5 +1,5 @@
 # Builds and tests lightview for Linux and Windows. Pushing a tag like `v0.1.0` also publishes a
-# GitHub release with the Linux tarball and the Windows installer (.msi). Can also be run by
+# GitHub release with the Linux .deb and tarball and the Windows installer (.msi). Can also be run by
 # hand from the Actions tab (it then only keeps the files as workflow artifacts).
 name: build
 
@@ -13,10 +13,13 @@ permissions:
 
 jobs:
   linux:
-    # An older Ubuntu, so the binary also runs on older glibc versions.
+    # The oldest supported distro: the binary needs this glibc (2.35) or newer.
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
+      - name: Check the tag matches Cargo.toml
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: test "${GITHUB_REF_NAME#v}" = "$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -n 1)"
       - uses: dtolnay/rust-toolchain@stable
       - run: cargo test --release
       - run: cargo build --release
@@ -24,13 +27,24 @@ jobs:
         shell: bash
         run: |
           version=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[0].version')
-          mkdir -p dist/lightview
+          mkdir -p dist/lightview/icon
           cp target/release/lightview lightview.desktop install.sh dist/lightview/
+          cp icon/aperture.svg dist/lightview/icon/
+          ./third-party-notices.py > dist/lightview/LICENSES.txt
           tar -czf "lightview-$version-linux-x86_64.tar.gz" -C dist lightview
+      - run: ./package-deb.sh
+      - name: Check the package installs
+        run: |
+          sudo apt-get install -y ./lightview_*.deb
+          test -x /usr/bin/lightview
+          test -f /usr/share/applications/lightview.desktop
+          grep -q '^egui ' /usr/share/doc/lightview/copyright
       - uses: actions/upload-artifact@v4
         with:
           name: linux
-          path: lightview-*-linux-x86_64.tar.gz
+          path: |
+            lightview-*-linux-x86_64.tar.gz
+            lightview_*.deb
 
   windows:
     runs-on: windows-latest
@@ -50,11 +64,16 @@ jobs:
           $sha = (Get-FileHash ljt.exe -Algorithm SHA256).Hash.ToLower()
           if ($sha -ne "1f05bc3ed1585e6b12a8b0c24c8c5f07b1f6d90d01b4b709b331bedc9d6e5838") { throw "libjpeg-turbo checksum mismatch: $sha" }
           7z e ljt.exe bin/turbojpeg.dll doc/LICENSE.md doc/README.ijg -oljt
+      - name: Collect the licences
+        # Bash, because PowerShell's `>` re-encodes the text.
+        shell: bash
+        run: |
+          mkdir dist
+          python third-party-notices.py x86_64-pc-windows-msvc > dist/LICENSES.txt
       - name: Build the installer
         shell: pwsh
         run: |
           $version = (cargo metadata --no-deps --format-version 1 | ConvertFrom-Json).packages[0].version
-          New-Item -ItemType Directory dist | Out-Null
           Copy-Item target/release/lightview.exe dist/
           Copy-Item ljt/turbojpeg.dll dist/
           Copy-Item ljt/LICENSE.md dist/libjpeg-turbo-LICENSE.md
@@ -67,7 +86,8 @@ jobs:
           path: lightview-*-x64.msi
 
   release:
-    if: startsWith(github.ref, 'refs/tags/v')
+    # Waits for both, but Linux still ships if Windows fails: "Re-run failed jobs" adds the .msi later.
+    if: ${{ !cancelled() && startsWith(github.ref, 'refs/tags/v') && needs.linux.result == 'success' }}
     needs: [linux, windows]
     runs-on: ubuntu-latest
     steps:
@@ -76,6 +96,8 @@ jobs:
           merge-multiple: true
       - uses: softprops/action-gh-release@v2
         with:
+          generate_release_notes: true
           files: |
+            lightview_*.deb
             lightview-*-linux-x86_64.tar.gz
             lightview-*-x64.msi

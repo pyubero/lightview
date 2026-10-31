@@ -14,14 +14,7 @@ install -Dm644 lightview.desktop "$stage/usr/share/applications/lightview.deskto
 install -Dm644 icon/aperture.svg "$stage/usr/share/icons/hicolor/scalable/apps/lightview.svg"
 install -Dm644 lightview.metainfo.xml "$stage/usr/share/metainfo/io.github.pyubero.lightview.metainfo.xml"
 mkdir -p "$stage/usr/share/doc/lightview" "$stage/DEBIAN"
-{
-    printf 'lightview\nCopyright (C) 2026 Pablo Yubero\nLicensed under the GNU General Public License, version 3 or later.\n\n'
-    cat LICENSE
-    printf '\n\n'
-    cat fonts/NOTICE.txt fonts/LICENSE-APACHE-2.0.txt fonts/emoji-icon-font-mit-license.txt
-    printf '\n\n'
-    ./third-party-notices.py
-} > "$stage/usr/share/doc/lightview/copyright"
+./third-party-notices.py > "$stage/usr/share/doc/lightview/copyright"
 cat > "$stage/DEBIAN/control" <<EOF
 Package: lightview
 Version: $version

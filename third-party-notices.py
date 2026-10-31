@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Prints the licence texts of every Rust crate in the Linux build, for package-deb.sh.
+"""Prints the licences every lightview package carries: its own, the fonts' and those of every Rust
+crate built for the given target (Linux by default).
 
-Identical texts are printed once, under the crates that use them. Fails if a crate has no text.
+Identical crate texts are printed once, under the crates that use them. Fails if a crate has no text.
 """
 import json
 import re
@@ -9,9 +10,13 @@ import subprocess
 import sys
 from pathlib import Path
 
+# Windows defaults to cp1252, which can't hold these texts.
+sys.stdout.reconfigure(encoding="utf-8", newline="\n")
+ROOT = Path(__file__).parent
+TARGET = sys.argv[1] if len(sys.argv) > 1 else "x86_64-unknown-linux-gnu"
 NAME = re.compile(r"(licen[cs]e|copying|notice)", re.I)
-# Published without its licence file; the same project's other crate has the same text.
-SIBLING = {"alloc-stdlib": "alloc-no-stdlib"}
+# Published without their licence file; the same project's or author's other crate has the same text.
+SIBLING = {"alloc-stdlib": "alloc-no-stdlib", "clipboard-win": "error-code"}
 
 
 def license_files(crate_dir):
@@ -21,7 +26,7 @@ def license_files(crate_dir):
 
 
 meta = json.loads(subprocess.check_output(
-    ["cargo", "metadata", "--locked", "--format-version", "1", "--filter-platform", "x86_64-unknown-linux-gnu"]))
+    ["cargo", "metadata", "--locked", "--format-version", "1", "--filter-platform", TARGET], cwd=ROOT))
 used = {node["id"] for node in meta["resolve"]["nodes"]}
 packages = sorted((p for p in meta["packages"] if p["id"] in used and p["name"] != "lightview"), key=lambda p: (p["name"], p["version"]))
 dirs = {p["name"]: Path(p["manifest_path"]).parent for p in packages}
@@ -33,7 +38,7 @@ for p in packages:
     crate_dir = dirs[SIBLING[p["name"]]] if p["name"] in SIBLING else Path(p["manifest_path"]).parent
     files = list(license_files(crate_dir))
     for f in files:
-        texts.setdefault(f.read_text(errors="replace").strip(), []).append(label)
+        texts.setdefault(f.read_text(encoding="utf-8", errors="replace").strip(), []).append(label)
     if not files:
         missing.append((p, label))
 
@@ -47,6 +52,11 @@ for p, label in missing:
 listed = {label.split(" (")[0] for labels in texts.values() for label in labels}
 assert listed == {f'{p["name"]} {p["version"]}' for p in packages}
 
+print("lightview\nCopyright (C) 2026 Pablo Yubero\nLicensed under the GNU General Public License, version 3 or later.\n")
+for name in ["LICENSE", "fonts/NOTICE.txt", "fonts/LICENSE-APACHE-2.0.txt", "fonts/emoji-icon-font-mit-license.txt"]:
+    sys.stdout.write((ROOT / name).read_text(encoding="utf-8"))
+    if name in ("LICENSE", "fonts/emoji-icon-font-mit-license.txt"):
+        print("\n")
 print(f"lightview uses these {len(packages)} third-party Rust crates. Their licences follow.\n")
 for text, labels in sorted(texts.items(), key=lambda kv: kv[1][0]):
     print("=" * 78)
