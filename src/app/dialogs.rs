@@ -92,7 +92,7 @@ impl App {
     }
 
     /// Auto Levels for the visible part of the current image.
-    pub(super) fn auto_levels(&self) -> Option<[[u8; 2]; 3]> {
+    pub(super) fn auto_levels(&self) -> Option<[f32; 2]> {
         let frame = &self.cache.get(self.current()?)?.frames[0];
         Some(edit::auto_levels(frame, self.doc()?.crop))
     }
@@ -100,10 +100,9 @@ impl App {
     /// The Adjust Color panel: the sliders change the edits live, and Done makes them one undo step.
     pub(super) fn adjust_panel(&mut self, ctx: &egui::Context) {
         let (Some(before), Some(mut doc)) = (self.adjusting.clone(), self.doc()) else { return };
-        let levels = self.auto_levels();
         let mut open = true;
         let choice = egui::Window::new(tr("Adjust Color")).open(&mut open).resizable(false).collapsible(false).show(ctx, |ui| {
-            edit::adjust_ui(ui, &mut doc.adjust, || levels.unwrap_or([[0, 255]; 3]))
+            edit::adjust_ui(ui, &mut doc.adjust, || self.auto_levels())
         }).and_then(|r| r.inner).flatten();
         let adjust = doc.adjust;
         self.doc = Some(doc);

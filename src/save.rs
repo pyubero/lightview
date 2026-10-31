@@ -20,6 +20,14 @@ pub const FORMATS: [(&str, &[&str]); 6] = [
     ("GIF", &["gif"]),
 ];
 
+/// `FORMATS` with the format of `source` first: file dialogs start on the first filter.
+pub fn formats_for(source: &Path) -> [(&'static str, &'static [&'static str]); 6] {
+    let ext = source.extension().and_then(|e| e.to_str()).unwrap_or_default().to_ascii_lowercase();
+    let mut formats = FORMATS;
+    formats.sort_by_key(|(_, exts)| !exts.contains(&ext.as_str()));
+    formats
+}
+
 /// Saves `frame` with the edits in `doc` to `dest`, in the format of its extension.
 /// EXIF from `source` is kept, with the orientation reset (the pixels are already upright)
 /// and the old thumbnail unlinked. Writes to a temporary file first, so a failed save never
@@ -92,6 +100,15 @@ fn source_exif(source: &Path) -> Option<Vec<u8>> {
 mod tests {
     use super::*;
     use std::time::Duration;
+
+    #[test]
+    fn source_format_comes_first() {
+        let first = |name: &str| formats_for(Path::new(name)).map(|(n, _)| n);
+        assert_eq!(first("a.PNG"), ["PNG", "JPEG", "WebP", "BMP", "TIFF", "GIF"]);
+        assert_eq!(first("a.jpeg")[0], "JPEG");
+        assert_eq!(first("a.tiff")[0], "TIFF");
+        assert_eq!(first("a.xyz"), FORMATS.map(|(n, _)| n));
+    }
 
     fn temp_dir(name: &str) -> std::path::PathBuf {
         let dir = std::env::temp_dir().join(format!("lightview-save-{name}-{}", std::process::id()));
