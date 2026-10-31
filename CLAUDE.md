@@ -91,6 +91,7 @@ Format: `YYYY-MM-DD — decision — reason`
 - 2026-10-31 — Remove Object (user's choices): LaMa for quality and MI-GAN for speed, catalog only because each has its own tensor layout; runs on a square of context around the selection, with no preview since Ctrl+Z undoes it; the session stays loaded between runs (LaMa takes ~18 s to load) and is dropped before any other model loads, so a 4 GB GPU isn't held.
 - 2026-10-31 — right-drag pans with any tool and in the before/after preview; left-drag still pans with no tool (user's choice); the button that started a drag owns it (`App::right_pan`), because egui's `dragged`/`drag_started`/`drag_stopped` fire for every button.
 - 2026-10-31 — markup shows at image resolution from the start (user's choice), so low-res images look as saved: `draw` shows `edit::flat` (the save path) as the frame and egui paints only handles and the text being typed; elements stay editable. On the UI thread, so up to 16 MP (the single frontier, user's choice), and only once a change ends: drags, typing and Adjust Color stay at screen resolution, because rendering every frame lagged at 1600×900; above 16 MP and on animations, markup always stays at screen resolution.
+- 2026-10-31 — UI font size (Settings, 10–20, default 13 = egui's body size) scales all text styles from egui's defaults, text only rather than `zoom_factor`, which would also scale icons and panels; bubbles use Body so they follow it.
 
 ## Self-Update Rule
 Before finishing your turn:

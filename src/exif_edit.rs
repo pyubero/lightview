@@ -347,9 +347,10 @@ mod tests {
     // Content wider than a right panel moves the panel's left edge, past the expander arrows.
     #[test]
     fn sections_keep_the_panel_width() {
-        fn image_area_right(d: &mut Dialog, width: f32) -> f32 {
+        fn image_area_right(d: &mut Dialog, width: f32, font_size: f32) -> f32 {
             let ctx = egui::Context::default();
             ctx.set_fonts(crate::markup::font_definitions());
+            crate::settings::apply_font_size(&ctx, font_size);
             let mut right = 0.0;
             for _ in 0..4 {
                 let mut input = egui::RawInput::default();
@@ -370,7 +371,9 @@ mod tests {
             ("Exposure", "1/250 s · f/2.8 · ISO 100 · 24.0 mm".to_string()),
         ];
         for width in [240.0, 320.0] {
-            assert_eq!(image_area_right(&mut d, width), 1280.0 - width);
+            for font_size in [10.0, 13.0, 20.0] {
+                assert_eq!(image_area_right(&mut d, width, font_size), 1280.0 - width, "{width} wide, font {font_size}");
+            }
         }
     }
 

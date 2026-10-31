@@ -129,7 +129,7 @@ impl App {
         let source = source.as_ref().unwrap_or(&doc);
         let Some(frame) = frame else {
             if let Some(e) = &self.error {
-                ui.painter().text(viewport.center(), egui::Align2::CENTER_CENTER, trf("Can't open this image:\n{e}", &[("e", &e)]), egui::FontId::proportional(14.0), Color32::GRAY);
+                ui.painter().text(viewport.center(), egui::Align2::CENTER_CENTER, trf("Can't open this image:\n{e}", &[("e", &e)]), egui::TextStyle::Body.resolve(ui.style()), Color32::GRAY);
             }
             return;
         };
@@ -344,7 +344,7 @@ pub(super) fn resize(frame: &Frame, crop: Rect, size: [u32; 2], transform: Trans
 
 /// A short message in a dark rounded box centred on `center`.
 pub(super) fn bubble(painter: &egui::Painter, center: Pos2, text: &str) {
-    let galley = painter.layout_no_wrap(text.to_string(), egui::FontId::proportional(14.0), Color32::WHITE);
+    let galley = painter.layout_no_wrap(text.to_string(), egui::TextStyle::Body.resolve(&painter.ctx().global_style()), Color32::WHITE);
     let rect = Rect::from_center_size(center, galley.size() + Vec2::new(16.0, 8.0));
     painter.rect_filled(rect, 4.0, Color32::from_black_alpha(190));
     painter.galley(rect.min + Vec2::new(8.0, 4.0), galley, Color32::WHITE);

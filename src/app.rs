@@ -167,6 +167,7 @@ impl App {
         // Otherwise egui's own Ctrl +/− scales the whole UI.
         cc.egui_ctx.options_mut(|o| o.zoom_with_keyboard = false);
         cc.egui_ctx.set_fonts(markup::font_definitions());
+        settings::apply_font_size(&cc.egui_ctx, settings.font_size);
         let mut recent: Vec<PathBuf> = cc.storage.and_then(|s| s.get_string("recent")).unwrap_or_default().lines().map(PathBuf::from).collect();
         let show_toolbar = cc.storage.and_then(|s| s.get_string("toolbar")).is_some_and(|v| v == "shown");
         if let Some(path) = &start {

@@ -11,6 +11,10 @@ pub const KEY: &str = "settings";
 
 const DESKTOP_FILE: &str = "lightview.desktop";
 const MIME_TYPES: [&str; 6] = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/bmp", "image/tiff"];
+/// egui's own body size, which every text style is scaled from.
+const DEFAULT_FONT_SIZE: f32 = 13.0;
+/// Capped at 20: the inspector panel is at most 320 pt wide and the toolbar has to fit too.
+const FONT_SIZES: [f32; 8] = [10.0, 11.0, 12.0, DEFAULT_FONT_SIZE, 14.0, 16.0, 18.0, 20.0];
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Serialize, Deserialize)]
 pub enum Interpolation {
@@ -115,11 +119,13 @@ pub struct Settings {
     pub language: Option<Language>,
     /// The first-launch "default image viewer" question has been dealt with.
     pub default_asked: bool,
+    /// UI body text, in points; the other text styles keep their proportions to it.
+    pub font_size: f32,
 }
 
 impl Default for Settings {
     fn default() -> Self {
-        Settings { gpu_scaling: false, interpolation: Interpolation::Bilinear, background: [0, 0, 0], window_size: [1280.0, 720.0], sort: SortOrder::Name, ai: AiSettings::default(), language: None, default_asked: false }
+        Settings { gpu_scaling: false, interpolation: Interpolation::Bilinear, background: [0, 0, 0], window_size: [1280.0, 720.0], sort: SortOrder::Name, ai: AiSettings::default(), language: None, default_asked: false, font_size: DEFAULT_FONT_SIZE }
     }
 }
 
@@ -128,6 +134,16 @@ impl Settings {
     pub fn interpolation(&self) -> Interpolation {
         if self.gpu_scaling && !self.interpolation.gpu_ok() { Interpolation::Bilinear } else { self.interpolation }
     }
+}
+
+/// Scales every text style from egui's defaults, so calling it again never compounds.
+pub fn apply_font_size(ctx: &egui::Context, size: f32) {
+    // The saved file can be edited by hand.
+    let factor = size.clamp(FONT_SIZES[0], FONT_SIZES[FONT_SIZES.len() - 1]) / DEFAULT_FONT_SIZE;
+    ctx.all_styles_mut(|style| {
+        style.text_styles = egui::style::default_text_styles();
+        style.text_styles.values_mut().for_each(|font| font.size *= factor);
+    });
 }
 
 /// Reads the settings straight from eframe's storage file, so the window size is known
@@ -169,6 +185,16 @@ pub fn ui(ui: &mut egui::Ui, s: &mut Settings) {
                 if ui.selectable_label(current == language, language.name()).clicked() {
                     s.language = Some(language);
                     i18n::set(language);
+                }
+            }
+        });
+        ui.end_row();
+
+        ui.label(tr("Font size"));
+        egui::ComboBox::from_id_salt("font-size").selected_text(s.font_size.to_string()).show_ui(ui, |ui| {
+            for size in FONT_SIZES {
+                if ui.selectable_value(&mut s.font_size, size, size.to_string()).clicked() {
+                    apply_font_size(ui.ctx(), size);
                 }
             }
         });
@@ -226,7 +252,7 @@ mod tests {
     fn storage_round_trip() {
         let mut ai = AiSettings { model: Some("mine.onnx".into()), ..AiSettings::default() };
         ai.overrides.insert("mine.onnx".into(), Preprocess::auto(512));
-        let s = Settings { gpu_scaling: true, interpolation: Interpolation::Lanczos3, background: [1, 2, 3], window_size: [800.0, 600.0], sort: SortOrder::DateModified, ai, language: Some(Language::German), default_asked: true };
+        let s = Settings { gpu_scaling: true, interpolation: Interpolation::Lanczos3, background: [1, 2, 3], window_size: [800.0, 600.0], sort: SortOrder::DateModified, ai, language: Some(Language::German), default_asked: true, font_size: 18.0 };
         // eframe stores each value as a RON string inside a RON map.
         let kv = HashMap::from([(KEY.to_string(), ron::to_string(&s).unwrap()), ("recent".to_string(), "/a".to_string())]);
         assert_eq!(parse(&ron::to_string(&kv).unwrap()), s);
@@ -248,6 +274,22 @@ mod tests {
         // A stored value missing newer fields keeps the defaults for them.
         let kv = HashMap::from([(KEY.to_string(), "(gpu_scaling: true)".to_string())]);
         assert_eq!(parse(&ron::to_string(&kv).unwrap()), Settings { gpu_scaling: true, ..Settings::default() });
+    }
+
+    #[test]
+    fn font_size_scales_every_text_style() {
+        use egui::TextStyle::{Body, Heading};
+        let ctx = egui::Context::default();
+        let size = |style| ctx.global_style().text_styles[&style].size;
+        apply_font_size(&ctx, 18.0);
+        apply_font_size(&ctx, 18.0);
+        assert!((size(Body) - 18.0).abs() < 1e-4);
+        assert!((size(Heading) - 18.0 * 18.0 / 13.0).abs() < 1e-4);
+        apply_font_size(&ctx, 500.0);
+        assert!((size(Body) - 20.0).abs() < 1e-4);
+        // Also catches egui changing its defaults under DEFAULT_FONT_SIZE.
+        apply_font_size(&ctx, DEFAULT_FONT_SIZE);
+        assert_eq!(ctx.global_style().text_styles, egui::style::default_text_styles());
     }
 
     #[test]
