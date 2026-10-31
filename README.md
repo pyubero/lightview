@@ -1,17 +1,23 @@
+<p align="center">
+  <img src="icon/aperture.svg" width="128" alt="lightview logo">
+</p>
+
 # lightview
 
-A fast, not-so-minimal image viewer for Linux, written in Rust. It opens quickly, moves through 
-a folder without waiting, and keeps your originals safe: edits are only ever written to a file 
-when you choose to save.
+A fast, not-so-minimal image viewer for Linux, with experimental Windows builds, written in Rust.
+It opens quickly, moves through a folder without waiting, and keeps your originals safe: edits are
+only ever written to a file when you choose to save.
 
 ## Features
 
 - **Instant browsing.** Images are decoded on background threads and the neighbouring images are
   decoded ahead, so the window never freezes and moving to the next image feels smoother.
 - **Viewing.** Fit to window, actual size, zoom at the pointer, pan, full screen, EXIF orientation,
-  and animated GIF and WebP playback with frame stepping.
-- **Editing.** Crop, resize, rotate, flip, colour adjustments and auto levels, with full undo and
-  redo.
+  animated GIF and WebP playback with frame stepping, and SVGs that stay sharp as you zoom in.
+- **Editing.** Crop, resize, rotate, flip, colour adjustments, auto levels and curves in RGB, HSL or
+  HSV, with full undo and redo.
+- **Safe deleting.** Deleting asks first and moves the image to the system Trash, and Ctrl+Z brings
+  it back.
 - **Selection and clipboard.** Rectangle, ellipse and lasso selections, plus cut, copy and paste of
   images.
 - **Markup.** Freehand sketching, shapes, arrows, text, highlights, a magnifier and a measuring tool.
@@ -32,6 +38,8 @@ when you choose to save.
 | GIF | Yes | Yes |
 | BMP | Yes | Yes |
 | TIFF | Yes (first page) | Yes |
+| SVG | Yes | No |
+| ICO | Yes (largest size) | No |
 
 Animated images can be viewed, but not saved yet.
 
@@ -39,7 +47,7 @@ Animated images can be viewed, but not saved yet.
 ## Installation
 
 lightview runs on Linux, on both Wayland and X11. It has been developed and tested on Kubuntu with
-KDE Plasma. Windows isn't supported yet.
+KDE Plasma. Windows builds are experimental.
 
 ### Ubuntu, Kubuntu, Mint, Pop!_OS, Debian 12 or newer (64-bit Intel/AMD)
 
@@ -49,6 +57,10 @@ KDE Plasma. Windows isn't supported yet.
    default image viewer. You can change your mind later in Edit → Settings.
 
 To uninstall, remove lightview in your software centre, or run `sudo apt remove lightview`.
+
+### Windows (experimental, 64-bit)
+
+Download the `.msi` file from the [Releases](../../releases) page and run it.
 
 ### From source (any other distribution)
 
@@ -60,9 +72,13 @@ this repository:
 ```
 
 This builds a release binary, installs it to `~/.local/bin`, adds a desktop entry, and **makes
-lightview your default viewer** for JPEG, PNG, GIF, WebP and BMP. To undo it, remove
-`~/.local/bin/lightview` and `~/.local/share/applications/lightview.desktop`, then choose another
-default app in your system settings.
+lightview your default viewer** for JPEG, PNG, GIF, WebP, BMP and TIFF. To undo it, remove
+`~/.local/bin/lightview`, `~/.local/share/applications/lightview.desktop` and
+`~/.local/share/icons/hicolor/scalable/apps/lightview.svg`, then choose another default app in your
+system settings.
+
+The tarball on the [Releases](../../releases) page works the same way without a Rust toolchain:
+unpack it and run its `./install.sh`.
 
 To build without installing:
 
@@ -75,7 +91,7 @@ cargo build --release
 - **libjpeg-turbo** (`libturbojpeg.so.0`) makes JPEGs noticeably faster. It's loaded at run time, so
   no development package is needed, and lightview uses its pure-Rust decoder if it's missing.
 
-The AI downloads use the system's `curl`, `sha256sum`, `tar` and `unzip`.
+On Linux, the AI downloads use the system's `curl`, `tar` and `unzip`.
 
 ## Usage
 
@@ -165,7 +181,8 @@ lightview is free software: you can redistribute it and/or modify it under the t
 [GNU General Public License](LICENSE), version 3 or later. It comes with no warranty.
 
 The fonts built into lightview are Apache-2.0 and MIT licensed; see [`fonts/NOTICE.txt`](fonts/NOTICE.txt).
-The `.deb` includes their licences and those of the Rust crates, in
-`/usr/share/doc/lightview/copyright`.
+Every package includes their licences and those of the Rust crates: in
+`/usr/share/doc/lightview/copyright` from the `.deb`, and in `LICENSES.txt` in the tarball and in
+the Windows install folder.
 
 Third-party licences for the downloadable AI components are in [`licenses/`](licenses).
