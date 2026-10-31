@@ -235,8 +235,8 @@ impl App {
                     }
                 }
                 Action::AutoLevels => {
-                    if let Some(levels) = self.auto_levels() {
-                        self.edit(|d| d.adjust.levels = Some(levels));
+                    if let Some([exposure, contrast]) = self.auto_levels() {
+                        self.edit(|d| (d.adjust.exposure, d.adjust.contrast) = (exposure, contrast));
                     }
                 }
                 Action::ResetAdjust => self.edit(|d| d.adjust = Adjust::default()),

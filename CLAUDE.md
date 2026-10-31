@@ -85,6 +85,7 @@ Format: `YYYY-MM-DD — decision — reason`
 - 2026-10-30 — `app.rs` split into child modules `src/app/*.rs`, not sibling files — only children see `App`'s private fields; `App` stays one flat struct, no sub-structs, no dialog trait.
 - 2026-10-30 — app icon = aperture in kingfisher colours (user's choice): one SVG in hicolor/scalable via `Icon=lightview`, plus an embedded 256 px PNG for X11 — on Wayland the panel finds it through the app id and `.desktop` file, and winit ignores window icons.
 - 2026-10-29 — M21 Windows (user's choices): one code base with per-OS bits in `platform.rs`/`ai.rs`; releases (Linux tarball + Windows .msi into Program Files) built by GitHub Actions; ship `turbojpeg.dll` since it's < 5 MB; developed on branch `windows`, merged after testing on Windows 11.
+- 2026-10-31 — Auto Levels is a button that sets the Exposure and Contrast sliders (user's choice); `Adjust.levels` removed, so one stretch for all channels and no colour-cast correction — every adjustment stays visible and editable. Save As lists the source's format first, since rfd has no current-filter option and dialogs start on the first filter.
 
 ## Self-Update Rule
 Before finishing your turn:

@@ -490,7 +490,7 @@ impl App {
         let Some((path, l)) = self.current().and_then(|p| Some((p, self.cache.get(p)?))) else { return };
         let Some(doc) = self.doc().filter(|_| l.frames.len() == 1) else { return };
         let (frame, source) = (l.frames[0].clone(), path.clone());
-        let mut dialog = save::FORMATS.iter().fold(rfd::FileDialog::new().set_file_name(path.file_name().unwrap_or_default().to_string_lossy()), |d, (name, exts)| d.add_filter(*name, exts));
+        let mut dialog = save::formats_for(path).iter().fold(rfd::FileDialog::new().set_file_name(path.file_name().unwrap_or_default().to_string_lossy()), |d, (name, exts)| d.add_filter(*name, exts));
         if let Some(dir) = path.parent() {
             dialog = dialog.set_directory(dir);
         }
