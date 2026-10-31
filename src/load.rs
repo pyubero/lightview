@@ -308,14 +308,22 @@ pub fn set_exif_dpi(tiff: &mut [u8], dpi: u16) {
     }
 }
 
+/// Whether a Trash item is `path`. When Windows hides known extensions, `item.name` has none,
+/// but `item.id` (like `$RAB12CD.jpg`) keeps it.
+fn is_trashed_copy(item: &trash::TrashItem, path: &Path) -> bool {
+    let same_name = Some(item.name.as_os_str()) == path.file_name() || (Some(item.name.as_os_str()) == path.file_stem() && Path::new(&item.id).extension() == path.extension());
+    // Compared canonically: on Windows `path` starts with `\\?\`, the Trash's paths don't.
+    same_name && item.original_parent.canonicalize().is_ok_and(|p| Some(p.as_path()) == path.parent())
+}
+
 /// Puts a file back from the Trash, to the place it was deleted from.
 pub fn restore_trashed(path: &Path) -> Result<(), String> {
     let items = trash::os_limited::list().map_err(|e| e.to_string())?;
-    // Compared canonically: on Windows `path` starts with `\\?\`, the Trash's paths don't.
-    let same = |i: &trash::TrashItem| Some(i.name.as_os_str()) == path.file_name() && i.original_parent.canonicalize().is_ok_and(|p| p.join(&i.name) == path);
-    let newest = items.into_iter().filter(same).max_by_key(|i| i.time_deleted);
+    let newest = items.into_iter().filter(|i| is_trashed_copy(i, path)).max_by_key(|i| i.time_deleted);
     let item = newest.ok_or_else(|| crate::i18n::tr("It's no longer in the Trash").to_string())?;
-    trash::os_limited::restore_all([item]).map_err(|e| e.to_string())
+    // The full name, or the file would come back without its extension.
+    let name = path.file_name().unwrap_or_default().to_owned();
+    trash::os_limited::restore_all([trash::TrashItem { name, ..item }]).map_err(|e| e.to_string())
 }
 
 /// The supported images in `path`'s folder: by name in file-manager order, or oldest first.
@@ -380,6 +388,18 @@ fn natural_cmp(a: &str, b: &str) -> Ordering {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn finds_trashed_file_with_hidden_extension() {
+        let dir = std::fs::canonicalize(std::env::temp_dir()).unwrap();
+        let path = dir.join("photo.jpg");
+        let item = |name: &str, id: &str| trash::TrashItem { id: id.into(), name: name.into(), original_parent: dir.clone(), time_deleted: 0 };
+        assert!(is_trashed_copy(&item("photo.jpg", "/trash/info/photo.jpg.trashinfo"), &path));
+        assert!(is_trashed_copy(&item("photo", r"C:\$Recycle.Bin\S-1\$RAB12CD.jpg"), &path));
+        assert!(!is_trashed_copy(&item("photo", r"C:\$Recycle.Bin\S-1\$RAB12CD.png"), &path));
+        assert!(!is_trashed_copy(&item("other.jpg", "/trash/info/other.jpg.trashinfo"), &path));
+        assert!(!is_trashed_copy(&trash::TrashItem { original_parent: dir.join("elsewhere"), ..item("photo.jpg", "x") }, &path));
+    }
 
     // Uses the real Trash: `cargo test trash_round_trip -- --ignored`.
     #[test]

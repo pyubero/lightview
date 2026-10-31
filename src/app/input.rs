@@ -409,7 +409,8 @@ impl App {
     /// The scroll wheel, and the zoom actions, which wait until the image is known.
     pub(super) fn zoom(&mut self, ctx: &egui::Context, drag: &egui::Response, actions: &[Action], img: Vec2, viewport: Rect, ppp: f32) {
         let (factor, hover) = ctx.input(|i| (i.zoom_delta() * (i.smooth_scroll_delta.y / 200.0).exp(), i.pointer.hover_pos()));
-        if factor != 1.0 && drag.hovered() {
+        let modal_open = ctx.memory(|m| m.top_modal_layer().is_some());
+        if factor != 1.0 && drag.hovered() && !modal_open {
             self.view = view::zoom_at(self.view, factor, hover.unwrap_or(viewport.center()), img, viewport, ppp);
         }
         for action in actions {

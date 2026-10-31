@@ -167,11 +167,12 @@ pub fn download_gpu() -> Result<(), String> {
         for (i, part) in GPU_PARTS.iter().enumerate() {
             let archive = tmp.join(format!("download-{i}"));
             fetch(part.url, part.sha256, &archive)?;
-            // The system's tools: tar for ONNX Runtime (GNU tar reads the .tgz, Windows' bsdtar the .zip);
-            // the wheels are zips, which Windows' tar reads too, but GNU tar doesn't, so Linux uses unzip.
+            #[cfg(windows)]
+            crate::platform::unzip(&archive, &tmp, part.members.unwrap_or(&["nvidia/*/bin/*.dll"]))?;
+            // The system's tools: GNU tar reads the ONNX Runtime .tgz, unzip the wheels.
+            #[cfg(not(windows))]
             match part.members {
                 Some(members) => run(crate::platform::command("tar").arg("-xf").arg(&archive).arg("-C").arg(&tmp).arg("--strip-components=2").args(members))?,
-                None if cfg!(windows) => run(crate::platform::command("tar").arg("-xf").arg(&archive).arg("-C").arg(&tmp).arg("--strip-components=3").arg("nvidia/*/bin/*.dll"))?,
                 None => run(crate::platform::command("unzip").args(["-q", "-j", "-o"]).arg(&archive).arg("nvidia/*/lib/lib*.so*").arg("-d").arg(&tmp))?,
             }
             // The archives are big: drop each one once it's unpacked.
@@ -230,9 +231,11 @@ pub fn download_runtime() -> Result<(), String> {
     let unpacked = dir.join("onnxruntime.part");
     let result = (|| {
         std::fs::create_dir_all(&unpacked).map_err(|e| e.to_string())?;
-        // The system's tar: GNU tar reads the Linux .tgz, Windows' own tar (bsdtar) reads its .zip.
-        run(crate::platform::command("tar").arg("-xf").arg(&archive).arg("-C").arg(&unpacked).arg(RUNTIME_MEMBER))?;
-        std::fs::rename(unpacked.join(RUNTIME_MEMBER), &path).map_err(|e| e.to_string())
+        #[cfg(windows)]
+        crate::platform::unzip(&archive, &unpacked, &[RUNTIME_MEMBER])?;
+        #[cfg(not(windows))]
+        run(crate::platform::command("tar").arg("-xf").arg(&archive).arg("-C").arg(&unpacked).arg("--strip-components=2").arg(RUNTIME_MEMBER))?;
+        std::fs::rename(unpacked.join(RUNTIME_FILE), &path).map_err(|e| e.to_string())
     })();
     let _ = std::fs::remove_file(&archive);
     let _ = std::fs::remove_dir_all(&unpacked);
@@ -240,9 +243,8 @@ pub fn download_runtime() -> Result<(), String> {
 }
 
 /// Downloads `url` to `dest`, keeping it only if its SHA-256 is `sha256`.
-// shortcut: uses the system's curl (Linux, and Windows 10 and later) rather than an HTTP crate.
 fn fetch(url: &str, sha256: &str, dest: &Path) -> Result<(), String> {
-    let result = run(crate::platform::command("curl").args(["-L", "--fail", "--silent", "--show-error", "-o"]).arg(dest).arg(url)).and_then(|()| {
+    let result = crate::platform::download(url, dest).and_then(|()| {
         if sha256_file(dest)? == sha256 { Ok(()) } else { Err(tr("the download didn't match its checksum").into()) }
     });
     if result.is_err() {
@@ -1236,7 +1238,7 @@ mod tests {
         environment().unwrap();
     }
 
-    /// A file:// URL curl accepts on Linux and Windows (`file:///C:/…` there).
+    /// A file:// URL for `platform::download` on Linux and Windows (`file:///C:/…` there).
     fn file_url(path: &Path) -> String {
         let p = path.display().to_string().replace('\\', "/");
         if p.starts_with('/') { format!("file://{p}") } else { format!("file:///{p}") }

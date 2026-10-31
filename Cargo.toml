@@ -30,3 +30,6 @@ windows-sys = { version = "0.61", features = ["Win32_Globalization", "Win32_Syst
 # Unoptimised decoders are 10–50× slower; keep dependencies fast in debug builds.
 [profile.dev.package."*"]
 opt-level = 3
+
+[build-dependencies]
+winresource = "0.1.34"

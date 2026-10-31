@@ -28,6 +28,11 @@ fn resolve(view: View, img: Vec2, viewport: Rect, ppp: f32) -> (f32, Pos2) {
     (scale, Pos2::new(clamp(center.x, half.x, img.x), clamp(center.y, half.y, img.y)))
 }
 
+/// The current zoom: physical px per image px, so 1.0 is actual size.
+pub fn scale(view: View, img: Vec2, viewport: Rect, ppp: f32) -> f32 {
+    resolve(view, img, viewport, ppp).0
+}
+
 /// Where the visible part of the image goes on screen (points) and which part of the image it is (image px).
 pub fn layout(view: View, img: Vec2, viewport: Rect, ppp: f32) -> (Rect, Rect) {
     let (scale, center) = resolve(view, img, viewport, ppp);

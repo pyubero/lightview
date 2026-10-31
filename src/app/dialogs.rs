@@ -271,10 +271,10 @@ mod tests {
     use crate::markup;
     use eframe::egui::{Key, Modifiers, Pos2, Rect, Sense, Vec2};
 
-    // Scroll zoom relies on this: a modal must stop the image being hovered.
+    // Scroll zoom relies on this: a modal must stop the image being hovered, and be seen by the next frame.
     #[test]
     fn modal_blocks_image_hover() {
-        fn hovered(modal: bool) -> bool {
+        fn hovered(modal: bool) -> (bool, bool) {
             let ctx = egui::Context::default();
             ctx.set_fonts(markup::font_definitions());
             let mut hovered = false;
@@ -291,10 +291,10 @@ mod tests {
                 });
                 output.textures_delta.clear();
             }
-            hovered
+            (hovered, ctx.memory(|m| m.top_modal_layer().is_some()))
         }
-        assert!(hovered(false));
-        assert!(!hovered(true));
+        assert_eq!(hovered(false), (true, false));
+        assert_eq!(hovered(true), (false, true));
     }
 
     #[test]

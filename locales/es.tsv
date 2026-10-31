@@ -203,7 +203,7 @@ Show Drawing Toolbar	Mostrar barra de dibujo
 Show Image Information	Mostrar información de la imagen
 Silueta — small and fast	Silueta — pequeño y rápido
 Size read from the model when it runs; the usual normalisation.	Tamaño leído del modelo al ejecutarlo; normalización habitual.
-Sketch	Boceto
+Sketch	Dibujar
 Smoother zooming and panning. Uses more GPU memory and makes switching images a little slower.	Zoom y desplazamiento más suaves. Usa más memoria de GPU y hace algo más lento el cambio de imagen.
 Sort order	Orden
 Std (R, G, B)	Desv. estándar (R, G, B)

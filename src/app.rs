@@ -610,11 +610,12 @@ impl App {
         self.selected = self.doc.as_ref().map(|d| d.elements.len() - 1);
     }
 
-    fn make_title(&self) -> String {
+    fn make_title(&self, zoom: Option<f32>) -> String {
         let Some(path) = self.current() else { return "lightview".into() };
         let name = path.file_name().unwrap_or_default().to_string_lossy();
+        let zoom = zoom.map_or(String::new(), |z| format!(" — {z:.2}×"));
         match self.cache.get(path) {
-            Some(l) => format!("{name} — {}×{} — {}", l.frames[0].w, l.frames[0].h, format_size(l.file_size)),
+            Some(l) => format!("{name} — {}×{} — {}{zoom}", l.frames[0].w, l.frames[0].h, format_size(l.file_size)),
             None => name.into_owned(),
         }
     }
@@ -679,19 +680,20 @@ impl eframe::App for App {
         let full = self.current().and_then(|p| self.cache.get(p)).cloned();
         let full = full.as_deref();
 
-        let mut hovered_at = None;
+        let (mut hovered_at, mut zoom) = (None, None);
         // Zoom and pan only once the full image is in (the preview has different pixel sizes).
         if let (Some(l), Some(doc)) = (full, &doc) {
             let drag = self.image_input(ui, doc, viewport, ppp);
             hovered_at = drag.hover_pos().filter(|_| drag.hovered());
             self.zoom(&ctx, &drag, &actions, doc.size_vec(), viewport, ppp);
+            zoom = Some(crate::view::scale(self.view, doc.size_vec(), viewport, ppp));
             self.animate(&ctx, l, &actions);
         }
         self.draw(ui, full, doc, hovered_at, viewport);
         self.show_status(ui, viewport);
         self.dialogs(&ctx, viewport);
 
-        let title = self.make_title();
+        let title = self.make_title(zoom);
         if title != self.title {
             ctx.send_viewport_cmd(ViewportCommand::Title(title.clone()));
             self.title = title;
@@ -739,6 +741,13 @@ mod tests {
         app.cache.insert(path.clone(), Arc::new(Loaded { frames: vec![frame], file_size: 6 }));
         app.files = vec![path.clone()];
         (app, path)
+    }
+
+    #[test]
+    fn title_shows_the_zoom() {
+        let (app, _) = app_with_image();
+        assert_eq!(app.make_title(Some(0.25)), "a.png — 2×1 — 1 KB — 0.25×");
+        assert_eq!(app.make_title(None), "a.png — 2×1 — 1 KB");
     }
 
     #[test]
