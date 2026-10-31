@@ -245,6 +245,10 @@ impl App {
                                 d.elements.push(Element::pasted(Arc::new(img), region.min, region.size(), style));
                             }
                         });
+                        // The filled area should be seen, not outlined.
+                        if run.task == crate::ai::Task::Inpaint {
+                            self.selection = None;
+                        }
                         self.set_status(trf("{task} done", &[("task", &run.task.title())]));
                     }
                     Err(e) if e == "cancelled" => self.set_status(tr("Cancelled")),
@@ -779,6 +783,24 @@ mod tests {
         assert_eq!(app.restoring.as_ref().map(|r| r.progress), Some(0.5));
         app.handle(Msg::Restored(2, path, Rect::ZERO, false, Err("cancelled".into())));
         assert!(app.restoring.is_none());
+    }
+
+    #[test]
+    fn removing_an_object_pastes_the_fill_once_and_clears_the_selection() {
+        let (mut app, path) = app_with_image();
+        let region = Rect::from_min_size(Pos2::ZERO, Vec2::new(1.0, 1.0));
+        let sel = Selection::Rect(region);
+        let run = |id, sel| Restoring { id, task: crate::ai::Task::Inpaint, progress: 0.0, started: Instant::now(), cancel: Arc::default(), selection: Some(sel) };
+        // A failure keeps the selection for another try.
+        app.selection = Some(sel.clone());
+        app.restoring = Some(run(1, sel.clone()));
+        app.handle(Msg::Restored(1, path.clone(), region, true, Err("boom".into())));
+        assert!(app.selection.is_some() && app.doc().is_none_or(|d| d.elements.is_empty()));
+        app.restoring = Some(run(2, sel));
+        let fill = image::RgbaImage::from_pixel(1, 1, image::Rgba([1, 2, 3, 255]));
+        app.handle(Msg::Restored(2, path, region, true, Ok((fill, 0.0))));
+        assert!(app.selection.is_none() && app.restoring.is_none());
+        assert_eq!(app.doc().map(|d| d.elements.len()), Some(1));
     }
 
     /// Clipboard between two processes (needs a desktop session):

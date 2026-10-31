@@ -19,8 +19,8 @@ when you choose to save.
   saves to a copy.
 - **Six languages.** English, Spanish, French, German, Italian and Portuguese. lightview starts in
   your system's language and you can change it in Edit → Settings.
-- **Optional AI tools.** Background removal, denoising, and upscaling or low-light enhancement. They
-  run locally on your machine, and nothing is installed until you ask for it.
+- **Optional AI tools.** Background removal, object removal, denoising, and upscaling or low-light
+  enhancement. They run locally on your machine, and nothing is installed until you ask for it.
 
 ### Supported formats
 
@@ -108,6 +108,7 @@ accept its licence.
 | Remove Background | Silueta, U²-Net, IS-Net, BiRefNet |
 | Denoise | SCUNet, SwinIR |
 | Enhance Image | BSRGAN 4× |
+| Remove Object | LaMa (best quality), MI-GAN (fast) |
 
 ### Models you convert yourself
 

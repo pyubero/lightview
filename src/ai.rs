@@ -342,16 +342,19 @@ pub enum Task {
     Denoise,
     /// Image to image, generative.
     Enhance,
+    /// Fills in a selected area.
+    Inpaint,
 }
 
 impl Task {
-    pub const ALL: [Task; 3] = [Task::Background, Task::Denoise, Task::Enhance];
+    pub const ALL: [Task; 4] = [Task::Background, Task::Denoise, Task::Enhance, Task::Inpaint];
 
     pub fn title(self) -> &'static str {
         match self {
             Task::Background => tr("Remove Background"),
             Task::Denoise => tr("Denoise"),
             Task::Enhance => tr("Enhance Image"),
+            Task::Inpaint => tr("Remove Object"),
         }
     }
 }
@@ -399,6 +402,8 @@ const BIREFNET_LICENSE: License = License { project: "BiRefNet", spdx: "MIT", ur
 const REMBG_LICENSE: License = License { project: "rembg", spdx: "MIT", url: "https://github.com/danielgatis/rembg", text: include_str!("../licenses/rembg.txt") };
 const SCUNET_LICENSE: License = License { project: "SCUNet", spdx: "Apache-2.0", url: "https://github.com/cszn/SCUNet", text: include_str!("../licenses/scunet.txt") };
 const BSRGAN_LICENSE: License = License { project: "BSRGAN", spdx: "Apache-2.0", url: "https://github.com/cszn/BSRGAN", text: include_str!("../licenses/bsrgan.txt") };
+const LAMA_LICENSE: License = License { project: "LaMa", spdx: "Apache-2.0", url: "https://github.com/advimman/lama", text: include_str!("../licenses/lama.txt") };
+const MIGAN_LICENSE: License = License { project: "MI-GAN", spdx: "MIT", url: "https://github.com/Picsart-AI-Research/MI-GAN", text: include_str!("../licenses/migan.txt") };
 const SWINIR_LICENSE: License = License { project: "SwinIR", spdx: "Apache-2.0", url: "https://github.com/JingyunLiang/SwinIR", text: include_str!("../licenses/swinir.txt") };
 /// The licence files that come with the ONNX conversions (SCUNet's is KAIR's MIT licence).
 const HELIOSOPH_SCUNET_LICENSE: License = License { project: "Heliosoph/scunet-onnx (the ONNX conversion)", spdx: "MIT", url: "https://huggingface.co/Heliosoph/scunet-onnx", text: include_str!("../licenses/heliosoph-scunet.txt") };
@@ -410,11 +415,14 @@ const RELEASES: &str = "https://github.com/danielgatis/rembg/releases/download/v
 const SCUNET: &str = "https://huggingface.co/Heliosoph/scunet-onnx/resolve/6d11417ee2fbcc73783c502a238ac115097754fe";
 const SWINIR: &str = "https://huggingface.co/Heliosoph/swinir-onnx/resolve/a4a77e2c33c32cfa4f39953b2aa87afec7f34aef";
 const BSRGAN: &str = "https://huggingface.co/FuryTMP/BSRGANx4_fp16/resolve/9359c20a3c91f930cdba220a31129ff9f8997791";
+const LAMA: &str = "https://huggingface.co/Carve/LaMa-ONNX/resolve/c3c0c9e468934d62e79c329e35d82dd09ff8c444";
+const MIGAN: &str = "https://huggingface.co/andraniksargsyan/migan/resolve/406830d0fa60666da0071c342ad2fbc8f30c5c64";
+const LAMA_FILE: &str = "lama_fp32.onnx";
 const HELIOSOPH: Option<&str> = Some(tr_key("Converted to ONNX by Heliosoph LLC from the authors' published weights."));
 const SCUNET_LICENSES: &[License] = &[SCUNET_LICENSE, HELIOSOPH_SCUNET_LICENSE];
 
 /// In order of preference within each task: the first one installed is that task's default.
-pub const CATALOG: [Known; 13] = [
+pub const CATALOG: [Known; 15] = [
     Known { file: "silueta.onnx", label: tr_key("Silueta — small and fast"), task: Task::Background, mb: 44, sha256: "75da6c8d2f8096ec743d071951be73b4a8bc7b3e51d9a6625d63644f90ffeedb", base: RELEASES, data: None, pre: Some(U2NET), converted_by: None, scale: 1, max_tile: 512, notice: None, licenses: &[U2NET_LICENSE, REMBG_LICENSE] },
     Known { file: "u2netp.onnx", label: tr_key("U²-Net small — fastest"), task: Task::Background, mb: 5, sha256: "309c8469258dda742793dce0ebea8e6dd393174f89934733ecc8b14c76f4ddd8", base: RELEASES, data: None, pre: Some(U2NET), converted_by: None, scale: 1, max_tile: 512, notice: None, licenses: &[U2NET_LICENSE] },
     Known { file: "u2net.onnx", label: tr_key("U²-Net — general"), task: Task::Background, mb: 176, sha256: "8d10d2f3bb75ae3b6d527c77944fc5e7dcd94b29809d47a739a7a728a912b491", base: RELEASES, data: None, pre: Some(U2NET), converted_by: None, scale: 1, max_tile: 512, notice: None, licenses: &[U2NET_LICENSE] },
@@ -428,6 +436,8 @@ pub const CATALOG: [Known; 13] = [
     Known { file: "scunet_color_50.onnx", label: tr_key("SCUNet σ50 — heavy noise"), task: Task::Denoise, mb: 77, sha256: "691b995af0700809ddf882265de4a68373b2d2af9d4a89daca662b828686229d", base: SCUNET, data: Some(("scunet_color_50.onnx.data", "a12e0931304ea43d3367d5f5848099e46fdafe07fd2126ed207ceca02989d446")), pre: None, converted_by: HELIOSOPH, scale: 1, max_tile: 512, notice: None, licenses: SCUNET_LICENSES },
     Known { file: "swinir_denoising_color_25.onnx", label: tr_key("SwinIR σ25 — moderate noise, very slow"), task: Task::Denoise, mb: 55, sha256: "5fb427215c6a893b4c4aa27b6ab0aad66742fb9cb7ab24f65eff27b09cc2ea74", base: SWINIR, data: None, pre: None, converted_by: HELIOSOPH, scale: 1, max_tile: 512, notice: None, licenses: &[SWINIR_LICENSE, HELIOSOPH_SWINIR_LICENSE] },
     Known { file: "BSRGANx4_fp16.onnx", label: tr_key("BSRGAN 4× — upscales and sharpens, may invent detail"), task: Task::Enhance, mb: 33, sha256: "9682732b50a4ab4d78a3c84220702b4063e11cccb2bf50ca27ea2b572dedd173", base: BSRGAN, data: None, pre: None, converted_by: Some(tr_key("ONNX export (half precision) by FuryTMP on Hugging Face; its origin isn't verified.")), scale: 4, max_tile: 256, notice: None, licenses: &[BSRGAN_LICENSE] },
+    Known { file: LAMA_FILE, label: tr_key("LaMa — best quality, slower"), task: Task::Inpaint, mb: 208, sha256: "1faef5301d78db7dda502fe59966957ec4b79dd64e16f03ed96913c7a4eb68d6", base: LAMA, data: None, pre: None, converted_by: Some(tr_key("ONNX export by Carve on Hugging Face; its origin isn't verified.")), scale: 1, max_tile: 512, notice: None, licenses: &[LAMA_LICENSE] },
+    Known { file: "migan_pipeline_v2.onnx", label: tr_key("MI-GAN — fast"), task: Task::Inpaint, mb: 28, sha256: "6f1f3530a1a2324b19752018ce756088b07973cda8d7d890034ace5c8a48c40b", base: MIGAN, data: None, pre: None, converted_by: None, scale: 1, max_tile: 512, notice: None, licenses: &[MIGAN_LICENSE] },
 ];
 
 const FROM_LIGHTVIEW_MODELS: Known = Known { file: "", label: "", task: Task::Enhance, mb: 0, sha256: "", base: "", data: None, pre: None, converted_by: None, scale: 4, max_tile: 256, notice: None, licenses: &[] };
@@ -476,9 +486,10 @@ fn list_models(dir: &Path) -> Vec<String> {
     files
 }
 
-/// The installed models that can do `task`: those it knows for `task`, and any model it doesn't know.
+/// The installed models that can do `task`: those it knows for `task`, and any model it doesn't
+/// know, except for Inpaint, whose inputs differ per model.
 pub fn for_task(task: Task, installed: &[String]) -> Vec<String> {
-    installed.iter().filter(|f| known(f).is_none_or(|k| k.task == task)).cloned().collect()
+    installed.iter().filter(|f| known(f).map_or(task != Task::Inpaint, |k| k.task == task)).cloned().collect()
 }
 
 /// The model `task` uses: the user's choice if it's installed, else the first installed model
@@ -546,7 +557,13 @@ pub fn open_folder() {
     }
 }
 
+/// The last inpainting model, by file and GPU setting. LaMa takes ~18 s to load (at any
+/// optimisation level) and 1–4 s to run, and objects tend to be removed in a series.
+static INPAINTER: std::sync::Mutex<Option<((String, bool), ort::session::Session)>> = std::sync::Mutex::new(None);
+
 fn session(file: &str) -> Result<ort::session::Session, String> {
+    // Loading another model frees the kept one: both may not fit a 4 GB GPU.
+    INPAINTER.lock().unwrap().take();
     let path = models_dir()?.join(file);
     // One thread per physical core was ~10% faster than one per hardware thread here.
     // shortcut: assumes two hardware threads per core; read the real core count if that's wrong somewhere.
@@ -691,6 +708,98 @@ fn with_alpha_of(img: &RgbaImage, scale: usize) -> RgbaImage {
     let alpha = GrayImage::from_fn(img.width(), img.height(), |x, y| image::Luma([img.get_pixel(x, y)[3]]));
     let alpha = image::imageops::resize(&alpha, w, h, FilterType::Triangle);
     RgbaImage::from_fn(w, h, |x, y| image::Rgba([0, 0, 0, alpha.get_pixel(x, y)[0]]))
+}
+
+/// The part of the image the model sees around `region`, as x, y, width, height: a square with
+/// room for context, at least 512 px so small areas aren't enlarged, moved to stay inside the
+/// `w`×`h` image and cut only where the image is smaller.
+fn context_rect(region: Rect, w: u32, h: u32) -> (u32, u32, u32, u32) {
+    let side = (region.width().max(region.height()) as u32 * 3 / 2).max(512);
+    let (cw, ch) = (side.min(w), side.min(h));
+    let place = |center: f32, len: u32, max: u32| (center as u32).saturating_sub(len / 2).min(max - len);
+    (place(region.center().x, cw, w), place(region.center().y, ch, h), cw, ch)
+}
+
+/// Channel-first bytes, as the inpainting models take them.
+fn to_planes(rgb: &image::RgbImage) -> Vec<u8> {
+    (0..3).flat_map(|c| rgb.pixels().map(move |p| p[c])).collect()
+}
+
+fn from_planes(data: &[u8], w: u32, h: u32) -> Result<image::RgbImage, String> {
+    let plane = (w * h) as usize;
+    if data.len() != 3 * plane {
+        return Err(tr("the model's output doesn't match its input size").into());
+    }
+    Ok(image::RgbImage::from_fn(w, h, |x, y| {
+        let i = (y * w + x) as usize;
+        image::Rgb([data[i], data[plane + i], data[2 * plane + i]])
+    }))
+}
+
+/// Fills `hole` (coverage over `region`) from the context around it; the result is `region`'s
+/// size, with `img`'s alpha. `run` gets the context as RGB and the hole as 255, at `size` if given,
+/// and returns the filled context at that size.
+fn fill_context(img: &RgbaImage, region: Rect, hole: &GrayImage, size: Option<u32>, run: impl FnOnce(image::RgbImage, GrayImage) -> Result<image::RgbImage, String>) -> Result<RgbaImage, String> {
+    let (x, y, cw, ch) = context_rect(region, img.width(), img.height());
+    let (rx, ry) = (region.min.x as u32, region.min.y as u32);
+    let mut rgb = DynamicImage::ImageRgba8(image::imageops::crop_imm(img, x, y, cw, ch).to_image()).into_rgb8();
+    let mut mask = GrayImage::new(cw, ch);
+    image::imageops::replace(&mut mask, hole, (rx - x) as i64, (ry - y) as i64);
+    if let Some(s) = size {
+        rgb = image::imageops::resize(&rgb, s, s, FilterType::Triangle);
+        mask = image::imageops::resize(&mask, s, s, FilterType::Triangle);
+    }
+    // Anything touched stays a hole: a tiny selection mustn't vanish in the resize.
+    mask.pixels_mut().for_each(|m| m[0] = if m[0] > 0 { 255 } else { 0 });
+    let filled = run(rgb, mask)?;
+    let filled = if size.is_some() { image::imageops::resize(&filled, cw, ch, FilterType::Lanczos3) } else { filled };
+    if filled.dimensions() != (cw, ch) {
+        return Err(tr("the model's output doesn't match its input size").into());
+    }
+    let (rw, rh) = hole.dimensions();
+    Ok(RgbaImage::from_fn(rw, rh, |px, py| {
+        let c = filled.get_pixel(rx - x + px, ry - y + py);
+        image::Rgba([c[0], c[1], c[2], img.get_pixel(rx + px, ry + py)[3]])
+    }))
+}
+
+/// Remove Object: `img` with `hole` (coverage over `region`) filled in, as a `region`-sized image.
+/// A model run can't be interrupted, so `cancel` is checked either side of it.
+pub fn inpaint(file: &str, img: &RgbaImage, region: Rect, hole: &GrayImage, cancel: &AtomicBool) -> Result<RgbaImage, String> {
+    let key = (file.to_string(), USE_GPU.load(Ordering::Relaxed));
+    let kept = INPAINTER.lock().unwrap().take().filter(|(k, _)| *k == key);
+    let mut session = match kept {
+        Some((_, session)) => session,
+        None => session(file)?,
+    };
+    let lama = file == LAMA_FILE;
+    let result = fill_context(img, region, hole, lama.then_some(512), |rgb, mask| {
+        if cancel.load(Ordering::Relaxed) {
+            return Err("cancelled".to_string());
+        }
+        let (w, h) = rgb.dimensions();
+        let (uw, uh) = (w as usize, h as usize);
+        if lama {
+            // Fixed at 512×512: 0–1 in, 0–255 out; a mask of 1 is the hole.
+            let image: Vec<f32> = to_planes(&rgb).iter().map(|&v| v as f32 / 255.0).collect();
+            let mask: Vec<f32> = mask.pixels().map(|m| m[0] as f32 / 255.0).collect();
+            let image = ort::value::Tensor::from_array(([1usize, 3, uh, uw], image)).map_err(|e| e.to_string())?;
+            let mask = ort::value::Tensor::from_array(([1usize, 1, uh, uw], mask)).map_err(|e| e.to_string())?;
+            let outputs = session.run(ort::inputs!["image" => image, "mask" => mask]).map_err(|e| e.to_string())?;
+            let (_, out) = outputs[0].try_extract_tensor::<f32>().map_err(|e| e.to_string())?;
+            from_planes(&out.iter().map(|v| v.round().clamp(0.0, 255.0) as u8).collect::<Vec<u8>>(), w, h)
+        } else {
+            // MI-GAN's pipeline: any size, bytes in and out; a mask of 0 is the hole.
+            let mask: Vec<u8> = mask.pixels().map(|m| 255 - m[0]).collect();
+            let image = ort::value::Tensor::from_array(([1usize, 3, uh, uw], to_planes(&rgb))).map_err(|e| e.to_string())?;
+            let mask = ort::value::Tensor::from_array(([1usize, 1, uh, uw], mask)).map_err(|e| e.to_string())?;
+            let outputs = session.run(ort::inputs!["image" => image, "mask" => mask]).map_err(|e| e.to_string())?;
+            let (_, out) = outputs[0].try_extract_tensor::<u8>().map_err(|e| e.to_string())?;
+            from_planes(out, w, h)
+        }
+    });
+    *INPAINTER.lock().unwrap() = Some((key, session));
+    if cancel.load(Ordering::Relaxed) { Err("cancelled".to_string()) } else { result }
 }
 
 /// The model's input size, from its first input's shape (…, H, W); 1024 when it's dynamic.
@@ -1059,6 +1168,7 @@ mod tests {
         // Each task's first entry is its default.
         assert_eq!(CATALOG.iter().find(|k| k.task == Task::Denoise).unwrap().file, "scunet_color_real_psnr.onnx");
         assert_eq!(CATALOG.iter().find(|k| k.task == Task::Enhance).unwrap().file, "BSRGANx4_fp16.onnx");
+        assert_eq!(CATALOG.iter().find(|k| k.task == Task::Inpaint).unwrap().file, LAMA_FILE);
         assert!(CATALOG.iter().all(|k| (k.scale > 1) == (k.file == "BSRGANx4_fp16.onnx")));
     }
 
@@ -1133,6 +1243,104 @@ mod tests {
         assert_eq!(choose(None, Task::Denoise, &installed(&["silueta.onnx", "mine.onnx"])), None);
         assert_eq!(choose(Some(&"mine.onnx".into()), Task::Denoise, &mixed).as_deref(), Some("mine.onnx"));
         assert_eq!(for_task(Task::Enhance, &mixed), ["BSRGANx4_fp16.onnx", "mine.onnx"]);
+    }
+
+    #[test]
+    fn inpaint_only_uses_its_own_models() {
+        let all = ["lama_fp32.onnx", "migan_pipeline_v2.onnx", "mine.onnx", "silueta.onnx"].map(String::from);
+        assert_eq!(for_task(Task::Inpaint, &all), ["lama_fp32.onnx", "migan_pipeline_v2.onnx"]);
+        assert_eq!(choose(None, Task::Inpaint, &all).as_deref(), Some("lama_fp32.onnx"));
+        assert_eq!(choose(None, Task::Inpaint, &all[1..]).as_deref(), Some("migan_pipeline_v2.onnx"));
+        assert_eq!(choose(None, Task::Inpaint, &all[2..]), None);
+        assert!(for_task(Task::Background, &all).contains(&"mine.onnx".to_string()));
+    }
+
+    #[test]
+    fn inpaint_context() {
+        let r = |x0, y0, x1, y1| Rect::from_min_max(Pos2::new(x0, y0), Pos2::new(x1, y1));
+        // Centred, 512 px at least.
+        assert_eq!(context_rect(r(1000.0, 1000.0, 1100.0, 1100.0), 4000, 3000), (794, 794, 512, 512));
+        // Big selections keep half their size as context.
+        assert_eq!(context_rect(r(1000.0, 1000.0, 1800.0, 1400.0), 4000, 3000), (800, 600, 1200, 1200));
+        // Moved in at the edges, not cut.
+        assert_eq!(context_rect(r(0.0, 0.0, 10.0, 10.0), 4000, 3000), (0, 0, 512, 512));
+        assert_eq!(context_rect(r(3990.0, 2990.0, 4000.0, 3000.0), 4000, 3000), (3488, 2488, 512, 512));
+        // An image smaller than the square, and the whole image.
+        assert_eq!(context_rect(r(10.0, 10.0, 20.0, 20.0), 300, 2000), (0, 0, 300, 512));
+        assert_eq!(context_rect(r(0.0, 0.0, 4000.0, 3000.0), 4000, 3000), (0, 0, 4000, 3000));
+    }
+
+    #[test]
+    fn inpaint_fills_the_region() {
+        let img = RgbaImage::from_fn(600, 600, |x, _| image::Rgba([9, 9, 9, if x < 300 { 255 } else { 40 }]));
+        let region = Rect::from_min_max(Pos2::new(290.0, 100.0), Pos2::new(310.0, 110.0));
+        let hole = GrayImage::from_pixel(20, 10, image::Luma([255]));
+        let green = |rgb: image::RgbImage, mask: GrayImage| {
+            // Binary, and at the context's own size when none is asked for.
+            assert!(mask.pixels().all(|m| m[0] == 0 || m[0] == 255));
+            assert_eq!(rgb.dimensions(), mask.dimensions());
+            Ok(image::RgbImage::from_pixel(rgb.width(), rgb.height(), image::Rgb([0, 200, 0])))
+        };
+        for size in [None, Some(512), Some(256)] {
+            let out = fill_context(&img, region, &hole, size, green).unwrap();
+            assert_eq!(out.dimensions(), (20, 10));
+            // RGB from the model, alpha from the image.
+            assert_eq!(out.get_pixel(0, 5).0, [0, 200, 0, 255]);
+            assert_eq!(out.get_pixel(19, 5).0, [0, 200, 0, 40]);
+        }
+        // The hole is where the region is, within the context.
+        let (x, y, ..) = context_rect(region, 600, 600);
+        fill_context(&img, region, &hole, None, |rgb, mask| {
+            assert_eq!(mask.get_pixel(290 - x, 100 - y)[0], 255);
+            assert_eq!((mask.get_pixel(289 - x, 100 - y)[0], mask.get_pixel(310 - x, 100 - y)[0]), (0, 0));
+            Ok(rgb)
+        }).unwrap();
+        // One pixel of a much bigger context survives shrinking.
+        let big = RgbaImage::new(4000, 3000);
+        let dot = Rect::from_min_size(Pos2::new(2000.0, 1500.0), egui::vec2(1600.0, 1.0));
+        let line = GrayImage::from_pixel(1600, 1, image::Luma([255]));
+        fill_context(&big, dot, &line, Some(512), |rgb, mask| {
+            assert!(mask.pixels().any(|m| m[0] == 255));
+            Ok(rgb)
+        }).unwrap();
+        // A model returning the wrong size is refused, not a panic.
+        assert!(fill_context(&img, region, &hole, None, |_, _| Ok(image::RgbImage::new(3, 3))).is_err());
+        assert!(from_planes(&[0; 5], 2, 2).is_err());
+        assert_eq!(from_planes(&to_planes(&image::RgbImage::from_pixel(2, 1, image::Rgb([1, 2, 3]))), 2, 1).unwrap().get_pixel(1, 0).0, [1, 2, 3]);
+    }
+
+    /// `LIGHTVIEW_AI=photo.jpg LIGHTVIEW_AI_MODEL=<file> cargo test --release inpaint_photo -- --ignored --nocapture`
+    /// (needs the runtime): fills an ellipse inside `LIGHTVIEW_AI_BOX=x,y,w,h` (by default the middle fifth
+    /// of the image) and writes `photo-<model>-inpainted.png`, the whole image, to the temp folder.
+    #[test]
+    #[ignore]
+    fn inpaint_photo() {
+        let path = PathBuf::from(std::env::var("LIGHTVIEW_AI").unwrap());
+        let file = std::env::var("LIGHTVIEW_AI_MODEL").unwrap();
+        let mut img = image::open(&path).unwrap().into_rgba8();
+        let (w, h) = (img.width(), img.height());
+        let b: Vec<u32> = std::env::var("LIGHTVIEW_AI_BOX").map_or(vec![w * 2 / 5, h * 2 / 5, w / 5, h / 5], |s| s.split(',').map(|v| v.parse().unwrap()).collect());
+        let region = Rect::from_min_size(Pos2::new(b[0] as f32, b[1] as f32), egui::vec2(b[2] as f32, b[3] as f32));
+        let oval = crate::markup::Selection::Ellipse(region);
+        let hole = crate::markup::polygon_mask(&oval.outline(), None, region.min, 1.0, b[2], b[3]).unwrap();
+        let hole = GrayImage::from_raw(b[2], b[3], hole.data().to_vec()).unwrap();
+        // The second run reuses the loaded model.
+        let t = std::time::Instant::now();
+        inpaint(&file, &img, region, &hole, &AtomicBool::new(false)).unwrap();
+        eprintln!("{file}: first run {:.0} ms", t.elapsed().as_secs_f64() * 1000.0);
+        let t = std::time::Instant::now();
+        let filled = inpaint(&file, &img, region, &hole, &AtomicBool::new(false)).unwrap();
+        eprintln!("{file}: filled {}×{} in {:.0} ms, GPU {} ({:?})", b[2], b[3], t.elapsed().as_secs_f64() * 1000.0, on_gpu(), gpu_error());
+        input_size(&file).unwrap();
+        assert!(INPAINTER.lock().unwrap().is_none(), "another session frees the kept one");
+        for (x, y, px) in filled.enumerate_pixels() {
+            if hole.get_pixel(x, y)[0] > 0 {
+                *img.get_pixel_mut(b[0] + x, b[1] + y) = *px;
+            }
+        }
+        let out = std::env::temp_dir().join(format!("{}-{file}-inpainted.png", path.file_stem().unwrap().to_string_lossy()));
+        img.save(&out).unwrap();
+        eprintln!("wrote {}", out.display());
     }
 
     #[test]

@@ -259,3 +259,8 @@ this file's EXIF couldn't be processed	no se han podido procesar los datos EXIF 
 {task} failed: {e}	{task}: error: {e}
 {task} on the GPU	{task} en la GPU
 {task} preview of the visible area · drag to compare · Before | After	{task}: vista previa de la zona visible · arrastra para comparar · Antes | Después
+Remove Object	Eliminar objeto
+LaMa — best quality, slower	LaMa — máxima calidad, más lento
+MI-GAN — fast	MI-GAN — rápido
+ONNX export by Carve on Hugging Face; its origin isn't verified.	Exportación a ONNX de Carve en Hugging Face; su origen no está verificado.
+the selection is empty	la selección está vacía

@@ -50,6 +50,8 @@ pub(super) enum Action {
     Cutout(bool),
     /// Denoise or Enhance Image: shows a before/after preview first.
     Restore(crate::ai::Task),
+    /// Remove Object: fills in the selection.
+    Inpaint,
     DownloadRuntime,
     AiModels,
 }
@@ -191,6 +193,7 @@ impl App {
                 item(ui, tr("Remove Background and Crop"), Action::Cutout(true), ready(Task::Background), actions);
                 item(ui, tr("Denoise"), Action::Restore(Task::Denoise), ready(Task::Denoise), actions);
                 item(ui, tr("Enhance Image"), Action::Restore(Task::Enhance), ready(Task::Enhance), actions);
+                item(ui, tr("Remove Object"), Action::Inpaint, ready(Task::Inpaint) && self.selection.is_some(), actions);
             });
             ui.menu_button(tr("Tools"), |ui| {
                 let label = if self.show_toolbar { tr("Hide Drawing Toolbar") } else { tr("Show Drawing Toolbar") };

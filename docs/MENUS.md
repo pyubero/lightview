@@ -72,6 +72,7 @@ when" says otherwise. `▸` marks a submenu.
 | Remove Background and Crop | | same | Also crops to the subject. |
 | Denoise | | AI runtime and a Denoise model installed, no AI job running | Preview of the visible area first, then Apply to Whole Image / Selection. |
 | Enhance Image | | AI runtime and an Enhance model installed, no AI job running | Same flow; with an upscaler the image becomes 4× bigger. Shows a one-time notice per model. |
+| Remove Object | | AI runtime and a Remove Object model installed, a selection, no AI job running | Fills in the selection, with no preview; Ctrl+Z undoes it. |
 
 ## Tools
 | Item | Shortcut | Enabled when | Does |

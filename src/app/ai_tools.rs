@@ -94,6 +94,32 @@ impl App {
         });
     }
 
+    /// Remove Object: fills in the selection on another thread. No preview: Ctrl+Z undoes it.
+    pub(super) fn inpaint(&mut self) {
+        let task = crate::ai::Task::Inpaint;
+        let Some((l, doc, path)) = self.current().and_then(|p| Some((self.cache.get(p)?.clone(), self.doc()?, p.clone()))) else { return };
+        let Some(file) = crate::ai::choose(self.settings.ai.choice(task), task, &crate::ai::installed()) else { return };
+        let Some(sel) = self.selection.clone().filter(|s| !s.is_empty() && self.restoring.is_none()) else { return };
+        let region = Rect::from_min_max(sel.bbox().min.floor(), sel.bbox().max.ceil()).intersect(doc.bounds());
+        if region.width() < 1.0 || region.height() < 1.0 {
+            return;
+        }
+        let cancel = Arc::new(AtomicBool::new(false));
+        self.restore_runs += 1;
+        let id = self.restore_runs;
+        self.restoring = Some(Restoring { id, task, progress: 0.0, started: Instant::now(), cancel: cancel.clone(), selection: Some(sel.clone()) });
+        let notify = self.notify.clone();
+        std::thread::spawn(move || {
+            let (w, h) = (region.width() as u32, region.height() as u32);
+            let result = edit::render(&l.frames[0], &doc).and_then(|img| {
+                let img = img.into_rgba8();
+                let hole = crate::markup::polygon_mask(&sel.outline(), None, region.min, 1.0, w, h).and_then(|m| image::GrayImage::from_raw(w, h, m.data().to_vec())).ok_or(tr("the selection is empty"))?;
+                Ok((crate::ai::inpaint(&file, &img, region, &hole, &cancel)?, 0.0))
+            });
+            notify.send(Msg::Restored(id, path, region, true, result));
+        });
+    }
+
     /// The bottom bar while Denoise / Enhance runs: progress, time left, Cancel.
     pub(super) fn restore_progress(&mut self, ctx: &egui::Context, viewport: Rect) {
         let Some(r) = &self.restoring else { return };

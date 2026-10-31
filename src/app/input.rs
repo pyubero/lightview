@@ -273,6 +273,7 @@ impl App {
                 Action::Cutout(crop) => self.cutout(*crop),
                 Action::Restore(task) if *task == crate::ai::Task::Enhance && let Some(file) = self.unseen_notice() => self.enhance_notice = Some(file),
                 Action::Restore(task) => self.preview_restore(*task),
+                Action::Inpaint => self.inpaint(),
                 Action::DownloadRuntime => self.license_prompt = Some((Download::Runtime, 0)),
                 Action::AiModels => self.show_ai_models = true,
                 Action::RotateLeft => self.edit(Doc::rotate_left),
