@@ -138,7 +138,7 @@ Numbering continues from v1.
 ### 21. Windows (in progress)
 - Same code on both systems; the differences live in `platform.rs` (opening links/folders, helper programs without console windows) and per-OS constants in `ai.rs` (ONNX Runtime and NVIDIA packages for Windows, `SetDllDirectoryW` so cuDNN finds its parts). Checksums are computed in Rust (`sha2`) instead of `sha256sum`; downloads use the `curl` and `tar` that Windows 10+ includes.
 - `turbojpeg.dll` (libjpeg-turbo 3.2.1, 1.2 MB, ~0.45 MB in the installer) ships next to `lightview.exe` for fast JPEG decoding.
-- Releases are built by GitHub Actions (`.github/workflows/build.yml`): a Linux `.deb`, a tarball (binary, `.desktop`, icon, `install.sh`) and a Windows `.msi` (WiX v5, `packaging/windows/lightview.wxs`) that installs into Program Files, adds a Start menu entry and registers lightview for JPG/PNG/GIF/WebP/BMP/TIFF so it can be picked in Settings → Default apps.
+- Releases are built by GitHub Actions (`.github/workflows/build.yml`): a Linux `.deb` and a Windows `.msi` (WiX v5, `packaging/windows/lightview.wxs`) that installs into Program Files, adds a Start menu entry and registers lightview for JPG/PNG/GIF/WebP/BMP/TIFF so it can be picked in Settings → Default apps.
 - **Done when** it runs on Windows 11 (open, navigate, edit, save, AI tools, GPU) and the workflow produces both packages.
 - Settle before merging into `main`: `lightview.exe` has no embedded icon, so Explorer and file associations show a generic one.
 

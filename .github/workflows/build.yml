@@ -1,5 +1,5 @@
 # Builds and tests lightview for Linux and Windows. Pushing a tag like `v0.1.0` also publishes a
-# GitHub release with the Linux .deb and tarball and the Windows installer (.msi). Can also be run by
+# GitHub release with the Linux .deb and the Windows installer (.msi). Can also be run by
 # hand from the Actions tab (it then only keeps the files as workflow artifacts).
 name: build
 
@@ -16,22 +16,13 @@ jobs:
     # The oldest supported distro: the binary needs this glibc (2.35) or newer.
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Check the tag matches Cargo.toml
         if: startsWith(github.ref, 'refs/tags/v')
         run: test "${GITHUB_REF_NAME#v}" = "$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -n 1)"
       - uses: dtolnay/rust-toolchain@stable
       - run: cargo test --release
       - run: cargo build --release
-      - name: Package
-        shell: bash
-        run: |
-          version=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[0].version')
-          mkdir -p dist/lightview/icon
-          cp target/release/lightview lightview.desktop install.sh dist/lightview/
-          cp icon/aperture.svg dist/lightview/icon/
-          ./third-party-notices.py > dist/lightview/LICENSES.txt
-          tar -czf "lightview-$version-linux-x86_64.tar.gz" -C dist lightview
       - run: ./package-deb.sh
       - name: Check the package installs
         run: |
@@ -39,12 +30,10 @@ jobs:
           test -x /usr/bin/lightview
           test -f /usr/share/applications/lightview.desktop
           grep -q '^egui ' /usr/share/doc/lightview/copyright
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: linux
-          path: |
-            lightview-*-linux-x86_64.tar.gz
-            lightview_*.deb
+          path: lightview_*.deb
 
   windows:
     runs-on: windows-latest
@@ -52,7 +41,7 @@ jobs:
       # Static C runtime: lightview.exe then runs without the Visual C++ redistributable.
       RUSTFLAGS: -C target-feature=+crt-static
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
       - run: cargo test --release
       - run: cargo build --release
@@ -80,7 +69,7 @@ jobs:
           Copy-Item ljt/README.ijg dist/libjpeg-turbo-README.ijg
           dotnet tool install --global wix --version 5.0.2
           wix build packaging/windows/lightview.wxs -arch x64 -d Version=$version -d Dist=dist -o "lightview-$version-x64.msi"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: windows
           path: lightview-*-x64.msi
@@ -91,13 +80,12 @@ jobs:
     needs: [linux, windows]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           merge-multiple: true
-      - uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v3
         with:
           generate_release_notes: true
           files: |
             lightview_*.deb
-            lightview-*-linux-x86_64.tar.gz
             lightview-*-x64.msi

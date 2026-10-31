@@ -88,9 +88,6 @@ lightview your default viewer** for JPEG, PNG, GIF, WebP, BMP and TIFF. To undo 
 `~/.local/share/icons/hicolor/scalable/apps/lightview.svg`, then choose another default app in your
 system settings.
 
-The tarball on the [Releases](../../releases) page works the same way without a Rust toolchain:
-unpack it and run its `./install.sh`.
-
 To build without installing:
 
 ```sh
@@ -193,7 +190,7 @@ lightview is free software: you can redistribute it and/or modify it under the t
 
 The fonts built into lightview are Apache-2.0 and MIT licensed; see [`fonts/NOTICE.txt`](fonts/NOTICE.txt).
 Every package includes their licences and those of the Rust crates: in
-`/usr/share/doc/lightview/copyright` from the `.deb`, and in `LICENSES.txt` in the tarball and in
-the Windows install folder.
+`/usr/share/doc/lightview/copyright` from the `.deb`, and in `LICENSES.txt` in the Windows install
+folder.
 
 Third-party licences for the downloadable AI components are in [`licenses/`](licenses).

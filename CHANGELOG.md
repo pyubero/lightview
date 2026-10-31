@@ -12,4 +12,4 @@ First public release.
 - Optional local AI tools: Remove Background, Remove Object, Denoise and Enhance Image, with optional NVIDIA GPU support.
 - Delete an image to the system Trash, with a confirmation; Ctrl+Z restores it.
 - Six languages: English, Spanish, French, German, Italian and Portuguese, and a UI font size setting.
-- Experimental Windows builds (`.msi`), alongside the Linux `.deb` and tarball.
+- Experimental Windows builds (`.msi`), alongside the Linux `.deb`.
