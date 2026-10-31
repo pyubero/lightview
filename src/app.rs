@@ -90,6 +90,8 @@ pub struct App {
     resized: Option<(TexKey, Vec<u8>)>,
     /// The current frame at its output size, while the edits shrink it.
     baked: Option<(BakeKey, Arc<Frame>)>,
+    /// The image with its markup: for which generation and doc, and the pixels (`flattened`).
+    flat: Option<(u64, Doc, Arc<Frame>)>,
     /// Bumped whenever what's shown changes source (navigation, preview → full).
     generation: u64,
     anim_frame: usize,
@@ -180,7 +182,7 @@ impl App {
             t0, timings, bench, rx, loader, notify, recent, settings, show_info: false, show_settings: false, default_prompt, default_result: None, inspector: None,
             files: start.into_iter().collect(), index: 0,
             cache: HashMap::new(), preview: None, error: None, view: View::Fit,
-            texture: None, tex_key: None, resized: None, baked: None, generation: 0, anim_frame: 0, anim_due: None, anim_paused: false,
+            texture: None, tex_key: None, resized: None, baked: None, flat: None, generation: 0, anim_frame: 0, anim_due: None, anim_paused: false,
             doc: None, undo: Vec::new(), redo: Vec::new(), deleted: Vec::new(), delete_prompt: false, saved: None, tool: Tool::Pan, drag_start: None, right_pan: false, crop_rect: None, measure: None, measure_drag: 1,
             show_toolbar, style: None, selected: None, grab: Grab::None, editing_text: None, focus_text: false, change_base: None, last_restyle: None, selection: None, element_textures: HashMap::new(),
             resize_dialog: None, adjusting: None, pending: None, show_ai_models: false, license_prompt: None, restoring: None, restore_runs: 0, compare: None, enhance_notice: None, visible: None, downloading: HashSet::new(),
@@ -891,6 +893,97 @@ mod tests {
         feed(&mut app, drag_events(RIGHT));
         assert_ne!(app.view, start);
         assert_eq!(app.compare.as_ref().map(|c| c.split), Some(0.5));
+    }
+
+    fn with_line(app: &mut App) -> Arc<Loaded> {
+        let mut line = Element::new(Shape::Line, Pos2::new(1.0, 1.0), Style::for_image(Vec2::splat(1000.0)));
+        line.points[1] = Pos2::new(50.0, 50.0);
+        app.doc_mut().unwrap().elements.push(line);
+        app.current().and_then(|p| app.cache.get(p)).unwrap().clone()
+    }
+
+    #[test]
+    fn markup_is_shown_as_it_will_be_saved() {
+        let (mut app, _) = app_zoomed_in();
+        let l = with_line(&mut app);
+        for bar in [true, false] {
+            app.show_toolbar = bar;
+            let doc = app.doc().unwrap();
+            let flat = app.flattened(Some(&l), &doc).unwrap();
+            assert_eq!(flat.pixels, edit::flat(&l.frames[0], &doc).unwrap().pixels);
+            // Nothing changed: no new render, so nothing else is invalidated.
+            let generation = app.generation;
+            assert!(Arc::ptr_eq(&flat, &app.flattened(Some(&l), &doc).unwrap()));
+            assert_eq!(app.generation, generation);
+        }
+        // A change renders again.
+        let before = app.flattened(Some(&l), &app.doc().unwrap()).unwrap();
+        app.doc_mut().unwrap().elements[0].points[1] = Pos2::new(90.0, 20.0);
+        assert!(!Arc::ptr_eq(&before, &app.flattened(Some(&l), &app.doc().unwrap()).unwrap()));
+    }
+
+    #[test]
+    fn flattening_stops_where_it_cant_apply() {
+        let (mut app, _) = app_zoomed_in();
+        let l = with_line(&mut app);
+        let doc = app.doc().unwrap();
+        assert!(app.flattened(Some(&l), &doc).is_some());
+        // Still decoding.
+        assert!(app.flattened(None, &doc).is_none() && app.flat.is_none());
+        // No markup.
+        assert!(app.flattened(Some(&l), &Doc::new(1000, 1000)).is_none());
+        // Animated.
+        let frame = || Frame { w: 2, h: 2, pixels: vec![0; 12], alpha: false, delay: std::time::Duration::ZERO };
+        let animated = Loaded { frames: vec![frame(), frame()], file_size: 6 };
+        assert!(app.flattened(Some(&animated), &doc).is_none());
+        // Past the limit.
+        let sized = |w, h| { let mut d = doc.clone(); d.resize(w, h); d };
+        assert!(app.flattened(Some(&l), &sized(4000, 3000)).is_some(), "12 MP");
+        assert!(app.flattened(Some(&l), &sized(4000, 4000)).is_some(), "16 MP");
+        assert!(app.flattened(Some(&l), &sized(6000, 4000)).is_none(), "24 MP");
+    }
+
+    #[test]
+    fn markup_stays_at_screen_resolution_until_a_change_ends() {
+        let (mut app, _) = app_zoomed_in();
+        let l = with_line(&mut app);
+        let doc = app.doc().unwrap();
+        // A small image too: rendering every frame of a drag lags at 1600×900.
+        app.change_base = Some(doc.clone());
+        assert!(app.flattened(Some(&l), &doc).is_none(), "tracing");
+        app.change_base = None;
+        assert!(app.flattened(Some(&l), &doc).is_some(), "released");
+        app.adjusting = Some(doc.clone());
+        assert!(app.flattened(Some(&l), &doc).is_none(), "Adjust Color open");
+        app.adjusting = None;
+        // Typing, even once something else has taken `change_base`.
+        app.editing_text = Some(0);
+        assert!(app.flattened(Some(&l), &doc).is_none(), "typing");
+        app.editing_text = None;
+        assert!(app.flattened(Some(&l), &doc).is_some(), "text finished");
+    }
+
+    #[test]
+    fn the_texture_follows_flattening_with_the_elements_still_editable() {
+        let (mut app, _) = app_zoomed_in();
+        let l = with_line(&mut app);
+        let ctx = egui::Context::default();
+        ctx.set_fonts(markup::font_definitions());
+        let draw = |app: &mut App| {
+            let mut input = egui::RawInput::default();
+            input.screen_rect = Some(Rect::from_min_size(Pos2::ZERO, Vec2::splat(400.0)));
+            let mut output = ctx.run_ui(input, |ui| {
+                let doc = app.doc();
+                app.draw(ui, Some(&l), doc, None, ui.available_rect_before_wrap());
+            });
+            output.textures_delta.clear();
+            app.tex_key.unwrap()
+        };
+        assert!(draw(&mut app).flat);
+        assert_eq!(app.doc().unwrap().elements.len(), 1, "flattening only changes the view");
+        // Without flattening it's drawn on top again, from a new texture.
+        app.adjusting = app.doc();
+        assert!(!draw(&mut app).flat);
     }
 
     /// Clipboard between two processes (needs a desktop session):

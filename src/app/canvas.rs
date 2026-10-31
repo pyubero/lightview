@@ -17,9 +17,14 @@ pub(super) struct BakeKey {
     size: [u32; 2],
 }
 
+/// The most pixels `flattened` renders: ~200 ms on the UI thread, once per finished change.
+const FLAT_MAX_PIXELS: u64 = 16_000_000;
+
 /// What the current texture holds; it's rebuilt when this changes.
 #[derive(Clone, Copy, PartialEq)]
 pub(super) struct TexKey {
+    /// The frame comes from `flattened`.
+    pub(super) flat: bool,
     generation: u64,
     anim_frame: usize,
     /// GPU scaling uploads the whole frame, so transform/crop/size don't matter then.
@@ -33,14 +38,35 @@ pub(super) struct TexKey {
 }
 
 impl App {
-    /// Draws the markup over the image, plus the selection and the text being typed.
+    /// The image with its markup at image resolution, as saving writes it, so the view is
+    /// faithful on a low-res image. While a change is in progress the markup stays at screen
+    /// resolution, because rendering every frame lags even at 1600×900.
+    // shortcut: above the limit, and on animated images, markup stays at screen resolution; render on a thread if that's missed.
+    pub(super) fn flattened(&mut self, full: Option<&Loaded>, doc: &Doc) -> Option<Arc<Frame>> {
+        let live = self.change_base.is_some() || self.adjusting.is_some() || self.editing_text.is_some();
+        let fits = doc.size[0] as u64 * doc.size[1] as u64 <= FLAT_MAX_PIXELS;
+        let Some(l) = full.filter(|l| l.frames.len() == 1 && fits && !live && !doc.elements.is_empty()) else {
+            self.flat = None;
+            return None;
+        };
+        if self.flat.as_ref().is_none_or(|(generation, done, _)| *generation != self.generation || done != doc) {
+            let frame = edit::flat(&l.frames[0], doc).ok()?;
+            self.generation += 1;
+            self.flat = Some((self.generation, doc.clone(), Arc::new(frame)));
+        }
+        self.flat.as_ref().map(|f| f.2.clone())
+    }
+
+    /// Draws the markup over the image (unless it's in the image already, `flat`), plus the
+    /// selection handle and the text being typed.
     #[allow(clippy::too_many_arguments)]
-    pub(super) fn paint_markup(&mut self, ui: &egui::Ui, doc: &Doc, dest: Rect, crop: Rect, texture: egui::TextureId, uv: &dyn Fn(Pos2) -> Pos2) {
+    pub(super) fn paint_markup(&mut self, ui: &egui::Ui, doc: &Doc, flat: bool, dest: Rect, crop: Rect, texture: egui::TextureId, uv: &dyn Fn(Pos2) -> Pos2) {
         let k = dest.width() / crop.width();
         let to_screen = |p: Pos2| view::to_screen(dest, crop, p);
         let painter = ui.painter().with_clip_rect(dest);
         let mut used = Vec::new();
-        for (i, e) in doc.elements.iter().enumerate() {
+        let painted = if flat { &[][..] } else { &doc.elements[..] };
+        for (i, e) in painted.iter().enumerate() {
             let own = e.texture_key().and_then(|key| {
                 used.push(key);
                 if let std::collections::hash_map::Entry::Vacant(slot) = self.element_textures.entry(key) {
@@ -85,6 +111,13 @@ impl App {
             (Some(l), Some(doc)) => (Some(&l.frames[self.anim_frame]), self.view, doc),
             _ => (preview.as_deref(), View::Fit, preview.as_ref().map(|f| Doc::new(f.w, f.h)).unwrap_or(Doc::new(1, 1))),
         };
+        // Flattened pixels hold every edit, so they're drawn as a plain image of the output's size.
+        let edited = doc.clone();
+        let flat = self.flattened(full, &doc);
+        let (frame, doc) = match &flat {
+            Some(f) => (Some(&**f), Doc::new(f.w, f.h)),
+            None => (frame, doc),
+        };
         // A shrunk image is shown from its resized pixels: the decoded ones still hold the lost detail.
         let bake_key = frame.filter(|_| doc.shrinks()).map(|_| BakeKey { generation: self.generation, anim_frame: self.anim_frame, crop: doc.crop, size: doc.plain_size() });
         if let (Some(key), Some(frame)) = (bake_key, frame) && self.baked.as_ref().map(|b| b.0) != Some(key) {
@@ -107,11 +140,11 @@ impl App {
         // shortcut: colour adjustments only run on the CPU path; add a shader if GPU users miss smooth zoom while adjusting.
         let gpu = self.settings.gpu_scaling && frame.w.max(frame.h) as usize <= ctx.input(|i| i.max_texture_side) && doc.adjust.is_identity();
         let key = if gpu {
-            TexKey { generation: self.generation, anim_frame: self.anim_frame, gpu, interpolation, transform: Transform::default(), crop: [0.0; 4], size: [frame.w, frame.h], adjust: Adjust::default(), baked: bake_key }
+            TexKey { flat: flat.is_some(), generation: self.generation, anim_frame: self.anim_frame, gpu, interpolation, transform: Transform::default(), crop: [0.0; 4], size: [frame.w, frame.h], adjust: Adjust::default(), baked: bake_key }
         } else {
             let src = source.to_source(crop);
             let size = [(dest.width() * ppp).round().max(1.0) as u32, (dest.height() * ppp).round().max(1.0) as u32];
-            TexKey { generation: self.generation, anim_frame: self.anim_frame, gpu, interpolation, transform: doc.transform, crop: [src.min.x, src.min.y, src.width(), src.height()], size, adjust: doc.adjust, baked: bake_key }
+            TexKey { flat: flat.is_some(), generation: self.generation, anim_frame: self.anim_frame, gpu, interpolation, transform: doc.transform, crop: [src.min.x, src.min.y, src.width(), src.height()], size, adjust: doc.adjust, baked: bake_key }
         };
         self.upload_texture(ctx, frame, key, &doc);
         let texture = self.texture.as_ref().unwrap().id();
@@ -140,8 +173,8 @@ impl App {
         self.paint_compare(ui, dest, crop);
         // The magnifier samples the image texture: the whole frame (GPU) or the visible part (CPU).
         let uv = |p: Pos2| if gpu { (source.source_point(p).to_vec2() / frame_size).to_pos2() } else { ((p - crop.min) / crop.size()).to_pos2() };
-        if !doc.elements.is_empty() || self.editing_text.is_some() || !self.element_textures.is_empty() {
-            self.paint_markup(ui, &doc, dest, crop, texture, &uv);
+        if !edited.elements.is_empty() || self.editing_text.is_some() || !self.element_textures.is_empty() {
+            self.paint_markup(ui, &edited, flat.is_some(), dest, crop, texture, &uv);
         }
         if let Some(p) = hovered_at.filter(|_| self.tool == Tool::Draw(Shape::Magnifier) && self.compare.is_none()) && let Some(style) = self.style {
             // The lens a click here would place.
@@ -154,7 +187,7 @@ impl App {
             self.paint_crop(ui, dest, crop, viewport);
         }
         if self.tool == Tool::Measure {
-            self.paint_measure(ui, &doc, dest, crop, viewport);
+            self.paint_measure(ui, &edited, dest, crop, viewport);
         }
         if self.timings {
             self.report_timings(ctx, full.is_some(), frame_wh);

@@ -421,8 +421,10 @@ pub fn flatten(img: &mut RgbaImage, elements: &[Element]) {
     let mut data = std::mem::take(img).into_raw();
     for px in data.as_chunks_mut::<4>().0 {
         let a = px[3] as u32;
-        for v in &mut px[..3] {
-            *v = ((*v as u32 * a + 127) / 255) as u8;
+        if a != 255 {
+            for v in &mut px[..3] {
+                *v = ((*v as u32 * a + 127) / 255) as u8;
+            }
         }
     }
     let Some(mut pixmap) = tiny_skia::IntSize::from_wh(w, h).and_then(|size| tiny_skia::Pixmap::from_vec(data, size)) else { return };
@@ -505,8 +507,10 @@ pub fn flatten(img: &mut RgbaImage, elements: &[Element]) {
                 let mut data = src.as_raw().clone();
                 for px in data.as_chunks_mut::<4>().0 {
                     let a = px[3] as u32;
-                    for v in &mut px[..3] {
-                        *v = ((*v as u32 * a + 127) / 255) as u8;
+                    if a != 255 {
+                        for v in &mut px[..3] {
+                            *v = ((*v as u32 * a + 127) / 255) as u8;
+                        }
                     }
                 }
                 let Some(src_map) = tiny_skia::IntSize::from_wh(src.width(), src.height()).and_then(|size| tiny_skia::Pixmap::from_vec(data, size)) else { continue };

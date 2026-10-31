@@ -263,13 +263,34 @@ pub fn to_dynamic(alpha: bool, w: u32, h: u32, pixels: Vec<u8>) -> Option<Dynami
     })
 }
 
+/// `into_rgba8`, five times faster for RGB: these loops run every time markup is shown.
+fn to_rgba(img: DynamicImage) -> image::RgbaImage {
+    let DynamicImage::ImageRgb8(rgb) = img else { return img.into_rgba8() };
+    let (w, h) = rgb.dimensions();
+    let mut out = vec![255; w as usize * h as usize * 4];
+    for (to, from) in out.as_chunks_mut::<4>().0.iter_mut().zip(rgb.as_raw().as_chunks::<3>().0) {
+        to[..3].copy_from_slice(from);
+    }
+    image::RgbaImage::from_raw(w, h, out).expect("same size")
+}
+
+fn drop_alpha(rgba: &image::RgbaImage) -> image::RgbImage {
+    let (w, h) = rgba.dimensions();
+    let mut out = vec![0; w as usize * h as usize * 3];
+    for (to, from) in out.as_chunks_mut::<3>().0.iter_mut().zip(rgba.as_raw().as_chunks::<4>().0) {
+        to.copy_from_slice(&from[..3]);
+    }
+    image::RgbImage::from_raw(w, h, out).expect("same size")
+}
+
 /// The full-size edited image, for saving.
 pub fn render(frame: &Frame, doc: &Doc) -> Result<DynamicImage, String> {
     let [w, h] = doc.plain_size();
     let img = if doc.crop.size() == Vec2::new(w as f32, h as f32) && doc.crop.min == doc.crop.min.round() {
         // Same scale: copy the pixels exactly instead of resampling.
         let img = to_dynamic(frame.alpha, frame.w, frame.h, frame.pixels.clone()).ok_or("bad frame")?;
-        img.crop_imm(doc.crop.min.x as u32, doc.crop.min.y as u32, w, h)
+        // Cropping copies pixel by pixel, which is slow even when it keeps them all.
+        if [w, h] == [frame.w, frame.h] { img } else { img.crop_imm(doc.crop.min.x as u32, doc.crop.min.y as u32, w, h) }
     } else {
         let pixels = resize(frame, doc.crop, w, h, ResizeAlg::Convolution(FilterType::Lanczos3));
         to_dynamic(frame.alpha, w, h, pixels).ok_or("bad frame")?
@@ -281,13 +302,20 @@ pub fn render(frame: &Frame, doc: &Doc) -> Result<DynamicImage, String> {
         _ => unreachable!("to_dynamic only makes RGB(A)"),
     }
     if !doc.elements.is_empty() {
-        let mut rgba = img.into_rgba8();
+        let mut rgba = to_rgba(img);
         markup::flatten(&mut rgba, &doc.elements);
         // Erasing to transparent (background removal) gives an opaque image an alpha channel.
         let alpha = frame.alpha || doc.elements.iter().any(|e| e.shape == markup::Shape::Erase && e.style.color.a() == 0);
-        img = if alpha { DynamicImage::ImageRgba8(rgba) } else { DynamicImage::ImageRgb8(DynamicImage::ImageRgba8(rgba).into_rgb8()) };
+        img = if alpha { DynamicImage::ImageRgba8(rgba) } else { DynamicImage::ImageRgb8(drop_alpha(&rgba)) };
     }
     Ok(img)
+}
+
+/// `render` as a frame, to show the markup as it will be saved.
+pub fn flat(frame: &Frame, doc: &Doc) -> Result<Frame, String> {
+    let img = render(frame, doc)?;
+    let (w, h, alpha) = (img.width(), img.height(), img.color().has_alpha());
+    Ok(Frame { w, h, pixels: img.into_bytes(), alpha, delay: frame.delay })
 }
 
 /// The Adjust Color panel body: sliders that change `a` live. Returns Some(true) for Done,
@@ -679,6 +707,71 @@ mod tests {
             a.apply(&mut px.clone(), 3);
         }
         eprintln!("adjust 1280×960: {:.1} ms per step", t.elapsed().as_secs_f64() * 100.0);
+    }
+
+    #[test]
+    fn flat_is_the_saved_image() {
+        use crate::markup::{Element, Shape, Style};
+        for (alpha, channels) in [(false, 3), (true, 4)] {
+            let frame = Frame { w: 40, h: 30, pixels: (0..40 * 30 * channels).map(|i| (i * 7 % 251) as u8).collect(), alpha, delay: Duration::ZERO };
+            let plain = Doc::new(40, 30);
+            let mut changed = Doc::new(40, 30);
+            changed.rotate_right();
+            changed.resize(60, 80);
+            changed.adjust.exposure = 0.5;
+            for mut doc in [plain, changed] {
+                let mut e = Element::new(Shape::Rect, Pos2::new(2.0, 2.0), Style::for_image(doc.size_vec()));
+                e.points[1] = Pos2::new(20.0, 20.0);
+                doc.elements.push(e);
+                let (saved, shown) = (render(&frame, &doc).unwrap(), flat(&frame, &doc).unwrap());
+                assert_eq!([shown.w, shown.h], doc.size);
+                assert_eq!(shown.alpha, alpha);
+                assert_eq!(shown.pixels, saved.as_bytes());
+            }
+        }
+    }
+
+    #[test]
+    fn fast_pixel_conversions_match_the_slow_ones() {
+        let rgb = image::RgbImage::from_fn(5, 3, |x, y| image::Rgb([x as u8, y as u8, 200]));
+        let rgba = to_rgba(DynamicImage::ImageRgb8(rgb.clone()));
+        assert_eq!(rgba, DynamicImage::ImageRgb8(rgb.clone()).into_rgba8());
+        assert_eq!(drop_alpha(&rgba), rgb);
+        let clear = image::RgbaImage::from_fn(2, 2, |x, _| image::Rgba([9, 8, 7, x as u8]));
+        assert_eq!(drop_alpha(&clear), DynamicImage::ImageRgba8(clear.clone()).into_rgb8());
+        assert_eq!(to_rgba(DynamicImage::ImageRgba8(clear.clone())), clear);
+    }
+
+    /// How long `flat` takes, for `FLAT_MAX_PIXELS`:
+    /// `cargo test --release flat_timing -- --ignored --nocapture`.
+    #[test]
+    #[ignore]
+    fn flat_timing() {
+        use crate::markup::{Element, Shape, Style};
+        for mp in [1, 2, 4, 8, 12, 16, 24] {
+            let w = (mp as f64 * 1e6 * 4.0 / 3.0).sqrt() as u32;
+            let h = w * 3 / 4;
+            let frame = Frame { w, h, pixels: (0..w as usize * h as usize * 3).map(|i| (i % 251) as u8).collect(), alpha: false, delay: Duration::ZERO };
+            let mut doc = Doc::new(w, h);
+            let style = Style::for_image(doc.size_vec());
+            let mut e = Element::new(Shape::Rect, Pos2::new(w as f32 / 4.0, h as f32 / 4.0), style);
+            e.points[1] = Pos2::new(w as f32 / 2.0, h as f32 / 2.0);
+            doc.elements.push(e);
+            let run = |doc: &Doc| {
+                let times: Vec<f64> = (0..5).map(|_| {
+                    let t = std::time::Instant::now();
+                    std::hint::black_box(flat(&frame, doc).unwrap());
+                    t.elapsed().as_secs_f64() * 1000.0
+                }).collect();
+                let mut sorted = times;
+                sorted.sort_by(f64::total_cmp);
+                sorted[2]
+            };
+            let shape = run(&doc);
+            let paste = image::RgbaImage::from_pixel(w, h, image::Rgba([9, 9, 9, 255]));
+            doc.elements.push(Element::pasted(std::sync::Arc::new(paste), Pos2::ZERO, doc.size_vec(), style));
+            eprintln!("{mp:>2} MP: shape {shape:.0} ms, full-size paste {:.0} ms", run(&doc));
+        }
     }
 
     #[test]
