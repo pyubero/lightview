@@ -107,6 +107,8 @@ pub struct App {
     tool: Tool,
     /// Crop tool: where the drag started and the rect so far, in image px.
     drag_start: Option<Pos2>,
+    /// A drag started with the right button is under way: it pans.
+    right_pan: bool,
     crop_rect: Option<Rect>,
     /// Measure tool: the two endpoints (image px) and which one is being dragged.
     measure: Option<[Pos2; 2]>,
@@ -179,7 +181,7 @@ impl App {
             files: start.into_iter().collect(), index: 0,
             cache: HashMap::new(), preview: None, error: None, view: View::Fit,
             texture: None, tex_key: None, resized: None, baked: None, generation: 0, anim_frame: 0, anim_due: None, anim_paused: false,
-            doc: None, undo: Vec::new(), redo: Vec::new(), deleted: Vec::new(), delete_prompt: false, saved: None, tool: Tool::Pan, drag_start: None, crop_rect: None, measure: None, measure_drag: 1,
+            doc: None, undo: Vec::new(), redo: Vec::new(), deleted: Vec::new(), delete_prompt: false, saved: None, tool: Tool::Pan, drag_start: None, right_pan: false, crop_rect: None, measure: None, measure_drag: 1,
             show_toolbar, style: None, selected: None, grab: Grab::None, editing_text: None, focus_text: false, change_base: None, last_restyle: None, selection: None, element_textures: HashMap::new(),
             resize_dialog: None, adjusting: None, pending: None, show_ai_models: false, license_prompt: None, restoring: None, restore_runs: 0, compare: None, enhance_notice: None, visible: None, downloading: HashSet::new(),
             title: String::new(),
@@ -801,6 +803,94 @@ mod tests {
         app.handle(Msg::Restored(2, path, region, true, Ok((fill, 0.0))));
         assert!(app.selection.is_none() && app.restoring.is_none());
         assert_eq!(app.doc().map(|d| d.elements.len()), Some(1));
+    }
+
+    /// A big image at 1:1, panned by nothing yet.
+    fn app_zoomed_in() -> (App, View) {
+        let (mut app, path) = app_with_image();
+        let frame = Frame { w: 1000, h: 1000, pixels: vec![0; 3_000_000], alpha: false, delay: std::time::Duration::ZERO };
+        app.cache.insert(path, Arc::new(Loaded { frames: vec![frame], file_size: 6 }));
+        app.view = crate::view::actual_size(Vec2::splat(1000.0));
+        let view = app.view;
+        (app, view)
+    }
+
+    fn press(button: egui::PointerButton, pressed: bool, at: f32) -> egui::Event {
+        egui::Event::PointerButton { pos: Pos2::new(at, at), button, pressed, modifiers: egui::Modifiers::NONE }
+    }
+
+    fn drag_events(button: egui::PointerButton) -> Vec<egui::Event> {
+        let to = |at| egui::Event::PointerMoved(Pos2::new(at, at));
+        vec![to(100.0), press(button, true, 100.0), to(130.0), to(160.0), to(190.0), press(button, false, 190.0), to(190.0)]
+    }
+
+    /// Runs `image_input` for one frame per event, in a 400 px viewport.
+    fn feed(app: &mut App, events: Vec<egui::Event>) {
+        let ctx = egui::Context::default();
+        ctx.set_fonts(markup::font_definitions());
+        for event in events {
+            let mut input = egui::RawInput::default();
+            input.screen_rect = Some(Rect::from_min_size(Pos2::ZERO, Vec2::splat(400.0)));
+            input.events.push(event);
+            let mut output = ctx.run_ui(input, |ui| {
+                let doc = app.doc().unwrap();
+                app.image_input(ui, &doc, ui.available_rect_before_wrap(), 1.0);
+            });
+            output.textures_delta.clear();
+        }
+    }
+
+    const LEFT: egui::PointerButton = egui::PointerButton::Primary;
+    const RIGHT: egui::PointerButton = egui::PointerButton::Secondary;
+
+    #[test]
+    fn right_drag_pans_with_any_tool() {
+        for tool in [Tool::Draw(Shape::Rect), Tool::Draw(Shape::Magnifier), Tool::Select, Tool::Selection(SelKind::Rect), Tool::Crop, Tool::Measure, Tool::Pan] {
+            let (mut app, start) = app_zoomed_in();
+            app.tool = tool;
+            feed(&mut app, drag_events(RIGHT));
+            assert_ne!(app.view, start);
+            assert!(!app.right_pan);
+            // The tool saw nothing.
+            assert!(app.doc().unwrap().elements.is_empty() && app.change_base.is_none());
+            assert!(app.selection.is_none() && app.crop_rect.is_none() && app.measure.is_none());
+        }
+    }
+
+    #[test]
+    fn left_drag_still_uses_the_tool_or_pans() {
+        let (mut app, start) = app_zoomed_in();
+        app.tool = Tool::Draw(Shape::Rect);
+        feed(&mut app, drag_events(LEFT));
+        assert_eq!(app.view, start);
+        assert_eq!(app.doc().unwrap().elements.len(), 1);
+        let (mut app, start) = app_zoomed_in();
+        feed(&mut app, drag_events(LEFT));
+        assert_ne!(app.view, start, "with no tool, left-drag pans");
+    }
+
+    #[test]
+    fn a_right_press_during_a_left_drawing_leaves_it_alone() {
+        let (mut app, start) = app_zoomed_in();
+        app.tool = Tool::Draw(Shape::Rect);
+        let mut events = drag_events(LEFT);
+        // Tapped once the drawing is under way.
+        events.splice(4..4, [press(RIGHT, true, 160.0), press(RIGHT, false, 160.0)]);
+        feed(&mut app, events);
+        assert_eq!(app.view, start);
+        assert!(app.change_base.is_none() && !app.right_pan);
+        assert_eq!(app.doc().unwrap().elements.len(), 1);
+        assert_eq!(app.undo.len(), 1);
+    }
+
+    #[test]
+    fn right_drag_pans_the_before_after_preview() {
+        let (mut app, start) = app_zoomed_in();
+        let texture = egui::Context::default().load_texture("t", egui::ColorImage::example(), TextureOptions::LINEAR);
+        app.compare = Some(Compare { task: crate::ai::Task::Denoise, region: Rect::from_min_size(Pos2::ZERO, Vec2::splat(10.0)), texture, split: 0.5, ms_per_mp: 0.0, scale: 1 });
+        feed(&mut app, drag_events(RIGHT));
+        assert_ne!(app.view, start);
+        assert_eq!(app.compare.as_ref().map(|c| c.split), Some(0.5));
     }
 
     /// Clipboard between two processes (needs a desktop session):

@@ -89,6 +89,7 @@ Format: `YYYY-MM-DD — decision — reason`
 - 2026-10-29 — M21 Windows (user's choices): one code base with per-OS bits in `platform.rs`/`ai.rs`; releases (Linux tarball + Windows .msi into Program Files) built by GitHub Actions; ship `turbojpeg.dll` since it's < 5 MB; developed on `main` since 2026-10-31.
 - 2026-10-31 — Auto Levels is a button that sets the Exposure and Contrast sliders (user's choice); `Adjust.levels` removed, so one stretch for all channels and no colour-cast correction — every adjustment stays visible and editable. Save As lists the source's format first, since rfd has no current-filter option and dialogs start on the first filter.
 - 2026-10-31 — Remove Object (user's choices): LaMa for quality and MI-GAN for speed, catalog only because each has its own tensor layout; runs on a square of context around the selection, with no preview since Ctrl+Z undoes it; the session stays loaded between runs (LaMa takes ~18 s to load) and is dropped before any other model loads, so a 4 GB GPU isn't held.
+- 2026-10-31 — right-drag pans with any tool and in the before/after preview; left-drag still pans with no tool (user's choice); the button that started a drag owns it (`App::right_pan`), because egui's `dragged`/`drag_started`/`drag_stopped` fire for every button.
 
 ## Self-Update Rule
 Before finishing your turn:

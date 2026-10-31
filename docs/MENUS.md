@@ -105,4 +105,5 @@ thickness, fill, font size, zoom) · Undo · Redo · Done.
 | Esc | Cancels the drawing in progress, else leaves the current tool, else leaves full screen. |
 | Delete / Backspace | Deletes the selected element (Select tool), else the selection; with neither, Delete (not Backspace) offers to delete the image. |
 | Mouse wheel / pinch | Zoom at the pointer. |
-| Drag | Pans (or uses the current tool). |
+| Right-drag | Pans, with any tool. |
+| Drag | Uses the current tool; with no tool, pans. |

@@ -330,6 +330,17 @@ impl App {
         let img = doc.size_vec();
         let drag = ui.interact(viewport, ui.scope_id().with("image"), Sense::click_and_drag());
         let (dest, vis) = view::layout(self.view, img, viewport, ppp);
+        // A drag started with the right button pans, whatever the tool; the tools never see it.
+        if drag.drag_started_by(egui::PointerButton::Secondary) {
+            self.right_pan = true;
+        }
+        if self.right_pan {
+            if drag.dragged() {
+                self.view = view::pan(self.view, drag.drag_delta(), img, viewport, ppp);
+            }
+            self.right_pan = !drag.drag_stopped();
+            return drag;
+        }
         if let Some(c) = &mut self.compare {
             // Dragging moves the before/after line instead of using the tool.
             if drag.dragged() && let Some(p) = drag.interact_pointer_pos() {
