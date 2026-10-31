@@ -1,9 +1,10 @@
 use super::{App, Tool, ms};
 use crate::edit::{self, Adjust, Doc};
 use crate::i18n::{tr, trf};
-use crate::load::{Frame, Loaded};
+use crate::load::{Frame, Loaded, Msg};
 use crate::markup::{self, Element, Shape};
 use crate::settings::Interpolation;
+use crate::svg;
 use crate::view::{self, Transform, View};
 use eframe::egui::{self, Color32, ColorImage, Pos2, Rect, TextureFilter, TextureOptions, Vec2};
 use std::sync::Arc;
@@ -55,6 +56,31 @@ impl App {
             self.flat = Some((self.generation, doc.clone(), Arc::new(frame)));
         }
         self.flat.as_ref().map(|f| f.2.clone())
+    }
+
+    /// The current SVG drawn for `zoom` (screen px per output px) and how many times bigger it
+    /// is than 1×, when it's sharper than the frame. The latest render stays until a newer one
+    /// arrives. Markup and shrinking show as saved, so they stay at 1×.
+    // shortcut: renders of tiers already zoomed past still finish; cancel them if they hold up big SVGs.
+    pub(super) fn sharp_frame(&mut self, full: Option<&Loaded>, doc: &Doc, zoom: f32) -> Option<(u32, Arc<Frame>)> {
+        let l = full?;
+        let tree = l.svg.as_ref()?;
+        let plain = doc.elements.is_empty() && !doc.shrinks();
+        let k = if plain { svg::tier(zoom * doc.scale().max_elem(), [l.frames[0].w, l.frames[0].h]) } else { 1 };
+        if k != self.sharp_wanted {
+            self.sharp_wanted = k;
+            if k == 1 {
+                self.sharp = None;
+            } else {
+                let (tree, path, notify) = (tree.clone(), self.current()?.clone(), self.notify.clone());
+                std::thread::spawn(move || {
+                    if let Some(frame) = svg::render(&tree, k) {
+                        notify.send(Msg::Sharp(path, k, frame));
+                    }
+                });
+            }
+        }
+        self.sharp.clone()
     }
 
     /// Draws the markup over the image (unless it's in the image already, `flat`), plus the
@@ -124,8 +150,9 @@ impl App {
             self.baked = Some((key, Arc::new(edit::bake(frame, &doc))));
         }
         let baked = bake_key.and_then(|_| self.baked.as_ref()).map(|b| b.1.clone());
-        let frame = baked.as_deref().or(frame);
-        let source = baked.is_some().then(|| doc.on_baked());
+        let sharp = self.sharp_frame(full, &edited, view::scale(view, edited.size_vec(), viewport, ppp));
+        let frame = baked.as_deref().or(sharp.as_ref().map(|s| &*s.1)).or(frame);
+        let source = baked.is_some().then(|| doc.on_baked()).or(sharp.as_ref().map(|s| doc.on_sharp(s.0)));
         let source = source.as_ref().unwrap_or(&doc);
         let Some(frame) = frame else {
             if let Some(e) = &self.error {

@@ -90,6 +90,10 @@ pub struct App {
     resized: Option<(TexKey, Vec<u8>)>,
     /// The current frame at its output size, while the edits shrink it.
     baked: Option<(BakeKey, Arc<Frame>)>,
+    /// An SVG drawn sharper than its 1× frame: how many times bigger, and the pixels.
+    sharp: Option<(u32, Arc<Frame>)>,
+    /// The scale the zoom last asked for; 1 is the frame itself.
+    sharp_wanted: u32,
     /// The image with its markup: for which generation and doc, and the pixels (`flattened`).
     flat: Option<(u64, Doc, Arc<Frame>)>,
     /// Bumped whenever what's shown changes source (navigation, preview → full).
@@ -183,7 +187,7 @@ impl App {
             t0, timings, bench, rx, loader, notify, recent, settings, show_info: false, show_settings: false, default_prompt, default_result: None, inspector: None,
             files: start.into_iter().collect(), index: 0,
             cache: HashMap::new(), preview: None, error: None, view: View::Fit,
-            texture: None, tex_key: None, resized: None, baked: None, flat: None, generation: 0, anim_frame: 0, anim_due: None, anim_paused: false,
+            texture: None, tex_key: None, resized: None, baked: None, sharp: None, sharp_wanted: 1, flat: None, generation: 0, anim_frame: 0, anim_due: None, anim_paused: false,
             doc: None, undo: Vec::new(), redo: Vec::new(), deleted: Vec::new(), delete_prompt: false, saved: None, tool: Tool::Pan, drag_start: None, right_pan: false, crop_rect: None, measure: None, measure_drag: 1,
             show_toolbar, style: None, selected: None, grab: Grab::None, editing_text: None, focus_text: false, change_base: None, last_restyle: None, selection: None, element_textures: HashMap::new(),
             resize_dialog: None, adjusting: None, pending: None, show_ai_models: false, license_prompt: None, restoring: None, restore_runs: 0, compare: None, enhance_notice: None, visible: None, downloading: HashSet::new(),
@@ -314,6 +318,12 @@ impl App {
                         self.generation += 1;
                     }
                     self.cache.insert(path, Arc::new(loaded));
+                }
+            }
+            Msg::Sharp(path, k, frame) => {
+                if self.current() == Some(&path) && self.sharp_wanted == k {
+                    self.sharp = Some((k, Arc::new(frame)));
+                    self.generation += 1;
                 }
             }
             Msg::Error(path, e) => {
@@ -460,6 +470,7 @@ impl App {
         self.view = View::Fit;
         self.preview = None;
         self.error = None;
+        (self.sharp, self.sharp_wanted) = (None, 1);
         self.generation += 1;
         self.anim_frame = 0;
         self.anim_due = None;
@@ -499,7 +510,7 @@ impl App {
         let Some((path, l)) = self.current().and_then(|p| Some((p, self.cache.get(p)?))) else { return };
         let Some(doc) = self.doc().filter(|_| l.frames.len() == 1) else { return };
         let (frame, source) = (l.frames[0].clone(), path.clone());
-        let mut dialog = save::formats_for(path).iter().fold(rfd::FileDialog::new().set_file_name(path.file_name().unwrap_or_default().to_string_lossy()), |d, (name, exts)| d.add_filter(*name, exts));
+        let mut dialog = save::formats_for(path).iter().fold(rfd::FileDialog::new().set_file_name(save::suggested_name(path)), |d, (name, exts)| d.add_filter(*name, exts));
         if let Some(dir) = path.parent() {
             dialog = dialog.set_directory(dir);
         }
@@ -747,9 +758,89 @@ mod tests {
         let mut app = App::new(&cc, Instant::now(), false, false, rx, loader, notify, settings, None);
         let path = PathBuf::from("/a.png");
         let frame = Frame { w: 2, h: 1, pixels: vec![0; 6], alpha: false, delay: std::time::Duration::ZERO };
-        app.cache.insert(path.clone(), Arc::new(Loaded { frames: vec![frame], file_size: 6 }));
+        app.cache.insert(path.clone(), Arc::new(Loaded { frames: vec![frame], file_size: 6, svg: None }));
         app.files = vec![path.clone()];
         (app, path)
+    }
+
+    /// `app_with_image`, with a 2×1 SVG as the image.
+    fn app_with_svg() -> (App, PathBuf, Arc<Loaded>) {
+        let (mut app, path) = app_with_image();
+        let tree = crate::svg::load(br#"<svg xmlns="http://www.w3.org/2000/svg" width="2" height="1"/>"#).unwrap();
+        let frame = crate::svg::render(&tree, 1).unwrap();
+        let loaded = Arc::new(Loaded { frames: vec![frame], file_size: 6, svg: Some(tree) });
+        app.cache.insert(path.clone(), loaded.clone());
+        (app, path, loaded)
+    }
+
+    #[test]
+    fn svg_sharpens_with_zoom_and_returns_to_1x() {
+        let (mut app, _, l) = app_with_svg();
+        let doc = Doc::new(2, 1);
+        assert!(app.sharp_frame(Some(&l), &doc, 0.5).is_none());
+        assert!(app.sharp_frame(Some(&l), &doc, 3.0).is_none(), "nothing until the render arrives");
+        let msg = app.rx.recv().unwrap();
+        app.handle(msg);
+        let (k, frame) = app.sharp_frame(Some(&l), &doc, 3.0).unwrap();
+        assert_eq!((k, frame.w, frame.h), (4, 8, 4));
+        assert!(app.rx.try_recv().is_err(), "the same tier isn't rendered twice");
+        // Still shown while the next tier renders, then back to 1× when zoomed out.
+        assert_eq!(app.sharp_frame(Some(&l), &doc, 5.0).unwrap().0, 4);
+        assert!(app.sharp_frame(Some(&l), &doc, 1.0).is_none());
+        assert!(app.sharp.is_none());
+        // The 16× render arrives too late.
+        let msg = app.rx.recv().unwrap();
+        app.handle(msg);
+        assert!(app.sharp.is_none());
+    }
+
+    #[test]
+    fn a_sharp_svg_draws_at_any_zoom_and_rotation_on_both_paths() {
+        let (mut app, path) = app_with_image();
+        let tree = crate::svg::load(br#"<svg xmlns="http://www.w3.org/2000/svg" width="100" height="50"/>"#).unwrap();
+        let l = Arc::new(Loaded { frames: vec![crate::svg::render(&tree, 1).unwrap()], file_size: 6, svg: Some(tree.clone()) });
+        app.cache.insert(path.clone(), l.clone());
+        let ctx = egui::Context::default();
+        ctx.set_fonts(markup::font_definitions());
+        for gpu in [true, false] {
+            app.settings.gpu_scaling = gpu;
+            app.reset_shown();
+            app.sharp_wanted = 4;
+            app.handle(Msg::Sharp(path.clone(), 4, crate::svg::render(&tree, 4).unwrap()));
+            for quarter_turn in [false, true] {
+                if quarter_turn {
+                    app.edit(Doc::rotate_right);
+                }
+                for view in [View::Fit, View::Manual { scale: 3.3, center: Pos2::new(10.0, 10.0) }, View::Manual { scale: 2.0, center: Pos2::new(99.0, 49.0) }] {
+                    app.view = view;
+                    let mut input = egui::RawInput::default();
+                    input.screen_rect = Some(Rect::from_min_size(Pos2::ZERO, Vec2::splat(400.0)));
+                    let mut output = ctx.run_ui(input, |ui| {
+                        let doc = app.doc();
+                        app.draw(ui, Some(&l), doc, None, ui.available_rect_before_wrap());
+                    });
+                    output.textures_delta.clear();
+                    assert_eq!(app.sharp_wanted, 4);
+                    if gpu {
+                        assert_eq!(app.texture.as_ref().unwrap().size(), [400, 200], "the whole sharp frame is uploaded");
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn svg_with_markup_stays_at_1x_and_navigation_clears_it() {
+        let (mut app, path, l) = app_with_svg();
+        let mut doc = Doc::new(2, 1);
+        doc.elements.push(Element::erase(&Selection::Rect(doc.bounds()), false, doc.bounds(), Color32::TRANSPARENT));
+        assert!(app.sharp_frame(Some(&l), &doc, 8.0).is_none());
+        assert_eq!(app.sharp_wanted, 1);
+        app.sharp_wanted = 4;
+        app.handle(Msg::Sharp(path, 4, l.frames[0].clone()));
+        assert!(app.sharp.is_some());
+        app.reset_shown();
+        assert!(app.sharp.is_none() && app.sharp_wanted == 1);
     }
 
     #[test]
@@ -812,7 +903,7 @@ mod tests {
     fn app_zoomed_in() -> (App, View) {
         let (mut app, path) = app_with_image();
         let frame = Frame { w: 1000, h: 1000, pixels: vec![0; 3_000_000], alpha: false, delay: std::time::Duration::ZERO };
-        app.cache.insert(path, Arc::new(Loaded { frames: vec![frame], file_size: 6 }));
+        app.cache.insert(path, Arc::new(Loaded { frames: vec![frame], file_size: 6, svg: None }));
         app.view = crate::view::actual_size(Vec2::splat(1000.0));
         let view = app.view;
         (app, view)
@@ -935,7 +1026,7 @@ mod tests {
         assert!(app.flattened(Some(&l), &Doc::new(1000, 1000)).is_none());
         // Animated.
         let frame = || Frame { w: 2, h: 2, pixels: vec![0; 12], alpha: false, delay: std::time::Duration::ZERO };
-        let animated = Loaded { frames: vec![frame(), frame()], file_size: 6 };
+        let animated = Loaded { frames: vec![frame(), frame()], file_size: 6, svg: None };
         assert!(app.flattened(Some(&animated), &doc).is_none());
         // Past the limit.
         let sized = |w, h| { let mut d = doc.clone(); d.resize(w, h); d };

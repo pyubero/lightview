@@ -34,6 +34,7 @@
           <RegistryValue Root="HKLM" Key="Software\Classes\.bmp\OpenWithProgids" Name="lightview.Image" Value="" Type="string" />
           <RegistryValue Root="HKLM" Key="Software\Classes\.tif\OpenWithProgids" Name="lightview.Image" Value="" Type="string" />
           <RegistryValue Root="HKLM" Key="Software\Classes\.tiff\OpenWithProgids" Name="lightview.Image" Value="" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\Classes\.svg\OpenWithProgids" Name="lightview.Image" Value="" Type="string" />
 
           <!-- …and as an app in Settings → Default apps. -->
           <RegistryValue Root="HKLM" Key="Software\lightview\Capabilities" Name="ApplicationName" Value="lightview" Type="string" />
@@ -46,6 +47,7 @@
           <RegistryValue Root="HKLM" Key="Software\lightview\Capabilities\FileAssociations" Name=".bmp" Value="lightview.Image" Type="string" />
           <RegistryValue Root="HKLM" Key="Software\lightview\Capabilities\FileAssociations" Name=".tif" Value="lightview.Image" Type="string" />
           <RegistryValue Root="HKLM" Key="Software\lightview\Capabilities\FileAssociations" Name=".tiff" Value="lightview.Image" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\lightview\Capabilities\FileAssociations" Name=".svg" Value="lightview.Image" Type="string" />
           <RegistryValue Root="HKLM" Key="Software\RegisteredApplications" Name="lightview" Value="Software\lightview\Capabilities" Type="string" />
         </Component>
       </Directory>

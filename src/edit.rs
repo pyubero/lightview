@@ -145,11 +145,16 @@ impl Doc {
     }
 
     /// Output px per transformed-crop px, on each axis.
-    fn scale(&self) -> Vec2 {
+    pub fn scale(&self) -> Vec2 {
         self.size_vec() / self.transform.size(self.crop.size())
     }
 
     /// The decoded-image point that ends up at output point `p`.
+    /// These edits on pixels `k` times bigger than the decoded ones (a sharper SVG render).
+    pub fn on_sharp(&self, k: u32) -> Doc {
+        Doc { crop: self.crop * k as f32, ..self.clone() }
+    }
+
     pub fn source_point(&self, p: Pos2) -> Pos2 {
         self.crop.min + self.transform.source_point((p.to_vec2() / self.scale()).to_pos2(), self.crop.size()).to_vec2()
     }
@@ -546,6 +551,22 @@ mod tests {
         }
         // A rect slightly outside on every side (from rounding) is clamped, not refused.
         resize(&frame, Rect::from_min_max(Pos2::new(-0.001, -0.001), Pos2::new(4000.001, 3.001)), 8, 1, ResizeAlg::Nearest);
+    }
+
+    #[test]
+    fn sharp_pixels_map_by_their_scale() {
+        let mut doc = Doc::new(30, 20);
+        doc.crop_to(Rect::from_min_size(Pos2::new(3.0, 2.0), Vec2::new(20.0, 10.0)));
+        doc.resize(40, 20);
+        for edit in [Doc::rotate_right, Doc::flip_horizontal, Doc::rotate_left] {
+            edit(&mut doc);
+            let sharp = doc.on_sharp(4);
+            let frame = Rect::from_min_size(Pos2::ZERO, Vec2::new(120.0, 80.0));
+            let (p, r) = (Pos2::new(7.0, 5.0), doc.bounds());
+            assert!((sharp.source_point(p).to_vec2() - doc.source_point(p).to_vec2() * 4.0).length() < 1e-3);
+            assert!((sharp.to_source(r).size() - doc.to_source(r).size() * 4.0).length() < 1e-3);
+            assert!(frame.contains_rect(sharp.to_source(r)));
+        }
     }
 
     #[test]

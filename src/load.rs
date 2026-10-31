@@ -1,6 +1,6 @@
 use crate::edit::Doc;
 use crate::settings::SortOrder;
-use crate::turbo;
+use crate::{svg, turbo};
 use eframe::egui;
 use image::codecs::{gif::GifDecoder, webp::WebPDecoder};
 use image::metadata::Orientation;
@@ -12,7 +12,7 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, Condvar, Mutex, OnceLock, mpsc};
 use std::time::Duration;
 
-pub const EXTENSIONS: [&str; 8] = ["jpg", "jpeg", "png", "gif", "webp", "bmp", "tif", "tiff"];
+pub const EXTENSIONS: [&str; 9] = ["jpg", "jpeg", "png", "gif", "webp", "bmp", "tif", "tiff", "svg"];
 
 #[derive(Clone)]
 pub struct Frame {
@@ -28,6 +28,8 @@ pub struct Frame {
 pub struct Loaded {
     pub frames: Vec<Frame>,
     pub file_size: u64,
+    /// For an SVG, which can be drawn again sharper when zoomed in.
+    pub svg: Option<Arc<resvg::usvg::Tree>>,
 }
 
 pub enum Msg {
@@ -36,6 +38,8 @@ pub enum Msg {
     Folder(Vec<PathBuf>),
     Preview(PathBuf, Frame),
     Full(PathBuf, Loaded),
+    /// An SVG drawn this many times bigger than its 1× frame.
+    Sharp(PathBuf, u32, Frame),
     Error(PathBuf, String),
     /// A save finished (successfully or not) writing this path. Save As also says which image
     /// and edits it wrote; an EXIF copy wrote no edits.
@@ -141,6 +145,11 @@ pub fn relist(path: &Path, sort: SortOrder, notify: &Notify) {
 fn load(path: &Path, target: [u32; 2], on_preview: impl Fn(Frame) + Sync) -> Result<Loaded, String> {
     let bytes = std::fs::read(path).map_err(|e| e.to_string())?;
     let file_size = bytes.len() as u64;
+    if path.extension().is_some_and(|e| e.eq_ignore_ascii_case("svg")) {
+        let tree = svg::load(&bytes)?;
+        let frame = svg::render(&tree, 1).ok_or("the SVG renderer failed")?;
+        return Ok(Loaded { frames: vec![frame], file_size, svg: Some(tree) });
+    }
     let reader = ImageReader::new(Cursor::new(&bytes)).with_guessed_format().map_err(|e| e.to_string())?;
     let format = reader.format();
 
@@ -164,7 +173,7 @@ fn load(path: &Path, target: [u32; 2], on_preview: impl Fn(Frame) + Sync) -> Res
         if frames.is_empty() {
             return Err(crate::i18n::tr("no frames").into());
         }
-        return Ok(Loaded { frames, file_size });
+        return Ok(Loaded { frames, file_size, svg: None });
     }
 
     let mut decoder = reader.into_decoder().map_err(|e| e.to_string())?;
@@ -201,7 +210,7 @@ fn load(path: &Path, target: [u32; 2], on_preview: impl Fn(Frame) + Sync) -> Res
         None => DynamicImage::from_decoder(decoder).map_err(|e| e.to_string())?,
     };
     img.apply_orientation(orientation);
-    Ok(Loaded { frames: vec![to_frame(img, Duration::ZERO)], file_size })
+    Ok(Loaded { frames: vec![to_frame(img, Duration::ZERO)], file_size, svg: None })
 }
 
 /// The largest JPEG scale-down (8, 4 or 2) whose output still covers `img` (upright) when
@@ -414,6 +423,18 @@ mod tests {
         assert_eq!(std::fs::read_to_string(&path).unwrap(), "image");
         std::fs::remove_file(&path).unwrap();
         assert!(restore_trashed(&path).is_err());
+    }
+
+    #[test]
+    fn opens_svg() {
+        let path = std::env::temp_dir().join(format!("lightview-{}.SVG", std::process::id()));
+        std::fs::write(&path, r#"<svg xmlns="http://www.w3.org/2000/svg" width="3" height="2"/>"#).unwrap();
+        let loaded = load(&path, [100, 100], |_| {}).unwrap();
+        std::fs::write(&path, "broken").unwrap();
+        let broken = load(&path, [100, 100], |_| {});
+        std::fs::remove_file(&path).unwrap();
+        assert_eq!((loaded.frames[0].w, loaded.frames[0].h), (3, 2));
+        assert!(loaded.svg.is_some() && broken.is_err());
     }
 
     #[test]

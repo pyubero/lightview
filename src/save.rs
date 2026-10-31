@@ -23,9 +23,18 @@ pub const FORMATS: [(&str, &[&str]); 6] = [
 /// `FORMATS` with the format of `source` first: file dialogs start on the first filter.
 pub fn formats_for(source: &Path) -> [(&'static str, &'static [&'static str]); 6] {
     let ext = source.extension().and_then(|e| e.to_str()).unwrap_or_default().to_ascii_lowercase();
+    // Edits are pixels, so an SVG can't be written back: PNG keeps its transparency.
+    let ext = if ext == "svg" { "png".to_string() } else { ext };
     let mut formats = FORMATS;
     formats.sort_by_key(|(_, exts)| !exts.contains(&ext.as_str()));
     formats
+}
+
+/// The name Save As starts with: the source's, unless its format can't be written.
+pub fn suggested_name(source: &Path) -> String {
+    let svg = source.extension().is_some_and(|e| e.eq_ignore_ascii_case("svg"));
+    let name = if svg { source.with_extension("png") } else { source.to_path_buf() };
+    name.file_name().unwrap_or_default().to_string_lossy().into_owned()
 }
 
 /// Saves `frame` with the edits in `doc` to `dest`, in the format of its extension.
@@ -108,6 +117,19 @@ mod tests {
         assert_eq!(first("a.jpeg")[0], "JPEG");
         assert_eq!(first("a.tiff")[0], "TIFF");
         assert_eq!(first("a.xyz"), FORMATS.map(|(n, _)| n));
+    }
+
+    #[test]
+    fn an_svg_saves_as_png_and_never_as_svg() {
+        assert_eq!(formats_for(Path::new("a.SVG"))[0].0, "PNG");
+        assert_eq!(suggested_name(Path::new("/d/a.b.svg")), "a.b.png");
+        assert_eq!(suggested_name(Path::new("/d/a.jpg")), "a.jpg");
+        let dest = temp_dir("svg").join("a.svg");
+        std::fs::write(&dest, "original").unwrap();
+        let frame = Frame { w: 1, h: 1, pixels: vec![0; 4], alpha: true, delay: Duration::ZERO };
+        assert!(save(&frame, &Doc::new(1, 1), &dest, &dest).is_err());
+        assert_eq!(std::fs::read(&dest).unwrap(), b"original");
+        std::fs::remove_dir_all(dest.parent().unwrap()).unwrap();
     }
 
     fn temp_dir(name: &str) -> std::path::PathBuf {

@@ -12,6 +12,7 @@ mod markup;
 mod platform;
 mod save;
 mod settings;
+mod svg;
 mod turbo;
 mod view;
 
