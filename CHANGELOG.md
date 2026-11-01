@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.2.1 (2026-11-01)
 
 Security hardening: opening a malicious file, or browsing past one in a folder, can no longer freeze the app or exhaust memory through lightview's own code.
 
