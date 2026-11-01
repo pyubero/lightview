@@ -17,6 +17,8 @@ struct Lib {
 
 const NAME: &str = if cfg!(windows) { "turbojpeg.dll" } else { "libturbojpeg.so.0" };
 const TJPF_RGB: c_int = 0;
+// Refuses progressive files of over 500 scans, whose decode time a tiny file can make huge.
+const TJFLAG_LIMITSCANS: c_int = 32768;
 // The `image` crate's default allocation limit; bigger files go to it and its own checks.
 const MAX_BYTES: u64 = 512 << 20;
 
@@ -26,7 +28,10 @@ fn lib() -> Option<&'static Lib> {
         // SAFETY: loading runs libjpeg-turbo's initialisers, which have no side effects. The
         // symbol types match the TurboJPEG 2.x API (turbojpeg.h), which 3.x still exports.
         unsafe {
-            let lib = libloading::Library::new(NAME).ok()?;
+            // On Windows the search for a bare name reaches the current folder, which is the photo's
+            // on a double-click: a DLL planted next to it would run. The installer puts ours beside the exe.
+            let path: std::path::PathBuf = if cfg!(windows) { std::env::current_exe().ok()?.parent()?.join(NAME) } else { NAME.into() };
+            let lib = libloading::Library::new(path).ok()?;
             Some(Lib {
                 init: *lib.get(b"tjInitDecompress\0").ok()?,
                 header: *lib.get(b"tjDecompressHeader3\0").ok()?,
@@ -66,7 +71,7 @@ pub fn decode(bytes: &[u8], den: u32) -> Option<RgbImage> {
                 return None;
             }
             let mut dst = vec![0u8; w as usize * h as usize * 3];
-            if (lib.decompress)(handle, bytes.as_ptr(), len, dst.as_mut_ptr(), w as c_int, 0, h as c_int, TJPF_RGB, 0) != 0 {
+            if (lib.decompress)(handle, bytes.as_ptr(), len, dst.as_mut_ptr(), w as c_int, 0, h as c_int, TJPF_RGB, TJFLAG_LIMITSCANS) != 0 {
                 return None;
             }
             RgbImage::from_raw(w, h, dst)

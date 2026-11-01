@@ -309,6 +309,9 @@ fn environment() -> Result<&'static ort::environment::Environment, String> {
     .map_err(Clone::clone)
 }
 
+/// The biggest input side a model may ask for: it comes from the file, and it's squared into an allocation.
+const MAX_INPUT_SIDE: i64 = 4096;
+
 /// How a model wants its input, and whether its output needs a sigmoid (BiRefNet gives logits).
 #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Preprocess {
@@ -605,7 +608,7 @@ pub fn restore(file: &str, img: &RgbaImage, progress: &dyn Fn(f32), cancel: &Ato
     let mut session = session(file)?;
     // A model exported with a fixed size only takes tiles of that size.
     let fixed = session.inputs().first().and_then(|i| i.dtype().tensor_shape()).and_then(|shape| match shape.iter().copied().collect::<Vec<i64>>().as_slice() {
-        [.., h, w] if h == w && *h > 0 => Some(*h as usize),
+        [.., h, w] if h == w && (1..=MAX_INPUT_SIDE).contains(h) => Some(*h as usize),
         _ => None,
     });
     // Big tiles: per pixel they cost the same. A smaller image gets a tile just big enough
@@ -808,7 +811,7 @@ pub fn input_size(file: &str) -> Result<u32, String> {
     let shape = session.inputs().first().and_then(|i| i.dtype().tensor_shape()).ok_or(tr("the model has no image input"))?;
     let dims: Vec<i64> = shape.iter().copied().collect();
     Ok(match dims.as_slice() {
-        [.., h, w] if h == w && *h > 0 => *h as u32,
+        [.., h, w] if h == w && (1..=MAX_INPUT_SIDE).contains(h) => *h as u32,
         _ => 1024,
     })
 }
@@ -976,6 +979,7 @@ pub fn models_ui(ui: &mut egui::Ui, s: &mut AiSettings, installed: &[String], bu
         }
     });
     ui.add_space(8.0);
+    ui.weak(tr("Only add models from sources you trust: they run with your permissions."));
     ui.horizontal(|ui| {
         out.add = ui.button(tr("Add model file…")).clicked();
         if ui.button(tr("Open models folder")).clicked() {

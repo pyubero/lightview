@@ -63,7 +63,14 @@ pub fn write_atomic(dest: &Path, write: impl FnOnce(&mut BufWriter<File>) -> Res
     let ext = dest.extension().and_then(|e| e.to_str()).unwrap_or_default();
     let tmp = dest.with_extension(format!("{ext}.lightview-tmp"));
     let result = (|| {
-        let mut out = BufWriter::new(File::create(&tmp).map_err(|e| e.to_string())?);
+        // A leftover goes first, and `create_new` then won't follow a link planted at this name.
+        let _ = std::fs::remove_file(&tmp);
+        let file = File::options().write(true).create_new(true).open(&tmp).map_err(|e| e.to_string())?;
+        // Overwriting a private file keeps it private. Some file systems can't, which needn't fail the save.
+        if let Ok(existing) = std::fs::metadata(dest) {
+            let _ = file.set_permissions(existing.permissions());
+        }
+        let mut out = BufWriter::new(file);
         write(&mut out)?;
         out.into_inner().map_err(|e| e.to_string())?.sync_all().map_err(|e| e.to_string())?;
         std::fs::rename(&tmp, dest).map_err(|e| e.to_string())
@@ -215,6 +222,33 @@ mod tests {
         let back = image::open(&dest).unwrap();
         std::fs::remove_dir_all(&dir).unwrap();
         assert_eq!((back.width(), back.height()), (3, 2));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_planted_symlink_is_not_followed() {
+        let dir = temp_dir("symlink");
+        let (victim, dest) = (dir.join("victim.txt"), dir.join("out.png"));
+        std::fs::write(&victim, "precious").unwrap();
+        std::os::unix::fs::symlink(&victim, dir.join("out.png.lightview-tmp")).unwrap();
+        write_atomic(&dest, |out| out.write_all(b"saved").map_err(|e| e.to_string())).unwrap();
+        let (kept, saved) = (std::fs::read(&victim).unwrap(), std::fs::read(&dest).unwrap());
+        std::fs::remove_dir_all(&dir).unwrap();
+        assert_eq!((&kept[..], &saved[..]), (&b"precious"[..], &b"saved"[..]));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn overwriting_keeps_a_private_file_private() {
+        use std::os::unix::fs::PermissionsExt;
+        let dir = temp_dir("mode");
+        let dest = dir.join("private.png");
+        std::fs::write(&dest, "old").unwrap();
+        std::fs::set_permissions(&dest, std::fs::Permissions::from_mode(0o600)).unwrap();
+        write_atomic(&dest, |out| out.write_all(b"new").map_err(|e| e.to_string())).unwrap();
+        let mode = std::fs::metadata(&dest).unwrap().permissions().mode() & 0o777;
+        std::fs::remove_dir_all(&dir).unwrap();
+        assert_eq!(mode, 0o600);
     }
 
     #[test]

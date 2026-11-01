@@ -25,15 +25,16 @@ use std::time::Instant;
 fn main() -> eframe::Result {
     let t0 = Instant::now();
     let (mut timings, mut bench, mut path) = (false, false, None);
-    for arg in std::env::args().skip(1) {
-        match arg.as_str() {
-            "--timings" => timings = true,
-            "--bench" => (timings, bench) = (true, true),
+    // `args()` panics on a file name that isn't valid Unicode.
+    for arg in std::env::args_os().skip(1) {
+        match arg.to_str() {
+            Some("--timings") => timings = true,
+            Some("--bench") => (timings, bench) = (true, true),
             _ => path = Some(arg),
         }
     }
     let path = path.map(|p| std::fs::canonicalize(&p).unwrap_or_else(|e| {
-        eprintln!("lightview: {p}: {e}");
+        eprintln!("lightview: {}: {e}", p.display());
         std::process::exit(1);
     }));
 

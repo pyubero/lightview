@@ -27,7 +27,8 @@ impl Inspector {
             None => tr("None (sRGB assumed)").into(),
         };
         // shortcut: EXIF is read for JPEGs only, like EXIF editing; little_exif can also read PNG/WebP if wanted.
-        let exif = if jpeg { exif_edit::read(path) } else { Err(tr("EXIF is shown for JPEG files only").into()) };
+        // On the UI thread, where a panic would close the app and lose unsaved edits.
+        let exif = if jpeg { crate::load::catching(|| exif_edit::read(path)) } else { Err(tr("EXIF is shown for JPEG files only").into()) };
         let jfif_dpi = jpeg.then(|| std::fs::File::open(path).ok()).flatten().and_then(|mut f| {
             let mut head = [0u8; 18];
             std::io::Read::read_exact(&mut f, &mut head).ok()?;

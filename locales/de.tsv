@@ -153,6 +153,7 @@ Nothing to paste: {e}	Nichts zum Einfügen: {e}
 OK	OK
 ONNX export (half precision) by FuryTMP on Hugging Face; its origin isn't verified.	ONNX-Export (halbe Genauigkeit) von FuryTMP auf Hugging Face; die Herkunft ist nicht überprüft.
 ONNX model	ONNX-Modell
+Only add models from sources you trust: they run with your permissions.	Fügen Sie nur Modelle aus vertrauenswürdigen Quellen hinzu: Sie laufen mit Ihren Berechtigungen.
 Open Recent	Zuletzt geöffnet
 Open in Google Maps	In Google Maps öffnen
 Open models folder	Modellordner öffnen
@@ -247,6 +248,7 @@ a GPU library was missing from the download	im Download fehlte eine GPU-Biblioth
 about {time} left	noch etwa {time}
 can't save as .{ext}: use .jpg, .png, .webp, .bmp, .tif or .gif	Speichern als .{ext} nicht möglich: Verwenden Sie .jpg, .png, .webp, .bmp, .tif oder .gif
 choose a new name: the original is never modified	Wählen Sie einen neuen Namen: Das Original wird nie verändert
+compressed SVG files aren't supported	komprimierte SVG-Dateien werden nicht unterstützt
 couldn't read this file's EXIF safely	die EXIF-Daten dieser Datei konnten nicht sicher gelesen werden
 edited: {w} × {h}	bearbeitet: {w} × {h}
 lightview is now the default image viewer	lightview ist jetzt der Standard-Bildbetrachter
@@ -263,7 +265,10 @@ the model's output isn't a whole multiple of its input	die Modellausgabe ist kei
 the written file didn't check out: the location wasn't removed	die geschriebene Datei hat die Prüfung nicht bestanden: Der Standort wurde nicht entfernt
 the written file didn't check out: {e}	die geschriebene Datei hat die Prüfung nicht bestanden: {e}
 the written file didn't check out: {label} wasn't saved	die geschriebene Datei hat die Prüfung nicht bestanden: {label} wurde nicht gespeichert
+this file crashed its decoder	diese Datei hat den Decoder zum Absturz gebracht
 this file's EXIF couldn't be processed	die EXIF-Daten dieser Datei konnten nicht verarbeitet werden
+this image is too large to open	dieses Bild ist zu groß zum Öffnen
+this isn't a regular file	dies ist keine normale Datei
 {format}, {count} frames	{format}, {count} Einzelbilder
 {name} is already installed	{name} ist bereits installiert
 {name} will be moved to the Trash.	{name} wird in den Papierkorb verschoben.

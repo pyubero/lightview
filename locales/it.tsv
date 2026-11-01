@@ -153,6 +153,7 @@ Nothing to paste: {e}	Niente da incollare: {e}
 OK	OK
 ONNX export (half precision) by FuryTMP on Hugging Face; its origin isn't verified.	Esportazione ONNX (mezza precisione) di FuryTMP su Hugging Face; l'origine non è verificata.
 ONNX model	Modello ONNX
+Only add models from sources you trust: they run with your permissions.	Aggiungi solo modelli da fonti attendibili: vengono eseguiti con i tuoi permessi.
 Open Recent	Apri recenti
 Open in Google Maps	Apri in Google Maps
 Open models folder	Apri cartella dei modelli
@@ -247,6 +248,7 @@ a GPU library was missing from the download	mancava una libreria GPU nel downloa
 about {time} left	circa {time} rimanenti
 can't save as .{ext}: use .jpg, .png, .webp, .bmp, .tif or .gif	impossibile salvare come .{ext}: usa .jpg, .png, .webp, .bmp, .tif o .gif
 choose a new name: the original is never modified	scegli un altro nome: l'originale non viene mai modificato
+compressed SVG files aren't supported	i file SVG compressi non sono supportati
 couldn't read this file's EXIF safely	impossibile leggere in sicurezza i dati EXIF di questo file
 edited: {w} × {h}	modificata: {w} × {h}
 lightview is now the default image viewer	lightview è ora il visualizzatore di immagini predefinito
@@ -263,7 +265,10 @@ the model's output isn't a whole multiple of its input	l'uscita del modello non 
 the written file didn't check out: the location wasn't removed	il file scritto non ha superato il controllo: la posizione non è stata rimossa
 the written file didn't check out: {e}	il file scritto non ha superato il controllo: {e}
 the written file didn't check out: {label} wasn't saved	il file scritto non ha superato il controllo: {label} non è stato salvato
+this file crashed its decoder	questo file ha mandato in crash il decodificatore
 this file's EXIF couldn't be processed	impossibile elaborare i dati EXIF di questo file
+this image is too large to open	questa immagine è troppo grande per essere aperta
+this isn't a regular file	questo non è un file normale
 {format}, {count} frames	{format}, {count} fotogrammi
 {name} is already installed	{name} è già installato
 {name} will be moved to the Trash.	{name} verrà spostato nel cestino.

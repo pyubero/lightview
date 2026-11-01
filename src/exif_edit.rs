@@ -1,4 +1,5 @@
 use crate::i18n::{tr, tr_key, trf};
+use crate::load::ifd_chain_ends;
 use crate::save::write_atomic;
 use eframe::egui;
 use image::{ImageDecoder, ImageReader};
@@ -49,9 +50,19 @@ fn guarded<T>(f: impl FnOnce() -> Result<T, std::io::Error>) -> Result<T, String
     }
 }
 
+/// Whether every TIFF block in the file has an IFD chain that ends. little_exif follows a looping
+/// chain for ever, which `guarded` can't stop, and it finds its block by scanning, with or without
+/// the `Exif` prefix and even behind the image data, so all of them are checked.
+fn ifd_chains_end(jpeg: &[u8]) -> bool {
+    jpeg.windows(4).enumerate().all(|(i, w)| !matches!(w, b"II\x2a\0" | b"MM\0\x2a") || ifd_chain_ends(&jpeg[i..]))
+}
+
 /// Parses the EXIF of a JPEG buffer. Refuses when the file has EXIF that little_exif reads
 /// as empty, since writing that back would silently wipe it.
 fn metadata(jpeg: &Vec<u8>) -> Result<Metadata, String> {
+    if !ifd_chains_end(jpeg) {
+        return Err(tr("this file's EXIF couldn't be processed").into());
+    }
     let m = guarded(|| Metadata::new_from_vec(jpeg, FileExtension::JPEG))?;
     let has_exif = ImageReader::new(Cursor::new(jpeg))
         .with_guessed_format()
@@ -155,6 +166,21 @@ pub fn read(path: &Path) -> Result<Dialog, String> {
     Ok(Dialog { path: path.to_path_buf(), values: original.clone(), original, gps: location(&m), remove_gps: false, summary: summary(&m), resolution: resolution(&m), others })
 }
 
+/// Drops the XMP segments that mention a location: little_exif only rewrites the EXIF one.
+fn drop_xmp_location(jpeg: &mut Vec<u8>) {
+    const XMP: [&[u8]; 2] = [b"http://ns.adobe.com/xap/1.0/\0", b"http://ns.adobe.com/xmp/extension/\0"];
+    let mut at = 2;
+    while let Some(&[0xFF, marker, high, low]) = jpeg.get(at..).and_then(|rest| rest.first_chunk::<4>()) {
+        let end = at + 2 + u16::from_be_bytes([high, low]) as usize;
+        let Some(body) = jpeg.get(at + 4..end).filter(|_| marker != 0xDA) else { break };
+        if marker == 0xE1 && XMP.iter().any(|x| body.starts_with(x)) && body.windows(3).any(|w| w == b"GPS") {
+            jpeg.drain(at..end);
+        } else {
+            at = end;
+        }
+    }
+}
+
 /// Applies the edits to a JPEG buffer. Only changed fields are touched; MakerNote is always
 /// dropped. The result is checked before it's returned, so a bad write never reaches disk.
 fn apply(jpeg: &mut Vec<u8>, original: &Values, values: &Values, remove_gps: bool) -> Result<(), String> {
@@ -179,6 +205,9 @@ fn apply(jpeg: &mut Vec<u8>, original: &Values, values: &Values, remove_gps: boo
         m.remove_tag(ExifTag::GPSInfo(Vec::new()));
     }
     guarded(|| m.write_to_vec(jpeg, FileExtension::JPEG))?;
+    if remove_gps {
+        drop_xmp_location(jpeg);
+    }
 
     // Check the written file: values as asked, location gone if asked, image still decodes.
     let check = metadata(jpeg).map_err(|e| trf("the written file didn't check out: {e}", &[("e", &e)]))?;
@@ -399,6 +428,65 @@ mod tests {
             // Pixels are never re-encoded.
             assert_eq!(image::load_from_memory(&jpeg).unwrap().to_rgb8(), image::load_from_memory(&before).unwrap().to_rgb8());
         }
+    }
+
+    /// `jpeg` with a segment after its EXIF one: little_exif expects EXIF to come first.
+    fn with_segment_after_exif(mut jpeg: Vec<u8>, payload: &[u8]) -> Vec<u8> {
+        let exif = jpeg.windows(6).position(|w| w == b"Exif\0\0").unwrap();
+        let end = exif - 2 + u16::from_be_bytes([jpeg[exif - 2], jpeg[exif - 1]]) as usize;
+        let tail = jpeg.split_off(end);
+        jpeg.extend([0xFF, 0xE1]);
+        jpeg.extend((payload.len() as u16 + 2).to_be_bytes());
+        jpeg.extend(payload);
+        jpeg.extend(tail);
+        jpeg
+    }
+
+    /// A JPEG with a segment right after SOI: `marker`, then `payload`.
+    fn with_segment(mut jpeg: Vec<u8>, marker: u8, payload: &[u8]) -> Vec<u8> {
+        let mut segment = vec![0xFF, marker];
+        segment.extend((payload.len() as u16 + 2).to_be_bytes());
+        segment.extend(payload);
+        jpeg.splice(2..2, segment);
+        jpeg
+    }
+
+    /// Without a guard little_exif walks this IFD for ever, on the UI thread.
+    #[test]
+    fn looping_ifds_are_refused() {
+        let plain = {
+            let mut jpeg = Vec::new();
+            image::codecs::jpeg::JpegEncoder::new(&mut jpeg).encode(&[0; 3], 1, 1, image::ExtendedColorType::Rgb8).unwrap();
+            jpeg
+        };
+        const LOOPING: &[u8] = b"II\x2a\0\x08\0\0\0\0\0\x08\0\0\0";
+        let with_prefix = [b"Exif\0\0".as_slice(), LOOPING].concat();
+        assert!(metadata(&with_segment(plain.clone(), 0xE1, &with_prefix)).is_err());
+        // little_exif doesn't need the prefix.
+        assert!(metadata(&with_segment(plain.clone(), 0xE1, LOOPING)).is_err());
+        // Behind another segment, and behind the image data.
+        assert!(metadata(&with_segment(with_segment(plain.clone(), 0xE1, &with_prefix), 0xFE, b"comment")).is_err());
+        let mut after_image = plain.clone();
+        after_image.truncate(after_image.len() - 2);
+        let tail = with_segment(vec![0xFF, 0xD8], 0xE1, &with_prefix);
+        after_image.extend(&tail[2..]);
+        assert!(metadata(&after_image).is_err());
+    }
+
+    #[test]
+    fn remove_gps_also_clears_xmp() {
+        let xmp = |text: &str| [b"http://ns.adobe.com/xap/1.0/\0".as_slice(), text.as_bytes()].concat();
+        let jpeg = with_segment_after_exif(sample_jpeg(), &xmp(r#"<rdf:Description exif:GPSLatitude="40,25N"/>"#));
+        let kept = with_segment_after_exif(sample_jpeg(), &xmp("<dc:title>Walk</dc:title>"));
+        let d = read_vec(&sample_jpeg(), "xmp");
+        let (mut a, mut b, mut c) = (jpeg.clone(), jpeg, kept);
+        apply(&mut a, &d.original, &d.original, true).unwrap();
+        apply(&mut b, &d.original, &d.original, false).unwrap();
+        apply(&mut c, &d.original, &d.original, true).unwrap();
+        let has = |jpeg: &[u8], text: &[u8]| jpeg.windows(text.len()).any(|w| w == text);
+        assert!(!has(&a, b"GPSLatitude"), "the location survived in XMP");
+        assert!(has(&b, b"GPSLatitude"), "only removed on request");
+        assert!(has(&c, b"Walk"), "XMP without a location stays");
     }
 
     #[test]

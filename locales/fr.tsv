@@ -153,6 +153,7 @@ Nothing to paste: {e}	Rien à coller : {e}
 OK	OK
 ONNX export (half precision) by FuryTMP on Hugging Face; its origin isn't verified.	Export ONNX (demi-précision) de FuryTMP sur Hugging Face ; son origine n'est pas vérifiée.
 ONNX model	Modèle ONNX
+Only add models from sources you trust: they run with your permissions.	N'ajoutez que des modèles provenant de sources fiables : ils s'exécutent avec vos autorisations.
 Open Recent	Ouvrir un fichier récent
 Open in Google Maps	Ouvrir dans Google Maps
 Open models folder	Ouvrir le dossier des modèles
@@ -247,6 +248,7 @@ a GPU library was missing from the download	une bibliothèque GPU manquait dans 
 about {time} left	environ {time} restantes
 can't save as .{ext}: use .jpg, .png, .webp, .bmp, .tif or .gif	impossible d'enregistrer en .{ext} : utilisez .jpg, .png, .webp, .bmp, .tif ou .gif
 choose a new name: the original is never modified	choisissez un autre nom : l'original n'est jamais modifié
+compressed SVG files aren't supported	les fichiers SVG compressés ne sont pas pris en charge
 couldn't read this file's EXIF safely	impossible de lire les données EXIF de ce fichier en toute sécurité
 edited: {w} × {h}	modifiée : {w} × {h}
 lightview is now the default image viewer	lightview est maintenant la visionneuse d'images par défaut
@@ -263,7 +265,10 @@ the model's output isn't a whole multiple of its input	la sortie du modèle n'es
 the written file didn't check out: the location wasn't removed	le fichier écrit n'a pas passé la vérification : l'emplacement n'a pas été retiré
 the written file didn't check out: {e}	le fichier écrit n'a pas passé la vérification : {e}
 the written file didn't check out: {label} wasn't saved	le fichier écrit n'a pas passé la vérification : {label} n'a pas été enregistré
+this file crashed its decoder	ce fichier a fait planter le décodeur
 this file's EXIF couldn't be processed	impossible de traiter les données EXIF de ce fichier
+this image is too large to open	cette image est trop grande pour être ouverte
+this isn't a regular file	ce n'est pas un fichier normal
 {format}, {count} frames	{format}, {count} images
 {name} is already installed	{name} est déjà installé
 {name} will be moved to the Trash.	{name} sera déplacé vers la corbeille.

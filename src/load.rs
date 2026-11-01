@@ -1,18 +1,29 @@
 use crate::edit::Doc;
+use crate::i18n::tr;
 use crate::settings::SortOrder;
 use crate::{svg, turbo};
 use eframe::egui;
 use image::codecs::{gif::GifDecoder, webp::WebPDecoder};
 use image::metadata::Orientation;
-use image::{AnimationDecoder, DynamicImage, ImageDecoder, ImageFormat, ImageReader};
+use image::{AnimationDecoder, DynamicImage, Frames, ImageDecoder, ImageFormat, ImageReader, Limits};
 use std::cmp::Ordering;
 use std::collections::HashSet;
 use std::io::Cursor;
+use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Condvar, Mutex, OnceLock, mpsc};
 use std::time::Duration;
 
 pub const EXTENSIONS: [&str; 10] = ["jpg", "jpeg", "png", "gif", "webp", "bmp", "tif", "tiff", "svg", "ico"];
+
+/// Bigger files are refused before they're read.
+const MAX_FILE_BYTES: u64 = 1 << 30;
+/// The memory an animation's frames may hold: what a tiny file can ask for has no other limit.
+const MAX_ANIMATION_BYTES: usize = 1 << 30;
+/// The `image` crate's default allocation limit, which its WebP animations don't apply.
+const MAX_CANVAS_BYTES: u64 = 512 << 20;
+/// Real files chain two IFDs (the image and its thumbnail).
+const MAX_IFD_CHAIN: usize = 8;
 
 #[derive(Clone)]
 pub struct Frame {
@@ -104,7 +115,7 @@ impl Loader {
                     path
                 };
                 let target = *target.lock().unwrap();
-                let msg = match load(&path, target, |frame| notify.send(Msg::Preview(path.clone(), frame))) {
+                let msg = match catching(|| load(&path, target, |frame| notify.send(Msg::Preview(path.clone(), frame)))) {
                     Ok(loaded) => Msg::Full(path.clone(), loaded),
                     Err(e) => Msg::Error(path.clone(), e),
                 };
@@ -128,6 +139,12 @@ impl Loader {
     }
 }
 
+/// Runs `f`, which reads an untrusted file. A panic in a decoder becomes an error; on a worker it
+/// would lose the thread and leave its path marked busy for good.
+pub fn catching<T>(f: impl FnOnce() -> Result<T, String>) -> Result<T, String> {
+    catch_unwind(AssertUnwindSafe(f)).unwrap_or_else(|_| Err(tr("this file crashed its decoder").into()))
+}
+
 /// Starts decoding `path` and listing its folder.
 pub fn start(path: &Path, sort: SortOrder, loader: &Loader, notify: &Notify) {
     loader.want(vec![path.to_path_buf()]);
@@ -143,6 +160,15 @@ pub fn relist(path: &Path, sort: SortOrder, notify: &Notify) {
 /// Decodes a file. For JPEGs, `on_preview` first gets the EXIF thumbnail (if any), then,
 /// when libjpeg-turbo is installed, a reduced-size decode just big enough for `target`.
 fn load(path: &Path, target: [u32; 2], on_preview: impl Fn(Frame) + Sync) -> Result<Loaded, String> {
+    // The folder's neighbours get here unopened, and any of them may be a FIFO, which would block
+    // this worker for ever, or a link to a device that never ends.
+    let meta = std::fs::metadata(path).map_err(|e| e.to_string())?;
+    if !meta.is_file() {
+        return Err(tr("this isn't a regular file").into());
+    }
+    if meta.len() > MAX_FILE_BYTES {
+        return Err(tr("this image is too large to open").into());
+    }
     let bytes = std::fs::read(path).map_err(|e| e.to_string())?;
     let file_size = bytes.len() as u64;
     if path.extension().is_some_and(|e| e.eq_ignore_ascii_case("svg")) {
@@ -153,25 +179,41 @@ fn load(path: &Path, target: [u32; 2], on_preview: impl Fn(Frame) + Sync) -> Res
     let reader = ImageReader::new(Cursor::new(&bytes)).with_guessed_format().map_err(|e| e.to_string())?;
     let format = reader.format();
 
-    let animated = match format {
-        Some(ImageFormat::Gif) => Some(GifDecoder::new(Cursor::new(&bytes)).and_then(|d| d.into_frames().collect_frames())),
+    let animation: Option<Frames> = match format {
+        Some(ImageFormat::Gif) => {
+            let mut d = GifDecoder::new(Cursor::new(&bytes)).map_err(|e| e.to_string())?;
+            // Unlike with `ImageReader`, it starts without any.
+            d.set_limits(Limits::default()).map_err(|e| e.to_string())?;
+            Some(d.into_frames())
+        }
         Some(ImageFormat::WebP) => {
             let d = WebPDecoder::new(Cursor::new(&bytes)).map_err(|e| e.to_string())?;
-            d.has_animation().then(|| d.into_frames().collect_frames())
+            let (w, h) = d.dimensions();
+            if d.has_animation() && w as u64 * h as u64 * 4 > MAX_CANVAS_BYTES {
+                return Err(tr("this image is too large to open").into());
+            }
+            d.has_animation().then(|| d.into_frames())
         }
         _ => None,
     };
-    if let Some(frames) = animated {
+    if let Some(animation) = animation {
         // shortcut: all frames are decoded before showing; stream them if huge GIFs are slow.
-        let frames = frames.map_err(|e| e.to_string())?;
-        let frames: Vec<Frame> = frames.into_iter().map(|f| {
+        let (mut frames, mut held) = (Vec::new(), 0);
+        for f in animation {
+            let f = f.map_err(|e| e.to_string())?;
             let (n, d) = f.delay().numer_denom_ms();
             // Like browsers: delays under 20 ms mean "unspecified" and play at 100 ms.
             let ms = if d == 0 || n / d < 20 { 100 } else { n / d };
-            to_frame(DynamicImage::ImageRgba8(f.into_buffer()), Duration::from_millis(ms.into()))
-        }).collect();
+            let frame = to_frame(DynamicImage::ImageRgba8(f.into_buffer()), Duration::from_millis(ms.into()));
+            held += frame.pixels.len() + size_of::<Frame>();
+            frames.push(frame);
+            // A long animation plays as far as it fits.
+            if held >= MAX_ANIMATION_BYTES {
+                break;
+            }
+        }
         if frames.is_empty() {
-            return Err(crate::i18n::tr("no frames").into());
+            return Err(tr("no frames").into());
         }
         return Ok(Loaded { frames, file_size, svg: None });
     }
@@ -229,6 +271,11 @@ fn to_frame(img: DynamicImage, delay: Duration) -> Frame {
 /// The JPEG thumbnail in IFD1 of an EXIF (TIFF) block, if any. The file is untrusted:
 /// every read is bounds-checked and anything malformed returns `None`.
 fn exif_thumbnail(tiff: &[u8]) -> Option<&[u8]> {
+    tiff.get(thumbnail_range(tiff)?)
+}
+
+/// Where `exif_thumbnail` is, if that's inside the block.
+fn thumbnail_range(tiff: &[u8]) -> Option<std::ops::Range<usize>> {
     let (u16_at, u32_at) = tiff_readers(tiff)?;
     let ifd1 = u32_at(next_ifd_ptr(tiff)?)?;
     if ifd1 == 0 {
@@ -244,7 +291,8 @@ fn exif_thumbnail(tiff: &[u8]) -> Option<&[u8]> {
         }
     }
     let offset = offset?;
-    tiff.get(offset..offset.checked_add(len?)?)
+    let range = offset..offset.checked_add(len?)?;
+    tiff.get(range.clone()).map(|_| range)
 }
 
 type Reader<'a> = Box<dyn Fn(usize) -> Option<usize> + 'a>;
@@ -275,9 +323,29 @@ fn next_ifd_ptr(tiff: &[u8]) -> Option<usize> {
     u32_at(ptr).map(|_| ptr)
 }
 
-/// Unlinks the EXIF thumbnail, for when the pixels no longer match it (e.g. after rotating).
+/// Whether the chain of IFDs in this TIFF block ends: a parser that follows every link never
+/// stops on one that loops. Whatever can't be read counts as the end.
+pub fn ifd_chain_ends(tiff: &[u8]) -> bool {
+    let Some((u16_at, u32_at)) = tiff_readers(tiff) else { return true };
+    let mut ifd = u32_at(4);
+    for _ in 0..MAX_IFD_CHAIN {
+        match ifd {
+            None | Some(0) => return true,
+            Some(at) => ifd = u16_at(at).and_then(|entries| u32_at(at + 2 + entries * 12)),
+        }
+    }
+    false
+}
+
+/// Erases the EXIF thumbnail, for when the pixels no longer match it (e.g. after rotating), and
+/// unlinks it. Only unlinking would leave the old picture in the file, cropped-out parts included.
+// shortcut: a preview in the MakerNote survives; clear that too if Save As should drop all of them.
 pub fn drop_exif_thumbnail(tiff: &mut [u8]) {
-    if let Some(ptr) = next_ifd_ptr(tiff) {
+    let ptr = next_ifd_ptr(tiff);
+    if let Some(range) = thumbnail_range(tiff) {
+        tiff[range].fill(0);
+    }
+    if let Some(ptr) = ptr {
         tiff[ptr..ptr + 4].fill(0);
     }
 }
@@ -329,7 +397,7 @@ fn is_trashed_copy(item: &trash::TrashItem, path: &Path) -> bool {
 pub fn restore_trashed(path: &Path) -> Result<(), String> {
     let items = trash::os_limited::list().map_err(|e| e.to_string())?;
     let newest = items.into_iter().filter(|i| is_trashed_copy(i, path)).max_by_key(|i| i.time_deleted);
-    let item = newest.ok_or_else(|| crate::i18n::tr("It's no longer in the Trash").to_string())?;
+    let item = newest.ok_or_else(|| tr("It's no longer in the Trash").to_string())?;
     // The full name, or the file would come back without its extension.
     let name = path.file_name().unwrap_or_default().to_owned();
     trash::os_limited::restore_all([trash::TrashItem { name, ..item }]).map_err(|e| e.to_string())
@@ -568,6 +636,108 @@ mod tests {
         // 50 ms kept; 0 ms ("unspecified") plays at 100 ms.
         assert_eq!(loaded.frames.iter().map(|f| f.delay.as_millis()).collect::<Vec<_>>(), [50, 100]);
         assert_eq!(loaded.frames[1].pixels[0], 255);
+    }
+
+    /// A GIF with a `w`×`h` canvas and `frames` one-pixel frames: tiny on disk, huge in memory.
+    fn gif_bomb(w: u16, h: u16, frames: usize) -> Vec<u8> {
+        let mut gif = b"GIF89a".to_vec();
+        gif.extend(w.to_le_bytes());
+        gif.extend(h.to_le_bytes());
+        gif.extend([0x80, 0, 0, 0, 0, 0, 255, 255, 255]); // A two-colour table.
+        for _ in 0..frames {
+            gif.extend([0x2C, 0, 0, 0, 0, 1, 0, 1, 0, 0, 2, 2, 0x44, 1, 0]);
+        }
+        gif.push(0x3B);
+        gif
+    }
+
+    fn load_bytes(name: &str, bytes: &[u8]) -> Result<Loaded, String> {
+        let path = std::env::temp_dir().join(format!("lightview-{}-{name}", std::process::id()));
+        std::fs::write(&path, bytes).unwrap();
+        let loaded = load(&path, [1280, 720], |_| {});
+        std::fs::remove_file(&path).unwrap();
+        loaded
+    }
+
+    #[test]
+    fn animations_stop_at_the_memory_budget() {
+        let (canvas, frames) = (4000 * 4000 * 4, 20);
+        assert!(canvas * frames > MAX_ANIMATION_BYTES);
+        let loaded = load_bytes("bomb.gif", &gif_bomb(4000, 4000, frames)).unwrap();
+        assert!(loaded.frames.len() > 1 && (loaded.frames.len() - 1) * canvas < MAX_ANIMATION_BYTES, "{} frames", loaded.frames.len());
+    }
+
+    #[test]
+    fn giant_gif_canvases_are_refused() {
+        assert!(load_bytes("giant.gif", &gif_bomb(u16::MAX, u16::MAX, 2)).is_err());
+    }
+
+    #[test]
+    fn giant_animated_webp_canvases_are_refused() {
+        let mut body = b"WEBP".to_vec();
+        // VP8X: animated, canvas 16384×16384 (sizes are stored minus one, in 24 bits).
+        body.extend(b"VP8X\x0a\0\0\0\x02\0\0\0\xff\x3f\0\xff\x3f\0");
+        body.extend(b"ANIM\x06\0\0\0\0\0\0\0\0\0");
+        body.extend(b"ANMF\x18\0\0\0");
+        body.extend([0; 16]);
+        body.extend(b"VP8L\0\0\0\0");
+        let mut webp = b"RIFF".to_vec();
+        webp.extend((body.len() as u32).to_le_bytes());
+        webp.extend(body);
+        assert_eq!(load_bytes("giant.webp", &webp).err().as_deref(), Some(tr("this image is too large to open")));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn only_regular_files_are_read() {
+        let dir = std::env::temp_dir().join(format!("lightview-special-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let (fifo, link) = (dir.join("pipe.jpg"), dir.join("zero.jpg"));
+        assert!(std::process::Command::new("mkfifo").arg(&fifo).status().unwrap().success());
+        std::os::unix::fs::symlink("/dev/zero", &link).unwrap();
+        let results = [&fifo, &link].map(|p| load(p, [100, 100], |_| {}).is_err());
+        std::fs::remove_dir_all(&dir).unwrap();
+        assert_eq!(results, [true, true]);
+    }
+
+    #[test]
+    fn oversized_files_are_refused() {
+        let path = std::env::temp_dir().join(format!("lightview-huge-{}.png", std::process::id()));
+        std::fs::File::create(&path).unwrap().set_len(MAX_FILE_BYTES + 1).unwrap();
+        let loaded = load(&path, [100, 100], |_| {});
+        std::fs::remove_file(&path).unwrap();
+        assert_eq!(loaded.err().as_deref(), Some(tr("this image is too large to open")));
+    }
+
+    #[test]
+    fn panics_become_errors() {
+        let result: Result<(), String> = catching(|| panic!("a decoder bug"));
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn dropped_thumbnail_leaves_no_trace() {
+        for le in [true, false] {
+            let mut t = tiff(le, b"JPEGDATA");
+            drop_exif_thumbnail(&mut t);
+            assert!(!t.windows(8).any(|w| w == b"JPEGDATA"), "the old picture is still in the file");
+        }
+    }
+
+    #[test]
+    fn ifd_chains() {
+        let ifd = |at: usize, next: u32| {
+            let mut t = b"II\x2a\0".to_vec();
+            t.extend((at as u32).to_le_bytes());
+            t.resize(at, 0);
+            t.extend([0, 0]);
+            t.extend(next.to_le_bytes());
+            t
+        };
+        assert!(ifd_chain_ends(&ifd(8, 0)));
+        assert!(ifd_chain_ends(&ifd(8, 0xFFFF_FFFF)), "a link out of bounds is the end");
+        assert!(!ifd_chain_ends(&ifd(8, 8)), "links to itself");
+        assert!(ifd_chain_ends(b"II"));
     }
 
     #[test]
