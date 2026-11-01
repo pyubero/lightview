@@ -2,11 +2,17 @@
   <img src="icon/aperture.svg" width="128" alt="lightview logo">
 </p>
 
+<p align="center">
+  <strong>Opening a photo shouldn't feel like a loading screen.<br>
+  Circling something on it shouldn't take a second app.</strong>
+</p>
+
 # lightview
 
 A fast, not-so-minimal image viewer for Linux, with experimental Windows builds, written in Rust.
 It opens quickly, moves through a folder without waiting, and keeps your originals safe: edits are
-only ever written to a file when you choose to save.
+only ever written to a file when you choose to save. It collects nothing: no telemetry, no account,
+and it never goes online on its own.
 
 ![lightview showing a photo of snowy mountains](screenshots/screenshot-general.jpg)
 
@@ -14,6 +20,12 @@ only ever written to a file when you choose to save.
 
 - **Instant browsing.** Images are decoded on background threads and the neighbouring images are
   decoded ahead, so the window never freezes and moving to the next image feels smoother.
+- **Private by design.** No telemetry, no data collection, no account and no background update
+  checks. lightview only connects to the internet when you ask it to, and your images stay on your
+  computer.
+- **Local AI tools.** Background removal, object removal, denoising, and upscaling or low-light
+  enhancement, all running on your own machine, so your photos are never sent to a server. The
+  tools are optional, and nothing is installed until you ask for it.
 - **Viewing.** Fit to window, actual size, zoom at the pointer, pan, full screen, EXIF orientation,
   animated GIF and WebP playback with frame stepping, and SVGs that stay sharp as you zoom in.
 - **Editing.** Crop, resize, rotate, flip, colour adjustments, auto levels and curves in RGB, HSL or
@@ -27,8 +39,6 @@ only ever written to a file when you choose to save.
   saves to a copy.
 - **Six languages.** English, Spanish, French, German, Italian and Portuguese. lightview starts in
   your system's language and you can change it in Edit → Settings.
-- **Optional AI tools.** Background removal, object removal, denoising, and upscaling or low-light
-  enhancement. They run locally on your machine, and nothing is installed until you ask for it.
 
 ### Supported formats
 
@@ -113,6 +123,10 @@ lightview photo.jpg      # open an image
 Settings are saved in `~/.local/share/lightview/app.ron`.
 
 ## AI tools
+
+Everything runs on your own computer, on the CPU or an NVIDIA GPU. Your images are never uploaded:
+lightview only goes online to download the runtime and models you ask for, and after that the AI
+tools work offline.
 
 The AI tools are in the Image menu. They need ONNX Runtime, installed with Tools → Download AI
 Runtime…, and at least one model for the task. Models live in `~/.local/share/lightview/models`.
