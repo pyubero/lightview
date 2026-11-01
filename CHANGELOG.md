@@ -1,10 +1,10 @@
 # Changelog
 
-## Unreleased
 
-- Image → Correct Perspective: drag four corners onto a document, façade or screen shot at an angle, press Enter, and it's straightened and cropped to that shape. Asks first if the image has markup, which is merged into the image. Ctrl+Z undoes it.
 
 ## 0.2.1 (2026-11-01)
+
+- Image → Perspective Correction: drag four corners onto a document, façade or screen shot at an angle, press Enter, and it's straightened and cropped to that shape. Asks first if the image has markup, which is merged into the image. Ctrl+Z undoes it.
 
 Security hardening: opening a malicious file, or browsing past one in a folder, can no longer freeze the app or exhaust memory through lightview's own code.
 
