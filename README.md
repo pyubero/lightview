@@ -28,7 +28,7 @@ and it never goes online on its own.
   tools are optional, and nothing is installed until you ask for it.
 - **Viewing.** Fit to window, actual size, zoom at the pointer, pan, full screen, EXIF orientation,
   animated GIF and WebP playback with frame stepping, and SVGs that stay sharp as you zoom in.
-- **Editing.** Crop, resize, rotate, flip, colour adjustments, auto levels and curves in RGB, HSL or
+- **Editing.** Crop, perspective correction, resize, rotate, flip, colour adjustments, auto levels and curves in RGB, HSL or
   HSV, with full undo and redo.
 - **Safe deleting.** Deleting asks first and moves the image to the system Trash, and Ctrl+Z brings
   it back.

@@ -30,6 +30,7 @@ impl App {
         self.adjust_panel(ctx);
         self.discard_dialog(ctx);
         self.delete_dialog(ctx);
+        self.perspective_dialog(ctx);
     }
 
     pub(super) fn settings_dialog(&mut self, ctx: &egui::Context) {
@@ -93,8 +94,8 @@ impl App {
 
     /// Auto Levels for the visible part of the current image.
     pub(super) fn auto_levels(&self) -> Option<[f32; 2]> {
-        let frame = &self.cache.get(self.current()?)?.frames[0];
-        Some(edit::auto_levels(frame, self.doc()?.crop))
+        let doc = self.doc()?;
+        Some(edit::auto_levels(doc.source(&self.cache.get(self.current()?)?.frames[0]), doc.crop))
     }
 
     /// The Adjust Color or Adjust Curves panel: it changes the edits live, and Done makes them one undo step.
@@ -102,7 +103,8 @@ impl App {
         let (Some(before), Some(mut doc)) = (self.adjusting.clone(), self.doc()) else { return };
         let mut open = true;
         let mut curves = self.curve_panel.take();
-        let frame = self.current().and_then(|c| self.cache.get(c)).map(|l| &l.frames[0]);
+        let base = doc.base.clone();
+        let frame = base.as_ref().map(|b| &*b.0).or(self.current().and_then(|c| self.cache.get(c)).map(|l| &l.frames[0]));
         let title = if curves.is_some() { tr("Adjust Curves") } else { tr("Adjust Color") };
         let choice = egui::Window::new(title).open(&mut open).resizable(false).collapsible(false).show(ctx, |ui| match &mut curves {
             Some(panel) => curves_ui(ui, &mut doc.adjust, panel, frame, doc.crop),
@@ -237,6 +239,26 @@ impl App {
     }
 
     /// Always asks before moving the current image to the Trash.
+    /// Asks before the markup is flattened into the corrected image.
+    pub(super) fn perspective_dialog(&mut self, ctx: &egui::Context) {
+        if !self.perspective_prompt {
+            return;
+        }
+        let modal = egui::Modal::new(egui::Id::unique("perspective")).show(ctx, |ui| {
+            ui.heading(tr("Merge drawings into the image?"));
+            ui.label(tr("Drawings, text and pasted images will be merged into the image and can't be edited afterwards. Ctrl+Z undoes it."));
+            ui.add_space(6.0);
+            confirm_buttons(ui)
+        });
+        let (accept, cancel) = modal.inner;
+        if accept {
+            self.perspective_prompt = false;
+            self.apply_perspective();
+        } else if cancel || modal.should_close() {
+            self.perspective_prompt = false;
+        }
+    }
+
     pub(super) fn delete_dialog(&mut self, ctx: &egui::Context) {
         if !self.delete_prompt {
             return;

@@ -30,6 +30,7 @@ pub(super) enum Action {
     Undo,
     Redo,
     Crop,
+    Perspective,
     Resize,
     AdjustColor,
     AdjustCurves,
@@ -175,6 +176,8 @@ impl App {
             ui.menu_button(tr("Image"), |ui| {
                 item(ui, tr("Crop"), Action::Crop, has_image, actions);
                 item(ui, tr("Resize…"), Action::Resize, has_image, actions);
+                // Done in Adjust Color goes back to the edits from before the panel opened.
+                item(ui, tr("Correct Perspective"), Action::Perspective, can_save && self.adjusting.is_none(), actions);
                 ui.separator();
                 item(ui, tr("Rotate Left"), Action::RotateLeft, has_image, actions);
                 item(ui, tr("Rotate Right"), Action::RotateRight, has_image, actions);

@@ -84,6 +84,8 @@ Downloading the AI runtime…	KI-Laufzeit wird heruntergeladen…
 Downloading…	Wird heruntergeladen…
 Drag to measure in image pixels · Esc to stop	Ziehen zum Messen in Bildpixeln · Esc zum Beenden
 Drag to select · Enter to crop · Esc to cancel	Ziehen zum Auswählen · Eingabe zum Zuschneiden · Esc zum Abbrechen
+Drag the corners onto a rectangle · Enter to apply · Esc to cancel	Ecken auf ein Rechteck ziehen · Eingabe zum Anwenden · Esc zum Abbrechen
+Drawings, text and pasted images will be merged into the image and can't be edited afterwards. Ctrl+Z undoes it.	Zeichnungen, Texte und eingefügte Bilder werden mit dem Bild zusammengeführt und können danach nicht mehr bearbeitet werden. Strg+Z macht es rückgängig.
 EXIF is shown for JPEG files only	EXIF wird nur bei JPEG-Dateien angezeigt
 Edit	Bearbeiten
 Edit the image description	Bildbeschreibung bearbeiten
@@ -140,6 +142,7 @@ Make lightview my default image viewer	lightview als Standard-Bildbetrachter ver
 Make lightview the default image viewer	lightview als Standard-Bildbetrachter festlegen
 Mean (R, G, B)	Mittelwert (R, G, B)
 Measure	Messen
+Merge drawings into the image?	Zeichnungen mit dem Bild zusammenführen?
 Model	Modell
 Name	Name
 Nearest	Nächster Nachbar
@@ -164,6 +167,7 @@ Output	Ausgabe
 Paste	Einfügen
 Pause Animation	Animation anhalten
 Percentage	Prozent
+Correct Perspective	Perspektive korrigieren
 Play Animation	Animation abspielen
 Please read and accept the licence before downloading.	Bitte lesen und akzeptieren Sie die Lizenz vor dem Herunterladen.
 Preprocessing: {file}	Vorverarbeitung: {file}
@@ -225,6 +229,7 @@ Text	Text
 Text colour	Textfarbe
 The AI runtime isn't installed yet: Tools > Download AI Runtime…	Die KI-Laufzeit ist noch nicht installiert: Werkzeuge > KI-Laufzeit herunterladen…
 The GPU couldn't be used, so the CPU is: {e}	Die GPU konnte nicht verwendet werden, daher wird die CPU genutzt: {e}
+The corners must form a shape with no crossing sides	Die Ecken müssen eine Form ohne sich kreuzende Seiten bilden
 Thickness	Stärke
 Tint	Farbton
 Tools	Werkzeuge

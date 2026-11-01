@@ -40,6 +40,7 @@ enum SelKind {
 enum Tool {
     Pan,
     Crop,
+    Perspective,
     Measure,
     Select,
     Draw(Shape),
@@ -117,6 +118,11 @@ pub struct App {
     /// A drag started with the right button is under way: it pans.
     right_pan: bool,
     crop_rect: Option<Rect>,
+    /// Perspective tool: the corners (output px, clockwise from the top left) and which one is being dragged.
+    perspective: Option<[Pos2; 4]>,
+    perspective_drag: Option<usize>,
+    /// Asking before flattening the markup into the corrected image.
+    perspective_prompt: bool,
     /// Measure tool: the two endpoints (image px) and which one is being dragged.
     measure: Option<[Pos2; 2]>,
     measure_drag: usize,
@@ -191,7 +197,7 @@ impl App {
             files: start.into_iter().collect(), index: 0,
             cache: HashMap::new(), preview: None, error: None, view: View::Fit,
             texture: None, tex_key: None, resized: None, baked: None, sharp: None, sharp_wanted: 1, flat: None, generation: 0, anim_frame: 0, anim_due: None, anim_paused: false,
-            doc: None, undo: Vec::new(), redo: Vec::new(), deleted: Vec::new(), delete_prompt: false, saved: None, tool: Tool::Pan, drag_start: None, right_pan: false, crop_rect: None, measure: None, measure_drag: 1,
+            doc: None, undo: Vec::new(), redo: Vec::new(), deleted: Vec::new(), delete_prompt: false, saved: None, tool: Tool::Pan, drag_start: None, right_pan: false, crop_rect: None, perspective: None, perspective_drag: None, perspective_prompt: false, measure: None, measure_drag: 1,
             show_toolbar, style: None, selected: None, grab: Grab::None, editing_text: None, focus_text: false, change_base: None, last_restyle: None, selection: None, element_textures: HashMap::new(),
             resize_dialog: None, adjusting: None, curve_panel: None, pending: None, show_ai_models: false, license_prompt: None, restoring: None, restore_runs: 0, compare: None, enhance_notice: None, visible: None, downloading: HashSet::new(),
             title: String::new(),
@@ -385,6 +391,9 @@ impl App {
                 // The measurement's and selection's points are in the old image coordinates.
                 (self.view, self.measure, self.selection) = (View::Fit, None, None);
             }
+            if doc.base != before.base {
+                self.generation += 1;
+            }
             self.undo.push(before);
             self.redo.clear();
             self.doc = Some(doc);
@@ -421,6 +430,9 @@ impl App {
         let (from, to) = if undo { (&mut self.undo, &mut self.redo) } else { (&mut self.redo, &mut self.undo) };
         let Some(doc) = from.pop() else { return };
         (self.selected, self.editing_text, self.change_base, self.last_restyle) = (None, None, None, None);
+        if current.base != doc.base {
+            self.generation += 1;
+        }
         to.push(current);
         if self.doc.as_ref().is_none_or(|d| d.geometry() != doc.geometry()) {
             (self.view, self.measure, self.selection) = (View::Fit, None, None);
@@ -483,6 +495,7 @@ impl App {
         self.redo.clear();
         self.tool = Tool::Pan;
         self.crop_rect = None;
+        (self.perspective, self.perspective_drag, self.perspective_prompt) = (None, None, false);
         self.measure = None;
         self.adjusting = None;
         (self.style, self.selected, self.grab, self.editing_text, self.change_base, self.last_restyle) = (None, None, Grab::None, None, None, None);
@@ -618,6 +631,17 @@ impl App {
                 d.elements.push(Element::erase(&sel.translate(-r.min.to_vec2()), true, d.bounds(), color));
             }
         });
+    }
+
+    /// Straightens what the perspective tool's corners enclose, as one undo step.
+    fn apply_perspective(&mut self) {
+        let (Some(corners), Some(l)) = (self.perspective, self.current().and_then(|p| self.cache.get(p)).cloned()) else { return };
+        let mut result = Ok(());
+        self.edit(|d| result = d.perspective(&l.frames[0], corners));
+        match result {
+            Ok(()) => (self.tool, self.perspective) = (Tool::Pan, None),
+            Err(e) => self.set_status(e),
+        }
     }
 
     /// Adds a clipboard image (straight RGBA) as a movable element, centred and fitted inside the image.
@@ -1114,6 +1138,119 @@ mod tests {
         let img = arboard::Clipboard::new().unwrap().get_image().unwrap();
         assert_eq!((img.width, img.height), (4, 3));
         assert_eq!(img.bytes[..8], [0, 1, 2, 3, 4, 5, 6, 7]);
+    }
+
+    /// One frame of `handle_keys` with `key` pressed.
+    fn press_key(app: &mut App, key: Key) {
+        let ctx = egui::Context::default();
+        let mut input = egui::RawInput::default();
+        input.events.push(egui::Event::Key { key, physical_key: None, pressed: true, repeat: false, modifiers: egui::Modifiers::NONE });
+        let mut output = ctx.run_ui(input, |ui| app.handle_keys(ui.ctx(), false, ui.input(|i| i.key_pressed(Key::Escape)), false));
+        output.textures_delta.clear();
+    }
+
+    /// A 1000 px image, black on the left half and white on the right, with the corners on the white part.
+    fn app_with_corners() -> (App, Arc<Loaded>) {
+        let (mut app, path) = app_with_image();
+        let pixels = (0..1000 * 1000 * 3).map(|i| if (i / 3) % 1000 < 500 { 0 } else { 255 }).collect();
+        let frame = Frame { w: 1000, h: 1000, pixels, alpha: false, delay: std::time::Duration::ZERO };
+        let l = Arc::new(Loaded { frames: vec![frame], file_size: 6, svg: None });
+        app.cache.insert(path, l.clone());
+        app.settings.gpu_scaling = false;
+        app.run_actions(&[Action::Perspective], &egui::Context::default(), false);
+        assert!(app.tool == Tool::Perspective);
+        app.perspective = Some([Pos2::new(600.0, 100.0), Pos2::new(900.0, 100.0), Pos2::new(900.0, 900.0), Pos2::new(600.0, 900.0)]);
+        (app, l)
+    }
+
+    /// Draws one frame and gives the darkest and brightest pixels the texture was made from.
+    fn drawn_range(app: &mut App, l: &Loaded) -> (u8, u8) {
+        let ctx = egui::Context::default();
+        ctx.set_fonts(markup::font_definitions());
+        let mut input = egui::RawInput::default();
+        input.screen_rect = Some(Rect::from_min_size(Pos2::ZERO, Vec2::splat(400.0)));
+        let mut output = ctx.run_ui(input, |ui| {
+            let doc = app.doc();
+            app.draw(ui, Some(l), doc, None, ui.available_rect_before_wrap());
+        });
+        output.textures_delta.clear();
+        let pixels = &app.resized.as_ref().unwrap().1;
+        (*pixels.iter().min().unwrap(), *pixels.iter().max().unwrap())
+    }
+
+    #[test]
+    fn perspective_shows_undoes_and_redoes() {
+        let (mut app, l) = app_with_corners();
+        assert_eq!(drawn_range(&mut app, &l), (0, 255));
+        press_key(&mut app, Key::Enter);
+        assert!(app.tool == Tool::Pan && app.perspective.is_none());
+        assert_eq!(app.doc().unwrap().size, [300, 800]);
+        assert!(app.dirty());
+        assert_eq!(drawn_range(&mut app, &l), (255, 255), "only the white part is left");
+        app.undo_redo(true);
+        assert_eq!(app.doc().unwrap().size, [1000, 1000]);
+        assert_eq!(drawn_range(&mut app, &l), (0, 255));
+        assert!(!app.dirty());
+        app.undo_redo(false);
+        assert_eq!(drawn_range(&mut app, &l), (255, 255));
+    }
+
+    #[test]
+    fn perspective_of_the_same_size_redraws() {
+        // Nothing in the texture key but the generation can tell these pixels apart.
+        let (mut app, l) = app_with_corners();
+        app.perspective = Some([Pos2::new(0.0, 1000.0), Pos2::new(1000.0, 1000.0), Pos2::new(1000.0, 0.0), Pos2::ZERO]);
+        drawn_range(&mut app, &l);
+        let (key, resized) = (app.tex_key, app.resized.as_ref().unwrap().1.clone());
+        press_key(&mut app, Key::Enter);
+        drawn_range(&mut app, &l);
+        assert!(app.tex_key != key);
+        assert_eq!(app.doc().unwrap().size, [1000, 1000]);
+        assert_eq!(app.resized.as_ref().unwrap().1, resized, "flipped top to bottom, the columns are the same");
+    }
+
+    #[test]
+    fn perspective_asks_before_flattening_markup() {
+        let (mut app, _) = app_with_corners();
+        with_line(&mut app);
+        press_key(&mut app, Key::Enter);
+        assert!(app.perspective_prompt);
+        assert_eq!(app.doc().unwrap().elements.len(), 1, "nothing is flattened yet");
+        // Enter and Esc belong to the dialog while it's open.
+        press_key(&mut app, Key::Enter);
+        press_key(&mut app, Key::Escape);
+        assert!(app.tool == Tool::Perspective && app.perspective.is_some());
+        app.apply_perspective();
+        assert_eq!(app.doc().unwrap().size, [300, 800]);
+        assert!(app.doc().unwrap().elements.is_empty());
+    }
+
+    #[test]
+    fn perspective_refuses_crossed_corners_and_keeps_the_tool() {
+        let (mut app, _) = app_with_corners();
+        app.perspective = app.perspective.map(|[a, b, c, d]| [a, c, b, d]);
+        press_key(&mut app, Key::Enter);
+        assert!(app.tool == Tool::Perspective && app.doc.is_none() && app.status.is_some());
+    }
+
+    #[test]
+    fn perspective_corners_follow_the_drag() {
+        let (mut app, _) = app_zoomed_in();
+        app.tool = Tool::Perspective;
+        let viewport = Rect::from_min_size(Pos2::ZERO, Vec2::splat(400.0));
+        let (dest, vis) = crate::view::layout(app.view, Vec2::splat(1000.0), viewport, 1.0);
+        let at = |p: f32| crate::view::to_image(dest, vis, Pos2::new(p, p));
+        let far = Pos2::new(999.0, 999.0);
+        app.perspective = Some([at(103.0), far, far, far]);
+        feed(&mut app, drag_events(LEFT));
+        let moved = app.perspective.unwrap();
+        assert!(moved[0].distance(at(190.0)) < 1.0, "{:?}", moved[0]);
+        assert_eq!(moved[1], far);
+        assert!(app.perspective_drag.is_none());
+        // A press away from every corner moves none.
+        app.perspective = Some([at(150.0), far, far, far]);
+        feed(&mut app, drag_events(LEFT));
+        assert_eq!(app.perspective.unwrap()[0], at(150.0));
     }
 
     #[test]

@@ -6,6 +6,7 @@ use crate::view::Transform;
 use eframe::egui::{self, Pos2, Rect, Vec2};
 use fast_image_resize::{FilterType, PixelType, ResizeAlg, ResizeOptions, Resizer, images::{Image, ImageRef}};
 use image::DynamicImage;
+use std::sync::Arc;
 
 /// The edits made to the current image, as one state; undo keeps a stack of these.
 /// The output is `crop` of the decoded image, then `transform`, then scaled to `size`.
@@ -21,6 +22,24 @@ pub struct Doc {
     pub adjust: Adjust,
     /// Markup, in output px; flattened into the image when saving.
     pub elements: Vec<Element>,
+    /// Pixels that replace the decoded image, after a perspective correction.
+    pub base: Option<Base>,
+}
+
+/// A frame held by a `Doc`. Compared by identity: Docs are compared every frame.
+#[derive(Clone)]
+pub struct Base(pub Arc<Frame>);
+
+impl PartialEq for Base {
+    fn eq(&self, other: &Self) -> bool {
+        Arc::ptr_eq(&self.0, &other.0)
+    }
+}
+
+impl std::fmt::Debug for Base {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "Base({}×{})", self.0.w, self.0.h)
+    }
 }
 
 /// Colour adjustments. All zero (the default) changes nothing.
@@ -123,7 +142,12 @@ pub fn auto_levels(frame: &Frame, crop: Rect) -> [f32; 2] {
 impl Doc {
     /// No edits on a `w`×`h` image.
     pub fn new(w: u32, h: u32) -> Self {
-        Doc { crop: Rect::from_min_size(Pos2::ZERO, Vec2::new(w as f32, h as f32)), transform: Transform::default(), size: [w, h], dpi: None, adjust: Adjust::default(), elements: Vec::new() }
+        Doc { crop: Rect::from_min_size(Pos2::ZERO, Vec2::new(w as f32, h as f32)), transform: Transform::default(), size: [w, h], dpi: None, adjust: Adjust::default(), elements: Vec::new(), base: None }
+    }
+
+    /// The pixels these edits apply to, given the `decoded` image.
+    pub fn source<'a>(&'a self, decoded: &'a Frame) -> &'a Frame {
+        self.base.as_ref().map_or(decoded, |b| &b.0)
     }
 
     pub fn size_vec(&self) -> Vec2 {
@@ -152,7 +176,7 @@ impl Doc {
     /// This doc on the pixels from `bake`, which already hold the crop and the size.
     pub fn on_baked(&self) -> Doc {
         let [w, h] = self.plain_size();
-        Doc { crop: Rect::from_min_size(Pos2::ZERO, Vec2::new(w as f32, h as f32)), ..self.clone() }
+        Doc { crop: Rect::from_min_size(Pos2::ZERO, Vec2::new(w as f32, h as f32)), base: None, ..self.clone() }
     }
 
     /// Output px per transformed-crop px, on each axis.
@@ -222,6 +246,21 @@ impl Doc {
         self.map_elements(|p| p - r.min.to_vec2(), 1.0);
     }
 
+    /// Straightens what `corners` (output px, clockwise from the top left) enclose into a
+    /// rectangle that becomes the whole image. Markup is flattened into it; colour stays live.
+    pub fn perspective(&mut self, decoded: &Frame, corners: [Pos2; 4]) -> Result<(), String> {
+        let bounds = self.bounds();
+        let corners = corners.map(|p| bounds.clamp(p));
+        if !is_convex(corners) {
+            return Err(tr("The corners must form a shape with no crossing sides").into());
+        }
+        let shown = flat(decoded, &Doc { adjust: Adjust::default(), ..self.clone() })?;
+        let warped = warp(&shown, corners);
+        let new = Doc::new(warped.w, warped.h);
+        *self = Doc { adjust: self.adjust, dpi: self.dpi, base: Some(Base(Arc::new(warped))), ..new };
+        Ok(())
+    }
+
     /// ΔX, ΔY and the distance from `a` to `b` (output px), in the original image's pixels
     /// but along the axes as shown.
     pub fn measure(&self, a: Pos2, b: Pos2) -> [f32; 3] {
@@ -255,6 +294,73 @@ pub fn resize(frame: &Frame, crop: Rect, w: u32, h: u32, alg: ResizeAlg) -> Vec<
 pub fn bake(frame: &Frame, doc: &Doc) -> Frame {
     let [w, h] = doc.plain_size();
     let pixels = resize(frame, doc.crop, w, h, ResizeAlg::Convolution(FilterType::Lanczos3));
+    Frame { w, h, pixels, alpha: frame.alpha, delay: frame.delay }
+}
+
+/// Maps the unit square to the quad `q`, clockwise from (0, 0) (Heckbert's closed form).
+pub fn homography(q: [Pos2; 4]) -> impl Fn(f64, f64) -> [f64; 2] + Copy + Send {
+    let [(x0, y0), (x1, y1), (x2, y2), (x3, y3)] = q.map(|p| (p.x as f64, p.y as f64));
+    let (dx1, dx2, sx) = (x1 - x2, x3 - x2, x0 - x1 + x2 - x3);
+    let (dy1, dy2, sy) = (y1 - y2, y3 - y2, y0 - y1 + y2 - y3);
+    let det = dx1 * dy2 - dx2 * dy1;
+    let (g, h) = ((sx * dy2 - dx2 * sy) / det, (dx1 * sy - sx * dy1) / det);
+    let (a, b, d, e) = (x1 - x0 + g * x1, x3 - x0 + h * x3, y1 - y0 + g * y1, y3 - y0 + h * y3);
+    move |u, v| {
+        let w = g * u + h * v + 1.0;
+        [(a * u + b * v + x0) / w, (d * u + e * v + y0) / w]
+    }
+}
+
+/// Whether the quad's corners turn the same way all round: not crossed, nor collapsed to a line.
+pub fn is_convex(q: [Pos2; 4]) -> bool {
+    let turns: [f32; 4] = std::array::from_fn(|i| (q[(i + 1) % 4] - q[i]).x * (q[(i + 2) % 4] - q[(i + 1) % 4]).y - (q[(i + 1) % 4] - q[i]).y * (q[(i + 2) % 4] - q[(i + 1) % 4]).x);
+    turns.iter().all(|t| *t > 0.0) || turns.iter().all(|t| *t < 0.0)
+}
+
+/// The straightened size of quad `q`: its longer edge each way.
+// shortcut: edge lengths, not the true aspect ratio (that needs the focal length); use Resize if it looks off.
+fn warped_size(q: [Pos2; 4]) -> [u32; 2] {
+    let len = |a: usize, b: usize| q[a].distance(q[b]);
+    [len(0, 1).max(len(3, 2)).round().max(1.0) as u32, len(0, 3).max(len(1, 2)).round().max(1.0) as u32]
+}
+
+/// Bilinear sample of `frame` at (x, y), in pixel-centre coordinates, into `out`.
+fn sample(frame: &Frame, x: f64, y: f64, out: &mut [u8]) {
+    let (w, h, channels) = (frame.w as usize, frame.h as usize, out.len());
+    let (x, y) = (x.clamp(0.0, (w - 1) as f64), y.clamp(0.0, (h - 1) as f64));
+    let (x0, y0) = (x as usize, y as usize);
+    let (x1, y1) = ((x0 + 1).min(w - 1), (y0 + 1).min(h - 1));
+    let (fx, fy) = ((x - x0 as f64) as f32, (y - y0 as f64) as f32);
+    let px = |x: usize, y: usize, c: usize| frame.pixels[(y * w + x) * channels + c] as f32;
+    for (c, v) in out.iter_mut().enumerate() {
+        let top = px(x0, y0, c) * (1.0 - fx) + px(x1, y0, c) * fx;
+        let bottom = px(x0, y1, c) * (1.0 - fx) + px(x1, y1, c) * fx;
+        *v = (top * (1.0 - fy) + bottom * fy + 0.5) as u8;
+    }
+}
+
+/// The quad `q` of `frame`, straightened into a rectangle.
+fn warp(frame: &Frame, q: [Pos2; 4]) -> Frame {
+    let [w, h] = warped_size(q);
+    let (wu, hu, channels) = (w as usize, h as usize, if frame.alpha { 4 } else { 3 });
+    let at = homography(q);
+    let mut pixels = vec![0; wu * hu * channels];
+    // Split across cores, as `Adjust::apply` does: this runs on the UI thread.
+    let threads = std::thread::available_parallelism().map_or(1, |n| n.get());
+    let rows = hu.div_ceil(threads).max(1);
+    std::thread::scope(|s| {
+        for (part, chunk) in pixels.chunks_mut(rows * wu * channels).enumerate() {
+            s.spawn(move || {
+                for (r, row) in chunk.chunks_exact_mut(wu * channels).enumerate() {
+                    let v = ((part * rows + r) as f64 + 0.5) / h as f64;
+                    for (x, px) in row.chunks_exact_mut(channels).enumerate() {
+                        let [sx, sy] = at((x as f64 + 0.5) / w as f64, v);
+                        sample(frame, sx - 0.5, sy - 0.5, px);
+                    }
+                }
+            });
+        }
+    });
     Frame { w, h, pixels, alpha: frame.alpha, delay: frame.delay }
 }
 
@@ -301,6 +407,7 @@ fn drop_alpha(rgba: &image::RgbaImage) -> image::RgbImage {
 
 /// The full-size edited image, for saving.
 pub fn render(frame: &Frame, doc: &Doc) -> Result<DynamicImage, String> {
+    let frame = doc.source(frame);
     let [w, h] = doc.plain_size();
     let img = if doc.crop.size() == Vec2::new(w as f32, h as f32) && doc.crop.min == doc.crop.min.round() {
         // Same scale: copy the pixels exactly instead of resampling.
@@ -877,6 +984,123 @@ mod tests {
         assert_eq!(d.result().0, [2000, 10]);
         d.dpi = 300;
         assert_eq!(d.result().1, Some(300));
+    }
+
+    fn square(w: f32, h: f32) -> [Pos2; 4] {
+        [Pos2::ZERO, Pos2::new(w, 0.0), Pos2::new(w, h), Pos2::new(0.0, h)]
+    }
+
+    #[test]
+    fn homography_hits_the_corners() {
+        let q = [Pos2::new(10.0, 5.0), Pos2::new(90.0, 20.0), Pos2::new(70.0, 80.0), Pos2::new(20.0, 60.0)];
+        let at = homography(q);
+        for ((u, v), p) in [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)].into_iter().zip(q) {
+            let [x, y] = at(u, v);
+            assert!((x - p.x as f64).abs() < 1e-3 && (y - p.y as f64).abs() < 1e-3, "{u},{v}: {x},{y}");
+        }
+        // The centre is where the diagonals cross, not the average of the corners.
+        let [x, y] = homography(square(10.0, 20.0))(0.5, 0.5);
+        assert_eq!([x, y], [5.0, 10.0]);
+        let [x, y] = at(0.5, 0.5);
+        let t = ((x - 10.0) / 60.0, (y - 5.0) / 75.0);
+        assert!((t.0 - t.1).abs() < 1e-6, "on the diagonal from corner 0 to corner 2");
+    }
+
+    #[test]
+    fn crossed_corners_are_not_convex() {
+        let [a, b, c, d] = square(10.0, 10.0);
+        assert!(is_convex([a, b, c, d]));
+        assert!(!is_convex([a, c, b, d]), "crossed");
+        assert!(!is_convex([a, b, Pos2::new(1.0, 1.0), d]), "a dent");
+        assert!(!is_convex([a, b, b, d]), "collapsed");
+        let mut doc = Doc::new(6, 5);
+        assert!(doc.perspective(&frame(), [a, c, b, d]).is_err());
+        assert_eq!(doc, Doc::new(6, 5), "a refused shape changes nothing");
+    }
+
+    #[test]
+    fn warping_the_whole_image_keeps_it() {
+        let mut doc = Doc::new(6, 5);
+        doc.perspective(&frame(), square(6.0, 5.0)).unwrap();
+        assert_eq!(doc.size, [6, 5]);
+        assert_eq!(render(&frame(), &doc).unwrap(), reference());
+    }
+
+    #[test]
+    fn a_keystoned_rectangle_comes_back_straight() {
+        // A white rectangle drawn with `homography` as a trapezoid, on black, then corrected:
+        // the result is white nearly to its edges.
+        let q = [Pos2::new(60.0, 20.0), Pos2::new(140.0, 20.0), Pos2::new(190.0, 130.0), Pos2::new(10.0, 130.0)];
+        let mut pixels = vec![0; 200 * 150 * 3];
+        let mut on = |x: f64, y: f64| pixels[(y as usize * 200 + x as usize) * 3..][..3].fill(255);
+        let at = homography(q);
+        for i in 0..1500 {
+            for j in 0..1500 {
+                let [x, y] = at(i as f64 / 1500.0, j as f64 / 1500.0);
+                on(x, y);
+            }
+        }
+        let f = Frame { w: 200, h: 150, pixels, alpha: false, delay: Duration::ZERO };
+        let mut doc = Doc::new(200, 150);
+        doc.perspective(&f, q).unwrap();
+        assert_eq!(doc.size, [180, 121]);
+        let out = render(&f, &doc).unwrap().to_rgb8();
+        for x in 2..178 {
+            assert!(out.get_pixel(x, 2)[0] > 200 && out.get_pixel(x, 118)[0] > 200 && out.get_pixel(x, 60)[0] > 200, "column {x}");
+        }
+        // A straight line of the frame's top edge stays a straight line.
+        for y in 2..119 {
+            assert!(out.get_pixel(2, y)[0] > 200 && out.get_pixel(177, y)[0] > 200, "row {y}");
+        }
+    }
+
+    #[test]
+    fn later_edits_work_on_the_corrected_image() {
+        let mut doc = Doc::new(6, 5);
+        doc.perspective(&frame(), [Pos2::new(1.0, 1.0), Pos2::new(5.0, 1.0), Pos2::new(5.0, 4.0), Pos2::new(1.0, 4.0)]).unwrap();
+        assert_eq!(doc.size, [4, 3]);
+        let warped = reference().crop_imm(1, 1, 4, 3);
+        // Sits on whole pixels, so it's a plain crop.
+        assert_eq!(render(&frame(), &doc).unwrap(), warped);
+        type Step = (fn(&mut Doc), fn(DynamicImage) -> DynamicImage);
+        let steps: [Step; 3] = [
+            (Doc::rotate_right, |i| i.rotate90()),
+            (Doc::flip_horizontal, |i| i.fliph()),
+            (|d| d.crop_to(rect(1.0, 1.0, 2.0, 1.0)), |i| i.crop_imm(1, 1, 2, 1)),
+        ];
+        for (edit, image_op) in steps {
+            let mut d = doc.clone();
+            edit(&mut d);
+            assert_eq!(render(&frame(), &d).unwrap(), image_op(warped.clone()));
+        }
+    }
+
+    #[test]
+    fn perspective_keeps_colour_live_and_flattens_markup() {
+        use crate::markup::{Shape, Style};
+        let frame = Frame { w: 40, h: 30, pixels: vec![100; 40 * 30 * 3], alpha: false, delay: Duration::ZERO };
+        let mut doc = Doc::new(40, 30);
+        doc.adjust.exposure = 1.0;
+        let mut e = Element::new(Shape::Rect, Pos2::new(5.0, 5.0), Style::for_image(doc.size_vec()));
+        e.points[1] = Pos2::new(35.0, 25.0);
+        doc.elements.push(e);
+        let drawn = render(&frame, &Doc { adjust: Adjust::default(), ..doc.clone() }).unwrap().to_rgb8();
+        doc.perspective(&frame, square(40.0, 30.0)).unwrap();
+        assert!(doc.elements.is_empty());
+        assert_eq!(doc.adjust.exposure, 1.0);
+        doc.adjust.exposure = 0.0;
+        assert_eq!(render(&frame, &doc).unwrap().to_rgb8(), drawn, "the markup is in the pixels, the colour isn't");
+    }
+
+    /// `cargo test --release warp_timing -- --ignored --nocapture`: applying runs on the UI thread.
+    #[test]
+    #[ignore]
+    fn warp_timing() {
+        let big = Frame { w: 4000, h: 3000, pixels: (0..4000 * 3000 * 3).map(|i| (i % 251) as u8).collect(), alpha: false, delay: Duration::ZERO };
+        let q = [Pos2::new(300.0, 100.0), Pos2::new(3700.0, 200.0), Pos2::new(3900.0, 2900.0), Pos2::new(100.0, 2800.0)];
+        let t = std::time::Instant::now();
+        std::hint::black_box(warp(&big, q));
+        eprintln!("warp 12 MP: {:.0} ms", t.elapsed().as_secs_f64() * 1000.0);
     }
 
     #[test]

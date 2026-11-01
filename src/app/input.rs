@@ -226,6 +226,14 @@ impl App {
                 Action::Redo => self.undo_redo(false),
                 Action::Crop if self.selection.is_some() => self.image_from_selection(),
                 Action::Crop if self.doc().is_some() => (self.tool, self.crop_rect) = (Tool::Crop, None),
+                Action::Perspective => {
+                    if let Some(doc) = self.doc() {
+                        self.finish_text();
+                        let r = doc.bounds().shrink2(doc.size_vec() * 0.1);
+                        self.perspective = Some([r.left_top(), r.right_top(), r.right_bottom(), r.left_bottom()]);
+                        (self.tool, self.crop_rect, self.selected) = (Tool::Perspective, None, None);
+                    }
+                }
                 Action::Resize => self.resize_dialog = self.doc().map(|d| ResizeDialog::new(&d)),
                 Action::Info => self.show_info = !self.show_info,
                 Action::Settings => self.show_settings = true,
@@ -310,17 +318,24 @@ impl App {
         if esc && !typing && let Some(before) = self.change_base.take() {
             // Cancel the drawing in progress.
             (self.doc, self.grab) = (Some(before), Grab::None);
-        } else if esc && !typing && self.tool != Tool::Pan {
+        } else if esc && !typing && self.tool != Tool::Pan && !self.perspective_prompt {
             if matches!(self.tool, Tool::Selection(_)) {
                 self.selection = None;
             }
-            (self.tool, self.crop_rect, self.measure, self.selected) = (Tool::Pan, None, None, None);
+            (self.tool, self.crop_rect, self.measure, self.selected, self.perspective) = (Tool::Pan, None, None, None, None);
         } else if esc && !typing && fullscreen {
             ctx.send_viewport_cmd(ViewportCommand::Fullscreen(false));
         }
         if enter && self.tool == Tool::Crop && let Some(r) = self.crop_rect.take() {
             self.edit(|d| d.crop_to(r));
             self.tool = Tool::Pan;
+        }
+        if enter && self.tool == Tool::Perspective && !self.perspective_prompt && self.adjusting.is_none() {
+            if self.doc.as_ref().is_some_and(|d| !d.elements.is_empty()) {
+                self.perspective_prompt = true;
+            } else {
+                self.apply_perspective();
+            }
         }
         if delete && self.tool == Tool::Select && let Some(i) = self.selected.take() {
             self.edit(|d| drop(d.elements.remove(i)));
@@ -363,6 +378,7 @@ impl App {
             Tool::Select | Tool::Draw(_) => self.markup_input(ctx, &drag, dest, vis, doc),
             Tool::Selection(kind) => self.selection_input(ctx, &drag, dest, vis, img, kind),
             Tool::Crop | Tool::Measure => self.crop_measure_input(ctx, &drag, dest, vis, img),
+            Tool::Perspective => self.perspective_input(ctx, &drag, dest, vis, img),
         }
         drag
     }
@@ -422,6 +438,24 @@ impl App {
                 (Tool::Crop, _) => self.crop_rect = Some(Rect::from_two_pos(a, at(p))),
                 _ => {}
             }
+        }
+    }
+
+    /// Perspective tool: dragging the corner nearest the press.
+    fn perspective_input(&mut self, ctx: &egui::Context, drag: &egui::Response, dest: Rect, vis: Rect, img: Vec2) {
+        if drag.hovered() {
+            ctx.set_cursor_icon(CursorIcon::Crosshair);
+        }
+        let Some(corners) = &mut self.perspective else { return };
+        if drag.drag_started() && let Some(o) = ctx.input(|i| i.pointer.press_origin()) {
+            let off = |i: usize| view::to_screen(dest, vis, corners[i]).distance(o);
+            self.perspective_drag = (0..4).min_by(|&a, &b| off(a).total_cmp(&off(b))).filter(|&i| off(i) < 14.0);
+        }
+        if drag.dragged() && let (Some(i), Some(p)) = (self.perspective_drag, drag.interact_pointer_pos()) {
+            corners[i] = Rect::from_min_size(Pos2::ZERO, img).clamp(view::to_image(dest, vis, p));
+        }
+        if drag.drag_stopped() {
+            self.perspective_drag = None;
         }
     }
 

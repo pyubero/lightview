@@ -84,6 +84,8 @@ Downloading the AI runtime…	Descargando el motor de IA…
 Downloading…	Descargando…
 Drag to measure in image pixels · Esc to stop	Arrastra para medir en píxeles de la imagen · Esc para salir
 Drag to select · Enter to crop · Esc to cancel	Arrastra para seleccionar · Intro para recortar · Esc para cancelar
+Drag the corners onto a rectangle · Enter to apply · Esc to cancel	Arrastra las esquinas sobre un rectángulo · Intro para aplicar · Esc para cancelar
+Drawings, text and pasted images will be merged into the image and can't be edited afterwards. Ctrl+Z undoes it.	Los dibujos, textos e imágenes pegadas se fusionarán con la imagen y ya no se podrán editar. Ctrl+Z lo deshace.
 EXIF is shown for JPEG files only	Los datos EXIF solo se muestran en archivos JPEG
 Edit	Editar
 Edit the image description	Editar la descripción de la imagen
@@ -140,6 +142,7 @@ Make lightview my default image viewer	Hacer de lightview mi visor de imágenes 
 Make lightview the default image viewer	Hacer de lightview el visor de imágenes predeterminado
 Mean (R, G, B)	Media (R, G, B)
 Measure	Medir
+Merge drawings into the image?	¿Fusionar los dibujos con la imagen?
 Model	Modelo
 Name	Nombre
 Nearest	Vecino más cercano
@@ -164,6 +167,7 @@ Output	Salida
 Paste	Pegar
 Pause Animation	Pausar animación
 Percentage	Porcentaje
+Correct Perspective	Corregir perspectiva
 Play Animation	Reproducir animación
 Please read and accept the licence before downloading.	Lee y acepta la licencia antes de descargar.
 Preprocessing: {file}	Preprocesado: {file}
@@ -225,6 +229,7 @@ Text	Texto
 Text colour	Color del texto
 The AI runtime isn't installed yet: Tools > Download AI Runtime…	El motor de IA aún no está instalado: Herramientas > Descargar motor de IA…
 The GPU couldn't be used, so the CPU is: {e}	No se ha podido usar la GPU, así que se usa la CPU: {e}
+The corners must form a shape with no crossing sides	Las esquinas deben formar una figura sin lados cruzados
 Thickness	Grosor
 Tint	Matiz
 Tools	Herramientas

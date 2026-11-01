@@ -84,6 +84,8 @@ Downloading the AI runtime…	Download del motore IA…
 Downloading…	Download in corso…
 Drag to measure in image pixels · Esc to stop	Trascina per misurare in pixel dell'immagine · Esc per uscire
 Drag to select · Enter to crop · Esc to cancel	Trascina per selezionare · Invio per ritagliare · Esc per annullare
+Drag the corners onto a rectangle · Enter to apply · Esc to cancel	Trascina gli angoli su un rettangolo · Invio per applicare · Esc per annullare
+Drawings, text and pasted images will be merged into the image and can't be edited afterwards. Ctrl+Z undoes it.	Disegni, testi e immagini incollate verranno uniti all'immagine e non potranno più essere modificati. Ctrl+Z annulla.
 EXIF is shown for JPEG files only	I dati EXIF vengono mostrati solo per i file JPEG
 Edit	Modifica
 Edit the image description	Modifica la descrizione dell'immagine
@@ -140,6 +142,7 @@ Make lightview my default image viewer	Imposta lightview come visualizzatore di 
 Make lightview the default image viewer	Imposta lightview come visualizzatore predefinito
 Mean (R, G, B)	Media (R, G, B)
 Measure	Misura
+Merge drawings into the image?	Unire i disegni all'immagine?
 Model	Modello
 Name	Nome
 Nearest	Vicino più prossimo
@@ -164,6 +167,7 @@ Output	Uscita
 Paste	Incolla
 Pause Animation	Metti in pausa l'animazione
 Percentage	Percentuale
+Correct Perspective	Correggi prospettiva
 Play Animation	Riproduci animazione
 Please read and accept the licence before downloading.	Leggi e accetta la licenza prima di scaricare.
 Preprocessing: {file}	Pre-elaborazione: {file}
@@ -225,6 +229,7 @@ Text	Testo
 Text colour	Colore del testo
 The AI runtime isn't installed yet: Tools > Download AI Runtime…	Il motore IA non è ancora installato: Strumenti > Scarica motore IA…
 The GPU couldn't be used, so the CPU is: {e}	Non è stato possibile usare la GPU, quindi si usa la CPU: {e}
+The corners must form a shape with no crossing sides	Gli angoli devono formare una figura senza lati incrociati
 Thickness	Spessore
 Tint	Tinta
 Tools	Strumenti

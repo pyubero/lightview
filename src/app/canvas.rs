@@ -65,7 +65,7 @@ impl App {
     pub(super) fn sharp_frame(&mut self, full: Option<&Loaded>, doc: &Doc, zoom: f32) -> Option<(u32, Arc<Frame>)> {
         let l = full?;
         let tree = l.svg.as_ref()?;
-        let plain = doc.elements.is_empty() && !doc.shrinks();
+        let plain = doc.elements.is_empty() && !doc.shrinks() && doc.base.is_none();
         let k = if plain { svg::tier(zoom * doc.scale().max_elem(), [l.frames[0].w, l.frames[0].h]) } else { 1 };
         if k != self.sharp_wanted {
             self.sharp_wanted = k;
@@ -133,8 +133,9 @@ impl App {
         let ctx = ui.ctx();
         let ppp = ctx.pixels_per_point();
         let preview = self.preview.clone();
+        let base = doc.as_ref().and_then(|d| d.base.clone());
         let (frame, view, doc) = match (full, doc) {
-            (Some(l), Some(doc)) => (Some(&l.frames[self.anim_frame]), self.view, doc),
+            (Some(l), Some(doc)) => (Some(base.as_ref().map_or(&l.frames[self.anim_frame], |b| &*b.0)), self.view, doc),
             _ => (preview.as_deref(), View::Fit, preview.as_ref().map(|f| Doc::new(f.w, f.h)).unwrap_or(Doc::new(1, 1))),
         };
         // Flattened pixels hold every edit, so they're drawn as a plain image of the output's size.
@@ -212,6 +213,9 @@ impl App {
         self.paint_selection(ui, dest, crop);
         if self.tool == Tool::Crop {
             self.paint_crop(ui, dest, crop, viewport);
+        }
+        if self.tool == Tool::Perspective {
+            self.paint_perspective(ui, dest, crop, viewport);
         }
         if self.tool == Tool::Measure {
             self.paint_measure(ui, &edited, dest, crop, viewport);
@@ -304,6 +308,31 @@ impl App {
             }
         }
         bubble(ui.painter(), Pos2::new(viewport.center().x, viewport.top() + 24.0), tr("Drag to select · Enter to crop · Esc to cancel"));
+    }
+
+    fn paint_perspective(&self, ui: &egui::Ui, dest: Rect, crop: Rect, viewport: Rect) {
+        let Some(corners) = self.perspective else { return };
+        let q = corners.map(|p| view::to_screen(dest, crop, p));
+        let painter = ui.painter().with_clip_rect(viewport);
+        let convex = edit::is_convex(q);
+        let color = if convex { Color32::YELLOW } else { Color32::RED };
+        let mut lines = vec![[q[0], q[1]], [q[1], q[2]], [q[2], q[3]], [q[3], q[0]]];
+        if convex {
+            // The guide lines of a square grid on the rectangle, to line up with the subject.
+            let at = edit::homography(q);
+            let p = |u: f64, v: f64| Pos2::new(at(u, v)[0] as f32, at(u, v)[1] as f32);
+            lines.extend((1..4).flat_map(|i| [[p(i as f64 / 4.0, 0.0), p(i as f64 / 4.0, 1.0)], [p(0.0, i as f64 / 4.0), p(1.0, i as f64 / 4.0)]]));
+        }
+        for [a, b] in lines.iter().copied() {
+            painter.line_segment([a, b], egui::Stroke::new(3.0, Color32::from_black_alpha(160)));
+        }
+        for (i, [a, b]) in lines.into_iter().enumerate() {
+            painter.line_segment([a, b], egui::Stroke::new(if i < 4 { 1.5 } else { 1.0 }, color));
+        }
+        for p in q {
+            painter.circle(p, 6.0, Color32::from_black_alpha(120), egui::Stroke::new(1.5, color));
+        }
+        bubble(ui.painter(), Pos2::new(viewport.center().x, viewport.top() + 24.0), tr("Drag the corners onto a rectangle · Enter to apply · Esc to cancel"));
     }
 
     fn paint_measure(&self, ui: &egui::Ui, doc: &Doc, dest: Rect, crop: Rect, viewport: Rect) {

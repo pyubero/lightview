@@ -57,6 +57,7 @@ when" says otherwise. `▸` marks a submenu.
 |---|---|---|---|
 | Crop | | | With a selection: crops to it (erasing outside an ellipse or lasso). Without: the crop tool (drag a rectangle, Enter applies, Esc cancels). |
 | Resize… | | | Width, height, keep aspect ratio, percentage, resolution (DPI). |
+| Correct Perspective | | a still image is loaded, Adjust Color/Curves closed | Drag four corners onto something rectangular; Enter straightens it and crops to it, Esc cancels. Markup is flattened into the image, after asking. |
 | — | | | |
 | Rotate Left | Ctrl+L | | |
 | Rotate Right | Ctrl+R | | |
@@ -102,7 +103,7 @@ thickness, fill, font size, zoom) · Undo · Redo · Done.
 ## Keys without a menu item
 | Key | Does |
 |---|---|
-| Enter | Applies the crop (Crop tool). |
+| Enter | Applies the crop (Crop tool) or the correction (Correct Perspective). |
 | Esc | Cancels the drawing in progress, else leaves the current tool, else leaves full screen. |
 | Delete / Backspace | Deletes the selected element (Select tool), else the selection; with neither, Delete (not Backspace) offers to delete the image. |
 | Mouse wheel / pinch | Zoom at the pointer. |
