@@ -366,10 +366,10 @@ impl App {
         bubble(ui.painter(), Pos2::new(viewport.center().x, viewport.top() + 24.0), tr("Drag to select · Enter to crop · Esc to cancel"));
     }
 
-    /// Straighten: the crop the turned image will get, with a grid to line things up against.
+    /// Straighten: the canvas the turned image will get, with a grid to line things up against.
     fn paint_straighten(&self, ui: &egui::Ui, size: Vec2, dest: Rect, crop: Rect, viewport: Rect) {
         let image = Rect::from_two_pos(view::to_screen(dest, crop, Pos2::ZERO), view::to_screen(dest, crop, size.to_pos2()));
-        let kept = Rect::from_center_size(image.center(), image.size() * edit::straighten_crop(size, self.straighten));
+        let kept = Rect::from_center_size(image.center(), edit::straighten_size(size, self.straighten) * (image.size() / size));
         let painter = ui.painter().with_clip_rect(viewport);
         let shade = Color32::from_black_alpha(160);
         for side in [

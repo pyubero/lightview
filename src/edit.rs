@@ -142,17 +142,18 @@ pub fn auto_levels(frame: &Frame, crop: Rect) -> [f32; 2] {
     [(-(lo + hi).log2()).clamp(-3.0, 3.0), ((lo + hi) / (hi - lo) - 1.0).clamp(0.0, 1.0)]
 }
 
-/// The scale (0–1) of the largest crop with `size`'s aspect ratio that fits inside `size`
-/// turned by `degrees`: Straighten's auto-crop.
-pub fn straighten_crop(size: Vec2, degrees: f32) -> f32 {
-    let (sin, cos) = degrees.abs().to_radians().sin_cos();
-    (size.x / (size.x * cos + size.y * sin)).min(size.y / (size.x * sin + size.y * cos))
+/// The size of `size` turned by `degrees`'s bounding box: Straighten's new canvas.
+pub fn straighten_size(size: Vec2, degrees: f32) -> Vec2 {
+    let (sin, cos) = degrees.to_radians().sin_cos();
+    let (sin, cos) = (sin.abs(), cos.abs());
+    Vec2::new(size.x * cos + size.y * sin, size.x * sin + size.y * cos)
 }
 
-/// Straighten's auto-crop in the unturned image (output px), clockwise from the top left: the
+/// Straighten's canvas in the unturned image (output px), clockwise from the top left: the
 /// rectangle that becomes upright once the image is turned by `degrees` (clockwise on screen).
+/// It encloses the whole image, so its corners lie outside it.
 pub fn straighten_corners(size: Vec2, degrees: f32) -> [Pos2; 4] {
-    let half = size * straighten_crop(size, degrees) / 2.0;
+    let half = straighten_size(size, degrees) / 2.0;
     let centre = (size / 2.0).to_pos2();
     let back = egui::emath::Rot2::from_angle(-degrees.to_radians());
     [Vec2::new(-half.x, -half.y), Vec2::new(half.x, -half.y), half, Vec2::new(-half.x, half.y)].map(|c| centre + back * c)
@@ -323,14 +324,16 @@ impl Doc {
 
     /// Straightens what `corners` (output px, clockwise from the top left) enclose into a
     /// rectangle that becomes the whole image. Markup is flattened into it; colour stays live.
-    pub fn perspective(&mut self, decoded: &Frame, corners: [Pos2; 4]) -> Result<(), String> {
+    /// With no `fill` the corners are kept inside the image; with one they may lie outside it,
+    /// and what falls outside gets that colour (transparent if the image has alpha).
+    pub fn perspective(&mut self, decoded: &Frame, corners: [Pos2; 4], fill: Option<[u8; 3]>) -> Result<(), String> {
         let bounds = self.bounds();
-        let corners = corners.map(|p| bounds.clamp(p));
+        let corners = if fill.is_some() { corners } else { corners.map(|p| bounds.clamp(p)) };
         if !is_convex(corners) {
             return Err(tr("The corners must form a shape with no crossing sides").into());
         }
         let shown = flat(decoded, &Doc { adjust: Adjust::default(), ..self.clone() })?;
-        let warped = warp(&shown, corners);
+        let warped = warp(&shown, corners, fill.unwrap_or_default());
         let new = Doc::new(warped.w, warped.h);
         *self = Doc { adjust: self.adjust, dpi: self.dpi, base: Some(Base(Arc::new(warped))), ..new };
         Ok(())
@@ -414,11 +417,16 @@ fn sample(frame: &Frame, x: f64, y: f64, out: &mut [u8]) {
     }
 }
 
-/// The quad `q` of `frame`, straightened into a rectangle.
-fn warp(frame: &Frame, q: [Pos2; 4]) -> Frame {
+/// The quad `q` of `frame`, straightened into a rectangle; what falls outside `frame` gets
+/// `fill` (transparent if `frame` has alpha).
+// shortcut: a hard, aliased edge where the image ends; blend the border pixels if it shows.
+fn warp(frame: &Frame, q: [Pos2; 4], fill: [u8; 3]) -> Frame {
     let [w, h] = warped_size(q);
     let (wu, hu, channels) = (w as usize, h as usize, if frame.alpha { 4 } else { 3 });
     let at = homography(q);
+    let [r, g, b] = fill;
+    let fill = [r, g, b, 0];
+    let (fw, fh) = (frame.w as f64, frame.h as f64);
     let mut pixels = vec![0; wu * hu * channels];
     // Split across cores, as `Adjust::apply` does: this runs on the UI thread.
     let threads = std::thread::available_parallelism().map_or(1, |n| n.get());
@@ -430,7 +438,11 @@ fn warp(frame: &Frame, q: [Pos2; 4]) -> Frame {
                     let v = ((part * rows + r) as f64 + 0.5) / h as f64;
                     for (x, px) in row.chunks_exact_mut(channels).enumerate() {
                         let [sx, sy] = at((x as f64 + 0.5) / w as f64, v);
-                        sample(frame, sx - 0.5, sy - 0.5, px);
+                        if (0.0..=fw).contains(&sx) && (0.0..=fh).contains(&sy) {
+                            sample(frame, sx - 0.5, sy - 0.5, px);
+                        } else {
+                            px.copy_from_slice(&fill[..channels]);
+                        }
                     }
                 }
             });
@@ -668,24 +680,33 @@ mod tests {
     }
 
     #[test]
-    fn straighten_crop_keeps_the_aspect_inside_the_turned_image() {
+    fn straighten_corners_enclose_the_turned_image() {
         let size = Vec2::new(400.0, 300.0);
-        assert_eq!(straighten_crop(size, 0.0), 1.0);
-        assert!((straighten_crop(Vec2::splat(100.0), 45.0) - std::f32::consts::FRAC_1_SQRT_2).abs() < 1e-5);
-        assert_eq!(straighten_crop(size, 10.0), straighten_crop(size, -10.0));
-        for angle in [-45.0, -12.5, 3.0, 30.0] {
+        assert_eq!(straighten_size(size, 0.0), size);
+        assert!((straighten_size(size, 90.0) - Vec2::new(300.0, 400.0)).length() < 1e-3);
+        assert_eq!(straighten_size(size, 10.0), straighten_size(size, -10.0));
+        for angle in [-170.0, -45.0, 3.0, 90.0, 135.0, 180.0] {
             let c = straighten_corners(size, angle);
-            let bounds = Rect::from_min_size(Pos2::ZERO, size).expand(1e-3);
-            assert!(c.iter().all(|&p| bounds.contains(p)), "{angle}: {c:?}");
+            assert!(is_convex(c), "{angle}");
+            // Every image corner is inside the quad: on the inner side of each clockwise edge.
+            for p in [Pos2::ZERO, Pos2::new(400.0, 0.0), size.to_pos2(), Pos2::new(0.0, 300.0)] {
+                let inside = |i: usize| {
+                    let e = (c[(i + 1) % 4] - c[i]).normalized();
+                    e.x * (p - c[i]).y - e.y * (p - c[i]).x >= -1e-2
+                };
+                assert!((0..4).all(inside), "{angle}: {p:?}");
+            }
             let (w, h) = (c[0].distance(c[1]), c[1].distance(c[2]));
-            assert!((w / h - 4.0 / 3.0).abs() < 1e-4, "{angle}");
+            assert!((Vec2::new(w, h) - straighten_size(size, angle)).length() < 1e-2, "{angle}");
             // The top edge runs at −angle in the unturned image, so it's level once turned.
             let d = c[1] - c[0];
-            assert!((d.y.atan2(d.x).to_degrees() + angle).abs() < 1e-3, "{angle}");
+            let off = (d.y.atan2(d.x).to_degrees() + angle).rem_euclid(360.0);
+            assert!(off < 1e-3 || off > 360.0 - 1e-3, "{angle}");
         }
     }
 
-    /// A line drawn 10° off level comes out level, at the auto-crop's size.
+    /// A line drawn 10° off level comes out level, on a canvas that holds the whole image, with
+    /// the fill colour in the corners.
     #[test]
     fn straighten_levels_a_tilted_line() {
         let (w, h) = (200u32, 120u32);
@@ -699,12 +720,15 @@ mod tests {
         }
         let decoded = Frame { w, h, pixels, alpha: false, delay: Duration::ZERO };
         let mut doc = Doc::new(w, h);
-        doc.perspective(&decoded, straighten_corners(doc.size_vec(), -10.0)).unwrap();
-        let k = straighten_crop(Vec2::new(w as f32, h as f32), 10.0);
-        assert_eq!(doc.size, [(w as f32 * k).round() as u32, (h as f32 * k).round() as u32]);
+        doc.perspective(&decoded, straighten_corners(doc.size_vec(), -10.0), Some([200, 150, 100])).unwrap();
+        let s = straighten_size(Vec2::new(w as f32, h as f32), 10.0);
+        assert_eq!(doc.size, [s.x.round() as u32, s.y.round() as u32]);
         let out = render(&decoded, &doc).unwrap().into_rgb8();
-        // Each column's darkest row: the same all the way along.
-        let rows: Vec<u32> = (10..out.width() - 10).map(|x| (0..out.height()).min_by_key(|&y| out.get_pixel(x, y)[0]).unwrap()).collect();
+        assert_eq!(out.get_pixel(0, 0).0, [200, 150, 100]);
+        assert_eq!(out.get_pixel(out.width() - 1, out.height() - 1).0, [200, 150, 100]);
+        // Each column's darkest row, across the middle where the line runs: the same all along.
+        let (x0, x1) = ((out.width() - w) / 2 + 10, (out.width() + w) / 2 - 10);
+        let rows: Vec<u32> = (x0..x1).map(|x| (0..out.height()).min_by_key(|&y| out.get_pixel(x, y)[0]).unwrap()).collect();
         let (lo, hi) = (rows.iter().min().unwrap(), rows.iter().max().unwrap());
         assert!(hi - lo <= 2, "{lo}..{hi}");
     }
@@ -1193,14 +1217,14 @@ mod tests {
         assert!(!is_convex([a, b, Pos2::new(1.0, 1.0), d]), "a dent");
         assert!(!is_convex([a, b, b, d]), "collapsed");
         let mut doc = Doc::new(6, 5);
-        assert!(doc.perspective(&frame(), [a, c, b, d]).is_err());
+        assert!(doc.perspective(&frame(), [a, c, b, d], None).is_err());
         assert_eq!(doc, Doc::new(6, 5), "a refused shape changes nothing");
     }
 
     #[test]
     fn warping_the_whole_image_keeps_it() {
         let mut doc = Doc::new(6, 5);
-        doc.perspective(&frame(), square(6.0, 5.0)).unwrap();
+        doc.perspective(&frame(), square(6.0, 5.0), None).unwrap();
         assert_eq!(doc.size, [6, 5]);
         assert_eq!(render(&frame(), &doc).unwrap(), reference());
     }
@@ -1221,7 +1245,7 @@ mod tests {
         }
         let f = Frame { w: 200, h: 150, pixels, alpha: false, delay: Duration::ZERO };
         let mut doc = Doc::new(200, 150);
-        doc.perspective(&f, q).unwrap();
+        doc.perspective(&f, q, None).unwrap();
         assert_eq!(doc.size, [180, 121]);
         let out = render(&f, &doc).unwrap().to_rgb8();
         for x in 2..178 {
@@ -1236,7 +1260,7 @@ mod tests {
     #[test]
     fn later_edits_work_on_the_corrected_image() {
         let mut doc = Doc::new(6, 5);
-        doc.perspective(&frame(), [Pos2::new(1.0, 1.0), Pos2::new(5.0, 1.0), Pos2::new(5.0, 4.0), Pos2::new(1.0, 4.0)]).unwrap();
+        doc.perspective(&frame(), [Pos2::new(1.0, 1.0), Pos2::new(5.0, 1.0), Pos2::new(5.0, 4.0), Pos2::new(1.0, 4.0)], None).unwrap();
         assert_eq!(doc.size, [4, 3]);
         let warped = reference().crop_imm(1, 1, 4, 3);
         // Sits on whole pixels, so it's a plain crop.
@@ -1264,7 +1288,7 @@ mod tests {
         e.points[1] = Pos2::new(35.0, 25.0);
         doc.elements.push(e);
         let drawn = render(&frame, &Doc { adjust: Adjust::default(), ..doc.clone() }).unwrap().to_rgb8();
-        doc.perspective(&frame, square(40.0, 30.0)).unwrap();
+        doc.perspective(&frame, square(40.0, 30.0), None).unwrap();
         assert!(doc.elements.is_empty());
         assert_eq!(doc.adjust.exposure, 1.0);
         doc.adjust.exposure = 0.0;
@@ -1278,7 +1302,7 @@ mod tests {
         let big = Frame { w: 4000, h: 3000, pixels: (0..4000 * 3000 * 3).map(|i| (i % 251) as u8).collect(), alpha: false, delay: Duration::ZERO };
         let q = [Pos2::new(300.0, 100.0), Pos2::new(3700.0, 200.0), Pos2::new(3900.0, 2900.0), Pos2::new(100.0, 2800.0)];
         let t = std::time::Instant::now();
-        std::hint::black_box(warp(&big, q));
+        std::hint::black_box(warp(&big, q, [0; 3]));
         eprintln!("warp 12 MP: {:.0} ms", t.elapsed().as_secs_f64() * 1000.0);
     }
 

@@ -759,14 +759,16 @@ impl App {
     fn apply_perspective(&mut self) {
         let (Some(corners), Some(l)) = (self.perspective, self.current().and_then(|p| self.cache.get(p)).cloned()) else { return };
         let mut result = Ok(());
-        self.edit(|d| result = d.perspective(&l.frames[0], corners));
+        // Straighten's corners lie outside the image: the new corners get the background colour.
+        let fill = (self.tool == Tool::Straighten).then_some(self.settings.background);
+        self.edit(|d| result = d.perspective(&l.frames[0], corners, fill));
         match result {
             Ok(()) => (self.tool, self.perspective) = (Tool::Pan, None),
             Err(e) => self.set_status(e),
         }
     }
 
-    /// Straighten: the auto-crop of the turned image goes through Correct Perspective, which asks
+    /// Straighten: the turned image's bounding box goes through Correct Perspective, which asks
     /// before merging the markup and keeps colour live.
     fn apply_straighten(&mut self) {
         let Some(doc) = self.doc() else { return };
@@ -1414,9 +1416,12 @@ mod tests {
         app.straighten = 8.0;
         app.apply_straighten();
         let doc = app.doc().unwrap();
-        let k = edit::straighten_crop(Vec2::new(40.0, 30.0), 8.0);
+        let s = edit::straighten_size(Vec2::new(40.0, 30.0), 8.0);
         assert!(app.tool == Tool::Pan && doc.base.is_some());
-        assert_eq!(doc.size, [(40.0 * k).round() as u32, (30.0 * k).round() as u32]);
+        assert_eq!(doc.size, [s.x.round() as u32, s.y.round() as u32]);
+        let [r, g, b] = app.settings.background;
+        let frame = &app.cache.get(app.current().unwrap()).unwrap().frames[0];
+        assert_eq!(edit::render(frame, &doc).unwrap().into_rgb8().get_pixel(0, 0).0, [r, g, b], "corners get the background");
         app.run_actions(&[Action::Undo], &ctx, false);
         assert_eq!(app.doc().unwrap().size, [40, 30]);
     }
