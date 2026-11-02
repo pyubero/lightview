@@ -14,10 +14,13 @@ pub enum Language {
     German,
     Italian,
     Portuguese,
+    Polish,
+    Dutch,
+    Russian,
 }
 
 impl Language {
-    pub const ALL: [Self; 6] = [Self::English, Self::Spanish, Self::French, Self::German, Self::Italian, Self::Portuguese];
+    pub const ALL: [Self; 9] = [Self::English, Self::Spanish, Self::French, Self::German, Self::Italian, Self::Portuguese, Self::Polish, Self::Dutch, Self::Russian];
 
     /// In its own language, so it can be found whatever the current one is.
     pub fn name(self) -> &'static str {
@@ -28,6 +31,9 @@ impl Language {
             Self::German => "Deutsch",
             Self::Italian => "Italiano",
             Self::Portuguese => "Português",
+            Self::Polish => "Polski",
+            Self::Dutch => "Nederlands",
+            Self::Russian => "Русский",
         }
     }
 
@@ -39,6 +45,9 @@ impl Language {
             Self::German => include_str!("../locales/de.tsv"),
             Self::Italian => include_str!("../locales/it.tsv"),
             Self::Portuguese => include_str!("../locales/pt.tsv"),
+            Self::Polish => include_str!("../locales/pl.tsv"),
+            Self::Dutch => include_str!("../locales/nl.tsv"),
+            Self::Russian => include_str!("../locales/ru.tsv"),
         }
     }
 
@@ -49,6 +58,9 @@ impl Language {
             Some("de") => Self::German,
             Some("it") => Self::Italian,
             Some("pt") => Self::Portuguese,
+            Some("pl") => Self::Polish,
+            Some("nl") => Self::Dutch,
+            Some("ru") => Self::Russian,
             _ => Self::English,
         }
     }
@@ -61,7 +73,7 @@ pub fn system_language() -> Language {
 }
 
 static CURRENT: AtomicU8 = AtomicU8::new(0);
-static TABLES: [OnceLock<HashMap<String, String>>; 6] = [const { OnceLock::new() }; 6];
+static TABLES: [OnceLock<HashMap<String, String>>; 9] = [const { OnceLock::new() }; 9];
 
 pub fn set(language: Language) {
     CURRENT.store(language as u8, Ordering::Relaxed);
@@ -120,7 +132,7 @@ mod tests {
     use super::*;
     use std::collections::BTreeSet;
 
-    const TRANSLATED: [Language; 5] = [Language::Spanish, Language::French, Language::German, Language::Italian, Language::Portuguese];
+    const TRANSLATED: [Language; 8] = [Language::Spanish, Language::French, Language::German, Language::Italian, Language::Portuguese, Language::Polish, Language::Dutch, Language::Russian];
 
     /// Every literal passed to `tr`/`trf` in the sources, as written there.
     fn keys_in_sources() -> BTreeSet<String> {
@@ -212,6 +224,12 @@ mod tests {
         assert_eq!(Language::from_locale("es_MX"), Language::Spanish);
         assert_eq!(Language::from_locale("pt_BR.UTF-8"), Language::Portuguese);
         assert_eq!(Language::from_locale("de:en"), Language::German);
+        assert_eq!(Language::from_locale("pl_PL.UTF-8"), Language::Polish);
+        assert_eq!(Language::from_locale("nl_BE"), Language::Dutch);
+        assert_eq!(Language::from_locale("ru_RU.UTF-8"), Language::Russian);
+        assert_eq!(lookup(Language::Russian, "Open…"), "Открыть…");
+        assert_eq!(Language::ALL.map(|l| l as usize), std::array::from_fn(|i| i), "ALL is in declaration order");
+        assert_eq!(Language::ALL.len(), TABLES.len());
         assert_eq!(Language::from_locale("ja_JP"), Language::English);
         assert_eq!(Language::from_locale("C"), Language::English);
     }

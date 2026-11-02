@@ -46,8 +46,14 @@ and it never goes online on its own.
 - **Markup.** Freehand sketching, shapes, arrows, text, highlights, a magnifier and a measuring tool.
 - **Metadata.** An inspector sidebar for image information, and EXIF editing for JPEG, PNG and
   TIFF files, which always saves to a copy. WebP and RAW metadata is shown, not edited.
-- **Six languages.** English, Spanish, French, German, Italian and Portuguese. lightview starts in
-  your system's language and you can change it in Edit → Settings.
+- **Nine languages.** English, Spanish, French, German, Italian, Portuguese, Polish, Dutch and
+  Russian. lightview starts in your system's language and you can change it in Edit → Settings.
+  The Polish, Dutch and Russian texts are machine translations: corrections, and new languages, are
+  welcome ([`TRANSLATING.md`](docs/TRANSLATING.md)).
+- **Your own shortcuts.** Any menu item can get a keyboard shortcut, and the default ones can be
+  changed, in Edit → Settings → Change Keyboard Shortcuts….
+- **Screen readers.** Menus, dialogs and settings can be read by a screen reader such as Orca or
+  Narrator. The image itself isn't described yet.
 
 ### Supported formats
 
@@ -228,6 +234,7 @@ lightview --bench photo.jpg     # the same, quitting after the first full image
 | [`ROADMAP-v2.md`](docs/ROADMAP-v2.md) | The roadmap for editing and AI features |
 | [`ROADMAP-v3.md`](docs/ROADMAP-v3.md) | Proposed features for competing with other viewers |
 | [`MENUS.md`](docs/MENUS.md) | Every menu item and shortcut |
+| [`TRANSLATING.md`](docs/TRANSLATING.md) | How to correct a translation or add a language |
 
 ## Licence
 

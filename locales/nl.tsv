@@ -1,0 +1,364 @@
+AI Image Processing	Beeldbewerking met AI
+AI Models	AI-modellen
+AI Models…	AI-modellen…
+AI runtime (ONNX Runtime)	AI-runtime (ONNX Runtime)
+Accept and Continue	Accepteren en doorgaan
+Accept and Download	Accepteren en downloaden
+Accessibility	Toegankelijkheid
+Actual Size	Werkelijke grootte
+Add model file…	Modelbestand toevoegen…
+Added {name}	{name} toegevoegd
+Adjust Color	Kleur aanpassen
+Adjust Color…	Kleur aanpassen…
+Adjust Curves	Curven aanpassen
+Adjust Curves…	Curven aanpassen…
+All channels together: overall brightness	Alle kanalen samen: algemene helderheid
+Animation	Animatie
+Applies the next time lightview starts	Geldt vanaf de volgende keer dat lightview start
+Apply sigmoid (the model outputs logits)	Sigmoïde toepassen (het model geeft logits)
+Apply to Selection	Toepassen op selectie
+Apply to Whole Image{size} (about {estimate})	Toepassen op hele afbeelding{size} (ongeveer {estimate})
+Arrow	Pijl
+Artist	Maker
+Auto Levels	Automatische niveaus
+BSRGAN 4× — upscales and sharpens, may invent detail	BSRGAN 4× — vergroot en verscherpt, kan details verzinnen
+Background colour	Achtergrondkleur
+BiRefNet lite — best quality, slow	BiRefNet lite — beste kwaliteit, traag
+Bicubic	Bicubisch
+Bilinear	Bilineair
+Blue: how much blue each pixel has	Blauw: hoeveel blauw elke pixel heeft
+Camera	Camera
+Camera make	Cameramerk
+Camera model	Cameramodel
+Can't open this image:\n{e}	Kan deze afbeelding niet openen:\n{e}
+Cancel	Annuleren
+Cancelled	Geannuleerd
+Check for updates	Controleren op updates
+Close	Sluiten
+Click to add a point, drag to move it, right-click to remove it	Klik om een punt toe te voegen, sleep om het te verplaatsen, klik met rechts om het te verwijderen
+Color space	Kleurruimte
+Colour	Kleur
+Colour profile	Kleurprofiel
+Continue	Doorgaan
+Contrast	Contrast
+Converted to ONNX by Heliosoph LLC from the authors' published weights.	Door Heliosoph LLC naar ONNX omgezet vanuit de door de auteurs gepubliceerde gewichten.
+Copied {w} × {h} px	{w} × {h} px gekopieerd
+Copy	Kopiëren
+Copyright	Copyright
+Couldn't add the model: {e}	Kon het model niet toevoegen: {e}
+Couldn't delete the image: {e}	Kon de afbeelding niet verwijderen: {e}
+Couldn't download {file}: {e}	Kon {file} niet downloaden: {e}
+Couldn't install the AI runtime: {e}	Kon de AI-runtime niet installeren: {e}
+Couldn't process the image: {e}	Kon de afbeelding niet verwerken: {e}
+Couldn't read {file}: {e}	Kon {file} niet lezen: {e}
+Couldn't restore the image: {e}	Kon de afbeelding niet terugzetten: {e}
+Couldn't save {name}: {e}	Kon {name} niet opslaan: {e}
+Crop	Bijsnijden
+Cut	Knippen
+DarkIR brightens dark and night photos and removes their noise and blur. On a well-lit photo it overexposes.	DarkIR maakt donkere en nachtfoto's lichter en verwijdert ruis en onscherpte. Een goed belichte foto wordt overbelicht.
+DarkIR — dark and night photos, same size	DarkIR — donkere en nachtfoto's, zelfde grootte
+Date modified	Gewijzigd op
+Date taken	Opnamedatum
+Default window size	Standaard venstergrootte
+Delete image?	Afbeelding verwijderen?
+Delete Image…	Afbeelding verwijderen…
+Delete Selection	Selectie verwijderen
+Denoise	Ruis verwijderen
+Denoise and Enhance run about 10× faster on a GTX 1050	Ruis verwijderen en Verbeteren zijn ongeveer 10× sneller op een GTX 1050
+Describe the image for people who can't see it	Beschrijf de afbeelding voor mensen die haar niet kunnen zien
+Description	Beschrijving
+Deselect	Selectie opheffen
+Detect size	Grootte bepalen
+Dimensions	Afmetingen
+Discard	Verwerpen
+Discard edits?	Bewerkingen verwerpen?
+Distance: {d} px · ΔX: {dx} px · ΔY: {dy} px	Afstand: {d} px · ΔX: {dx} px · ΔY: {dy} px
+Done	Klaar
+Download	Downloaden
+Download AI Runtime…	AI-runtime downloaden…
+Download GPU Support	GPU-ondersteuning downloaden
+Downloaded from Microsoft (ONNX Runtime) and NVIDIA (CUDA libraries, via their official PyPI packages).	Gedownload van Microsoft (ONNX Runtime) en NVIDIA (CUDA-bibliotheken, via hun officiële PyPI-pakketten).
+Downloaded {file}	{file} gedownload
+Downloading GPU support ({mb} MB)…	GPU-ondersteuning downloaden ({mb} MB)…
+Downloading the AI runtime…	AI-runtime downloaden…
+Downloading…	Downloaden…
+Drag to measure in image pixels · Esc to stop	Sleep om te meten in beeldpixels · Esc om te stoppen
+Drag to select · Enter to crop · Esc to cancel	Sleep om te selecteren · Enter om bij te snijden · Esc om te annuleren
+Drag the corners onto a rectangle · Enter to apply · Esc to cancel	Sleep de hoeken op een rechthoek · Enter om toe te passen · Esc om te annuleren
+Drawings, text and pasted images will be merged into the image and can't be edited afterwards. Ctrl+Z undoes it.	Tekeningen, tekst en geplakte afbeeldingen worden in de afbeelding samengevoegd en zijn daarna niet meer te bewerken. Ctrl+Z maakt dit ongedaan.
+Edit	Bewerken
+Edit the image description	Beschrijving van de afbeelding bewerken
+Ellipse	Ellips
+Elliptical Selection	Ovale selectie
+Embedded (unnamed)	Ingebed (zonder naam)
+Enhance Image	Afbeelding verbeteren
+Enhance Image uses generative AI. To make the image look better it may invent or alter fine details, such as textures, text or faces, that weren't in the original.	Afbeelding verbeteren gebruikt generatieve AI. Om de afbeelding mooier te maken kan het fijne details verzinnen of veranderen, zoals texturen, tekst of gezichten, die niet in het origineel stonden.
+Enter Full Screen	Volledig scherm
+Exposure	Belichting
+File	Bestand
+File name	Bestandsnaam
+File size	Bestandsgrootte
+Fill	Vulling
+Fit to Window	Passend in venster
+Flip Horizontally	Horizontaal spiegelen
+Flip Vertically	Verticaal spiegelen
+Folder	Map
+Font size	Lettergrootte
+For a faithful clean-up, use Denoise instead.	Gebruik voor een getrouwe opschoning liever Ruis verwijderen.
+Format	Formaat
+GPU (NVIDIA)	GPU (NVIDIA)
+GPU image scaling	Afbeeldingen schalen op de GPU
+GPU support	GPU-ondersteuning
+GPU support installed: restart lightview to use it	GPU-ondersteuning geïnstalleerd: start lightview opnieuw om haar te gebruiken
+General	Algemeen
+Green: how much green each pixel has	Groen: hoeveel groen elke pixel heeft
+Height	Hoogte
+Hide Drawing Toolbar	Tekenwerkbalk verbergen
+Hide Image Information	Afbeeldingsinformatie verbergen
+Highlight	Markeren
+Hue: the color itself, such as red or blue	Tint: de kleur zelf, zoals rood of blauw
+IS-Net anime — illustrations	IS-Net anime — illustraties
+IS-Net — general, clean edges	IS-Net — algemeen, nette randen
+Image	Afbeelding
+Image description	Beschrijving van de afbeelding
+Images	Afbeeldingen
+Input size	Invoergrootte
+Installed the AI runtime	AI-runtime geïnstalleerd
+Interpolation	Interpolatie
+It also makes the image {k}× bigger ({pixels}× the pixels), which takes a while for a big photo.	Het maakt de afbeelding ook {k}× groter ({pixels}× zoveel pixels), wat bij een grote foto even duurt.
+It's no longer in the Trash	Ze staat niet meer in de prullenbak
+Keep aspect ratio	Beeldverhouding behouden
+Language	Taal
+Lasso	Lasso
+Lens	Lens
+Licence ({step} of {count}) — {title}	Licentie ({step} van {count}) — {title}
+Licence — {title}	Licentie — {title}
+Lightness: from black, through color, to white	Lichtheid: van zwart, via kleur, naar wit
+Line	Lijn
+Location	Locatie
+Magnifier	Vergrootglas
+Make lightview my default image viewer	lightview mijn standaard afbeeldingsviewer maken
+Make lightview the default image viewer	lightview de standaard afbeeldingsviewer maken
+Mean (R, G, B)	Gemiddelde (R, G, B)
+Measure	Meten
+Merge drawings into the image?	Tekeningen in de afbeelding samenvoegen?
+Model	Model
+Name	Naam
+Nearest	Dichtstbijzijnde
+Next Frame	Volgend frame
+Next Image	Volgende afbeelding
+No location in this file	Geen locatie in dit bestand
+No model installed yet.	Nog geen model geïnstalleerd.
+No recent files	Geen recente bestanden
+None (sRGB assumed)	Geen (sRGB aangenomen)
+Nothing to paste: {e}	Niets om te plakken: {e}
+OK	OK
+ONNX export (half precision) by FuryTMP on Hugging Face; its origin isn't verified.	ONNX-export (halve precisie) door FuryTMP op Hugging Face; de herkomst is niet geverifieerd.
+ONNX model	ONNX-model
+Only add models from sources you trust: they run with your permissions.	Voeg alleen modellen toe uit bronnen die je vertrouwt: ze draaien met jouw rechten.
+Open Recent	Recent geopend
+Open in Google Maps	Openen in Google Maps
+Open models folder	Modellenmap openen
+Open project page	Projectpagina openen
+Open…	Openen…
+Other tags ({count})	Andere tags ({count})
+Output	Uitvoer
+Paste	Plakken
+Pause Animation	Animatie pauzeren
+Percentage	Percentage
+Correct Perspective	Perspectief corrigeren
+Play Animation	Animatie afspelen
+Please read and accept the licence before downloading.	Lees en accepteer de licentie voordat je downloadt.
+Preprocessing: {file}	Voorbewerking: {file}
+Previous Frame	Vorig frame
+Previous Image	Vorige afbeelding
+Read the input size from the model	Invoergrootte uit het model lezen
+Real-ESRGAN 4× half precision	Real-ESRGAN 4× halve precisie
+Real-ESRGAN 4× — upscales, smooth, may invent detail	Real-ESRGAN 4× — vergroot, glad, kan details verzinnen
+Real-ESRGAN and DarkIR can't be downloaded here. Convert them yourself with lightview-models, then copy the .onnx files into the models folder:	Real-ESRGAN en DarkIR kunnen hier niet gedownload worden. Zet ze zelf om met lightview-models en kopieer de .onnx-bestanden daarna naar de modellenmap:
+Real-ESRGAN general 4× half precision	Real-ESRGAN general 4× halve precisie
+Real-ESRGAN general 4× — fast, softer	Real-ESRGAN general 4× — snel, zachter
+Rectangle	Rechthoek
+Rectangular Selection	Rechthoekige selectie
+Red: how much red each pixel has	Rood: hoeveel rood elke pixel heeft
+Redo	Opnieuw
+Remove Background	Achtergrond verwijderen
+Remove Background and Crop	Achtergrond verwijderen en bijsnijden
+Remove location from the copy	Locatie uit de kopie verwijderen
+Reset	Herstellen
+Reset Color Adjustments	Kleuraanpassingen herstellen
+Reset to default	Standaard herstellen
+Resize	Formaat wijzigen
+Resize…	Formaat wijzigen…
+Resolution	Resolutie
+Restart lightview to start using the GPU.	Start lightview opnieuw om de GPU te gaan gebruiken.
+Revert	Terugdraaien
+Rotate Left	Linksom draaien
+Rotate Right	Rechtsom draaien
+Rounded Rectangle	Afgeronde rechthoek
+Run the AI tools on the graphics card ({mb} MB download, NVIDIA's CUDA libraries).	De AI-hulpmiddelen op de videokaart draaien ({mb} MB downloaden, de CUDA-bibliotheken van NVIDIA).
+Running {file}…	{file} draait…
+SCUNet σ15 — light noise	SCUNet σ15 — lichte ruis
+SCUNet σ25 — moderate noise	SCUNet σ25 — matige ruis
+SCUNet σ50 — heavy noise	SCUNet σ50 — sterke ruis
+SCUNet — noise and JPEG artifacts (recommended)	SCUNet — ruis en JPEG-artefacten (aanbevolen)
+Saturation	Verzadiging
+Saturation: from grey to vivid color	Verzadiging: van grijs tot levendige kleur
+Save As…	Opslaan als…
+Save copy…	Kopie opslaan…
+Saved in JPEG files	Opgeslagen in JPEG-bestanden
+Saved {name}	{name} opgeslagen
+Saves a copy of the file with this metadata (without other edits). Camera maker notes are removed.	Slaat een kopie van het bestand op met deze metadata (zonder andere bewerkingen). Notities van de camerafabrikant worden verwijderd.
+Select	Selecteren
+Select All	Alles selecteren
+Settings	Instellingen
+Settings…	Instellingen…
+Shapes	Vormen
+Show Drawing Toolbar	Tekenwerkbalk tonen
+Show Image Information	Afbeeldingsinformatie tonen
+Silueta — small and fast	Silueta — klein en snel
+Size read from the model when it runs; the usual normalisation.	Grootte wordt bij het draaien uit het model gelezen; de gebruikelijke normalisatie.
+Sketch	Schets
+Smoother zooming and panning. Uses more GPU memory and makes switching images a little slower.	Vloeiender zoomen en verschuiven. Gebruikt meer GPU-geheugen en maakt wisselen van afbeelding iets trager.
+Sort order	Sorteervolgorde
+Std (R, G, B)	Std.afw. (R, G, B)
+Stroke	Lijn
+SwinIR σ25 — moderate noise, very slow	SwinIR σ25 — matige ruis, erg traag
+Text	Tekst
+Text colour	Tekstkleur
+The AI runtime isn't installed yet: Tools > Download AI Runtime…	De AI-runtime is nog niet geïnstalleerd: Hulpmiddelen > AI-runtime downloaden…
+The GPU couldn't be used, so the CPU is: {e}	De GPU kon niet gebruikt worden, dus de CPU wordt gebruikt: {e}
+The corners must form a shape with no crossing sides	De hoeken moeten een vorm zonder kruisende zijden vormen
+Thickness	Dikte
+Tint	Tint
+Tools	Hulpmiddelen
+Undo	Ongedaan maken
+Use YYYY:MM:DD HH:MM:SS	Gebruik JJJJ:MM:DD UU:MM:SS
+Use the GPU	De GPU gebruiken
+Used by Remove Background and Remove Background and Crop.	Gebruikt door Achtergrond verwijderen en Achtergrond verwijderen en bijsnijden.
+Uses Bilinear while GPU scaling is on	Gebruikt bilineair zolang schalen op de GPU aan staat
+U²-Net people — portraits	U²-Net people — portretten
+U²-Net small — fastest	U²-Net small — snelst
+U²-Net — general	U²-Net — algemeen
+Value: from black to full color	Waarde: van zwart tot volle kleur
+View	Beeld
+Welcome to lightview	Welkom bij lightview
+Width	Breedte
+Your edits to {name} haven't been saved.	Je bewerkingen van {name} zijn niet opgeslagen.
+Zoom	Zoom
+Zoom In	Inzoomen
+Zoom Out	Uitzoomen
+a GPU library was missing from the download	er ontbrak een GPU-bibliotheek in de download
+about {time} left	nog ongeveer {time}
+can't save as .{ext}: use .jpg, .png, .webp, .bmp, .tif or .gif	kan niet opslaan als .{ext}: gebruik .jpg, .png, .webp, .bmp, .tif of .gif
+choose a new name: the original is never modified	kies een nieuwe naam: het origineel wordt nooit gewijzigd
+compressed SVG files aren't supported	gecomprimeerde SVG-bestanden worden niet ondersteund
+couldn't read this file's EXIF safely	kon de EXIF van dit bestand niet veilig lezen
+edited: {w} × {h}	bewerkt: {w} × {h}
+lightview is now the default image viewer	lightview is nu de standaard afbeeldingsviewer
+no data folder	geen gegevensmap
+no frames	geen frames
+no subject found	geen onderwerp gevonden
+pick an .onnx file	kies een .onnx-bestand
+the download didn't match its checksum	de download kwam niet overeen met de controlesom
+the model has no image input	het model heeft geen afbeeldingsinvoer
+the model's output changed size between tiles	de uitvoer van het model veranderde van grootte tussen tegels
+the model's output doesn't match its input size	de uitvoer van het model past niet bij de invoergrootte
+the model's output isn't a whole multiple of its input	de uitvoer van het model is geen geheel veelvoud van de invoer
+the written file didn't check out: the location wasn't removed	het geschreven bestand klopte niet: de locatie is niet verwijderd
+the written file didn't check out: {e}	het geschreven bestand klopte niet: {e}
+the written file didn't check out: {label} wasn't saved	het geschreven bestand klopte niet: {label} is niet opgeslagen
+this file crashed its decoder	dit bestand liet de decoder crashen
+this file's EXIF couldn't be processed	de EXIF van dit bestand kon niet verwerkt worden
+this image is too large to open	deze afbeelding is te groot om te openen
+this isn't a regular file	dit is geen gewoon bestand
+{format}, {count} frames	{format}, {count} frames
+{name} is already installed	{name} is al geïnstalleerd
+{name} will be moved to the Trash.	{name} wordt naar de prullenbak verplaatst.
+{task} done	{task} klaar
+{task} failed: {e}	{task} mislukt: {e}
+{task} on the GPU	{task} op de GPU
+{task} preview of the visible area · drag to compare · Before | After	Voorbeeld van {task} voor het zichtbare deel · sleep om te vergelijken · Voor | Na
+Remove Object	Object verwijderen
+LaMa — best quality, slower	LaMa — beste kwaliteit, trager
+MI-GAN — fast	MI-GAN — snel
+ONNX export by Carve on Hugging Face; its origin isn't verified.	ONNX-export door Carve op Hugging Face; de herkomst is niet geverifieerd.
+the selection is empty	de selectie is leeg
+No images in {name}	Geen afbeeldingen in {name}
+Can't open {name}: not a supported image	Kan {name} niet openen: geen ondersteunde afbeelding
+Save Copy	Kopie opslaan
+Copy Path	Pad kopiëren
+Show in File Manager	Tonen in bestandsbeheer
+Rename…	Naam wijzigen…
+First Image	Eerste afbeelding
+Last Image	Laatste afbeelding
+Copied the path	Pad gekopieerd
+Rename Image	Naam van afbeelding wijzigen
+Rename	Naam wijzigen
+That isn't a valid file name	Dat is geen geldige bestandsnaam
+{name} already exists	{name} bestaat al
+File changed on disk	Bestand gewijzigd op schijf
+{name} changed on disk. Reloading it discards your edits.	{name} is op schijf gewijzigd. Opnieuw laden verwerpt je bewerkingen.
+Reload	Opnieuw laden
+Keep Edits	Bewerkingen behouden
+Pixel grid	Pixelraster
+Shows the edges of the pixels when zoomed far in.	Toont de randen van de pixels als je ver inzoomt.
+Click a pixel to copy its colour · Esc to stop	Klik op een pixel om de kleur te kopiëren · Esc om te stoppen
+Copied {color}	{color} gekopieerd
+Copy Color	Kleur kopiëren
+this file is damaged or cut short	dit bestand is beschadigd of afgebroken
+HEIC and AVIF files need libheif, which isn't installed	HEIC- en AVIF-bestanden hebben libheif nodig, en dat is niet geïnstalleerd
+this file needs a libheif decoder plugin, which isn't installed	dit bestand heeft een decoderplug-in voor libheif nodig, en die is niet geïnstalleerd
+this file needs Microsoft's HEIF Image Extensions and HEVC or AV1 Video Extensions	dit bestand heeft de HEIF-afbeeldingsextensies en de HEVC- of AV1-video-extensies van Microsoft nodig
+Pages	Pagina's
+Next Page	Volgende pagina
+Previous Page	Vorige pagina
+{format}, {count} pages	{format}, {count} pagina's
+page {n} of {count}	pagina {n} van {count}
+Colour management	Kleurbeheer
+Converts images with a colour profile to sRGB, so wide-gamut photos look right on an sRGB monitor. Turn it off for a wide-gamut monitor.	Zet afbeeldingen met een kleurprofiel om naar sRGB, zodat foto's met een breed kleurbereik er goed uitzien op een sRGB-monitor. Zet het uit bij een monitor met een breed kleurbereik.
+this RAW file has no embedded preview	dit RAW-bestand heeft geen ingebed voorbeeld
+{format} (embedded preview)	{format} (ingebed voorbeeld)
+EXIF isn't read from this kind of RAW file yet	EXIF wordt nog niet gelezen uit dit soort RAW-bestanden
+A RAW file's metadata is shown, not edited.	De metadata van een RAW-bestand worden getoond, niet bewerkt.
+A WebP file's metadata is shown, not edited.	De metadata van een WebP-bestand worden getoond, niet bewerkt.
+EXIF is shown for JPEG, PNG, WebP, TIFF and RAW files	EXIF wordt getoond voor JPEG-, PNG-, WebP-, TIFF- en RAW-bestanden
+the copy must be a .{ext} file	de kopie moet een .{ext}-bestand zijn
+the written file didn't check out: the image changed	het geschreven bestand klopte niet: de afbeelding is veranderd
+Copy File	Bestand kopiëren
+Copied the file	Bestand gekopieerd
+Couldn't copy the file: {e}	Kon het bestand niet kopiëren: {e}
+Straighten…	Rechtzetten…
+Straighten	Rechtzetten
+Greyscale	Grijswaarden
+Invert Colors	Kleuren omkeren
+Remove Red Eye	Rode ogen verwijderen
+Pixelate Selection	Selectie pixeleren
+Select the eyes first, then choose this.	Selecteer eerst de ogen en kies dan dit.
+Hides faces. For text, a solid shape is safer: pixelation can sometimes be undone.	Verbergt gezichten. Voor tekst is een dichte vorm veiliger: pixeleren valt soms terug te draaien.
+Red eye removed	Rode ogen verwijderd
+Pixelated	Gepixeleerd
+Turn until the lines run straight · Enter to apply · Esc to cancel	Draai tot de lijnen recht lopen · Enter om toe te passen · Esc om te annuleren
+Recognize Text	Tekst herkennen
+PP-OCRv5 Latin — European languages	PP-OCRv5 Latijns — Europese talen
+PP-OCRv5 — Chinese, Japanese and English	PP-OCRv5 — Chinees, Japans en Engels
+Converted to ONNX by Satoru Nakamura (University of Tokyo) from PaddlePaddle's published models.	Door Satoru Nakamura (Universiteit van Tokio) naar ONNX omgezet vanuit de gepubliceerde modellen van PaddlePaddle.
+the model's output doesn't match its character list	de uitvoer van het model past niet bij de tekenlijst
+Read QR Code	QR-code lezen
+No QR code found	Geen QR-code gevonden
+No text found	Geen tekst gevonden
+QR Code	QR-code
+Text in Image	Tekst in afbeelding
+Couldn't read the text: {e}	Kon de tekst niet lezen: {e}
+Reading QR codes…	QR-codes lezen…
+Recognizing text…	Tekst herkennen…
+Reads the selection, or the whole image. Straighten tilted text first, and select small text in a large image so it's read at full size.	Leest de selectie of de hele afbeelding. Zet schuine tekst eerst recht, en selecteer kleine tekst in een grote afbeelding zodat die op volle grootte gelezen wordt.
+Reads the selection, or the whole image. Shows what the code says; links are never opened.	Leest de selectie of de hele afbeelding. Toont wat de code zegt; links worden nooit geopend.
+Keyboard Shortcuts	Sneltoetsen
+Press keys… (Esc to cancel)	Druk op de toetsen… (Esc om te annuleren)
+Change	Wijzigen
+Remove	Verwijderen
+Reset All Shortcuts	Alle sneltoetsen herstellen
+{keys} is already used by {action}	{keys} wordt al gebruikt door: {action}
+Copy, Cut, Paste, Enter, Esc and Delete	Kopiëren, Knippen, Plakken, Enter, Esc en Delete
+Change Keyboard Shortcuts…	Sneltoetsen wijzigen…

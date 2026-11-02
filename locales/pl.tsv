@@ -1,0 +1,364 @@
+AI Image Processing	Przetwarzanie obrazu przez AI
+AI Models	Modele AI
+AI Models…	Modele AI…
+AI runtime (ONNX Runtime)	Środowisko AI (ONNX Runtime)
+Accept and Continue	Akceptuj i kontynuuj
+Accept and Download	Akceptuj i pobierz
+Accessibility	Dostępność
+Actual Size	Rzeczywisty rozmiar
+Add model file…	Dodaj plik modelu…
+Added {name}	Dodano {name}
+Adjust Color	Dostosuj kolory
+Adjust Color…	Dostosuj kolory…
+Adjust Curves	Dostosuj krzywe
+Adjust Curves…	Dostosuj krzywe…
+All channels together: overall brightness	Wszystkie kanały razem: ogólna jasność
+Animation	Animacja
+Applies the next time lightview starts	Zadziała przy następnym uruchomieniu lightview
+Apply sigmoid (the model outputs logits)	Zastosuj sigmoidę (model zwraca logity)
+Apply to Selection	Zastosuj do zaznaczenia
+Apply to Whole Image{size} (about {estimate})	Zastosuj do całego obrazu{size} (około {estimate})
+Arrow	Strzałka
+Artist	Autor
+Auto Levels	Automatyczne poziomy
+BSRGAN 4× — upscales and sharpens, may invent detail	BSRGAN 4× — powiększa i wyostrza, może wymyślać szczegóły
+Background colour	Kolor tła
+BiRefNet lite — best quality, slow	BiRefNet lite — najlepsza jakość, wolny
+Bicubic	Dwusześcienna
+Bilinear	Dwuliniowa
+Blue: how much blue each pixel has	Niebieski: ile niebieskiego ma każdy piksel
+Camera	Aparat
+Camera make	Producent aparatu
+Camera model	Model aparatu
+Can't open this image:\n{e}	Nie można otworzyć tego obrazu:\n{e}
+Cancel	Anuluj
+Cancelled	Anulowano
+Check for updates	Sprawdź aktualizacje
+Close	Zamknij
+Click to add a point, drag to move it, right-click to remove it	Kliknij, aby dodać punkt, przeciągnij, aby go przesunąć, kliknij prawym przyciskiem, aby go usunąć
+Color space	Przestrzeń kolorów
+Colour	Kolor
+Colour profile	Profil kolorów
+Continue	Kontynuuj
+Contrast	Kontrast
+Converted to ONNX by Heliosoph LLC from the authors' published weights.	Przekonwertowane do ONNX przez Heliosoph LLC z wag opublikowanych przez autorów.
+Copied {w} × {h} px	Skopiowano {w} × {h} px
+Copy	Kopiuj
+Copyright	Prawa autorskie
+Couldn't add the model: {e}	Nie udało się dodać modelu: {e}
+Couldn't delete the image: {e}	Nie udało się usunąć obrazu: {e}
+Couldn't download {file}: {e}	Nie udało się pobrać {file}: {e}
+Couldn't install the AI runtime: {e}	Nie udało się zainstalować środowiska AI: {e}
+Couldn't process the image: {e}	Nie udało się przetworzyć obrazu: {e}
+Couldn't read {file}: {e}	Nie udało się odczytać {file}: {e}
+Couldn't restore the image: {e}	Nie udało się przywrócić obrazu: {e}
+Couldn't save {name}: {e}	Nie udało się zapisać {name}: {e}
+Crop	Przytnij
+Cut	Wytnij
+DarkIR brightens dark and night photos and removes their noise and blur. On a well-lit photo it overexposes.	DarkIR rozjaśnia ciemne i nocne zdjęcia oraz usuwa z nich szum i rozmycie. Dobrze oświetlone zdjęcie prześwietla.
+DarkIR — dark and night photos, same size	DarkIR — ciemne i nocne zdjęcia, ten sam rozmiar
+Date modified	Data modyfikacji
+Date taken	Data wykonania
+Default window size	Domyślny rozmiar okna
+Delete image?	Usunąć obraz?
+Delete Image…	Usuń obraz…
+Delete Selection	Usuń zaznaczenie
+Denoise	Usuń szum
+Denoise and Enhance run about 10× faster on a GTX 1050	Usuwanie szumu i ulepszanie działają około 10× szybciej na GTX 1050
+Describe the image for people who can't see it	Opisz obraz dla osób, które go nie widzą
+Description	Opis
+Deselect	Odznacz
+Detect size	Wykryj rozmiar
+Dimensions	Wymiary
+Discard	Odrzuć
+Discard edits?	Odrzucić zmiany?
+Distance: {d} px · ΔX: {dx} px · ΔY: {dy} px	Odległość: {d} px · ΔX: {dx} px · ΔY: {dy} px
+Done	Gotowe
+Download	Pobierz
+Download AI Runtime…	Pobierz środowisko AI…
+Download GPU Support	Pobierz obsługę GPU
+Downloaded from Microsoft (ONNX Runtime) and NVIDIA (CUDA libraries, via their official PyPI packages).	Pobierane od Microsoftu (ONNX Runtime) i NVIDII (biblioteki CUDA, z ich oficjalnych pakietów PyPI).
+Downloaded {file}	Pobrano {file}
+Downloading GPU support ({mb} MB)…	Pobieranie obsługi GPU ({mb} MB)…
+Downloading the AI runtime…	Pobieranie środowiska AI…
+Downloading…	Pobieranie…
+Drag to measure in image pixels · Esc to stop	Przeciągnij, aby zmierzyć w pikselach obrazu · Esc, aby zakończyć
+Drag to select · Enter to crop · Esc to cancel	Przeciągnij, aby zaznaczyć · Enter, aby przyciąć · Esc, aby anulować
+Drag the corners onto a rectangle · Enter to apply · Esc to cancel	Przeciągnij narożniki na prostokąt · Enter, aby zastosować · Esc, aby anulować
+Drawings, text and pasted images will be merged into the image and can't be edited afterwards. Ctrl+Z undoes it.	Rysunki, tekst i wklejone obrazy zostaną scalone z obrazem i nie będzie można ich później edytować. Ctrl+Z to cofa.
+Edit	Edycja
+Edit the image description	Edytuj opis obrazu
+Ellipse	Elipsa
+Elliptical Selection	Zaznaczenie eliptyczne
+Embedded (unnamed)	Osadzony (bez nazwy)
+Enhance Image	Ulepsz obraz
+Enhance Image uses generative AI. To make the image look better it may invent or alter fine details, such as textures, text or faces, that weren't in the original.	Ulepszanie obrazu korzysta z generatywnej AI. Aby obraz wyglądał lepiej, może wymyślić lub zmienić drobne szczegóły, takie jak tekstury, tekst czy twarze, których nie było w oryginale.
+Enter Full Screen	Pełny ekran
+Exposure	Ekspozycja
+File	Plik
+File name	Nazwa pliku
+File size	Rozmiar pliku
+Fill	Wypełnienie
+Fit to Window	Dopasuj do okna
+Flip Horizontally	Odbij w poziomie
+Flip Vertically	Odbij w pionie
+Folder	Folder
+Font size	Rozmiar czcionki
+For a faithful clean-up, use Denoise instead.	Do wiernego oczyszczenia użyj raczej usuwania szumu.
+Format	Format
+GPU (NVIDIA)	GPU (NVIDIA)
+GPU image scaling	Skalowanie obrazu na GPU
+GPU support	Obsługa GPU
+GPU support installed: restart lightview to use it	Zainstalowano obsługę GPU: uruchom ponownie lightview, aby z niej korzystać
+General	Ogólne
+Green: how much green each pixel has	Zielony: ile zielonego ma każdy piksel
+Height	Wysokość
+Hide Drawing Toolbar	Ukryj pasek rysowania
+Hide Image Information	Ukryj informacje o obrazie
+Highlight	Zakreślenie
+Hue: the color itself, such as red or blue	Odcień: sam kolor, np. czerwony lub niebieski
+IS-Net anime — illustrations	IS-Net anime — ilustracje
+IS-Net — general, clean edges	IS-Net — ogólny, czyste krawędzie
+Image	Obraz
+Image description	Opis obrazu
+Images	Obrazy
+Input size	Rozmiar wejścia
+Installed the AI runtime	Zainstalowano środowisko AI
+Interpolation	Interpolacja
+It also makes the image {k}× bigger ({pixels}× the pixels), which takes a while for a big photo.	Powiększa też obraz {k}× (pikseli {pixels}× więcej), co przy dużym zdjęciu trochę trwa.
+It's no longer in the Trash	Nie ma go już w koszu
+Keep aspect ratio	Zachowaj proporcje
+Language	Język
+Lasso	Lasso
+Lens	Obiektyw
+Licence ({step} of {count}) — {title}	Licencja ({step} z {count}) — {title}
+Licence — {title}	Licencja — {title}
+Lightness: from black, through color, to white	Jasność: od czerni, przez kolor, do bieli
+Line	Linia
+Location	Lokalizacja
+Magnifier	Lupa
+Make lightview my default image viewer	Ustaw lightview jako moją domyślną przeglądarkę obrazów
+Make lightview the default image viewer	Ustaw lightview jako domyślną przeglądarkę obrazów
+Mean (R, G, B)	Średnia (R, G, B)
+Measure	Miarka
+Merge drawings into the image?	Scalić rysunki z obrazem?
+Model	Model
+Name	Nazwa
+Nearest	Najbliższy sąsiad
+Next Frame	Następna klatka
+Next Image	Następny obraz
+No location in this file	Brak lokalizacji w tym pliku
+No model installed yet.	Nie zainstalowano jeszcze żadnego modelu.
+No recent files	Brak ostatnich plików
+None (sRGB assumed)	Brak (przyjęto sRGB)
+Nothing to paste: {e}	Nie ma czego wkleić: {e}
+OK	OK
+ONNX export (half precision) by FuryTMP on Hugging Face; its origin isn't verified.	Eksport ONNX (połowiczna precyzja) autorstwa FuryTMP na Hugging Face; jego pochodzenie nie jest zweryfikowane.
+ONNX model	Model ONNX
+Only add models from sources you trust: they run with your permissions.	Dodawaj tylko modele z zaufanych źródeł: działają z twoimi uprawnieniami.
+Open Recent	Otwórz ostatnie
+Open in Google Maps	Otwórz w Mapach Google
+Open models folder	Otwórz folder modeli
+Open project page	Otwórz stronę projektu
+Open…	Otwórz…
+Other tags ({count})	Inne znaczniki ({count})
+Output	Wynik
+Paste	Wklej
+Pause Animation	Wstrzymaj animację
+Percentage	Procent
+Correct Perspective	Popraw perspektywę
+Play Animation	Odtwórz animację
+Please read and accept the licence before downloading.	Przeczytaj i zaakceptuj licencję przed pobraniem.
+Preprocessing: {file}	Przetwarzanie wstępne: {file}
+Previous Frame	Poprzednia klatka
+Previous Image	Poprzedni obraz
+Read the input size from the model	Odczytaj rozmiar wejścia z modelu
+Real-ESRGAN 4× half precision	Real-ESRGAN 4× połowiczna precyzja
+Real-ESRGAN 4× — upscales, smooth, may invent detail	Real-ESRGAN 4× — powiększa, gładki, może wymyślać szczegóły
+Real-ESRGAN and DarkIR can't be downloaded here. Convert them yourself with lightview-models, then copy the .onnx files into the models folder:	Real-ESRGAN i DarkIR nie można tu pobrać. Przekonwertuj je samodzielnie za pomocą lightview-models, a następnie skopiuj pliki .onnx do folderu modeli:
+Real-ESRGAN general 4× half precision	Real-ESRGAN general 4× połowiczna precyzja
+Real-ESRGAN general 4× — fast, softer	Real-ESRGAN general 4× — szybki, łagodniejszy
+Rectangle	Prostokąt
+Rectangular Selection	Zaznaczenie prostokątne
+Red: how much red each pixel has	Czerwony: ile czerwonego ma każdy piksel
+Redo	Ponów
+Remove Background	Usuń tło
+Remove Background and Crop	Usuń tło i przytnij
+Remove location from the copy	Usuń lokalizację z kopii
+Reset	Resetuj
+Reset Color Adjustments	Resetuj korekty kolorów
+Reset to default	Przywróć domyślne
+Resize	Zmień rozmiar
+Resize…	Zmień rozmiar…
+Resolution	Rozdzielczość
+Restart lightview to start using the GPU.	Uruchom ponownie lightview, aby zacząć korzystać z GPU.
+Revert	Przywróć
+Rotate Left	Obróć w lewo
+Rotate Right	Obróć w prawo
+Rounded Rectangle	Zaokrąglony prostokąt
+Run the AI tools on the graphics card ({mb} MB download, NVIDIA's CUDA libraries).	Uruchamiaj narzędzia AI na karcie graficznej (pobranie {mb} MB, biblioteki CUDA firmy NVIDIA).
+Running {file}…	Uruchamianie {file}…
+SCUNet σ15 — light noise	SCUNet σ15 — lekki szum
+SCUNet σ25 — moderate noise	SCUNet σ25 — umiarkowany szum
+SCUNet σ50 — heavy noise	SCUNet σ50 — silny szum
+SCUNet — noise and JPEG artifacts (recommended)	SCUNet — szum i artefakty JPEG (zalecany)
+Saturation	Nasycenie
+Saturation: from grey to vivid color	Nasycenie: od szarości do żywego koloru
+Save As…	Zapisz jako…
+Save copy…	Zapisz kopię…
+Saved in JPEG files	Zapisywane w plikach JPEG
+Saved {name}	Zapisano {name}
+Saves a copy of the file with this metadata (without other edits). Camera maker notes are removed.	Zapisuje kopię pliku z tymi metadanymi (bez innych zmian). Notatki producenta aparatu są usuwane.
+Select	Zaznacz
+Select All	Zaznacz wszystko
+Settings	Ustawienia
+Settings…	Ustawienia…
+Shapes	Kształty
+Show Drawing Toolbar	Pokaż pasek rysowania
+Show Image Information	Pokaż informacje o obrazie
+Silueta — small and fast	Silueta — mały i szybki
+Size read from the model when it runs; the usual normalisation.	Rozmiar odczytywany z modelu przy uruchomieniu; zwykła normalizacja.
+Sketch	Szkic
+Smoother zooming and panning. Uses more GPU memory and makes switching images a little slower.	Płynniejsze powiększanie i przesuwanie. Zużywa więcej pamięci GPU i nieco spowalnia przełączanie obrazów.
+Sort order	Kolejność sortowania
+Std (R, G, B)	Odch. std. (R, G, B)
+Stroke	Obrys
+SwinIR σ25 — moderate noise, very slow	SwinIR σ25 — umiarkowany szum, bardzo wolny
+Text	Tekst
+Text colour	Kolor tekstu
+The AI runtime isn't installed yet: Tools > Download AI Runtime…	Środowisko AI nie jest jeszcze zainstalowane: Narzędzia > Pobierz środowisko AI…
+The GPU couldn't be used, so the CPU is: {e}	Nie udało się użyć GPU, więc używany jest procesor: {e}
+The corners must form a shape with no crossing sides	Narożniki muszą tworzyć kształt bez przecinających się boków
+Thickness	Grubość
+Tint	Odcień
+Tools	Narzędzia
+Undo	Cofnij
+Use YYYY:MM:DD HH:MM:SS	Użyj formatu RRRR:MM:DD GG:MM:SS
+Use the GPU	Używaj GPU
+Used by Remove Background and Remove Background and Crop.	Używany przez Usuń tło oraz Usuń tło i przytnij.
+Uses Bilinear while GPU scaling is on	Używa dwuliniowej, gdy włączone jest skalowanie na GPU
+U²-Net people — portraits	U²-Net people — portrety
+U²-Net small — fastest	U²-Net small — najszybszy
+U²-Net — general	U²-Net — ogólny
+Value: from black to full color	Wartość: od czerni do pełnego koloru
+View	Widok
+Welcome to lightview	Witaj w lightview
+Width	Szerokość
+Your edits to {name} haven't been saved.	Zmiany w {name} nie zostały zapisane.
+Zoom	Powiększenie
+Zoom In	Powiększ
+Zoom Out	Pomniejsz
+a GPU library was missing from the download	w pobranych plikach brakowało biblioteki GPU
+about {time} left	pozostało około {time}
+can't save as .{ext}: use .jpg, .png, .webp, .bmp, .tif or .gif	nie można zapisać jako .{ext}: użyj .jpg, .png, .webp, .bmp, .tif lub .gif
+choose a new name: the original is never modified	wybierz nową nazwę: oryginał nigdy nie jest zmieniany
+compressed SVG files aren't supported	skompresowane pliki SVG nie są obsługiwane
+couldn't read this file's EXIF safely	nie udało się bezpiecznie odczytać EXIF tego pliku
+edited: {w} × {h}	po edycji: {w} × {h}
+lightview is now the default image viewer	lightview jest teraz domyślną przeglądarką obrazów
+no data folder	brak folderu danych
+no frames	brak klatek
+no subject found	nie znaleziono obiektu
+pick an .onnx file	wybierz plik .onnx
+the download didn't match its checksum	pobrany plik nie zgadza się z sumą kontrolną
+the model has no image input	model nie ma wejścia obrazu
+the model's output changed size between tiles	rozmiar wyniku modelu zmienił się między kafelkami
+the model's output doesn't match its input size	wynik modelu nie pasuje do rozmiaru wejścia
+the model's output isn't a whole multiple of its input	wynik modelu nie jest całkowitą wielokrotnością wejścia
+the written file didn't check out: the location wasn't removed	zapisany plik nie przeszedł kontroli: lokalizacja nie została usunięta
+the written file didn't check out: {e}	zapisany plik nie przeszedł kontroli: {e}
+the written file didn't check out: {label} wasn't saved	zapisany plik nie przeszedł kontroli: {label} nie zostało zapisane
+this file crashed its decoder	ten plik spowodował awarię dekodera
+this file's EXIF couldn't be processed	nie udało się przetworzyć EXIF tego pliku
+this image is too large to open	ten obraz jest zbyt duży, by go otworzyć
+this isn't a regular file	to nie jest zwykły plik
+{format}, {count} frames	{format}, klatki: {count}
+{name} is already installed	{name} jest już zainstalowany
+{name} will be moved to the Trash.	{name} zostanie przeniesiony do kosza.
+{task} done	{task}: gotowe
+{task} failed: {e}	{task}: błąd: {e}
+{task} on the GPU	{task} na GPU
+{task} preview of the visible area · drag to compare · Before | After	{task}: podgląd widocznego obszaru · przeciągnij, aby porównać · Przed | Po
+Remove Object	Usuń obiekt
+LaMa — best quality, slower	LaMa — najlepsza jakość, wolniejszy
+MI-GAN — fast	MI-GAN — szybki
+ONNX export by Carve on Hugging Face; its origin isn't verified.	Eksport ONNX autorstwa Carve na Hugging Face; jego pochodzenie nie jest zweryfikowane.
+the selection is empty	zaznaczenie jest puste
+No images in {name}	Brak obrazów w {name}
+Can't open {name}: not a supported image	Nie można otworzyć {name}: nieobsługiwany obraz
+Save Copy	Zapisz kopię
+Copy Path	Kopiuj ścieżkę
+Show in File Manager	Pokaż w menedżerze plików
+Rename…	Zmień nazwę…
+First Image	Pierwszy obraz
+Last Image	Ostatni obraz
+Copied the path	Skopiowano ścieżkę
+Rename Image	Zmień nazwę obrazu
+Rename	Zmień nazwę
+That isn't a valid file name	To nie jest prawidłowa nazwa pliku
+{name} already exists	{name} już istnieje
+File changed on disk	Plik zmienił się na dysku
+{name} changed on disk. Reloading it discards your edits.	{name} zmienił się na dysku. Ponowne wczytanie odrzuci twoje zmiany.
+Reload	Wczytaj ponownie
+Keep Edits	Zachowaj zmiany
+Pixel grid	Siatka pikseli
+Shows the edges of the pixels when zoomed far in.	Pokazuje krawędzie pikseli przy dużym powiększeniu.
+Click a pixel to copy its colour · Esc to stop	Kliknij piksel, aby skopiować jego kolor · Esc, aby zakończyć
+Copied {color}	Skopiowano {color}
+Copy Color	Kopiuj kolor
+this file is damaged or cut short	ten plik jest uszkodzony lub niekompletny
+HEIC and AVIF files need libheif, which isn't installed	Pliki HEIC i AVIF wymagają biblioteki libheif, która nie jest zainstalowana
+this file needs a libheif decoder plugin, which isn't installed	ten plik wymaga wtyczki dekodera libheif, która nie jest zainstalowana
+this file needs Microsoft's HEIF Image Extensions and HEVC or AV1 Video Extensions	ten plik wymaga rozszerzeń obrazów HEIF oraz rozszerzeń wideo HEVC lub AV1 firmy Microsoft
+Pages	Strony
+Next Page	Następna strona
+Previous Page	Poprzednia strona
+{format}, {count} pages	{format}, strony: {count}
+page {n} of {count}	strona {n} z {count}
+Colour management	Zarządzanie kolorami
+Converts images with a colour profile to sRGB, so wide-gamut photos look right on an sRGB monitor. Turn it off for a wide-gamut monitor.	Konwertuje obrazy z profilem kolorów do sRGB, aby zdjęcia o szerokiej gamie wyglądały poprawnie na monitorze sRGB. Wyłącz to przy monitorze o szerokiej gamie.
+this RAW file has no embedded preview	ten plik RAW nie ma osadzonego podglądu
+{format} (embedded preview)	{format} (osadzony podgląd)
+EXIF isn't read from this kind of RAW file yet	EXIF nie jest jeszcze odczytywany z tego rodzaju plików RAW
+A RAW file's metadata is shown, not edited.	Metadane pliku RAW są wyświetlane, ale nie edytowane.
+A WebP file's metadata is shown, not edited.	Metadane pliku WebP są wyświetlane, ale nie edytowane.
+EXIF is shown for JPEG, PNG, WebP, TIFF and RAW files	EXIF jest wyświetlany dla plików JPEG, PNG, WebP, TIFF i RAW
+the copy must be a .{ext} file	kopia musi być plikiem .{ext}
+the written file didn't check out: the image changed	zapisany plik nie przeszedł kontroli: obraz się zmienił
+Copy File	Kopiuj plik
+Copied the file	Skopiowano plik
+Couldn't copy the file: {e}	Nie udało się skopiować pliku: {e}
+Straighten…	Wyprostuj…
+Straighten	Wyprostuj
+Greyscale	Skala szarości
+Invert Colors	Odwróć kolory
+Remove Red Eye	Usuń czerwone oczy
+Pixelate Selection	Pikselizuj zaznaczenie
+Select the eyes first, then choose this.	Najpierw zaznacz oczy, a potem wybierz tę opcję.
+Hides faces. For text, a solid shape is safer: pixelation can sometimes be undone.	Ukrywa twarze. W przypadku tekstu bezpieczniejszy jest pełny kształt: pikselizację czasem da się odwrócić.
+Red eye removed	Usunięto czerwone oczy
+Pixelated	Spikselizowano
+Turn until the lines run straight · Enter to apply · Esc to cancel	Obracaj, aż linie będą proste · Enter, aby zastosować · Esc, aby anulować
+Recognize Text	Rozpoznaj tekst
+PP-OCRv5 Latin — European languages	PP-OCRv5 łaciński — języki europejskie
+PP-OCRv5 — Chinese, Japanese and English	PP-OCRv5 — chiński, japoński i angielski
+Converted to ONNX by Satoru Nakamura (University of Tokyo) from PaddlePaddle's published models.	Przekonwertowane do ONNX przez Satoru Nakamurę (Uniwersytet Tokijski) z modeli opublikowanych przez PaddlePaddle.
+the model's output doesn't match its character list	wynik modelu nie pasuje do jego listy znaków
+Read QR Code	Odczytaj kod QR
+No QR code found	Nie znaleziono kodu QR
+No text found	Nie znaleziono tekstu
+QR Code	Kod QR
+Text in Image	Tekst na obrazie
+Couldn't read the text: {e}	Nie udało się odczytać tekstu: {e}
+Reading QR codes…	Odczytywanie kodów QR…
+Recognizing text…	Rozpoznawanie tekstu…
+Reads the selection, or the whole image. Straighten tilted text first, and select small text in a large image so it's read at full size.	Odczytuje zaznaczenie lub cały obraz. Przechylony tekst najpierw wyprostuj, a mały tekst na dużym obrazie zaznacz, aby został odczytany w pełnym rozmiarze.
+Reads the selection, or the whole image. Shows what the code says; links are never opened.	Odczytuje zaznaczenie lub cały obraz. Pokazuje treść kodu; linki nigdy nie są otwierane.
+Keyboard Shortcuts	Skróty klawiszowe
+Press keys… (Esc to cancel)	Naciśnij klawisze… (Esc, aby anulować)
+Change	Zmień
+Remove	Usuń
+Reset All Shortcuts	Przywróć wszystkie skróty
+{keys} is already used by {action}	{keys} jest już używany przez: {action}
+Copy, Cut, Paste, Enter, Esc and Delete	Kopiuj, Wytnij, Wklej, Enter, Esc i Delete
+Change Keyboard Shortcuts…	Zmień skróty klawiszowe…

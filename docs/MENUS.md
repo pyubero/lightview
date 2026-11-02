@@ -1,6 +1,8 @@
 # lightview menus
 
-The menu bar as built in `src/app/menu.rs` (`menu_bar`). The bar is hidden in full screen. Each action
+The menu bar as built in `src/app/menu.rs` (`menu_bar`). The shortcuts below are the defaults: Edit →
+Settings → Change Keyboard Shortcuts… changes or removes them, and gives one to any item listed here except
+Open Recent, Cut, Copy and Paste. The bar is hidden in full screen. Each action
 appears in exactly one menu. Items are greyed out until an image is fully loaded, unless "Enabled
 when" says otherwise. `▸` marks a submenu.
 
@@ -34,7 +36,7 @@ when" says otherwise. `▸` marks a submenu.
 | Select All | Ctrl+A | | Selects the whole image. |
 | Deselect | Ctrl+Shift+A | there's a selection | |
 | — | | | |
-| Settings… | Ctrl+, | always | GPU image scaling, interpolation, background colour, pixel grid (lines between pixels from 8× up), colour management (on: images with an ICC profile are converted to sRGB as they're decoded; off: shown as stored, and Save As keeps their profile), default window size, sort order. |
+| Settings… | Ctrl+, | always | GPU image scaling, interpolation, background colour, pixel grid (lines between pixels from 8× up), colour management (on: images with an ICC profile are converted to sRGB as they're decoded; off: shown as stored, and Save As keeps their profile), default window size, sort order, and a Change Keyboard Shortcuts… button, which opens the list of menu items by menu (Change records the next key combination, refused if another item or a fixed key has it; Remove; Reset All Shortcuts). |
 
 ## View
 | Item | Shortcut | Enabled when | Does |
@@ -88,6 +90,7 @@ when" says otherwise. `▸` marks a submenu.
 | Denoise | | AI runtime and a Denoise model installed, no AI job running | Preview of the visible area first, then Apply to Whole Image / Selection. |
 | Enhance Image | | AI runtime and an Enhance model installed, no AI job running | Same flow; with an upscaler the image becomes 4× bigger. Shows a one-time notice per model. |
 | Remove Object | | AI runtime and a Remove Object model installed, a selection, no AI job running | Fills in the selection, with no preview; Ctrl+Z undoes it. |
+| Recognize Text | | AI runtime and a Recognize Text model installed, not already reading | Reads the text in the selection's bounds, or the whole image, and shows it in a window with Copy. Upright text only; a large image is searched at up to 1920 px, so select small text to read it at full size. |
 
 ## Tools
 | Item | Shortcut | Enabled when | Does |
@@ -99,6 +102,7 @@ when" says otherwise. `▸` marks a submenu.
 | Lasso | | | |
 | Measure | | | Drag a line; distance, ΔX, ΔY in image pixels (ticked while active). |
 | Copy Color | | | Click a pixel to copy its colour as `#RRGGBB` (`#RRGGBBAA` if it isn't opaque), as it's seen with the edits (ticked while active). |
+| Read QR Code | | not already reading | Reads the QR codes in the selection's bounds, or the whole image, and shows what they say with Copy. Links are never opened. |
 | — | | | |
 | Sketch | | | Freehand. |
 | Shapes ▸ | | | Rectangle, Rounded Rectangle, Ellipse, Line, Arrow. |

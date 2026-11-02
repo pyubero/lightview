@@ -11,7 +11,7 @@ ab_glyph = "0.2.32"
 # Already in the build through `png`; the checksum of the standard PNG EXIF chunk.
 crc32fast = "1.5"
 arboard = { version = "3.7.0", default-features = false, features = ["image-data"] }
-eframe = { version = "0.37.0", default-features = false, features = ["glow", "wayland", "x11", "persistence", "clipboard"] }
+eframe = { version = "0.37.0", default-features = false, features = ["glow", "wayland", "x11", "persistence", "clipboard", "accesskit"] }
 fast_image_resize = "6.1.0"
 image = { version = "0.25.10", default-features = false, features = ["jpeg", "png", "gif", "webp", "bmp", "tiff", "ico", "qoi", "tga", "pnm", "dds", "hdr", "exr"] }
 jxl = "0.8"

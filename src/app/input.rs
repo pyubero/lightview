@@ -1,4 +1,3 @@
-use super::menu::SHORTCUTS;
 use super::dialogs::Renaming;
 use super::{Action, App, Download, Grab, Pending, SelKind, Tool};
 use crate::edit::{self, Adjust, Doc, ResizeDialog};
@@ -6,7 +5,7 @@ use crate::i18n::{tr, trf};
 use crate::load::Loaded;
 use crate::markup::{self, Element, Pick, Selection, Shape, Style};
 use crate::view::{self, View};
-use eframe::egui::{self, ColorImage, CursorIcon, Key, PointerButton, Pos2, Rect, Sense, Vec2, ViewportCommand};
+use eframe::egui::{self, ColorImage, CursorIcon, Key, KeyboardShortcut, Modifiers, PointerButton, Pos2, Rect, Sense, Vec2, ViewportCommand};
 use std::sync::Arc;
 use std::time::Instant;
 
@@ -188,10 +187,10 @@ impl App {
     }
 
     /// The shortcuts pressed this frame. Plain keys (arrows, F11) and undo belong to a text field while one has focus.
-    pub(super) fn read_shortcuts(ctx: &egui::Context, typing: bool) -> Vec<Action> {
+    pub(super) fn read_shortcuts(ctx: &egui::Context, typing: bool, keys: &[(KeyboardShortcut, Action)]) -> Vec<Action> {
         let modal = ctx.memory(|m| m.top_modal_layer().is_some());
         ctx.input_mut(|i| {
-            let mut actions: Vec<Action> = SHORTCUTS
+            let mut actions: Vec<Action> = keys
                 .iter()
                 .filter(|(sc, a)| !(typing && (sc.modifiers.is_none() || matches!(a, Action::Undo | Action::Redo | Action::SelectAll | Action::Deselect))) && i.consume_shortcut(sc))
                 .map(|(_, a)| a.clone())
@@ -204,6 +203,38 @@ impl App {
             }
             actions
         })
+    }
+
+    /// Settings' Change: the next key press, with its modifiers, becomes `recording`'s shortcut
+    /// unless another action has it; Esc cancels. Nothing else sees the key, so Esc doesn't also
+    /// close Settings and Ctrl+R doesn't also rotate.
+    pub(super) fn record_shortcut(&mut self, ctx: &egui::Context) {
+        let Some(action) = self.recording.clone() else { return };
+        let pressed = ctx.input_mut(|i| {
+            let pressed = i.events.iter().find_map(|e| match e {
+                egui::Event::Key { key, pressed: true, modifiers, .. } => Some(KeyboardShortcut::new(*modifiers, *key)),
+                _ => None,
+            });
+            i.events.retain(|e| !matches!(e, egui::Event::Key { .. } | egui::Event::Copy | egui::Event::Cut | egui::Event::Paste(_) | egui::Event::Text(_)));
+            pressed
+        });
+        let Some(sc) = pressed else { return };
+        self.recording = None;
+        if sc == KeyboardShortcut::new(Modifiers::NONE, Key::Escape) {
+            return;
+        }
+        match super::menu::taken(&super::menu::shortcuts(&self.settings.shortcuts), sc, &action) {
+            Some(other) => self.shortcut_error = Some(trf("{keys} is already used by {action}", &[("keys", &ctx.format_shortcut(&sc)), ("action", &other)])),
+            None => self.set_shortcut(&action, Some(sc)),
+        }
+    }
+
+    /// Gives `action` the shortcut `sc`, or none.
+    pub(super) fn set_shortcut(&mut self, action: &Action, sc: Option<KeyboardShortcut>) {
+        let name = format!("{action:?}");
+        self.settings.shortcuts.retain(|(n, _)| *n != name);
+        self.settings.shortcuts.push((name, sc));
+        self.shortcut_error = None;
     }
 
     /// Adds this frame's clipboard events to `actions`; returns a pasted image.

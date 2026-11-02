@@ -28,7 +28,7 @@ use menu::Action;
 
 const RECENT_MAX: usize = 10;
 
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 enum SelKind {
     Rect,
     Ellipse,
@@ -175,6 +175,12 @@ pub struct App {
     reading: bool,
     /// What they read, and the dialog's title.
     found_text: Option<(&'static str, String)>,
+    /// The Keyboard Shortcuts dialog (from Settings) is open.
+    show_shortcuts: bool,
+    /// That dialog is waiting for the key combination for this action.
+    recording: Option<Action>,
+    /// Why the last key combination wasn't taken.
+    shortcut_error: Option<String>,
     /// The part of the image on screen (output px), for the Denoise / Enhance preview.
     visible: Option<Rect>,
     /// Model files being downloaded.
@@ -220,7 +226,7 @@ impl App {
             texture: None, tex_key: None, resized: None, baked: None, sharp: None, sharp_wanted: 1, flat: None, generation: 0, anim_frame: 0, anim_due: None, anim_paused: false,
             doc: None, undo: Vec::new(), redo: Vec::new(), deleted: Vec::new(), delete_prompt: false, renaming: None, watched, own_stamp: None, changed_prompt: false, navigator: None, saved: None, tool: Tool::Pan, drag_start: None, right_pan: false, crop_rect: None, perspective: None, perspective_drag: None, perspective_prompt: false, straighten: 0.0, measure: None, measure_drag: 1,
             show_toolbar, style: None, selected: None, grab: Grab::None, editing_text: None, focus_text: false, change_base: None, last_restyle: None, selection: None, element_textures: HashMap::new(),
-            resize_dialog: None, adjusting: None, curve_panel: None, pending: None, show_ai_models: false, license_prompt: None, restoring: None, restore_runs: 0, compare: None, enhance_notice: None, reading: false, found_text: None, visible: None, downloading: HashSet::new(),
+            resize_dialog: None, adjusting: None, curve_panel: None, pending: None, show_ai_models: false, license_prompt: None, restoring: None, restore_runs: 0, compare: None, enhance_notice: None, reading: false, found_text: None, show_shortcuts: false, recording: None, shortcut_error: None, visible: None, downloading: HashSet::new(),
             title: String::new(),
             window_reported: false, preview_reported: None, full_reported: false, nav_start: None, close_next: false, status: None, file_clipboard: None,
         }
@@ -889,7 +895,12 @@ impl eframe::App for App {
         self.open_dropped(dropped);
 
         let typing = ctx.egui_wants_keyboard_input();
-        let mut actions = App::read_shortcuts(&ctx, typing);
+        let mut actions = if self.recording.is_some() {
+            self.record_shortcut(&ctx);
+            Vec::new()
+        } else {
+            App::read_shortcuts(&ctx, typing, &menu::shortcuts(&self.settings.shortcuts))
+        };
         let (esc, fullscreen) = ctx.input(|i| (i.key_pressed(Key::Escape), i.viewport().fullscreen.unwrap_or(false)));
         let pasted = if typing { None } else { App::read_clipboard(&ctx, &mut actions) };
         if !fullscreen {
@@ -1779,7 +1790,7 @@ mod tests {
                 input.screen_rect = Some(Rect::from_min_size(Pos2::ZERO, Vec2::splat(400.0)));
                 input.events.push(event);
                 let mut output = ctx.run_ui(input, |ui| {
-                    found = App::read_shortcuts(ui.ctx(), false);
+                    found = App::read_shortcuts(ui.ctx(), false, &menu::shortcuts(&[]));
                     if modal {
                         egui::Modal::new(egui::Id::unique("dialog")).show(ui.ctx(), |ui| ui.label("dialog"));
                     }
@@ -1792,6 +1803,85 @@ mod tests {
         assert!(actions(egui::PointerButton::Extra2, false) == [Action::NextImage]);
         assert!(actions(egui::PointerButton::Extra1, true).is_empty());
         assert!(actions(LEFT, false).is_empty());
+    }
+
+    /// One frame with `key` pressed (with `modifiers`): what the shortcuts in `keys` fire.
+    fn shortcut_actions(keys: &[(egui::KeyboardShortcut, Action)], key: Key, modifiers: egui::Modifiers) -> Vec<Action> {
+        let ctx = egui::Context::default();
+        let mut input = egui::RawInput::default();
+        input.events.push(egui::Event::Key { key, physical_key: None, pressed: true, repeat: false, modifiers });
+        let mut found = Vec::new();
+        let mut output = ctx.run_ui(input, |ui| found = App::read_shortcuts(ui.ctx(), false, keys));
+        output.textures_delta.clear();
+        found
+    }
+
+    #[test]
+    fn shortcuts_follow_the_users_changes() {
+        let alt_c = egui::KeyboardShortcut::new(egui::Modifiers::ALT, Key::C);
+        let changes = vec![("Crop".to_string(), Some(alt_c)), ("RotateRight".to_string(), None), ("Undo".to_string(), Some(egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, Key::U)))];
+        let keys = menu::shortcuts(&changes);
+        assert!(shortcut_actions(&keys, Key::C, egui::Modifiers::ALT) == [Action::Crop]);
+        assert!(shortcut_actions(&keys, Key::R, egui::Modifiers::COMMAND).is_empty(), "removed");
+        assert!(shortcut_actions(&keys, Key::Z, egui::Modifiers::COMMAND).is_empty(), "Undo moved");
+        assert!(shortcut_actions(&keys, Key::U, egui::Modifiers::COMMAND) == [Action::Undo]);
+        assert!(shortcut_actions(&keys, Key::O, egui::Modifiers::COMMAND) == [Action::Open], "the rest stay");
+        // Ctrl+Shift+Z is Redo, not Undo, whatever the order the table was built in.
+        let defaults = menu::shortcuts(&[]);
+        let shift = egui::Modifiers { shift: true, ..egui::Modifiers::COMMAND };
+        assert!(shortcut_actions(&defaults, Key::Z, shift) == [Action::Redo]);
+        // Every default shortcut's action can be named in Settings.
+        assert!(defaults.iter().all(|(_, a)| menu::bindable().iter().any(|(b, _)| b == a)));
+    }
+
+    #[test]
+    fn closing_the_shortcuts_dialog_stops_recording() {
+        let (mut app, _) = app_with_image();
+        (app.show_shortcuts, app.recording) = (true, Some(Action::Crop));
+        let ctx = egui::Context::default();
+        let mut frame = |app: &mut App, events: Vec<egui::Event>| {
+            let input = egui::RawInput { events, ..Default::default() };
+            let mut output = ctx.run_ui(input, |ui| {
+                app.record_shortcut(ui.ctx());
+                app.shortcuts_dialog(ui.ctx());
+            });
+            output.textures_delta.clear();
+        };
+        let esc = || egui::Event::Key { key: Key::Escape, physical_key: None, pressed: true, repeat: false, modifiers: egui::Modifiers::NONE };
+        // Esc first cancels the recording only, then closes the dialog.
+        frame(&mut app, vec![esc()]);
+        assert!(app.recording.is_none() && app.show_shortcuts);
+        frame(&mut app, vec![esc()]);
+        assert!(!app.show_shortcuts);
+    }
+
+    #[test]
+    fn a_taken_shortcut_is_refused_and_named() {
+        let (mut app, _) = app_with_image();
+        let record = |app: &mut App, key: Key, modifiers: egui::Modifiers| {
+            app.recording = Some(Action::Crop);
+            let ctx = egui::Context::default();
+            let mut input = egui::RawInput::default();
+            input.events.push(egui::Event::Key { key, physical_key: None, pressed: true, repeat: false, modifiers });
+            let mut output = ctx.run_ui(input, |ui| {
+                app.record_shortcut(ui.ctx());
+                assert!(!ui.input(|i| i.key_pressed(key)), "nobody else sees the key");
+            });
+            output.textures_delta.clear();
+        };
+        record(&mut app, Key::R, egui::Modifiers::COMMAND);
+        assert!(app.shortcut_error.as_ref().unwrap().ends_with(tr("Rotate Right")), "{:?}", app.shortcut_error);
+        assert!(app.settings.shortcuts.is_empty() && app.recording.is_none());
+        record(&mut app, Key::Delete, egui::Modifiers::NONE);
+        assert!(app.shortcut_error.is_some() && app.settings.shortcuts.is_empty(), "reserved");
+        record(&mut app, Key::Escape, egui::Modifiers::NONE);
+        assert!(app.settings.shortcuts.is_empty() && app.recording.is_none(), "Esc cancels");
+        record(&mut app, Key::K, egui::Modifiers::NONE);
+        assert!(app.shortcut_error.is_none());
+        assert!(menu::shortcuts(&app.settings.shortcuts).iter().any(|(sc, a)| *a == Action::Crop && sc.logical_key == Key::K));
+        // Giving Crop's key to Crop again is fine.
+        record(&mut app, Key::K, egui::Modifiers::NONE);
+        assert!(app.shortcut_error.is_none() && app.settings.shortcuts.len() == 1);
     }
 
     #[test]

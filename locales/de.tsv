@@ -354,3 +354,11 @@ Reading QR codes…	QR-Codes werden gelesen…
 Recognizing text…	Text wird erkannt…
 Reads the selection, or the whole image. Straighten tilted text first, and select small text in a large image so it's read at full size.	Liest die Auswahl oder das ganze Bild. Schräge Schrift zuerst begradigen, und kleine Schrift in einem großen Bild auswählen, damit sie in voller Größe gelesen wird.
 Reads the selection, or the whole image. Shows what the code says; links are never opened.	Liest die Auswahl oder das ganze Bild. Zeigt, was der Code enthält; Links werden nie geöffnet.
+Keyboard Shortcuts	Tastenkürzel
+Press keys… (Esc to cancel)	Tasten drücken… (Esc zum Abbrechen)
+Change	Ändern
+Remove	Entfernen
+Reset All Shortcuts	Alle Tastenkürzel zurücksetzen
+{keys} is already used by {action}	{keys} wird schon verwendet von: {action}
+Copy, Cut, Paste, Enter, Esc and Delete	Kopieren, Ausschneiden, Einfügen, Eingabe, Esc und Entf
+Change Keyboard Shortcuts…	Tastenkürzel ändern…

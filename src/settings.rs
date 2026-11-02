@@ -128,11 +128,14 @@ pub struct Settings {
     pub pixel_grid: bool,
     /// Convert images with an ICC profile to sRGB, which assumes an sRGB monitor.
     pub color_managed: bool,
+    /// The user's changes to the keyboard shortcuts, by action (its `Debug` name, such as
+    /// "Cutout(true)"); None removes that action's shortcut.
+    pub shortcuts: Vec<(String, Option<eframe::egui::KeyboardShortcut>)>,
 }
 
 impl Default for Settings {
     fn default() -> Self {
-        Settings { gpu_scaling: false, interpolation: Interpolation::Bilinear, background: [0, 0, 0], window_size: [1280.0, 720.0], sort: SortOrder::Name, ai: AiSettings::default(), language: None, default_asked: false, font_size: DEFAULT_FONT_SIZE, pixel_grid: false, color_managed: true }
+        Settings { gpu_scaling: false, interpolation: Interpolation::Bilinear, background: [0, 0, 0], window_size: [1280.0, 720.0], sort: SortOrder::Name, ai: AiSettings::default(), language: None, default_asked: false, font_size: DEFAULT_FONT_SIZE, pixel_grid: false, color_managed: true, shortcuts: Vec::new() }
     }
 }
 
@@ -267,7 +270,7 @@ mod tests {
     fn storage_round_trip() {
         let mut ai = AiSettings { model: Some("mine.onnx".into()), ..AiSettings::default() };
         ai.overrides.insert("mine.onnx".into(), Preprocess::auto(512));
-        let s = Settings { gpu_scaling: true, interpolation: Interpolation::Lanczos3, background: [1, 2, 3], window_size: [800.0, 600.0], sort: SortOrder::DateModified, ai, language: Some(Language::German), default_asked: true, font_size: 18.0, pixel_grid: true, color_managed: false };
+        let s = Settings { gpu_scaling: true, interpolation: Interpolation::Lanczos3, background: [1, 2, 3], window_size: [800.0, 600.0], sort: SortOrder::DateModified, ai, language: Some(Language::German), default_asked: true, font_size: 18.0, pixel_grid: true, color_managed: false, shortcuts: vec![("Crop".into(), Some(eframe::egui::KeyboardShortcut::new(eframe::egui::Modifiers::ALT, eframe::egui::Key::C))), ("Undo".into(), None)] };
         // eframe stores each value as a RON string inside a RON map.
         let kv = HashMap::from([(KEY.to_string(), ron::to_string(&s).unwrap()), ("recent".to_string(), "/a".to_string())]);
         assert_eq!(parse(&ron::to_string(&kv).unwrap()), s);

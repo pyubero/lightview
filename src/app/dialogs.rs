@@ -37,6 +37,7 @@ impl App {
     /// Whichever dialogs and floating bars are open.
     pub(super) fn dialogs(&mut self, ctx: &egui::Context, viewport: Rect) {
         self.settings_dialog(ctx);
+        self.shortcuts_dialog(ctx);
         self.default_dialog(ctx);
         self.resize_dialog(ctx);
         self.ai_models_dialog(ctx);
@@ -62,6 +63,10 @@ impl App {
         let modal = egui::Modal::new(egui::Id::unique("settings")).show(ctx, |ui| {
             ui.heading(tr("Settings"));
             settings::ui(ui, &mut self.settings);
+            ui.add_space(8.0);
+            if ui.button(tr("Change Keyboard Shortcuts…")).clicked() {
+                self.show_shortcuts = true;
+            }
             ui.add_space(8.0);
             if settings::desktop_installed() {
                 if ui.button(tr("Make lightview the default image viewer")).clicked() {
@@ -90,6 +95,58 @@ impl App {
         }
         if self.settings.color_managed != color_managed {
             self.apply_color_setting();
+        }
+    }
+
+    /// Keyboard Shortcuts, over Settings: every menu action by menu, its keys, Change and Remove.
+    pub(super) fn shortcuts_dialog(&mut self, ctx: &egui::Context) {
+        if !self.show_shortcuts {
+            return;
+        }
+        let height = ctx.content_rect().height() * 0.6;
+        let modal = egui::Modal::new(egui::Id::unique("shortcuts")).show(ctx, |ui| {
+            ui.heading(tr("Keyboard Shortcuts"));
+            if let Some(e) = &self.shortcut_error {
+                ui.colored_label(ui.visuals().warn_fg_color, e);
+            }
+            let keys = super::menu::shortcuts(&self.settings.shortcuts);
+            egui::ScrollArea::vertical().max_height(height).show(ui, |ui| {
+                for (menu, items) in super::menu::bindable_menus() {
+                    ui.add_space(6.0);
+                    ui.strong(tr(menu));
+                    egui::Grid::new(("shortcuts", menu)).num_columns(3).striped(true).min_col_width(120.0).show(ui, |ui| {
+                        for (action, name) in items {
+                            ui.label(tr(name));
+                            let current: Vec<String> = keys.iter().filter(|(_, a)| *a == action).map(|(sc, _)| ui.ctx().format_shortcut(sc)).collect();
+                            if self.recording.as_ref() == Some(&action) {
+                                ui.strong(tr("Press keys… (Esc to cancel)"));
+                            } else {
+                                ui.label(current.join(", "));
+                            }
+                            ui.horizontal(|ui| {
+                                if ui.small_button(tr("Change")).clicked() {
+                                    (self.recording, self.shortcut_error) = (Some(action.clone()), None);
+                                }
+                                if !current.is_empty() && ui.small_button(tr("Remove")).clicked() {
+                                    self.set_shortcut(&action, None);
+                                }
+                            });
+                            ui.end_row();
+                        }
+                    });
+                }
+            });
+            ui.add_space(8.0);
+            ui.horizontal(|ui| {
+                if ui.button(tr("Reset All Shortcuts")).clicked() {
+                    (self.settings.shortcuts, self.recording, self.shortcut_error) = (Vec::new(), None, None);
+                }
+                ui.button(tr("Close")).clicked()
+            })
+            .inner
+        });
+        if modal.inner || modal.should_close() {
+            (self.show_shortcuts, self.recording, self.shortcut_error) = (false, None, None);
         }
     }
 
