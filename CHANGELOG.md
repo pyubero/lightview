@@ -1,8 +1,13 @@
 # Changelog
 
-## Unreleased
+## 0.3.0 (2026-11-02)
 
-- Image → Straighten…: turn the image by any angle up to 45° under a grid; it's cropped to the largest rectangle of the same shape. Ctrl+Z undoes it.
+- Image → Recognize Text reads the text in the selection, or the whole image, offline, and shows it in a dialog where you can edit and copy it. It needs the AI runtime and a text model (PP-OCRv5, Latin or Chinese/Japanese/English), downloaded from Tools → AI Models….
+- Tools → Read QR Code shows what a QR code says. Links are never opened, and nothing needs downloading.
+- Polish, Dutch and Russian. These are machine translations, so corrections are welcome: see `docs/TRANSLATING.md`.
+- Screen readers can read the menus and dialogs.
+- Settings → Change Keyboard Shortcuts… gives any menu action a shortcut. A combination that's already taken or reserved is refused, and the action that has it is named.
+- Image → Straighten…: turn the image by any angle from −180° to 180° under a grid. The canvas grows to fit the turned image, and the new corners take the background colour, or are transparent if the image has transparency. Crop afterwards if you want straight edges. Ctrl+Z undoes it.
 - The crop snaps to 1:1, 4:3, 3:2 or 16:9 (either way round) when it's within 3%, and shows the ratio.
 - Image → Greyscale and Invert Colors. Greyscale is Saturation at −1, so it shows in Adjust Color.
 - Image → Remove Red Eye and Pixelate Selection work on the selected area. Pixelation uses a randomly placed grid and random noise, so the same picture never pixelates the same way twice. For text, a solid shape is still safer.
