@@ -30,6 +30,7 @@ serde = { version = "1.0.229", features = ["derive"] }
 sha2 = "0.11"
 tiny-skia = { version = "0.11.4", default-features = false, features = ["std", "simd"] }
 trash = { version = "5.2.9", default-features = false, features = ["coinit_apartmentthreaded"] }
+rqrr = { version = "0.11", default-features = false }
 
 [target.'cfg(windows)'.dependencies]
 # Already in the dependency tree (winit); only for SetDllDirectoryW (GPU support) and the system language.

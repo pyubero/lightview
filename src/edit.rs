@@ -159,6 +159,17 @@ pub fn straighten_corners(size: Vec2, degrees: f32) -> [Pos2; 4] {
     [Vec2::new(-half.x, -half.y), Vec2::new(half.x, -half.y), half, Vec2::new(-half.x, half.y)].map(|c| centre + back * c)
 }
 
+/// What the QR codes in `img` say, as text: shown to the user, never acted on.
+pub fn read_qr(img: &image::RgbaImage) -> Vec<String> {
+    let luma = DynamicImage::ImageRgba8(img.clone()).into_luma8();
+    // A decoder of untrusted data on another thread: a panic mustn't lose the reply.
+    std::panic::catch_unwind(|| {
+        let mut prepared = rqrr::PreparedImage::prepare_from_greyscale(luma.width() as usize, luma.height() as usize, |x, y| luma.get_pixel(x as u32, y as u32)[0]);
+        prepared.detect_grids().into_iter().filter_map(|g| g.decode().ok().map(|(_, text)| text)).collect()
+    })
+    .unwrap_or_default()
+}
+
 /// Red eye: pixels whose red is half as much again as their green and their blue take the green
 /// and blue's mean as their red, which keeps a pupil dark. Skin and yellows fail that test.
 pub fn remove_red_eye(img: &mut image::RgbaImage) {
@@ -731,6 +742,13 @@ mod tests {
         let rows: Vec<u32> = (x0..x1).map(|x| (0..out.height()).min_by_key(|&y| out.get_pixel(x, y)[0]).unwrap()).collect();
         let (lo, hi) = (rows.iter().min().unwrap(), rows.iter().max().unwrap());
         assert!(hi - lo <= 2, "{lo}..{hi}");
+    }
+
+    #[test]
+    fn qr_codes_are_read() {
+        let img = image::open(concat!(env!("CARGO_MANIFEST_DIR"), "/tests/data/qr.png")).unwrap().into_rgba8();
+        assert_eq!(read_qr(&img), ["https://example.org/lightview?q=1 — señal"]);
+        assert!(read_qr(&image::RgbaImage::from_pixel(64, 64, image::Rgba([255; 4]))).is_empty());
     }
 
     #[test]

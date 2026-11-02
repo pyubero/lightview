@@ -324,6 +324,7 @@ impl App {
                 Action::DeleteSelection => self.delete_selection(),
                 Action::DeleteImage => self.delete_prompt = true,
                 Action::Cutout(crop) => self.cutout(*crop),
+                Action::ReadText(qr) => self.read_text(*qr),
                 Action::Restore(task) if *task == crate::ai::Task::Enhance && let Some(file) = self.unseen_notice() => self.enhance_notice = Some(file),
                 Action::Restore(task) => self.preview_restore(*task),
                 Action::Inpaint => self.inpaint(),

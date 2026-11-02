@@ -42,6 +42,7 @@ impl App {
         self.ai_models_dialog(ctx);
         self.license_dialog(ctx);
         self.enhance_notice_dialog(ctx);
+        self.text_dialog(ctx);
         self.restore_progress(ctx, viewport);
         self.compare_bar(ctx, viewport);
         self.adjust_panel(ctx);
@@ -173,6 +174,25 @@ impl App {
             Some(false) => self.tool = Tool::Pan,
             None if !open => self.tool = Tool::Pan,
             None => {}
+        }
+    }
+
+    /// What Recognize Text or Read QR Code read. Editable, so part of it can be selected and
+    /// copied; a QR code's link is only shown, never opened.
+    fn text_dialog(&mut self, ctx: &egui::Context) {
+        let Some((title, text)) = &mut self.found_text else { return };
+        let modal = egui::Modal::new(egui::Id::unique("found-text")).show(ctx, |ui| {
+            ui.heading(*title);
+            egui::ScrollArea::vertical().max_height(400.0).show(ui, |ui| ui.add(egui::TextEdit::multiline(text).desired_width(480.0).desired_rows(6)));
+            ui.add_space(6.0);
+            ui.horizontal(|ui| (ui.button(tr("Copy")).clicked(), ui.button(tr("Close")).clicked())).inner
+        });
+        let (copy, close) = modal.inner;
+        if copy {
+            ctx.copy_text(text.clone());
+        }
+        if copy || close || modal.should_close() {
+            self.found_text = None;
         }
     }
 

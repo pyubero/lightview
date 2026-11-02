@@ -23,15 +23,16 @@ and it never goes online on its own.
 - **Private by design.** No telemetry, no data collection, no account and no background update
   checks. lightview only connects to the internet when you ask it to, and your images stay on your
   computer.
-- **Local AI tools.** Background removal, object removal, denoising, and upscaling or low-light
-  enhancement, all running on your own machine, so your photos are never sent to a server. The
+- **Local AI tools.** Background removal, object removal, denoising, upscaling or low-light
+  enhancement, and text recognition (OCR), all running on your own machine, so your photos are never sent to a server. The
   tools are optional, and nothing is installed until you ask for it.
 - **Viewing.** Fit to window, actual size, zoom at the pointer, pan, full screen, EXIF orientation,
   colour management (photos with a colour profile, such as Display P3 or Adobe RGB, are shown in sRGB),
   camera RAW files shown instantly from the preview the camera stores in them,
   animated GIF and WebP playback with frame stepping, and SVGs that stay sharp as you zoom in. Drag
   a file or folder onto the window to open it (X11 and Windows; not supported on Wayland yet). While zoomed in, a navigator thumbnail shows where
-  you are, and a pixel grid and a Copy Color tool help with detail work. The image reloads when its
+  you are, and a pixel grid and a Copy Color tool help with detail work. Read QR Code shows what a
+  QR code says, without opening it. The image reloads when its
   file changes on disk.
 - **Editing.** Crop (snapping to common ratios), perspective correction, straighten, resize,
   rotate, flip, colour adjustments, auto levels, curves in RGB, HSL or HSV, greyscale, invert,
@@ -161,6 +162,22 @@ accept its licence.
 | Denoise | SCUNet, SwinIR |
 | Enhance Image | BSRGAN 4× |
 | Remove Object | LaMa (best quality), MI-GAN (fast) |
+| Recognize Text | PP-OCRv5 Latin (European languages), PP-OCRv5 (Chinese, Japanese and English) |
+
+### Recognize Text and QR codes
+
+Image → Recognize Text reads the selection, or the whole image if nothing is selected, and shows the
+text in a window where you can copy all of it or just a part. A few things help it:
+
+- **Level text.** It looks for horizontal lines, so straighten tilted text first (Image →
+  Straighten…). Vertical text isn't read.
+- **Select small text.** To stay fast, a large image is scanned for text at up to 1920 pixels on its
+  long side. Small print in a big photo can be missed that way; select the area and it's read at
+  full size.
+- **Printed text.** Handwriting isn't supported.
+
+Tools → Read QR Code needs no download. It shows what each QR code in the selection or image says;
+links are only shown, never opened.
 
 ### Models you convert yourself
 

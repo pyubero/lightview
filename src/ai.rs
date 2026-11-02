@@ -347,10 +347,12 @@ pub enum Task {
     Enhance,
     /// Fills in a selected area.
     Inpaint,
+    /// Finds and reads text: a recogniser, with the detector and character list as its `data`.
+    Ocr,
 }
 
 impl Task {
-    pub const ALL: [Task; 4] = [Task::Background, Task::Denoise, Task::Enhance, Task::Inpaint];
+    pub const ALL: [Task; 5] = [Task::Background, Task::Denoise, Task::Enhance, Task::Inpaint, Task::Ocr];
 
     pub fn title(self) -> &'static str {
         match self {
@@ -358,6 +360,7 @@ impl Task {
             Task::Denoise => tr("Denoise"),
             Task::Enhance => tr("Enhance Image"),
             Task::Inpaint => tr("Remove Object"),
+            Task::Ocr => tr("Recognize Text"),
         }
     }
 }
@@ -373,8 +376,9 @@ pub struct Known {
     sha256: &'static str,
     /// Where `file` (and `data`) are downloaded from.
     base: &'static str,
-    /// The weights, when the `.onnx` keeps them in a separate file: its name and sha256.
-    data: Option<(&'static str, &'static str)>,
+    /// The other files it needs, by name and sha256: the weights, when the `.onnx` keeps them
+    /// separately, or Recognize Text's detector and character list.
+    data: &'static [(&'static str, &'static str)],
     /// Background removal's input settings (image-to-image models take the image as is).
     pre: Option<Preprocess>,
     /// Who made the ONNX file, when it isn't the authors.
@@ -407,6 +411,7 @@ const SCUNET_LICENSE: License = License { project: "SCUNet", spdx: "Apache-2.0",
 const BSRGAN_LICENSE: License = License { project: "BSRGAN", spdx: "Apache-2.0", url: "https://github.com/cszn/BSRGAN", text: include_str!("../licenses/bsrgan.txt") };
 const LAMA_LICENSE: License = License { project: "LaMa", spdx: "Apache-2.0", url: "https://github.com/advimman/lama", text: include_str!("../licenses/lama.txt") };
 const MIGAN_LICENSE: License = License { project: "MI-GAN", spdx: "MIT", url: "https://github.com/Picsart-AI-Research/MI-GAN", text: include_str!("../licenses/migan.txt") };
+const PADDLEOCR_LICENSE: License = License { project: "PaddleOCR (PP-OCRv5)", spdx: "Apache-2.0", url: "https://github.com/PaddlePaddle/PaddleOCR", text: include_str!("../licenses/paddleocr.txt") };
 const SWINIR_LICENSE: License = License { project: "SwinIR", spdx: "Apache-2.0", url: "https://github.com/JingyunLiang/SwinIR", text: include_str!("../licenses/swinir.txt") };
 /// The licence files that come with the ONNX conversions (SCUNet's is KAIR's MIT licence).
 const HELIOSOPH_SCUNET_LICENSE: License = License { project: "Heliosoph/scunet-onnx (the ONNX conversion)", spdx: "MIT", url: "https://huggingface.co/Heliosoph/scunet-onnx", text: include_str!("../licenses/heliosoph-scunet.txt") };
@@ -420,30 +425,36 @@ const SWINIR: &str = "https://huggingface.co/Heliosoph/swinir-onnx/resolve/a4a77
 const BSRGAN: &str = "https://huggingface.co/FuryTMP/BSRGANx4_fp16/resolve/9359c20a3c91f930cdba220a31129ff9f8997791";
 const LAMA: &str = "https://huggingface.co/Carve/LaMa-ONNX/resolve/c3c0c9e468934d62e79c329e35d82dd09ff8c444";
 const MIGAN: &str = "https://huggingface.co/andraniksargsyan/migan/resolve/406830d0fa60666da0071c342ad2fbc8f30c5c64";
+const PPOCR: &str = "https://huggingface.co/nakamura196/ppocrv5-mobile-web-onnx/resolve/dc7e2271c00d961a4c0a38dcebe23beb735ba33e";
 const LAMA_FILE: &str = "lama_fp32.onnx";
+/// Recognize Text's detector, shared by its recognisers.
+const OCR_DETECTOR: (&str, &str) = ("PP-OCRv5_mobile_det.onnx", "6bdf743af375b13fbbeeb47a91a40063af5bfb7a7f197f6df8cb990dc827e5d6");
+const NAKAMURA: Option<&str> = Some(tr_key("Converted to ONNX by Satoru Nakamura (University of Tokyo) from PaddlePaddle's published models."));
 const HELIOSOPH: Option<&str> = Some(tr_key("Converted to ONNX by Heliosoph LLC from the authors' published weights."));
 const SCUNET_LICENSES: &[License] = &[SCUNET_LICENSE, HELIOSOPH_SCUNET_LICENSE];
 
 /// In order of preference within each task: the first one installed is that task's default.
-pub const CATALOG: [Known; 15] = [
-    Known { file: "silueta.onnx", label: tr_key("Silueta — small and fast"), task: Task::Background, mb: 44, sha256: "75da6c8d2f8096ec743d071951be73b4a8bc7b3e51d9a6625d63644f90ffeedb", base: RELEASES, data: None, pre: Some(U2NET), converted_by: None, scale: 1, max_tile: 512, notice: None, licenses: &[U2NET_LICENSE, REMBG_LICENSE] },
-    Known { file: "u2netp.onnx", label: tr_key("U²-Net small — fastest"), task: Task::Background, mb: 5, sha256: "309c8469258dda742793dce0ebea8e6dd393174f89934733ecc8b14c76f4ddd8", base: RELEASES, data: None, pre: Some(U2NET), converted_by: None, scale: 1, max_tile: 512, notice: None, licenses: &[U2NET_LICENSE] },
-    Known { file: "u2net.onnx", label: tr_key("U²-Net — general"), task: Task::Background, mb: 176, sha256: "8d10d2f3bb75ae3b6d527c77944fc5e7dcd94b29809d47a739a7a728a912b491", base: RELEASES, data: None, pre: Some(U2NET), converted_by: None, scale: 1, max_tile: 512, notice: None, licenses: &[U2NET_LICENSE] },
-    Known { file: "u2net_human_seg.onnx", label: tr_key("U²-Net people — portraits"), task: Task::Background, mb: 176, sha256: "01eb6a29a5c4d8edb30b56adad9bb3a2a0535338e480724a213e0acfd2d1c73c", base: RELEASES, data: None, pre: Some(U2NET), converted_by: None, scale: 1, max_tile: 512, notice: None, licenses: &[U2NET_LICENSE] },
-    Known { file: "isnet-general-use.onnx", label: tr_key("IS-Net — general, clean edges"), task: Task::Background, mb: 179, sha256: "60920e99c45464f2ba57bee2ad08c919a52bbf852739e96947fbb4358c0d964a", base: RELEASES, data: None, pre: Some(ISNET), converted_by: None, scale: 1, max_tile: 512, notice: None, licenses: &[DIS_LICENSE] },
-    Known { file: "isnet-anime.onnx", label: tr_key("IS-Net anime — illustrations"), task: Task::Background, mb: 176, sha256: "f15622d853e8260172812b657053460e20806f04b9e05147d49af7bed31a6e99", base: RELEASES, data: None, pre: Some(ISNET), converted_by: None, scale: 1, max_tile: 512, notice: None, licenses: &[ANIME_LICENSE] },
-    Known { file: "BiRefNet-general-bb_swin_v1_tiny-epoch_232.onnx", label: tr_key("BiRefNet lite — best quality, slow"), task: Task::Background, mb: 224, sha256: "5600024376f572a557870a5eb0afb1e5961636bef4e1e22132025467d0f03333", base: RELEASES, data: None, pre: Some(BIREFNET), converted_by: None, scale: 1, max_tile: 512, notice: None, licenses: &[BIREFNET_LICENSE] },
-    Known { file: "scunet_color_real_psnr.onnx", label: tr_key("SCUNet — noise and JPEG artifacts (recommended)"), task: Task::Denoise, mb: 77, sha256: "231be201ab413dbc999d7951caa9844846b93a12a40a41e037d6b5888ed4e88c", base: SCUNET, data: Some(("scunet_color_real_psnr.onnx.data", "98825ea1210b641c71e5f052f582c70c49fd44b35387ebe2c034268c17df3feb")), pre: None, converted_by: HELIOSOPH, scale: 1, max_tile: 512, notice: None, licenses: SCUNET_LICENSES },
-    Known { file: "scunet_color_15.onnx", label: tr_key("SCUNet σ15 — light noise"), task: Task::Denoise, mb: 77, sha256: "228dfb72f8b5e23d35c0a92048b46ada31676b34e90a1ced6d221377861ffd6b", base: SCUNET, data: Some(("scunet_color_15.onnx.data", "4f2cdeeade2744b8fefdae9d572c8c71d84bc153e4863579c5f8fe680a3b1c74")), pre: None, converted_by: HELIOSOPH, scale: 1, max_tile: 512, notice: None, licenses: SCUNET_LICENSES },
-    Known { file: "scunet_color_25.onnx", label: tr_key("SCUNet σ25 — moderate noise"), task: Task::Denoise, mb: 77, sha256: "76170f1fcb84d3b3d38c4e7133a658bbbb70504e3dc5e4e4d1f7b0c395c093be", base: SCUNET, data: Some(("scunet_color_25.onnx.data", "f46aa0f533e5bb8b2485a6531a205e270f4a7be2447880a12d97f5f00b1e70c9")), pre: None, converted_by: HELIOSOPH, scale: 1, max_tile: 512, notice: None, licenses: SCUNET_LICENSES },
-    Known { file: "scunet_color_50.onnx", label: tr_key("SCUNet σ50 — heavy noise"), task: Task::Denoise, mb: 77, sha256: "691b995af0700809ddf882265de4a68373b2d2af9d4a89daca662b828686229d", base: SCUNET, data: Some(("scunet_color_50.onnx.data", "a12e0931304ea43d3367d5f5848099e46fdafe07fd2126ed207ceca02989d446")), pre: None, converted_by: HELIOSOPH, scale: 1, max_tile: 512, notice: None, licenses: SCUNET_LICENSES },
-    Known { file: "swinir_denoising_color_25.onnx", label: tr_key("SwinIR σ25 — moderate noise, very slow"), task: Task::Denoise, mb: 55, sha256: "5fb427215c6a893b4c4aa27b6ab0aad66742fb9cb7ab24f65eff27b09cc2ea74", base: SWINIR, data: None, pre: None, converted_by: HELIOSOPH, scale: 1, max_tile: 512, notice: None, licenses: &[SWINIR_LICENSE, HELIOSOPH_SWINIR_LICENSE] },
-    Known { file: "BSRGANx4_fp16.onnx", label: tr_key("BSRGAN 4× — upscales and sharpens, may invent detail"), task: Task::Enhance, mb: 33, sha256: "9682732b50a4ab4d78a3c84220702b4063e11cccb2bf50ca27ea2b572dedd173", base: BSRGAN, data: None, pre: None, converted_by: Some(tr_key("ONNX export (half precision) by FuryTMP on Hugging Face; its origin isn't verified.")), scale: 4, max_tile: 256, notice: None, licenses: &[BSRGAN_LICENSE] },
-    Known { file: LAMA_FILE, label: tr_key("LaMa — best quality, slower"), task: Task::Inpaint, mb: 208, sha256: "1faef5301d78db7dda502fe59966957ec4b79dd64e16f03ed96913c7a4eb68d6", base: LAMA, data: None, pre: None, converted_by: Some(tr_key("ONNX export by Carve on Hugging Face; its origin isn't verified.")), scale: 1, max_tile: 512, notice: None, licenses: &[LAMA_LICENSE] },
-    Known { file: "migan_pipeline_v2.onnx", label: tr_key("MI-GAN — fast"), task: Task::Inpaint, mb: 28, sha256: "6f1f3530a1a2324b19752018ce756088b07973cda8d7d890034ace5c8a48c40b", base: MIGAN, data: None, pre: None, converted_by: None, scale: 1, max_tile: 512, notice: None, licenses: &[MIGAN_LICENSE] },
+pub const CATALOG: [Known; 17] = [
+    Known { file: "silueta.onnx", label: tr_key("Silueta — small and fast"), task: Task::Background, mb: 44, sha256: "75da6c8d2f8096ec743d071951be73b4a8bc7b3e51d9a6625d63644f90ffeedb", base: RELEASES, data: &[], pre: Some(U2NET), converted_by: None, scale: 1, max_tile: 512, notice: None, licenses: &[U2NET_LICENSE, REMBG_LICENSE] },
+    Known { file: "u2netp.onnx", label: tr_key("U²-Net small — fastest"), task: Task::Background, mb: 5, sha256: "309c8469258dda742793dce0ebea8e6dd393174f89934733ecc8b14c76f4ddd8", base: RELEASES, data: &[], pre: Some(U2NET), converted_by: None, scale: 1, max_tile: 512, notice: None, licenses: &[U2NET_LICENSE] },
+    Known { file: "u2net.onnx", label: tr_key("U²-Net — general"), task: Task::Background, mb: 176, sha256: "8d10d2f3bb75ae3b6d527c77944fc5e7dcd94b29809d47a739a7a728a912b491", base: RELEASES, data: &[], pre: Some(U2NET), converted_by: None, scale: 1, max_tile: 512, notice: None, licenses: &[U2NET_LICENSE] },
+    Known { file: "u2net_human_seg.onnx", label: tr_key("U²-Net people — portraits"), task: Task::Background, mb: 176, sha256: "01eb6a29a5c4d8edb30b56adad9bb3a2a0535338e480724a213e0acfd2d1c73c", base: RELEASES, data: &[], pre: Some(U2NET), converted_by: None, scale: 1, max_tile: 512, notice: None, licenses: &[U2NET_LICENSE] },
+    Known { file: "isnet-general-use.onnx", label: tr_key("IS-Net — general, clean edges"), task: Task::Background, mb: 179, sha256: "60920e99c45464f2ba57bee2ad08c919a52bbf852739e96947fbb4358c0d964a", base: RELEASES, data: &[], pre: Some(ISNET), converted_by: None, scale: 1, max_tile: 512, notice: None, licenses: &[DIS_LICENSE] },
+    Known { file: "isnet-anime.onnx", label: tr_key("IS-Net anime — illustrations"), task: Task::Background, mb: 176, sha256: "f15622d853e8260172812b657053460e20806f04b9e05147d49af7bed31a6e99", base: RELEASES, data: &[], pre: Some(ISNET), converted_by: None, scale: 1, max_tile: 512, notice: None, licenses: &[ANIME_LICENSE] },
+    Known { file: "BiRefNet-general-bb_swin_v1_tiny-epoch_232.onnx", label: tr_key("BiRefNet lite — best quality, slow"), task: Task::Background, mb: 224, sha256: "5600024376f572a557870a5eb0afb1e5961636bef4e1e22132025467d0f03333", base: RELEASES, data: &[], pre: Some(BIREFNET), converted_by: None, scale: 1, max_tile: 512, notice: None, licenses: &[BIREFNET_LICENSE] },
+    Known { file: "scunet_color_real_psnr.onnx", label: tr_key("SCUNet — noise and JPEG artifacts (recommended)"), task: Task::Denoise, mb: 77, sha256: "231be201ab413dbc999d7951caa9844846b93a12a40a41e037d6b5888ed4e88c", base: SCUNET, data: &[("scunet_color_real_psnr.onnx.data", "98825ea1210b641c71e5f052f582c70c49fd44b35387ebe2c034268c17df3feb")], pre: None, converted_by: HELIOSOPH, scale: 1, max_tile: 512, notice: None, licenses: SCUNET_LICENSES },
+    Known { file: "scunet_color_15.onnx", label: tr_key("SCUNet σ15 — light noise"), task: Task::Denoise, mb: 77, sha256: "228dfb72f8b5e23d35c0a92048b46ada31676b34e90a1ced6d221377861ffd6b", base: SCUNET, data: &[("scunet_color_15.onnx.data", "4f2cdeeade2744b8fefdae9d572c8c71d84bc153e4863579c5f8fe680a3b1c74")], pre: None, converted_by: HELIOSOPH, scale: 1, max_tile: 512, notice: None, licenses: SCUNET_LICENSES },
+    Known { file: "scunet_color_25.onnx", label: tr_key("SCUNet σ25 — moderate noise"), task: Task::Denoise, mb: 77, sha256: "76170f1fcb84d3b3d38c4e7133a658bbbb70504e3dc5e4e4d1f7b0c395c093be", base: SCUNET, data: &[("scunet_color_25.onnx.data", "f46aa0f533e5bb8b2485a6531a205e270f4a7be2447880a12d97f5f00b1e70c9")], pre: None, converted_by: HELIOSOPH, scale: 1, max_tile: 512, notice: None, licenses: SCUNET_LICENSES },
+    Known { file: "scunet_color_50.onnx", label: tr_key("SCUNet σ50 — heavy noise"), task: Task::Denoise, mb: 77, sha256: "691b995af0700809ddf882265de4a68373b2d2af9d4a89daca662b828686229d", base: SCUNET, data: &[("scunet_color_50.onnx.data", "a12e0931304ea43d3367d5f5848099e46fdafe07fd2126ed207ceca02989d446")], pre: None, converted_by: HELIOSOPH, scale: 1, max_tile: 512, notice: None, licenses: SCUNET_LICENSES },
+    Known { file: "swinir_denoising_color_25.onnx", label: tr_key("SwinIR σ25 — moderate noise, very slow"), task: Task::Denoise, mb: 55, sha256: "5fb427215c6a893b4c4aa27b6ab0aad66742fb9cb7ab24f65eff27b09cc2ea74", base: SWINIR, data: &[], pre: None, converted_by: HELIOSOPH, scale: 1, max_tile: 512, notice: None, licenses: &[SWINIR_LICENSE, HELIOSOPH_SWINIR_LICENSE] },
+    Known { file: "BSRGANx4_fp16.onnx", label: tr_key("BSRGAN 4× — upscales and sharpens, may invent detail"), task: Task::Enhance, mb: 33, sha256: "9682732b50a4ab4d78a3c84220702b4063e11cccb2bf50ca27ea2b572dedd173", base: BSRGAN, data: &[], pre: None, converted_by: Some(tr_key("ONNX export (half precision) by FuryTMP on Hugging Face; its origin isn't verified.")), scale: 4, max_tile: 256, notice: None, licenses: &[BSRGAN_LICENSE] },
+    Known { file: LAMA_FILE, label: tr_key("LaMa — best quality, slower"), task: Task::Inpaint, mb: 208, sha256: "1faef5301d78db7dda502fe59966957ec4b79dd64e16f03ed96913c7a4eb68d6", base: LAMA, data: &[], pre: None, converted_by: Some(tr_key("ONNX export by Carve on Hugging Face; its origin isn't verified.")), scale: 1, max_tile: 512, notice: None, licenses: &[LAMA_LICENSE] },
+    Known { file: "migan_pipeline_v2.onnx", label: tr_key("MI-GAN — fast"), task: Task::Inpaint, mb: 28, sha256: "6f1f3530a1a2324b19752018ce756088b07973cda8d7d890034ace5c8a48c40b", base: MIGAN, data: &[], pre: None, converted_by: None, scale: 1, max_tile: 512, notice: None, licenses: &[MIGAN_LICENSE] },
+    Known { file: "latin_PP-OCRv5_mobile_rec.onnx", label: tr_key("PP-OCRv5 Latin — European languages"), task: Task::Ocr, mb: 13, sha256: "46449fd0606cd07d856744703211ea6826e4642d4c803d91167c53cde01d3b94", base: PPOCR, data: &[OCR_DETECTOR, ("latin_PP-OCRv5_mobile_rec.dict.json", "705592cc40b955ac82cdfdb049ec75f0a9041824d524eeb946a913a34d285409")], pre: None, converted_by: NAKAMURA, scale: 1, max_tile: 512, notice: None, licenses: &[PADDLEOCR_LICENSE] },
+    Known { file: "PP-OCRv5_mobile_rec.onnx", label: tr_key("PP-OCRv5 — Chinese, Japanese and English"), task: Task::Ocr, mb: 22, sha256: "1205c2e14cc3ecaf7a57fe14736521ded32489603c40d98e36fe4212a70d8be5", base: PPOCR, data: &[OCR_DETECTOR, ("PP-OCRv5_mobile_rec.dict.json", "02c0a0121c577dfa211f11de21084e3abd23478a77ea4fbdf71ee7a3e990a717")], pre: None, converted_by: NAKAMURA, scale: 1, max_tile: 512, notice: None, licenses: &[PADDLEOCR_LICENSE] },
 ];
 
-const FROM_LIGHTVIEW_MODELS: Known = Known { file: "", label: "", task: Task::Enhance, mb: 0, sha256: "", base: "", data: None, pre: None, converted_by: None, scale: 4, max_tile: 256, notice: None, licenses: &[] };
+const FROM_LIGHTVIEW_MODELS: Known = Known { file: "", label: "", task: Task::Enhance, mb: 0, sha256: "", base: "", data: &[], pre: None, converted_by: None, scale: 4, max_tile: 256, notice: None, licenses: &[] };
 
 /// Where users convert the `SELF_CONVERTED` models.
 pub const LIGHTVIEW_MODELS_URL: &str = "https://github.com/pyubero/lightview-models";
@@ -482,17 +493,19 @@ fn list_models(dir: &Path) -> Vec<String> {
     let mut files: Vec<String> = entries
         .filter_map(|e| e.ok()?.file_name().into_string().ok())
         .filter(|f| f.to_ascii_lowercase().ends_with(".onnx"))
-        // A catalog model whose weights file is missing isn't usable.
-        .filter(|f| known(f).and_then(|k| k.data).is_none_or(|(data, _)| dir.join(data).is_file()))
+        // A catalog model with a file missing isn't usable.
+        .filter(|f| known(f).is_none_or(|k| k.data.iter().all(|(data, _)| dir.join(data).is_file())))
+        // Nor is another model's part (the OCR detector) a model of its own.
+        .filter(|f| !recognised().any(|k| k.data.iter().any(|(data, _)| data == f)))
         .collect();
     files.sort();
     files
 }
 
 /// The installed models that can do `task`: those it knows for `task`, and any model it doesn't
-/// know, except for Inpaint, whose inputs differ per model.
+/// know, except for Inpaint and Recognize Text, whose inputs differ per model.
 pub fn for_task(task: Task, installed: &[String]) -> Vec<String> {
-    installed.iter().filter(|f| known(f).map_or(task != Task::Inpaint, |k| k.task == task)).cloned().collect()
+    installed.iter().filter(|f| known(f).map_or(!matches!(task, Task::Inpaint | Task::Ocr), |k| k.task == task)).cloned().collect()
 }
 
 /// The model `task` uses: the user's choice if it's installed, else the first installed model
@@ -519,7 +532,7 @@ pub fn download(k: &Known) -> Result<(), String> {
 
 fn download_to(dir: &Path, k: &Known) -> Result<(), String> {
     std::fs::create_dir_all(dir).map_err(|e| e.to_string())?;
-    let files: Vec<(&str, &str)> = std::iter::once((k.file, k.sha256)).chain(k.data).collect();
+    let files: Vec<(&str, &str)> = std::iter::once((k.file, k.sha256)).chain(k.data.iter().copied()).collect();
     let part = |name: &str| dir.join(format!("{name}.part"));
     // Fetch and check every file before installing any, so a failure leaves nothing half-installed.
     for (name, sha) in &files {
@@ -803,6 +816,155 @@ pub fn inpaint(file: &str, img: &RgbaImage, region: Rect, hole: &GrayImage, canc
     });
     *INPAINTER.lock().unwrap() = Some((key, session));
     if cancel.load(Ordering::Relaxed) { Err("cancelled".to_string()) } else { result }
+}
+
+/// Recognize Text: the text in `img`, a line per row. `file` is the recogniser; the detector
+/// and its character list come with it (`Known.data`). Follows PaddleOCR's own settings.
+pub fn read_text(file: &str, img: &RgbaImage) -> Result<String, String> {
+    let dir = models_dir()?;
+    let dict = std::fs::read_to_string(dir.join(file.replace(".onnx", ".dict.json"))).map_err(|e| e.to_string())?;
+    let dict: Vec<String> = ron::from_str(&dict).map_err(|e| e.to_string())?;
+    let (w, h) = img.dimensions();
+    if w == 0 || h == 0 {
+        return Ok(String::new());
+    }
+    // Detection: the long side at most 1920 px, the short one at least 64, both multiples of 32.
+    // Lines are then read from the full-size image, so this only costs the smallest text.
+    // shortcut: PaddleOCR allows 4000, but that took 8 s for 12 MP here (1920: 1.5 s, same text read); selecting tiny text first reads it at full size.
+    let long = w.max(h) as f32;
+    let scale = if long > 1920.0 { 1920.0 / long } else { (64.0 / w.min(h) as f32).max(1.0) };
+    let side = |v: u32| (((v as f32 * scale / 32.0).round() as u32) * 32).clamp(32, 4096);
+    let (dw, dh) = (side(w), side(h));
+    let rgb = DynamicImage::ImageRgba8(img.clone()).into_rgb8();
+    let small = image::imageops::resize(&rgb, dw, dh, FilterType::Triangle);
+    let input = bgr_planes(&small, |v, c| (v / 255.0 - IMAGENET_MEAN[c]) / IMAGENET_STD[c]);
+    let mut detector = session(OCR_DETECTOR.0)?;
+    let tensor = ort::value::Tensor::from_array(([1usize, 3, dh as usize, dw as usize], input)).map_err(|e| e.to_string())?;
+    let outputs = detector.run(ort::inputs![tensor]).map_err(|e| e.to_string())?;
+    let (_, prob) = outputs[0].try_extract_tensor::<f32>().map_err(|e| e.to_string())?;
+    let prob = prob.get(..(dw * dh) as usize).ok_or(tr("the model's output doesn't match its input size"))?;
+    let (sx, sy) = (w as f32 / dw as f32, h as f32 / dh as f32);
+    let boxes: Vec<Rect> = text_boxes(prob, dw, dh).into_iter().map(|r| Rect::from_min_max(Pos2::new(r.min.x * sx, r.min.y * sy), Pos2::new(r.max.x * sx, r.max.y * sy)).intersect(Rect::from_min_size(Pos2::ZERO, egui::vec2(w as f32, h as f32)))).collect();
+    drop(outputs);
+    drop(detector);
+    // Recognition, a line at a time: 48 px high, at least 320 wide (zero padded), at most 3200.
+    let mut recogniser = session(file)?;
+    let mut lines = Vec::new();
+    for b in boxes {
+        if b.width() < 1.0 || b.height() < 1.0 {
+            continue;
+        }
+        let (x, y, bw, bh) = (b.min.x as u32, b.min.y as u32, (b.width() as u32).max(1), (b.height() as u32).max(1));
+        let line = image::imageops::crop_imm(&rgb, x, y, bw.min(w - x), bh.min(h - y)).to_image();
+        let lw = ((48.0 * line.width() as f32 / line.height() as f32).ceil() as u32).clamp(1, 3200);
+        let line = image::imageops::resize(&line, lw, 48, FilterType::Triangle);
+        let pw = lw.max(320) as usize;
+        let mut input = vec![0f32; 3 * 48 * pw];
+        for (c, plane) in bgr_planes(&line, |v, _| v / 127.5 - 1.0).chunks(48 * lw as usize).enumerate() {
+            for (row, src) in plane.chunks(lw as usize).enumerate() {
+                input[c * 48 * pw + row * pw..][..lw as usize].copy_from_slice(src);
+            }
+        }
+        let tensor = ort::value::Tensor::from_array(([1usize, 3, 48, pw], input)).map_err(|e| e.to_string())?;
+        let outputs = recogniser.run(ort::inputs![tensor]).map_err(|e| e.to_string())?;
+        let (shape, probs) = outputs[0].try_extract_tensor::<f32>().map_err(|e| e.to_string())?;
+        let classes = shape.iter().last().copied().unwrap_or(0) as usize;
+        if classes != dict.len() + 2 {
+            return Err(tr("the model's output doesn't match its character list").into());
+        }
+        let text = ctc_decode(probs, classes, &dict);
+        if !text.trim().is_empty() {
+            lines.push((b, text.trim().to_string()));
+        }
+    }
+    Ok(join_lines(lines))
+}
+
+/// `img` as channel-first blue, green, red planes (OpenCV's order, which PaddleOCR trained on),
+/// each value passed through `f(value, rgb channel)`.
+fn bgr_planes(img: &image::RgbImage, f: impl Fn(f32, usize) -> f32) -> Vec<f32> {
+    let plane = (img.width() * img.height()) as usize;
+    let mut out = vec![0f32; 3 * plane];
+    for (i, px) in img.pixels().enumerate() {
+        for c in 0..3 {
+            out[(2 - c) * plane + i] = f(px[c] as f32, c);
+        }
+    }
+    out
+}
+
+/// The text boxes in a detector's probability map (`w`×`h`, its px), as PaddleOCR's DB post-processing
+/// finds them: pixels over 0.3, joined into blobs, kept if their mean is at least 0.6, then grown by
+/// area × 1.5 / perimeter, since the model marks a shrunk core of each line.
+// shortcut: upright boxes, not rotated ones, so tilted text needs Straighten first; vertical text isn't turned.
+fn text_boxes(prob: &[f32], w: u32, h: u32) -> Vec<Rect> {
+    let (w, h) = (w as usize, h as usize);
+    let mut seen = vec![false; w * h];
+    let mut boxes = Vec::new();
+    let mut stack = Vec::new();
+    for start in 0..w * h {
+        if seen[start] || prob[start] <= 0.3 {
+            continue;
+        }
+        seen[start] = true;
+        stack.push(start);
+        let (mut x0, mut y0, mut x1, mut y1, mut sum, mut n) = (w, h, 0, 0, 0.0, 0usize);
+        while let Some(i) = stack.pop() {
+            let (x, y) = (i % w, i / w);
+            (x0, y0, x1, y1) = (x0.min(x), y0.min(y), x1.max(x), y1.max(y));
+            sum += prob[i];
+            n += 1;
+            let neighbours = [(x > 0).then(|| i - 1), (x + 1 < w).then(|| i + 1), (y > 0).then(|| i - w), (y + 1 < h).then(|| i + w)];
+            for j in neighbours.into_iter().flatten() {
+                if !seen[j] && prob[j] > 0.3 {
+                    seen[j] = true;
+                    stack.push(j);
+                }
+            }
+        }
+        let (bw, bh) = ((x1 - x0 + 1) as f32, (y1 - y0 + 1) as f32);
+        if bw.min(bh) < 3.0 || sum / (n as f32) < 0.6 {
+            continue;
+        }
+        let grow = bw * bh * 1.5 / (2.0 * (bw + bh));
+        boxes.push(Rect::from_min_max(Pos2::new(x0 as f32, y0 as f32), Pos2::new(x1 as f32 + 1.0, y1 as f32 + 1.0)).expand(grow));
+    }
+    boxes
+}
+
+/// A recogniser's output (`classes` probabilities per step) as text: the likeliest class at each
+/// step, repeats merged, blanks (class 0) dropped; class k + 1 is `dict[k]`, the last one a space.
+fn ctc_decode(probs: &[f32], classes: usize, dict: &[String]) -> String {
+    let mut text = String::new();
+    let mut last = 0;
+    for step in probs.chunks_exact(classes) {
+        let best = step.iter().enumerate().max_by(|a, b| a.1.total_cmp(b.1)).map_or(0, |(i, _)| i);
+        if best != last && best != 0 {
+            text.push_str(dict.get(best - 1).map_or(" ", |s| s.as_str()));
+        }
+        last = best;
+    }
+    text
+}
+
+/// Lines read from `boxes` in reading order: a box whose middle lies within a row's first box
+/// joins that row; rows top to bottom, boxes in a row left to right.
+fn join_lines(mut boxes: Vec<(Rect, String)>) -> String {
+    boxes.sort_by(|a, b| a.0.min.y.total_cmp(&b.0.min.y));
+    let mut rows: Vec<(Rect, Vec<(Rect, String)>)> = Vec::new();
+    for (r, text) in boxes {
+        match rows.iter_mut().find(|(first, _)| first.y_range().contains(r.center().y)) {
+            Some((_, row)) => row.push((r, text)),
+            None => rows.push((r, vec![(r, text)])),
+        }
+    }
+    rows.into_iter()
+        .map(|(_, mut row)| {
+            row.sort_by(|a, b| a.0.min.x.total_cmp(&b.0.min.x));
+            row.into_iter().map(|(_, t)| t).collect::<Vec<_>>().join(" ")
+        })
+        .collect::<Vec<_>>()
+        .join("\n")
 }
 
 /// The model's input size, from its first input's shape (…, H, W); 1024 when it's dynamic.
@@ -1165,8 +1327,9 @@ mod tests {
         for k in &CATALOG {
             assert_eq!(k.pre.is_some(), k.task == Task::Background, "{}", k.file);
             assert_eq!(k.sha256.len(), 64, "{}", k.file);
-            if let Some((data, sha)) = k.data {
-                assert_eq!((data, sha.len()), (&*format!("{}.data", k.file), 64));
+            for (data, sha) in k.data {
+                assert_eq!(sha.len(), 64, "{data}");
+                assert!(k.task == Task::Ocr || *data == format!("{}.data", k.file), "{data}");
             }
         }
         // Each task's first entry is its default.
@@ -1186,7 +1349,7 @@ mod tests {
         let sha = |f: &str| sha256_file(&src.join(f)).unwrap();
         let (graph, weights) = (sha("m.onnx").leak() as &str, sha("m.onnx.data").leak() as &str);
         let base = file_url(&src).leak();
-        let known = |data_sha: &'static str| Known { file: "m.onnx", label: "", task: Task::Denoise, mb: 0, sha256: graph, base, data: Some(("m.onnx.data", data_sha)), pre: None, converted_by: None, scale: 1, max_tile: 512, notice: None, licenses: &[] };
+        let known = |data_sha: &'static str| Known { file: "m.onnx", label: "", task: Task::Denoise, mb: 0, sha256: graph, base, data: vec![("m.onnx.data", data_sha)].leak(), pre: None, converted_by: None, scale: 1, max_tile: 512, notice: None, licenses: &[] };
         // A bad weights checksum installs nothing, not even the good .onnx.
         assert!(download_to(&dest, &known("0000")).is_err());
         let leftovers: Vec<_> = std::fs::read_dir(&dest).unwrap().collect();
@@ -1490,5 +1653,115 @@ mod tests {
         let out = std::env::temp_dir().join(format!("{}-cutout.png", path.file_stem().unwrap().to_string_lossy()));
         cutout(&img, &mask).save(&out).unwrap();
         eprintln!("wrote {}", out.display());
+    }
+
+    #[test]
+    fn ctc_merges_repeats_and_drops_blanks() {
+        let dict: Vec<String> = ["a", "b"].map(String::from).to_vec();
+        // Classes: blank, a, b, space. Steps: a a blank a b space b.
+        let steps = [1, 1, 0, 1, 2, 3, 2];
+        let probs: Vec<f32> = steps.iter().flat_map(|&s| (0..4).map(move |c| if c == s { 0.9 } else { 0.03 })).collect();
+        assert_eq!(ctc_decode(&probs, 4, &dict), "aab b");
+    }
+
+    #[test]
+    fn text_boxes_keep_confident_blobs_grown() {
+        let (w, h) = (40u32, 20u32);
+        let mut prob = vec![0f32; (w * h) as usize];
+        let mut fill = |x0: u32, y0: u32, x1: u32, y1: u32, v: f32| (y0..y1).for_each(|y| (x0..x1).for_each(|x| prob[(y * w + x) as usize] = v));
+        fill(2, 2, 12, 6, 0.9); // A line.
+        fill(20, 10, 36, 14, 0.4); // Too faint on average.
+        fill(2, 12, 4, 18, 0.9); // Too thin.
+        let boxes = text_boxes(&prob, w, h);
+        assert_eq!(boxes.len(), 1, "{boxes:?}");
+        // 10 × 4 grown by 10·4·1.5 / 28 on each side.
+        let g = 60.0 / 28.0;
+        assert!((boxes[0].min.x - (2.0 - g)).abs() < 1e-4 && (boxes[0].max.y - (6.0 + g)).abs() < 1e-4, "{boxes:?}");
+    }
+
+    #[test]
+    fn lines_join_in_reading_order() {
+        let r = |x: f32, y: f32| Rect::from_min_size(Pos2::new(x, y), egui::vec2(50.0, 20.0));
+        let boxes = vec![(r(0.0, 40.0), "third".into()), (r(80.0, 3.0), "second".into()), (r(0.0, 0.0), "first".into())];
+        assert_eq!(join_lines(boxes), "first second\nthird");
+        assert_eq!(join_lines(Vec::new()), "");
+    }
+
+    #[test]
+    fn ocr_parts_are_not_models_and_are_needed() {
+        let dir = std::env::temp_dir().join(format!("lightview-ocr-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let latin = &CATALOG.iter().find(|k| k.task == Task::Ocr).unwrap();
+        std::fs::write(dir.join(latin.file), b"").unwrap();
+        std::fs::write(dir.join(OCR_DETECTOR.0), b"").unwrap();
+        let without_dict = list_models(&dir);
+        std::fs::write(dir.join(latin.data[1].0), b"").unwrap();
+        let with_dict = list_models(&dir);
+        std::fs::remove_dir_all(&dir).unwrap();
+        assert!(without_dict.is_empty(), "{without_dict:?}");
+        assert_eq!(with_dict, [latin.file]);
+        // A model lightview doesn't know isn't offered for reading text.
+        assert!(for_task(Task::Ocr, &["mine.onnx".into()]).is_empty());
+    }
+
+    #[test]
+    fn character_lists_parse() {
+        let dict: Vec<String> = ron::from_str(r#"["a","\"","\\","ß","🇩🇪"]"#).unwrap();
+        assert_eq!(dict, ["a", "\"", "\\", "ß", "🇩🇪"]);
+    }
+
+    /// Prints the text in `LIGHTVIEW_AI` and how long reading it took.
+    #[test]
+    #[ignore]
+    fn read_text_photo() {
+        let img = image::open(std::env::var("LIGHTVIEW_AI").unwrap()).unwrap().into_rgba8();
+        let file = std::env::var("LIGHTVIEW_AI_MODEL").unwrap_or("latin_PP-OCRv5_mobile_rec.onnx".into());
+        let t = std::time::Instant::now();
+        let text = read_text(&file, &img).unwrap();
+        eprintln!("{}×{} in {} ms:\n{text}", img.width(), img.height(), t.elapsed().as_millis());
+    }
+
+    /// Done when printed text in the six UI languages is read back: one sentence per language,
+    /// drawn with Roboto. `LIGHTVIEW_AI_MODEL` picks the recogniser (default: Latin).
+    #[test]
+    #[ignore]
+    fn read_text_languages() {
+        use ab_glyph::{Font, ScaleFont};
+        let lines = [
+            "The quick brown fox jumps over the lazy dog.",
+            "Größe, Straße und Übung für Bäcker.",
+            "El niño comió piñas en el año pasado.",
+            "Le garçon élève où la fenêtre était.",
+            "Perché la città è più bella così.",
+            "A ação e a coração também são nossas.",
+        ];
+        let font = ab_glyph::FontRef::try_from_slice(include_bytes!("../fonts/Roboto-Regular.ttf")).unwrap();
+        let scaled = font.as_scaled(32.0);
+        let mut img = RgbaImage::from_pixel(900, 60 * lines.len() as u32 + 40, image::Rgba([255; 4]));
+        for (row, line) in lines.iter().enumerate() {
+            let mut x = 30.0;
+            for c in line.chars() {
+                let mut glyph = scaled.scaled_glyph(c);
+                glyph.position = ab_glyph::point(x, 60.0 + 60.0 * row as f32);
+                x += scaled.h_advance(glyph.id);
+                if let Some(outline) = font.outline_glyph(glyph) {
+                    let b = outline.px_bounds();
+                    outline.draw(|gx, gy, v| {
+                        let px = img.get_pixel_mut(b.min.x as u32 + gx, b.min.y as u32 + gy);
+                        let ink = (255.0 * (1.0 - v)) as u8;
+                        px.0 = [ink.min(px[0]), ink.min(px[1]), ink.min(px[2]), 255];
+                    });
+                }
+            }
+        }
+        let file = std::env::var("LIGHTVIEW_AI_MODEL").unwrap_or("latin_PP-OCRv5_mobile_rec.onnx".into());
+        let t = std::time::Instant::now();
+        let text = read_text(&file, &img).unwrap();
+        eprintln!("{} ms:\n{text}", t.elapsed().as_millis());
+        let expected = if file.starts_with("latin") { &lines[..] } else { &lines[..1] };
+        let got: Vec<&str> = text.lines().collect();
+        for (i, line) in expected.iter().enumerate() {
+            assert_eq!(got.get(i), Some(line), "line {i}");
+        }
     }
 }

@@ -78,6 +78,8 @@ pub enum Msg {
     /// Denoise / Enhance run `id` finished `region` (output px) of this image: the result and how
     /// long it took per megapixel. `whole` is false for the preview.
     Restored(u64, PathBuf, egui::Rect, bool, Result<(image::RgbaImage, f64), String>),
+    /// Recognize Text (or Read QR Code, when true) finished: what it read.
+    TextFound(bool, Result<String, String>),
     /// A model download finished.
     Downloaded(String, Result<(), String>),
     /// A model's input size was read.

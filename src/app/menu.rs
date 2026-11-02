@@ -67,6 +67,8 @@ pub(super) enum Action {
     Restore(crate::ai::Task),
     /// Remove Object: fills in the selection.
     Inpaint,
+    /// Recognize Text, or Read QR Code when true: the selection, or the whole image.
+    ReadText(bool),
     DownloadRuntime,
     AiModels,
 }
@@ -251,6 +253,10 @@ impl App {
                 item(ui, tr("Denoise"), Action::Restore(Task::Denoise), ready(Task::Denoise), actions);
                 item(ui, tr("Enhance Image"), Action::Restore(Task::Enhance), ready(Task::Enhance), actions);
                 item(ui, tr("Remove Object"), Action::Inpaint, ready(Task::Inpaint) && self.selection.is_some(), actions);
+                let hint = tr("Reads the selection, or the whole image. Straighten tilted text first, and select small text in a large image so it's read at full size.");
+                if ui.add_enabled(ready(Task::Ocr) && !self.reading, egui::Button::new(tr("Recognize Text"))).on_hover_text(hint).on_disabled_hover_text(hint).clicked() {
+                    actions.push(Action::ReadText(false));
+                }
             });
             ui.menu_button(tr("Tools"), |ui| {
                 let label = if self.show_toolbar { tr("Hide Drawing Toolbar") } else { tr("Show Drawing Toolbar") };
@@ -267,6 +273,10 @@ impl App {
                 }
                 if ui.add_enabled(has_image, egui::Button::selectable(self.tool == Tool::CopyColor, tr("Copy Color"))).clicked() {
                     actions.push(Action::CopyColor);
+                }
+                let hint = tr("Reads the selection, or the whole image. Shows what the code says; links are never opened.");
+                if ui.add_enabled(has_image && !self.reading, egui::Button::new(tr("Read QR Code"))).on_hover_text(hint).on_disabled_hover_text(hint).clicked() {
+                    actions.push(Action::ReadText(true));
                 }
                 ui.separator();
                 item(ui, tr("Sketch"), Action::Pick(Pick::Draw(Shape::Sketch)), has_image, actions);

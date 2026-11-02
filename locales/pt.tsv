@@ -339,3 +339,18 @@ Hides faces. For text, a solid shape is safer: pixelation can sometimes be undon
 Red eye removed	Olhos vermelhos removidos
 Pixelated	Pixelizado
 Turn until the lines run straight · Enter to apply · Esc to cancel	Rode até as linhas ficarem direitas · Enter para aplicar · Esc para cancelar
+Recognize Text	Reconhecer texto
+PP-OCRv5 Latin — European languages	PP-OCRv5 latino — línguas europeias
+PP-OCRv5 — Chinese, Japanese and English	PP-OCRv5 — chinês, japonês e inglês
+Converted to ONNX by Satoru Nakamura (University of Tokyo) from PaddlePaddle's published models.	Convertido para ONNX por Satoru Nakamura (Universidade de Tóquio) a partir dos modelos publicados pela PaddlePaddle.
+the model's output doesn't match its character list	a saída do modelo não corresponde à sua lista de caracteres
+Read QR Code	Ler código QR
+No QR code found	Nenhum código QR encontrado
+No text found	Nenhum texto encontrado
+QR Code	Código QR
+Text in Image	Texto na imagem
+Couldn't read the text: {e}	Não foi possível ler o texto: {e}
+Reading QR codes…	A ler códigos QR…
+Recognizing text…	A reconhecer texto…
+Reads the selection, or the whole image. Straighten tilted text first, and select small text in a large image so it's read at full size.	Lê a seleção ou a imagem inteira. Endireite primeiro o texto inclinado e selecione o texto pequeno numa imagem grande para que seja lido em tamanho real.
+Reads the selection, or the whole image. Shows what the code says; links are never opened.	Lê a seleção ou a imagem inteira. Mostra o que o código diz; as ligações nunca são abertas.

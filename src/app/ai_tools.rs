@@ -57,6 +57,35 @@ impl App {
         });
     }
 
+    /// Recognize Text, or Read QR Code when `qr`, on the selection's bounds (or the whole edited
+    /// image) on another thread.
+    // shortcut: no progress or Cancel (≈ 2 s for a page on the CPU); add them if big images take long.
+    pub(super) fn read_text(&mut self, qr: bool) {
+        let Some((l, doc)) = self.current().and_then(|p| Some((self.cache.get(p)?.clone(), self.doc()?))) else { return };
+        let task = crate::ai::Task::Ocr;
+        let file = if qr { None } else { Some(crate::ai::choose(self.settings.ai.choice(task), task, &crate::ai::installed())) };
+        if self.reading || file == Some(None) {
+            return;
+        }
+        let region = self.selection.as_ref().filter(|s| !s.is_empty()).map(|s| Rect::from_min_max(s.bbox().min.floor(), s.bbox().max.ceil()).intersect(doc.bounds())).filter(|r| r.width() >= 1.0 && r.height() >= 1.0);
+        self.reading = true;
+        self.set_status(if qr { tr("Reading QR codes…") } else { tr("Recognizing text…") });
+        let notify = self.notify.clone();
+        std::thread::spawn(move || {
+            let result = edit::render(&l.frames[0], &doc).and_then(|img| {
+                let mut img = img.into_rgba8();
+                if let Some(r) = region {
+                    img = image::imageops::crop_imm(&img, r.min.x as u32, r.min.y as u32, r.width() as u32, r.height() as u32).to_image();
+                }
+                match file.flatten() {
+                    Some(file) => crate::ai::read_text(&file, &img),
+                    None => Ok(edit::read_qr(&img).join("\n")),
+                }
+            });
+            notify.send(Msg::TextFound(qr, result));
+        });
+    }
+
     /// Denoise / Enhance on the part of the image on screen (at most 256 px square, so it takes
     /// seconds), for the before/after preview.
     pub(super) fn preview_restore(&mut self, task: crate::ai::Task) {

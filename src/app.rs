@@ -171,6 +171,10 @@ pub struct App {
     compare: Option<Compare>,
     /// Enhance Image waiting for the user to read its model's notice: the model file.
     enhance_notice: Option<String>,
+    /// Recognize Text or Read QR Code is running.
+    reading: bool,
+    /// What they read, and the dialog's title.
+    found_text: Option<(&'static str, String)>,
     /// The part of the image on screen (output px), for the Denoise / Enhance preview.
     visible: Option<Rect>,
     /// Model files being downloaded.
@@ -216,7 +220,7 @@ impl App {
             texture: None, tex_key: None, resized: None, baked: None, sharp: None, sharp_wanted: 1, flat: None, generation: 0, anim_frame: 0, anim_due: None, anim_paused: false,
             doc: None, undo: Vec::new(), redo: Vec::new(), deleted: Vec::new(), delete_prompt: false, renaming: None, watched, own_stamp: None, changed_prompt: false, navigator: None, saved: None, tool: Tool::Pan, drag_start: None, right_pan: false, crop_rect: None, perspective: None, perspective_drag: None, perspective_prompt: false, straighten: 0.0, measure: None, measure_drag: 1,
             show_toolbar, style: None, selected: None, grab: Grab::None, editing_text: None, focus_text: false, change_base: None, last_restyle: None, selection: None, element_textures: HashMap::new(),
-            resize_dialog: None, adjusting: None, curve_panel: None, pending: None, show_ai_models: false, license_prompt: None, restoring: None, restore_runs: 0, compare: None, enhance_notice: None, visible: None, downloading: HashSet::new(),
+            resize_dialog: None, adjusting: None, curve_panel: None, pending: None, show_ai_models: false, license_prompt: None, restoring: None, restore_runs: 0, compare: None, enhance_notice: None, reading: false, found_text: None, visible: None, downloading: HashSet::new(),
             title: String::new(),
             window_reported: false, preview_reported: None, full_reported: false, nav_start: None, close_next: false, status: None, file_clipboard: None,
         }
@@ -312,6 +316,17 @@ impl App {
                 }
                 Err(e) => self.set_status(trf("Couldn't read {file}: {e}", &[("file", &file), ("e", &e)])),
             },
+            Msg::TextFound(qr, result) => {
+                self.reading = false;
+                match result {
+                    Ok(text) if text.trim().is_empty() => self.set_status(if qr { tr("No QR code found") } else { tr("No text found") }),
+                    Ok(text) => {
+                        self.status = None;
+                        self.found_text = Some((if qr { tr("QR Code") } else { tr("Text in Image") }, text));
+                    }
+                    Err(e) => self.set_status(trf("Couldn't read the text: {e}", &[("e", &e)])),
+                }
+            }
             Msg::Cutout(path, result) => match result {
                 Ok((img, object)) if self.current() == Some(&path) => {
                     let Some(doc) = self.doc() else { return };
@@ -1399,6 +1414,24 @@ mod tests {
         assert_eq!((app.doc().unwrap().adjust.saturation, app.doc().unwrap().adjust.invert), (-1.0, false));
         app.run_actions(&[Action::Greyscale], &ctx, false);
         assert!(app.doc().unwrap().adjust.is_identity(), "Greyscale toggles back");
+    }
+
+    #[test]
+    fn read_text_shows_what_it_found() {
+        let (mut app, path) = app_with_image();
+        let frame = Frame { w: 8, h: 8, pixels: vec![255; 8 * 8 * 3], alpha: false, delay: std::time::Duration::ZERO };
+        app.cache.insert(path, Arc::new(Loaded { frames: vec![frame], file_size: 6, svg: None }));
+        app.run_actions(&[Action::ReadText(true)], &egui::Context::default(), false);
+        assert!(app.reading);
+        // A blank image has no QR code: the thread says so.
+        while app.reading {
+            let msg = app.rx.recv_timeout(std::time::Duration::from_secs(10)).unwrap();
+            app.handle(msg);
+        }
+        assert!(app.found_text.is_none() && app.found_text.is_none());
+        assert_eq!(app.status.as_ref().unwrap().0, tr("No QR code found"));
+        app.handle(Msg::TextFound(false, Ok("Hola".into())));
+        assert_eq!(app.found_text, Some((tr("Text in Image"), "Hola".to_string())));
     }
 
     #[test]
