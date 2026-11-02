@@ -317,3 +317,5 @@ Next Page	Nächste Seite
 Previous Page	Vorherige Seite
 {format}, {count} pages	{format}, {count} Seiten
 page {n} of {count}	Seite {n} von {count}
+Colour management	Farbverwaltung
+Converts images with a colour profile to sRGB, so wide-gamut photos look right on an sRGB monitor. Turn it off for a wide-gamut monitor.	Wandelt Bilder mit Farbprofil nach sRGB um, damit Fotos mit großem Farbraum auf einem sRGB-Monitor richtig aussehen. Für einen Monitor mit großem Farbraum ausschalten.

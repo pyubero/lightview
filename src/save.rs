@@ -73,9 +73,11 @@ pub fn reserve_copy(source: &Path) -> Result<PathBuf, String> {
 
 /// Saves `frame` with the edits in `doc` to `dest`, in the format of its extension.
 /// EXIF from `source` is kept, with the orientation reset (the pixels are already upright)
-/// and the old thumbnail unlinked. Writes to a temporary file first, so a failed save never
-/// damages an existing file (including the original).
-pub fn save(frame: &Frame, doc: &Doc, source: &Path, dest: &Path) -> Result<(), String> {
+/// and the old thumbnail unlinked. `keep_icc` is for pixels that are still in the source's colour
+/// space (colour management off): its profile goes along. Converted pixels are sRGB, which needs
+/// none. Writes to a temporary file first, so a failed save never damages an existing file
+/// (including the original).
+pub fn save(frame: &Frame, doc: &Doc, source: &Path, dest: &Path, keep_icc: bool) -> Result<(), String> {
     let ext = dest.extension().and_then(|e| e.to_str()).unwrap_or_default().to_ascii_lowercase();
     if !FORMATS.iter().any(|(_, exts)| exts.contains(&ext.as_str())) {
         return Err(trf("can't save as .{ext}: use .jpg, .png, .webp, .bmp, .tif or .gif", &[("ext", &ext)]));
@@ -86,7 +88,8 @@ pub fn save(frame: &Frame, doc: &Doc, source: &Path, dest: &Path) -> Result<(), 
         set_exif_dpi(exif, dpi);
     }
 
-    write_atomic(dest, |out| encode(&img, &ext, exif, doc.dpi, out).map_err(|e| e.to_string()))
+    let icc = if keep_icc { source_icc(source) } else { None };
+    write_atomic(dest, |out| encode(&img, &ext, exif, icc, doc.dpi, out).map_err(|e| e.to_string()))
 }
 
 /// Writes `dest` through a temporary file next to it and renames it into place,
@@ -113,11 +116,14 @@ pub fn write_atomic(dest: &Path, write: impl FnOnce(&mut BufWriter<File>) -> Res
     result
 }
 
-fn encode(img: &DynamicImage, ext: &str, exif: Option<Vec<u8>>, dpi: Option<u16>, out: &mut (impl Write + Seek)) -> image::ImageResult<()> {
-    // Formats that can't hold EXIF just skip it.
-    fn with_exif<E: ImageEncoder>(mut enc: E, exif: Option<Vec<u8>>) -> E {
+fn encode(img: &DynamicImage, ext: &str, exif: Option<Vec<u8>>, icc: Option<Vec<u8>>, dpi: Option<u16>, out: &mut (impl Write + Seek)) -> image::ImageResult<()> {
+    // Formats that can't hold EXIF or a profile just skip them.
+    fn tagged<E: ImageEncoder>(mut enc: E, exif: Option<Vec<u8>>, icc: Option<Vec<u8>>) -> E {
         if let Some(exif) = exif {
             let _ = enc.set_exif_metadata(exif);
+        }
+        if let Some(icc) = icc {
+            let _ = enc.set_icc_profile(icc);
         }
         enc
     }
@@ -128,14 +134,18 @@ fn encode(img: &DynamicImage, ext: &str, exif: Option<Vec<u8>>, dpi: Option<u16>
             if let Some(dpi) = dpi {
                 enc.set_pixel_density(PixelDensity::dpi(dpi));
             }
-            DynamicImage::ImageRgb8(img.to_rgb8()).write_with_encoder(with_exif(enc, exif))
+            DynamicImage::ImageRgb8(img.to_rgb8()).write_with_encoder(tagged(enc, exif, icc))
         }
-        "png" => img.write_with_encoder(with_exif(PngEncoder::new(out), exif)),
-        "webp" => img.write_with_encoder(with_exif(WebPEncoder::new_lossless(out), exif)),
-        "tif" | "tiff" => img.write_with_encoder(TiffEncoder::new(out)),
+        "png" => img.write_with_encoder(tagged(PngEncoder::new(out), exif, icc)),
+        "webp" => img.write_with_encoder(tagged(WebPEncoder::new_lossless(out), exif, icc)),
+        "tif" | "tiff" => img.write_with_encoder(tagged(TiffEncoder::new(out), None, icc)),
         "gif" => DynamicImage::ImageRgba8(img.to_rgba8()).write_with_encoder(GifEncoder::new(out)),
         _ => img.write_with_encoder(BmpEncoder::new(out)),
     }
+}
+
+fn source_icc(source: &Path) -> Option<Vec<u8>> {
+    ImageReader::open(source).ok()?.with_guessed_format().ok()?.into_decoder().ok()?.icc_profile().ok()?
 }
 
 /// The source's EXIF, ready to copy: orientation reset and thumbnail unlinked.
@@ -167,6 +177,30 @@ mod tests {
         std::fs::remove_dir_all(dir).unwrap();
     }
 
+    /// With colour management off the pixels are still in the source's space, so a copy without
+    /// its profile would show the wrong colours.
+    #[test]
+    fn the_profile_goes_along_only_when_the_pixels_need_it() {
+        let dir = std::env::temp_dir().join(format!("lightview-icc-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let icc = moxcms::ColorProfile::new_display_p3().encode().unwrap();
+        let source = dir.join("wide.png");
+        let mut enc = PngEncoder::new(File::create(&source).unwrap());
+        enc.set_icc_profile(icc.clone()).unwrap();
+        DynamicImage::new_rgb8(2, 2).write_with_encoder(enc).unwrap();
+        // `image` 0.25.10 reads no profile from a small TIFF through `ImageReader` (64×64 fails, 12 MP works), so photo-sized.
+        let frame = Frame { w: 1000, h: 800, pixels: vec![0; 1000 * 800 * 3], alpha: false, delay: Duration::ZERO };
+        let profile_of = |p: &Path| source_icc(p);
+        for ext in ["png", "jpg", "webp", "tif"] {
+            let dest = dir.join(format!("copy.{ext}"));
+            save(&frame, &Doc::new(1000, 800), &source, &dest, true).unwrap();
+            assert_eq!(profile_of(&dest).as_ref(), Some(&icc), "{ext}");
+            save(&frame, &Doc::new(1000, 800), &source, &dest, false).unwrap();
+            assert_eq!(profile_of(&dest), None, "{ext}");
+        }
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
     #[cfg(unix)]
     #[test]
     fn a_copy_of_a_private_file_stays_private() {
@@ -178,7 +212,7 @@ mod tests {
         std::fs::set_permissions(&source, std::fs::Permissions::from_mode(0o600)).unwrap();
         let dest = reserve_copy(&source).unwrap();
         let frame = Frame { w: 1, h: 1, pixels: vec![0; 3], alpha: false, delay: Duration::ZERO };
-        save(&frame, &Doc::new(1, 1), &source, &dest).unwrap();
+        save(&frame, &Doc::new(1, 1), &source, &dest, false).unwrap();
         assert_eq!(std::fs::metadata(&dest).unwrap().permissions().mode() & 0o777, 0o600);
         std::fs::remove_dir_all(dir).unwrap();
     }
@@ -212,7 +246,7 @@ mod tests {
         let dest = temp_dir("svg").join("a.svg");
         std::fs::write(&dest, "original").unwrap();
         let frame = Frame { w: 1, h: 1, pixels: vec![0; 4], alpha: true, delay: Duration::ZERO };
-        assert!(save(&frame, &Doc::new(1, 1), &dest, &dest).is_err());
+        assert!(save(&frame, &Doc::new(1, 1), &dest, &dest, false).is_err());
         assert_eq!(std::fs::read(&dest).unwrap(), b"original");
         std::fs::remove_dir_all(dest.parent().unwrap()).unwrap();
     }
@@ -240,7 +274,7 @@ mod tests {
         assert_eq!(expected, DynamicImage::ImageRgb8(image::RgbImage::from_raw(3, 2, frame().pixels).unwrap()).rotate90().fliph().to_rgb8());
         for ext in ["png", "webp", "bmp", "tif"] {
             let dest = dir.join(format!("out.{ext}"));
-            save(&frame(), &doc, &source, &dest).unwrap();
+            save(&frame(), &doc, &source, &dest, false).unwrap();
             assert_eq!(image::open(&dest).unwrap().to_rgb8(), expected, "{ext}");
         }
         // No temporary files left behind.
@@ -267,7 +301,7 @@ mod tests {
 
         let dest = dir.join("saved.JPG");
         let doc = Doc { dpi: Some(300), ..Doc::new(3, 2) };
-        save(&frame(), &doc, &source, &dest).unwrap();
+        save(&frame(), &doc, &source, &dest, false).unwrap();
         let mut decoder = ImageReader::open(&dest).unwrap().with_guessed_format().unwrap().into_decoder().unwrap();
         let exif = decoder.exif_metadata().unwrap();
         let jpeg = std::fs::read(&dest).unwrap();
@@ -292,7 +326,7 @@ mod tests {
     fn gif_export() {
         let dir = temp_dir("gif");
         let dest = dir.join("out.gif");
-        save(&frame(), &Doc::new(3, 2), &dir.join("missing.png"), &dest).unwrap();
+        save(&frame(), &Doc::new(3, 2), &dir.join("missing.png"), &dest, false).unwrap();
         let back = image::open(&dest).unwrap();
         std::fs::remove_dir_all(&dir).unwrap();
         assert_eq!((back.width(), back.height()), (3, 2));
@@ -332,8 +366,8 @@ mod tests {
         std::fs::write(&dest, b"original").unwrap();
         // A frame whose pixel buffer is too short fails before anything is written.
         let bad = Frame { pixels: vec![0; 3], ..frame() };
-        assert!(save(&bad, &Doc::new(3, 2), &dest, &dest).is_err());
-        assert!(save(&frame(), &Doc::new(3, 2), &dest, &dir.join("x.heic")).is_err());
+        assert!(save(&bad, &Doc::new(3, 2), &dest, &dest, false).is_err());
+        assert!(save(&frame(), &Doc::new(3, 2), &dest, &dir.join("x.heic"), false).is_err());
         let kept = std::fs::read(&dest).unwrap();
         std::fs::remove_dir_all(&dir).unwrap();
         assert_eq!(kept, b"original");

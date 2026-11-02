@@ -317,3 +317,5 @@ Next Page	Página seguinte
 Previous Page	Página anterior
 {format}, {count} pages	{format}, {count} páginas
 page {n} of {count}	página {n} de {count}
+Colour management	Gestão de cor
+Converts images with a colour profile to sRGB, so wide-gamut photos look right on an sRGB monitor. Turn it off for a wide-gamut monitor.	Converte para sRGB as imagens com perfil de cor, para que as fotos de gama ampla fiquem corretas num monitor sRGB. Desative num monitor de gama ampla.

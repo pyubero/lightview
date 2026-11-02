@@ -3,6 +3,7 @@
 
 mod ai;
 mod app;
+mod color;
 mod curves;
 mod edit;
 mod exif_edit;
@@ -47,7 +48,7 @@ fn main() -> eframe::Result {
     let (tx, rx) = mpsc::channel();
     let notify = Notify { tx, ctx: Arc::new(OnceLock::new()) };
     // The first decode starts before the window exists, so it targets the configured window size.
-    let loader = Loader::new(notify.clone(), 3, settings.window_size.map(|v| v as u32));
+    let loader = Loader::new(notify.clone(), 3, settings.window_size.map(|v| v as u32), settings.color_managed);
     if let Some(path) = &path {
         load::start(path, settings.sort, &loader, &notify);
     }

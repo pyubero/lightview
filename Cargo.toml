@@ -15,6 +15,8 @@ image = { version = "0.25.10", default-features = false, features = ["jpeg", "pn
 jxl = "0.8"
 libloading = "0.8"
 little_exif = "0.6"
+# Already in the build through `image`; converts ICC profiles to sRGB.
+moxcms = "0.8"
 # ONNX Runtime itself is loaded at run time from the copy Tools → Download AI Runtime… installs.
 ort = { version = "=2.0.0-rc.15", default-features = false, features = ["std", "load-dynamic", "api-31", "cuda"] }
 resvg = "0.49"

@@ -33,7 +33,7 @@ when" says otherwise. `▸` marks a submenu.
 | Select All | Ctrl+A | | Selects the whole image. |
 | Deselect | Ctrl+Shift+A | there's a selection | |
 | — | | | |
-| Settings… | Ctrl+, | always | GPU image scaling, interpolation, background colour, pixel grid (lines between pixels from 8× up), default window size, sort order. |
+| Settings… | Ctrl+, | always | GPU image scaling, interpolation, background colour, pixel grid (lines between pixels from 8× up), colour management (on: images with an ICC profile are converted to sRGB as they're decoded; off: shown as stored, and Save As keeps their profile), default window size, sort order. |
 
 ## View
 | Item | Shortcut | Enabled when | Does |

@@ -605,11 +605,11 @@ impl App {
             return;
         }
         let Some((frame, doc, source)) = self.to_save() else { return };
-        let notify = self.notify.clone();
+        let (notify, keep_icc) = (self.notify.clone(), !self.settings.color_managed);
         std::thread::spawn(move || {
             let (dest, result) = match save::reserve_copy(&source) {
                 Ok(dest) => {
-                    let result = save::save(&frame, &doc, &source, &dest);
+                    let result = save::save(&frame, &doc, &source, &dest, keep_icc);
                     if result.is_err() {
                         let _ = std::fs::remove_file(&dest);
                     }
@@ -628,11 +628,11 @@ impl App {
         if let Some(dir) = source.parent() {
             dialog = dialog.set_directory(dir);
         }
-        let notify = self.notify.clone();
+        let (notify, keep_icc) = (self.notify.clone(), !self.settings.color_managed);
         // The system dialog asks before replacing an existing file.
         std::thread::spawn(move || {
             if let Some(dest) = dialog.save_file() {
-                let result = save::save(&frame, &doc, &source, &dest);
+                let result = save::save(&frame, &doc, &source, &dest, keep_icc);
                 notify.send(Msg::Saved(dest, result, Some((source, doc))));
             }
         });
@@ -903,7 +903,7 @@ mod tests {
     fn app_with_image() -> (App, PathBuf) {
         let (tx, rx) = mpsc::channel();
         let notify = Notify { tx, ctx: Arc::default() };
-        let loader = Loader::new(notify.clone(), 0, [100, 100]);
+        let loader = Loader::new(notify.clone(), 0, [100, 100], true);
         let settings = Settings { default_asked: true, ..Settings::default() };
         let cc = eframe::CreationContext::_new_kittest(egui::Context::default());
         let mut app = App::new(&cc, Instant::now(), false, false, rx, loader, notify, settings, None);
@@ -1498,7 +1498,7 @@ mod tests {
         image::RgbImage::new(4, 2).save(&path).unwrap();
         let (tx, rx) = mpsc::channel();
         let notify = Notify { tx, ctx: Arc::default() };
-        let loader = Loader::new(notify.clone(), 1, [100, 100]);
+        let loader = Loader::new(notify.clone(), 1, [100, 100], true);
         let settings = Settings { default_asked: true, ..Settings::default() };
         let cc = eframe::CreationContext::_new_kittest(egui::Context::default());
         let mut app = App::new(&cc, Instant::now(), false, false, rx, loader, notify, settings, None);
@@ -1522,6 +1522,17 @@ mod tests {
         app.answer_changed(true);
         wait_for(&mut app, &|app| width(app) == Some(8));
         std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn changing_the_colour_setting_decodes_again_and_keeps_the_edits() {
+        let (mut app, path) = app_with_image();
+        app.edit(Doc::rotate_left);
+        let generation = app.generation;
+        app.settings.color_managed = false;
+        app.apply_color_setting();
+        assert!(!app.cache.contains_key(&path) && app.generation > generation);
+        assert!(app.doc.is_some());
     }
 
     #[test]

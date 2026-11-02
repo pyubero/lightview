@@ -56,7 +56,7 @@ impl App {
         if !self.show_settings {
             return;
         }
-        let sort = self.settings.sort;
+        let (sort, color_managed) = (self.settings.sort, self.settings.color_managed);
         let modal = egui::Modal::new(egui::Id::unique("settings")).show(ctx, |ui| {
             ui.heading(tr("Settings"));
             settings::ui(ui, &mut self.settings);
@@ -86,6 +86,18 @@ impl App {
         if self.settings.sort != sort && let Some(path) = self.current() {
             load::relist(path, self.settings.sort, &self.notify);
         }
+        if self.settings.color_managed != color_managed {
+            self.apply_color_setting();
+        }
+    }
+
+    /// Decodes what's held again, with the new setting. Edits stay.
+    // shortcut: pixels from Correct Perspective (`Doc.base`) keep the old colours until it's redone.
+    pub(super) fn apply_color_setting(&mut self) {
+        self.loader.set_color_managed(self.settings.color_managed);
+        self.cache.clear();
+        self.generation += 1;
+        self.request_decodes();
     }
 
     /// Asked once, here and not by the package: a package runs as root, defaults are per user.
