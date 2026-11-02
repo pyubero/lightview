@@ -146,6 +146,33 @@ pub fn actual_size(img: Vec2) -> View {
     View::Manual { scale: 1.0, center: (img / 2.0).to_pos2() }
 }
 
+/// The longer side of the navigator thumbnail, in points.
+const NAVIGATOR_SIZE: f32 = 160.0;
+/// Below this many screen px per image px, a pixel grid would be nearly solid.
+const GRID_MIN_SCALE: f32 = 8.0;
+
+/// Where the navigator goes for an image of size `img`: `viewport`'s bottom-right corner.
+pub fn navigator_rect(img: Vec2, viewport: Rect) -> Rect {
+    let size = (img * (NAVIGATOR_SIZE / img.max_elem())).max(Vec2::splat(1.0));
+    Rect::from_min_size(viewport.max - size - Vec2::splat(12.0), size)
+}
+
+/// Whether `crop`, what's shown of an image of size `img`, leaves part of it out.
+pub fn zoomed_in(crop: Rect, img: Vec2) -> bool {
+    crop.width() < img.x - 0.5 || crop.height() < img.y - 0.5
+}
+
+/// The lines between the pixels on screen, when they're big enough to tell apart.
+pub fn grid_lines(dest: Rect, crop: Rect, ppp: f32) -> Vec<[Pos2; 2]> {
+    if dest.width() / crop.width() * ppp < GRID_MIN_SCALE {
+        return Vec::new();
+    }
+    let at = |x: f32, y: f32| to_screen(dest, crop, Pos2::new(x, y));
+    let columns = (crop.left().ceil() as u32..=crop.right().floor() as u32).map(|x| [Pos2::new(at(x as f32, 0.0).x, dest.top()), Pos2::new(at(x as f32, 0.0).x, dest.bottom())]);
+    let rows = (crop.top().ceil() as u32..=crop.bottom().floor() as u32).map(|y| [Pos2::new(dest.left(), at(0.0, y as f32).y), Pos2::new(dest.right(), at(0.0, y as f32).y)]);
+    columns.chain(rows).collect()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -156,6 +183,35 @@ mod tests {
 
     fn rect(x0: f32, y0: f32, x1: f32, y1: f32) -> Rect {
         Rect::from_min_max(Pos2::new(x0, y0), Pos2::new(x1, y1))
+    }
+
+    #[test]
+    fn navigator_keeps_the_images_shape_in_the_corner() {
+        let viewport = panel(800.0, 600.0);
+        let r = navigator_rect(Vec2::new(4000.0, 2000.0), viewport);
+        assert_eq!(r.size(), Vec2::new(160.0, 80.0));
+        assert!(viewport.contains_rect(r) && r.max.x > 780.0 && r.max.y > 580.0);
+        assert_eq!(navigator_rect(Vec2::new(10000.0, 1.0), viewport).height(), 1.0);
+    }
+
+    #[test]
+    fn zoomed_in_means_part_of_it_is_cut_off() {
+        let img = Vec2::new(100.0, 50.0);
+        assert!(!zoomed_in(rect(0.0, 0.0, 100.0, 50.0), img));
+        assert!(zoomed_in(rect(0.0, 0.0, 100.0, 40.0), img));
+        assert!(zoomed_in(rect(10.0, 0.0, 60.0, 50.0), img));
+    }
+
+    #[test]
+    fn the_grid_needs_big_pixels_and_sits_on_their_edges() {
+        let dest = rect(0.0, 0.0, 100.0, 100.0);
+        assert!(grid_lines(dest, rect(0.0, 0.0, 20.0, 20.0), 1.0).is_empty(), "5 px per pixel");
+        assert_eq!(grid_lines(dest, rect(0.0, 0.0, 20.0, 20.0), 2.0).len(), 42, "10 px per pixel, with 2 ppp");
+        // Panned by half a pixel: 10 px per pixel, so edges at 5, 15…
+        let lines = grid_lines(dest, rect(3.5, 7.5, 13.5, 17.5), 1.0);
+        assert_eq!(lines.len(), 20);
+        assert_eq!(lines[0], [Pos2::new(5.0, 0.0), Pos2::new(5.0, 100.0)]);
+        assert_eq!(lines[10], [Pos2::new(0.0, 5.0), Pos2::new(100.0, 5.0)]);
     }
 
     #[test]

@@ -4,6 +4,7 @@ use crate::edit;
 use crate::i18n::{tr, trf};
 use crate::load::{self, Msg};
 use crate::settings;
+use eframe::egui::text::{CCursor, CCursorRange};
 use eframe::egui::{self, Rect};
 
 /// A download waiting for the user to accept its licence.
@@ -14,6 +15,22 @@ pub(super) enum Download {
     Runtime,
     /// ONNX Runtime's GPU build and NVIDIA's CUDA libraries.
     Gpu,
+}
+
+/// The Rename dialog's state.
+pub(super) struct Renaming {
+    original: String,
+    pub(super) name: String,
+    /// The dialog just opened, or a name was refused: the name without its extension gets selected.
+    fresh: bool,
+    pub(super) error: Option<String>,
+}
+
+impl Renaming {
+    pub(super) fn new(path: &std::path::Path) -> Self {
+        let name = path.file_name().unwrap_or_default().to_string_lossy().into_owned();
+        Renaming { original: name.clone(), name, fresh: true, error: None }
+    }
 }
 
 impl App {
@@ -30,6 +47,8 @@ impl App {
         self.adjust_panel(ctx);
         self.discard_dialog(ctx);
         self.delete_dialog(ctx);
+        self.rename_dialog(ctx);
+        self.changed_dialog(ctx);
         self.perspective_dialog(ctx);
     }
 
@@ -256,6 +275,64 @@ impl App {
             self.apply_perspective();
         } else if cancel || modal.should_close() {
             self.perspective_prompt = false;
+        }
+    }
+
+    /// The file changed on disk under unsaved edits: only the user can say which one wins.
+    pub(super) fn changed_dialog(&mut self, ctx: &egui::Context) {
+        if !self.changed_prompt {
+            return;
+        }
+        let name = self.current().and_then(|p| p.file_name()).unwrap_or_default().to_string_lossy().into_owned();
+        let modal = egui::Modal::new(egui::Id::unique("changed")).show(ctx, |ui| {
+            ui.heading(tr("File changed on disk"));
+            ui.label(trf("{name} changed on disk. Reloading it discards your edits.", &[("name", &name)]));
+            ui.add_space(6.0);
+            ui.horizontal(|ui| (ui.button(tr("Reload")).clicked(), ui.button(tr("Keep Edits")).clicked())).inner
+        });
+        let (reload, keep) = modal.inner;
+        if reload || keep || modal.should_close() {
+            self.answer_changed(reload);
+        }
+    }
+
+    pub(super) fn answer_changed(&mut self, reload: bool) {
+        self.changed_prompt = false;
+        if reload {
+            self.doc = None;
+            self.reload();
+        }
+    }
+
+    /// Asks for the current image's new file name. Enter accepts; a refused name stays to be fixed.
+    pub(super) fn rename_dialog(&mut self, ctx: &egui::Context) {
+        let Some(mut r) = self.renaming.take() else { return };
+        let modal = egui::Modal::new(egui::Id::unique("rename")).show(ctx, |ui| {
+            ui.heading(tr("Rename Image"));
+            ui.add_space(6.0);
+            let mut edit = egui::TextEdit::singleline(&mut r.name).desired_width(320.0).show(ui);
+            if std::mem::take(&mut r.fresh) {
+                edit.response.request_focus();
+                let stem = r.name.rsplit_once('.').map_or(&r.name[..], |(stem, _)| stem).chars().count();
+                edit.state.cursor.set_char_range(Some(CCursorRange::two(CCursor::new(0), CCursor::new(stem))));
+                edit.state.store(ui.ctx(), edit.response.id);
+            }
+            let enter = edit.response.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter));
+            if let Some(e) = &r.error {
+                ui.colored_label(ui.visuals().error_fg_color, e);
+            }
+            ui.add_space(6.0);
+            let (rename, cancel) = ui.horizontal(|ui| (ui.button(tr("Rename")).clicked(), ui.button(tr("Cancel")).clicked())).inner;
+            (enter || rename, cancel)
+        });
+        let (accept, cancel) = modal.inner;
+        if cancel || modal.should_close() {
+            return;
+        }
+        if !accept {
+            self.renaming = Some(r);
+        } else if r.name != r.original && let Err(e) = self.rename_current(&r.name) {
+            self.renaming = Some(Renaming { error: Some(e), fresh: true, ..r });
         }
     }
 

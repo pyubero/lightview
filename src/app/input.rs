@@ -1,11 +1,12 @@
 use super::menu::SHORTCUTS;
+use super::dialogs::Renaming;
 use super::{Action, App, Download, Grab, Pending, SelKind, Tool};
-use crate::edit::{Adjust, Doc, ResizeDialog};
-use crate::i18n::trf;
+use crate::edit::{self, Adjust, Doc, ResizeDialog};
+use crate::i18n::{tr, trf};
 use crate::load::Loaded;
 use crate::markup::{self, Element, Pick, Selection, Shape, Style};
 use crate::view::{self, View};
-use eframe::egui::{self, ColorImage, CursorIcon, Key, Pos2, Rect, Sense, Vec2, ViewportCommand};
+use eframe::egui::{self, ColorImage, CursorIcon, Key, PointerButton, Pos2, Rect, Sense, Vec2, ViewportCommand};
 use std::sync::Arc;
 use std::time::Instant;
 
@@ -188,12 +189,20 @@ impl App {
 
     /// The shortcuts pressed this frame. Plain keys (arrows, F11) and undo belong to a text field while one has focus.
     pub(super) fn read_shortcuts(ctx: &egui::Context, typing: bool) -> Vec<Action> {
+        let modal = ctx.memory(|m| m.top_modal_layer().is_some());
         ctx.input_mut(|i| {
-            SHORTCUTS
+            let mut actions: Vec<Action> = SHORTCUTS
                 .iter()
                 .filter(|(sc, a)| !(typing && (sc.modifiers.is_none() || matches!(a, Action::Undo | Action::Redo | Action::SelectAll | Action::Deselect))) && i.consume_shortcut(sc))
                 .map(|(_, a)| a.clone())
-                .collect()
+                .collect();
+            // The mouse's back and forward buttons.
+            for (button, action) in [(PointerButton::Extra1, Action::PrevImage), (PointerButton::Extra2, Action::NextImage)] {
+                if !typing && !modal && i.pointer.button_pressed(button) {
+                    actions.push(action);
+                }
+            }
+            actions
         })
     }
 
@@ -220,6 +229,19 @@ impl App {
             match action {
                 Action::Open => self.open_dialog(),
                 Action::SaveAs => self.save_dialog(),
+                Action::SaveCopy => self.save_copy(),
+                Action::CopyPath => {
+                    if let Some(path) = self.current() {
+                        ctx.copy_text(path.display().to_string());
+                        self.set_status(tr("Copied the path"));
+                    }
+                }
+                Action::ShowInFolder => {
+                    if let Some(path) = self.current() {
+                        crate::platform::show_in_folder(path);
+                    }
+                }
+                Action::Rename if self.restoring.is_none() => self.renaming = self.current().map(|p| Renaming::new(p)),
                 Action::OpenRecent(path) => self.confirm(Pending::Open(path.clone())),
                 Action::Close => self.confirm(Pending::Close),
                 Action::Undo => self.undo_redo(true),
@@ -257,6 +279,11 @@ impl App {
                 Action::ResetAdjust => self.edit(|d| d.adjust = Adjust::default()),
                 Action::Measure if self.tool == Tool::Measure => (self.tool, self.measure) = (Tool::Pan, None),
                 Action::Measure if self.doc().is_some() => (self.tool, self.crop_rect) = (Tool::Measure, None),
+                Action::CopyColor if self.tool == Tool::CopyColor => self.tool = Tool::Pan,
+                Action::CopyColor if self.doc().is_some() => {
+                    self.finish_text();
+                    (self.tool, self.crop_rect, self.selected) = (Tool::CopyColor, None, None);
+                }
                 Action::ShowToolbar => {
                     self.show_toolbar = !self.show_toolbar;
                     if !self.show_toolbar {
@@ -298,6 +325,8 @@ impl App {
                 Action::Fullscreen => ctx.send_viewport_cmd(ViewportCommand::Fullscreen(!fullscreen)),
                 Action::PrevImage => self.confirm(Pending::Navigate(-1)),
                 Action::NextImage => self.confirm(Pending::Navigate(1)),
+                Action::FirstImage => self.go_to(0),
+                Action::LastImage => self.go_to(self.files.len().saturating_sub(1)),
                 Action::Play => (self.anim_paused, self.anim_due) = (false, None),
                 Action::Pause => self.anim_paused = true,
                 _ => {} // zoom and frame-step actions are applied below, once the image is known
@@ -379,6 +408,7 @@ impl App {
             Tool::Selection(kind) => self.selection_input(ctx, &drag, dest, vis, img, kind),
             Tool::Crop | Tool::Measure => self.crop_measure_input(ctx, &drag, dest, vis, img),
             Tool::Perspective => self.perspective_input(ctx, &drag, dest, vis, img),
+            Tool::CopyColor => self.copy_color_input(ctx, &drag, dest, vis, doc),
         }
         drag
     }
@@ -441,6 +471,23 @@ impl App {
         }
     }
 
+    /// Copy Color tool: a click copies the pixel's colour as hex, as it's seen with the edits.
+    fn copy_color_input(&mut self, ctx: &egui::Context, drag: &egui::Response, dest: Rect, vis: Rect, doc: &Doc) {
+        if drag.hovered() {
+            ctx.set_cursor_icon(CursorIcon::Crosshair);
+        }
+        let Some(p) = drag.interact_pointer_pos().filter(|_| drag.clicked()) else { return };
+        let Some(l) = self.current().and_then(|c| self.cache.get(c)).cloned() else { return };
+        // shortcut: renders the full edited image on the UI thread, like Copy; fine for one click.
+        let Ok(img) = edit::render(&l.frames[self.anim_frame.min(l.frames.len() - 1)], doc) else { return };
+        let img = img.into_rgba8();
+        let p = view::to_image(dest, vis, p);
+        let (x, y) = ((p.x as u32).min(img.width() - 1), (p.y as u32).min(img.height() - 1));
+        let color = hex_color(img.get_pixel(x, y).0);
+        ctx.copy_text(color.clone());
+        self.set_status(trf("Copied {color}", &[("color", &color)]));
+    }
+
     /// Perspective tool: dragging the corner nearest the press.
     fn perspective_input(&mut self, ctx: &egui::Context, drag: &egui::Response, dest: Rect, vis: Rect, img: Vec2) {
         if drag.hovered() {
@@ -498,5 +545,19 @@ impl App {
             }
             ctx.request_repaint_after(self.anim_due.unwrap() - now);
         }
+    }
+}
+
+/// `#RRGGBB`, with `AA` added when the colour isn't opaque.
+fn hex_color([r, g, b, a]: [u8; 4]) -> String {
+    if a == 255 { format!("#{r:02X}{g:02X}{b:02X}") } else { format!("#{r:02X}{g:02X}{b:02X}{a:02X}") }
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn hex_colors() {
+        assert_eq!(super::hex_color([255, 16, 0, 255]), "#FF1000");
+        assert_eq!(super::hex_color([0, 0, 255, 128]), "#0000FF80");
     }
 }

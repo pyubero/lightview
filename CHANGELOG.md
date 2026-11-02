@@ -1,6 +1,15 @@
 # Changelog
 
+## Unreleased
 
+- Drag a file or folder onto the window to open it, on X11 and Windows. Not supported on Wayland yet.
+- File → Save Copy (Ctrl+S) writes `photo-edited.jpg` next to the original with no dialog, and never replaces a file.
+- The mouse's back and forward buttons go to the previous and next image, and Home and End to the first and last.
+- File → Copy Path, Show in File Manager and Rename (F2). Rename never replaces another file.
+- The open image reloads when its file changes on disk. If it has unsaved edits, lightview asks first.
+- A navigator thumbnail in the corner while zoomed in: click or drag on it to move around.
+- Settings → Pixel grid shows the edges of the pixels from 8× zoom up.
+- Tools → Copy Color copies the hex value of the pixel you click.
 
 ## 0.2.1 (2026-11-01)
 

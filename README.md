@@ -27,9 +27,14 @@ and it never goes online on its own.
   enhancement, all running on your own machine, so your photos are never sent to a server. The
   tools are optional, and nothing is installed until you ask for it.
 - **Viewing.** Fit to window, actual size, zoom at the pointer, pan, full screen, EXIF orientation,
-  animated GIF and WebP playback with frame stepping, and SVGs that stay sharp as you zoom in.
+  animated GIF and WebP playback with frame stepping, and SVGs that stay sharp as you zoom in. Drag
+  a file or folder onto the window to open it (X11 and Windows; not supported on Wayland yet). While zoomed in, a navigator thumbnail shows where
+  you are, and a pixel grid and a Copy Color tool help with detail work. The image reloads when its
+  file changes on disk.
 - **Editing.** Crop, perspective correction, resize, rotate, flip, colour adjustments, auto levels and curves in RGB, HSL or
   HSV, with full undo and redo.
+- **File actions.** Save a quick copy with Ctrl+S, copy the path, show the file in your file manager
+  and rename it with F2. Neither Save Copy nor Rename ever replaces another file.
 - **Safe deleting.** Deleting asks first and moves the image to the system Trash, and Ctrl+Z brings
   it back.
 - **Selection and clipboard.** Rectangle, ellipse and lasso selections, plus cut, copy and paste of
@@ -195,6 +200,7 @@ lightview --bench photo.jpg     # the same, quitting after the first full image
 |---|---|
 | [`PROJECT_BRIEF.md`](docs/PROJECT_BRIEF.md) | Goals, scope, performance targets and early milestones |
 | [`ROADMAP-v2.md`](docs/ROADMAP-v2.md) | The roadmap for editing and AI features |
+| [`ROADMAP-v3.md`](docs/ROADMAP-v3.md) | Proposed features for competing with other viewers |
 | [`MENUS.md`](docs/MENUS.md) | Every menu item and shortcut |
 
 ## Licence

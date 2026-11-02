@@ -12,7 +12,7 @@ use eframe::egui::{self, Color32, Key, Pos2, Rect, TextureHandle, TextureOptions
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 use std::sync::atomic::Ordering;
-use std::sync::{Arc, mpsc};
+use std::sync::{Arc, Mutex, mpsc};
 use std::time::Instant;
 
 mod ai_tools;
@@ -42,6 +42,7 @@ enum Tool {
     Crop,
     Perspective,
     Measure,
+    CopyColor,
     Select,
     Draw(Shape),
     Selection(SelKind),
@@ -110,6 +111,15 @@ pub struct App {
     /// Images moved to the Trash this session, newest last; Ctrl+Z brings them back.
     deleted: Vec<PathBuf>,
     delete_prompt: bool,
+    renaming: Option<dialogs::Renaming>,
+    /// The file the watcher thread keeps an eye on.
+    watched: Arc<Mutex<Option<PathBuf>>>,
+    /// The state lightview itself last left the current file in, which isn't a change to react to.
+    own_stamp: Option<load::Stamp>,
+    /// Asking what to do: the file changed on disk, and there are unsaved edits.
+    changed_prompt: bool,
+    /// The navigator's thumbnail, and what it holds.
+    navigator: Option<(TexKey, TextureHandle)>,
     /// The edits last saved to a copy.
     saved: Option<Doc>,
     tool: Tool,
@@ -192,12 +202,13 @@ impl App {
             settings.default_asked = settings::is_default();
             default_prompt = (!settings.default_asked).then_some(true);
         }
+        let watched = load::watch(notify.clone(), std::time::Duration::from_secs(1));
         App {
             t0, timings, bench, rx, loader, notify, recent, settings, show_info: false, show_settings: false, default_prompt, default_result: None, inspector: None,
             files: start.into_iter().collect(), index: 0,
             cache: HashMap::new(), preview: None, error: None, view: View::Fit,
             texture: None, tex_key: None, resized: None, baked: None, sharp: None, sharp_wanted: 1, flat: None, generation: 0, anim_frame: 0, anim_due: None, anim_paused: false,
-            doc: None, undo: Vec::new(), redo: Vec::new(), deleted: Vec::new(), delete_prompt: false, saved: None, tool: Tool::Pan, drag_start: None, right_pan: false, crop_rect: None, perspective: None, perspective_drag: None, perspective_prompt: false, measure: None, measure_drag: 1,
+            doc: None, undo: Vec::new(), redo: Vec::new(), deleted: Vec::new(), delete_prompt: false, renaming: None, watched, own_stamp: None, changed_prompt: false, navigator: None, saved: None, tool: Tool::Pan, drag_start: None, right_pan: false, crop_rect: None, perspective: None, perspective_drag: None, perspective_prompt: false, measure: None, measure_drag: 1,
             show_toolbar, style: None, selected: None, grab: Grab::None, editing_text: None, focus_text: false, change_base: None, last_restyle: None, selection: None, element_textures: HashMap::new(),
             resize_dialog: None, adjusting: None, curve_panel: None, pending: None, show_ai_models: false, license_prompt: None, restoring: None, restore_runs: 0, compare: None, enhance_notice: None, visible: None, downloading: HashSet::new(),
             title: String::new(),
@@ -307,6 +318,16 @@ impl App {
                 Err(e) => self.set_status(trf("Couldn't process the image: {e}", &[("e", &e)])),
             },
             Msg::Open(path) => self.confirm(Pending::Open(path)),
+            Msg::Changed(path, stamp) => {
+                if self.current() != Some(&path) || self.own_stamp == Some(stamp) {
+                    return;
+                }
+                if self.dirty() {
+                    self.changed_prompt = true;
+                } else {
+                    self.reload();
+                }
+            }
             Msg::Folder(files) => {
                 if let Some(i) = self.current().and_then(|cur| files.iter().position(|p| p == cur)) {
                     self.files = files;
@@ -354,6 +375,7 @@ impl App {
                 let (Ok(()), Ok(path), Some(current)) = (result, std::fs::canonicalize(&path), self.current().cloned()) else { return };
                 if path == current {
                     // Overwrote the image on screen: show the saved version.
+                    self.own_stamp = load::stamp(&path);
                     self.cache.remove(&path);
                     self.reset_shown();
                     self.request_decodes();
@@ -471,6 +493,32 @@ impl App {
         self.index = 0;
     }
 
+    /// Opens what was dragged onto the window: the first item, or a folder's first image.
+    // shortcut: winit 0.30 delivers no drops on Wayland, so this only runs on X11 and Windows; a newer winit would bring it.
+    fn open_dropped(&mut self, paths: Vec<PathBuf>) {
+        let Some(path) = paths.into_iter().next() else { return };
+        let name = path.file_name().unwrap_or_default().to_string_lossy().into_owned();
+        if path.is_dir() {
+            let (sort, notify) = (self.settings.sort, self.notify.clone());
+            std::thread::spawn(move || notify.send(match load::first_image(&path, sort) {
+                Some(image) => Msg::Open(image),
+                None => Msg::Status(trf("No images in {name}", &[("name", &name)])),
+            }));
+        } else if load::is_image(&path) {
+            self.confirm(Pending::Open(path));
+        } else {
+            self.set_status(trf("Can't open {name}: not a supported image", &[("name", &name)]));
+        }
+    }
+
+    /// Goes to the image at `index`. Already there is no move, so it can't touch any edits.
+    fn go_to(&mut self, index: usize) {
+        let delta = index as isize - self.index as isize;
+        if delta != 0 {
+            self.confirm(Pending::Navigate(delta));
+        }
+    }
+
     /// Moves by `delta` in the folder, stopping at the ends.
     fn navigate(&mut self, delta: isize) {
         let Some(index) = self.index.checked_add_signed(delta).filter(|&i| i < self.files.len()) else { return };
@@ -478,6 +526,16 @@ impl App {
         self.reset_shown();
         self.nav_start = Some(Instant::now());
         self.request_decodes();
+    }
+
+    /// Shows the current file's new contents. The old pixels stay up until they're decoded, at the
+    /// same zoom, so a file that changes often doesn't flicker.
+    fn reload(&mut self) {
+        let (Some(path), view) = (self.current().cloned(), self.view) else { return };
+        self.reset_shown();
+        self.view = view;
+        self.inspector = None;
+        self.loader.want(vec![path]);
     }
 
     /// Clears what's shown, before switching to another image.
@@ -505,6 +563,7 @@ impl App {
             r.cancel.store(true, Ordering::Relaxed);
         }
         self.compare = None;
+        self.changed_prompt = false;
     }
 
     fn open_dialog(&self) {
@@ -521,13 +580,45 @@ impl App {
         });
     }
 
+    /// What saving needs: the current still image's frame, its edits and its path.
+    fn to_save(&self) -> Option<(Frame, Doc, PathBuf)> {
+        let path = self.current()?;
+        let l = self.cache.get(path)?;
+        Some((l.frames[0].clone(), self.doc().filter(|_| l.frames.len() == 1)?, path.clone()))
+    }
+
+    /// Save Copy has something to write: with no edits it would only re-encode the file.
+    fn can_save_copy(&self) -> bool {
+        self.dirty() && self.current().and_then(|p| self.cache.get(p)).is_some_and(|l| l.frames.len() == 1)
+    }
+
+    /// Saves the current image (with its edits) next to it under a new name, with no questions.
+    fn save_copy(&mut self) {
+        if !self.can_save_copy() {
+            return;
+        }
+        let Some((frame, doc, source)) = self.to_save() else { return };
+        let notify = self.notify.clone();
+        std::thread::spawn(move || {
+            let (dest, result) = match save::reserve_copy(&source) {
+                Ok(dest) => {
+                    let result = save::save(&frame, &doc, &source, &dest);
+                    if result.is_err() {
+                        let _ = std::fs::remove_file(&dest);
+                    }
+                    (dest, result)
+                }
+                Err(e) => (source.clone(), Err(e)),
+            };
+            notify.send(Msg::Saved(dest, result, Some((source, doc))));
+        });
+    }
+
     /// Asks where to save the current image (with its edits), then saves on that thread.
     fn save_dialog(&mut self) {
-        let Some((path, l)) = self.current().and_then(|p| Some((p, self.cache.get(p)?))) else { return };
-        let Some(doc) = self.doc().filter(|_| l.frames.len() == 1) else { return };
-        let (frame, source) = (l.frames[0].clone(), path.clone());
-        let mut dialog = save::formats_for(path).iter().fold(rfd::FileDialog::new().set_file_name(save::suggested_name(path)), |d, (name, exts)| d.add_filter(*name, exts));
-        if let Some(dir) = path.parent() {
+        let Some((frame, doc, source)) = self.to_save() else { return };
+        let mut dialog = save::formats_for(&source).iter().fold(rfd::FileDialog::new().set_file_name(save::suggested_name(&source)), |d, (name, exts)| d.add_filter(*name, exts));
+        if let Some(dir) = source.parent() {
             dialog = dialog.set_directory(dir);
         }
         let notify = self.notify.clone();
@@ -620,6 +711,22 @@ impl App {
         self.request_decodes();
     }
 
+    /// Renames the current image's file. It stays open, with its edits.
+    fn rename_current(&mut self, name: &str) -> Result<(), String> {
+        let Some(old) = self.current().cloned() else { return Ok(()) };
+        let new = load::rename(&old, name)?;
+        self.files[self.index] = new.clone();
+        if let Some(l) = self.cache.remove(&old) {
+            self.cache.insert(new.clone(), l);
+        }
+        if let Some(entry) = self.recent.iter_mut().find(|p| **p == old) {
+            *entry = new.clone();
+        }
+        load::relist(&new, self.settings.sort, &self.notify);
+        self.request_decodes();
+        Ok(())
+    }
+
     /// Crops to the selection; for an ellipse or lasso, the outside is erased too.
     fn image_from_selection(&mut self) {
         let (Some(sel), Some(doc)) = (self.selection.take(), self.doc()) else { return };
@@ -697,11 +804,17 @@ impl eframe::App for App {
         while let Ok(msg) = self.rx.try_recv() {
             self.handle(msg);
         }
+        if let Ok(mut watched) = self.watched.lock() && watched.as_ref() != self.files.get(self.index) {
+            *watched = self.files.get(self.index).cloned();
+        }
         crate::ai::set_use_gpu(self.settings.ai.use_gpu);
         if ctx.input(|i| i.viewport().close_requested()) && self.dirty() {
             ctx.send_viewport_cmd(ViewportCommand::CancelClose);
             self.pending = Some(Pending::Close);
         }
+
+        let dropped: Vec<PathBuf> = ctx.input(|i| i.raw.dropped_files.iter().map(|f| f.path().to_path_buf()).collect());
+        self.open_dropped(dropped);
 
         let typing = ctx.egui_wants_keyboard_input();
         let mut actions = App::read_shortcuts(&ctx, typing);
@@ -774,6 +887,7 @@ pub fn ms(t: Instant) -> f64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::view;
 
     /// An app showing a decoded 2×1 image.
     fn app_with_image() -> (App, PathBuf) {
@@ -1251,6 +1365,413 @@ mod tests {
         app.perspective = Some([at(150.0), far, far, far]);
         feed(&mut app, drag_events(LEFT));
         assert_eq!(app.perspective.unwrap()[0], at(150.0));
+    }
+
+    /// A temporary folder holding `files`, empty ones. Removed by hand at the end of a test.
+    fn temp_folder(name: &str, files: &[&str]) -> PathBuf {
+        let dir = std::env::temp_dir().join(format!("lightview-{name}-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        for file in files {
+            std::fs::write(dir.join(file), b"").unwrap();
+        }
+        std::fs::canonicalize(dir).unwrap()
+    }
+
+    /// One frame of `ui` with `input`, with the new events it took.
+    fn frame(app: &mut App, ctx: &egui::Context, input: egui::RawInput) -> egui::FullOutput {
+        use eframe::App as _;
+        let mut eframe = eframe::Frame::_new_kittest();
+        let mut output = ctx.run_ui(input, |ui| app.ui(ui, &mut eframe));
+        output.textures_delta.clear();
+        output
+    }
+
+    #[test]
+    fn dropped_image_opens_and_edits_ask_first() {
+        let dir = temp_folder("drop-image", &["b.png", "notes.txt"]);
+        let (mut app, _) = app_with_image();
+        app.open_dropped(vec![dir.join("notes.txt")]);
+        assert_eq!(app.files, [PathBuf::from("/a.png")], "not an image: stays where it is");
+        assert!(app.status.is_some());
+        app.edit(Doc::rotate_left);
+        app.open_dropped(vec![dir.join("b.png")]);
+        assert!(matches!(app.pending, Some(Pending::Open(_))), "unsaved edits ask first");
+        app.pending = None;
+        app.doc = None;
+        app.open_dropped(vec![dir.join("b.png"), dir.join("notes.txt")]);
+        assert_eq!(app.files, [dir.join("b.png")]);
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn dropped_folder_opens_its_first_image() {
+        let dir = temp_folder("drop-folder", &["notes.txt", "img10.png", "img2.png"]);
+        let (mut app, _) = app_with_image();
+        app.open_dropped(vec![dir.clone()]);
+        assert!(matches!(app.rx.recv().unwrap(), Msg::Open(p) if p == dir.join("img2.png")));
+        let empty = temp_folder("drop-empty", &["notes.txt"]);
+        app.open_dropped(vec![empty.clone()]);
+        assert!(matches!(app.rx.recv().unwrap(), Msg::Status(_)));
+        assert_eq!(app.files, [PathBuf::from("/a.png")]);
+        std::fs::remove_dir_all(dir).unwrap();
+        std::fs::remove_dir_all(empty).unwrap();
+    }
+
+    #[test]
+    fn a_change_on_disk_reloads_or_asks() {
+        let stamp = (std::time::SystemTime::UNIX_EPOCH, 9);
+        let changed = |path: &PathBuf| Msg::Changed(path.clone(), stamp);
+        let shown = |app: &App, path: &PathBuf| app.cache.get(path).unwrap().file_size;
+        let (mut app, path) = app_with_image();
+        let view = View::Manual { scale: 2.0, center: Pos2::new(1.0, 1.0) };
+        app.view = view;
+        app.handle(changed(&"/other.png".into()));
+        app.handle(Msg::Changed(path.clone(), stamp));
+        assert_eq!(app.view, view, "the zoom stays");
+        assert_eq!(shown(&app, &path), 6, "the old pixels stay up until the new ones arrive");
+        // Lightview's own write.
+        app.own_stamp = Some(stamp);
+        app.edit(Doc::rotate_left);
+        app.handle(changed(&path));
+        assert!(!app.changed_prompt && app.dirty());
+        app.own_stamp = None;
+        // Someone else's write, with edits: they stay until the user answers.
+        app.handle(changed(&path));
+        assert!(app.changed_prompt && app.dirty());
+        let ctx = egui::Context::default();
+        ctx.set_fonts(markup::font_definitions());
+        let mut output = ctx.run_ui(egui::RawInput::default(), |ui| app.changed_dialog(ui.ctx()));
+        output.textures_delta.clear();
+        assert!(app.changed_prompt && app.dirty(), "it waits");
+        app.answer_changed(false);
+        assert!(!app.changed_prompt && app.dirty(), "Keep Edits");
+        app.handle(changed(&path));
+        app.answer_changed(true);
+        assert!(!app.changed_prompt && !app.dirty() && app.doc.is_none(), "Reload");
+    }
+
+    /// A real file changing under a real watcher and decoder, with no edits and then with some.
+    #[test]
+    fn an_outside_write_reaches_the_screen() {
+        let dir = temp_folder("reload", &[]);
+        let path = dir.join("a.png");
+        image::RgbImage::new(4, 2).save(&path).unwrap();
+        let (tx, rx) = mpsc::channel();
+        let notify = Notify { tx, ctx: Arc::default() };
+        let loader = Loader::new(notify.clone(), 1, [100, 100]);
+        let settings = Settings { default_asked: true, ..Settings::default() };
+        let cc = eframe::CreationContext::_new_kittest(egui::Context::default());
+        let mut app = App::new(&cc, Instant::now(), false, false, rx, loader, notify, settings, None);
+        app.open(path.clone());
+        *app.watched.lock().unwrap() = Some(path.clone());
+        let wait_for = |app: &mut App, done: &dyn Fn(&App) -> bool| {
+            while !done(app) {
+                let msg = app.rx.recv_timeout(std::time::Duration::from_secs(10)).expect("nothing arrived");
+                app.handle(msg);
+            }
+        };
+        let width = |app: &App| app.cache.get(&path).map(|l| l.frames[0].w);
+        wait_for(&mut app, &|app| width(app) == Some(4));
+        std::thread::sleep(std::time::Duration::from_millis(1100));
+        image::RgbImage::new(6, 2).save(&path).unwrap();
+        wait_for(&mut app, &|app| width(app) == Some(6));
+        app.edit(Doc::rotate_left);
+        image::RgbImage::new(8, 2).save(&path).unwrap();
+        wait_for(&mut app, &|app| app.changed_prompt);
+        assert_eq!(width(&app), Some(6), "the edits' image stays until the user answers");
+        app.answer_changed(true);
+        wait_for(&mut app, &|app| width(app) == Some(8));
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn navigating_away_drops_the_question() {
+        let mut app = app_in_folder();
+        app.changed_prompt = true;
+        app.navigate(1);
+        assert!(!app.changed_prompt);
+    }
+
+    #[test]
+    fn save_copy_needs_unsaved_edits_and_writes_a_new_file() {
+        let dir = temp_folder("save-copy", &[]);
+        let path = dir.join("a.png");
+        std::fs::write(&path, b"original").unwrap();
+        let (mut app, old) = app_with_image();
+        let l = app.cache.remove(&old).unwrap();
+        app.cache.insert(path.clone(), l);
+        app.files = vec![path.clone()];
+        app.run_actions(&[Action::SaveCopy], &egui::Context::default(), false);
+        assert!(app.rx.try_recv().is_err(), "no edits, nothing to write");
+        app.edit(Doc::rotate_left);
+        app.run_actions(&[Action::SaveCopy], &egui::Context::default(), false);
+        let msg = app.rx.recv().unwrap();
+        app.handle(msg);
+        assert!(!app.dirty());
+        assert!(image::open(dir.join("a-edited.png")).is_ok());
+        assert_eq!(std::fs::read(path).unwrap(), b"original");
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    /// `app_with_image` on a folder of three images, showing the middle one.
+    fn app_in_folder() -> App {
+        let (mut app, _) = app_with_image();
+        app.files = ["/a.png", "/b.png", "/c.png"].map(PathBuf::from).to_vec();
+        app.index = 1;
+        let frame = Frame { w: 2, h: 1, pixels: vec![0; 6], alpha: false, delay: std::time::Duration::ZERO };
+        app.cache.insert("/b.png".into(), Arc::new(Loaded { frames: vec![frame], file_size: 6, svg: None }));
+        app
+    }
+
+    #[test]
+    fn home_and_end_go_to_the_ends_and_stay_put_there() {
+        let ctx = egui::Context::default();
+        let mut app = app_in_folder();
+        app.run_actions(&[Action::LastImage], &ctx, false);
+        assert_eq!(app.index, 2);
+        app.run_actions(&[Action::FirstImage], &ctx, false);
+        assert_eq!(app.index, 0);
+        app.index = 1;
+        app.edit(Doc::rotate_left);
+        app.run_actions(&[Action::FirstImage], &ctx, false);
+        assert!(matches!(app.pending, Some(Pending::Navigate(-1))), "unsaved edits ask first");
+        app.pending = None;
+        // Already there: edits survive, with no question.
+        app.files.truncate(2);
+        app.run_actions(&[Action::LastImage], &ctx, false);
+        assert!(app.pending.is_none() && app.doc.is_some() && app.index == 1);
+    }
+
+    #[test]
+    fn mouse_side_buttons_navigate_unless_a_dialog_is_open() {
+        fn actions(button: egui::PointerButton, modal: bool) -> Vec<Action> {
+            let ctx = egui::Context::default();
+            ctx.set_fonts(markup::font_definitions());
+            let mut found = Vec::new();
+            for event in [egui::Event::PointerMoved(Pos2::new(9.0, 9.0)), press(button, true, 9.0)] {
+                let mut input = egui::RawInput::default();
+                input.screen_rect = Some(Rect::from_min_size(Pos2::ZERO, Vec2::splat(400.0)));
+                input.events.push(event);
+                let mut output = ctx.run_ui(input, |ui| {
+                    found = App::read_shortcuts(ui.ctx(), false);
+                    if modal {
+                        egui::Modal::new(egui::Id::unique("dialog")).show(ui.ctx(), |ui| ui.label("dialog"));
+                    }
+                });
+                output.textures_delta.clear();
+            }
+            found
+        }
+        assert!(actions(egui::PointerButton::Extra1, false) == [Action::PrevImage]);
+        assert!(actions(egui::PointerButton::Extra2, false) == [Action::NextImage]);
+        assert!(actions(egui::PointerButton::Extra1, true).is_empty());
+        assert!(actions(LEFT, false).is_empty());
+    }
+
+    #[test]
+    fn copy_path_puts_the_path_on_the_clipboard() {
+        let (mut app, _) = app_with_image();
+        let ctx = egui::Context::default();
+        let mut output = ctx.run_ui(egui::RawInput::default(), |ui| app.run_actions(&[Action::CopyPath], ui.ctx(), false));
+        output.textures_delta.clear();
+        assert!(output.platform_output.commands.contains(&egui::OutputCommand::CopyText("/a.png".into())));
+    }
+
+    #[test]
+    fn renaming_follows_the_file_and_keeps_the_edits() {
+        let dir = temp_folder("rename-app", &["a.png", "taken.png"]);
+        let path = dir.join("a.png");
+        let (mut app, old) = app_with_image();
+        let l = app.cache.remove(&old).unwrap();
+        app.cache.insert(path.clone(), l);
+        app.files = vec![path.clone()];
+        app.recent = vec![path.clone()];
+        app.edit(Doc::rotate_left);
+        assert!(app.rename_current("taken.png").is_err());
+        assert_eq!(app.files, [path.clone()]);
+        app.rename_current("b.png").unwrap();
+        let new = dir.join("b.png");
+        assert_eq!((app.current(), app.recent.as_slice()), (Some(&new), std::slice::from_ref(&new)));
+        assert!(app.cache.contains_key(&new) && !app.cache.contains_key(&path));
+        assert!(app.dirty(), "edits stay");
+        assert!(matches!(app.rx.recv().unwrap(), Msg::Folder(files) if files.contains(&new)));
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn the_rename_dialog_replaces_the_name_keeps_the_extension_and_shows_refusals() {
+        let dir = temp_folder("rename-dialog", &["a.b.png", "taken.png"]);
+        let (mut app, old) = app_with_image();
+        let l = app.cache.remove(&old).unwrap();
+        app.cache.insert(dir.join("a.b.png"), l);
+        app.files = vec![dir.join("a.b.png")];
+        let ctx = test_ctx();
+        let run = |app: &mut App, events: Vec<egui::Event>| {
+            let mut input = egui::RawInput::default();
+            input.screen_rect = Some(Rect::from_min_size(Pos2::ZERO, Vec2::splat(400.0)));
+            input.events = events;
+            let mut output = ctx.run_ui(input, |ui| app.rename_dialog(ui.ctx()));
+            output.textures_delta.clear();
+        };
+        let enter = || egui::Event::Key { key: Key::Enter, physical_key: None, pressed: true, repeat: false, modifiers: egui::Modifiers::NONE };
+        app.run_actions(&[Action::Rename], &ctx, false);
+        run(&mut app, vec![]);
+        run(&mut app, vec![]);
+        run(&mut app, vec![egui::Event::Text("taken".into())]);
+        assert_eq!(app.renaming.as_ref().unwrap().name, "taken.png", "the extension wasn't selected");
+        run(&mut app, vec![enter()]);
+        assert!(app.renaming.as_ref().is_some_and(|r| r.error.is_some()), "refused, and still open");
+        assert!(dir.join("a.b.png").exists());
+        run(&mut app, vec![]);
+        run(&mut app, vec![egui::Event::Text("free".into())]);
+        run(&mut app, vec![enter()]);
+        assert!(app.renaming.is_none());
+        assert_eq!(app.current(), Some(&dir.join("free.png")));
+        assert_eq!(std::fs::read_dir(&dir).unwrap().count(), 2);
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn f2_is_refused_while_an_ai_job_needs_the_path() {
+        let (mut app, _) = app_with_image();
+        app.restoring = Some(Restoring { id: 1, task: crate::ai::Task::Denoise, progress: 0.0, started: Instant::now(), cancel: Arc::default(), selection: None });
+        app.run_actions(&[Action::Rename], &egui::Context::default(), false);
+        assert!(app.renaming.is_none());
+        app.restoring = None;
+        app.run_actions(&[Action::Rename], &egui::Context::default(), false);
+        assert!(app.renaming.is_some());
+    }
+
+    /// One frame of input, drawing and the navigator, in a 400 px viewport.
+    fn view_frame(app: &mut App, ctx: &egui::Context, l: &Loaded, events: Vec<egui::Event>) -> egui::FullOutput {
+        let mut input = egui::RawInput::default();
+        input.screen_rect = Some(Rect::from_min_size(Pos2::ZERO, Vec2::splat(400.0)));
+        input.events = events;
+        let mut output = ctx.run_ui(input, |ui| {
+            let doc = app.doc();
+            let viewport = ui.available_rect_before_wrap();
+            app.image_input(ui, doc.as_ref().unwrap(), viewport, 1.0);
+            app.draw(ui, Some(l), doc, None, viewport);
+        });
+        output.textures_delta.clear();
+        output
+    }
+
+    fn click_at(app: &mut App, ctx: &egui::Context, l: &Loaded, p: Pos2) -> Vec<egui::OutputCommand> {
+        let button = |pressed| egui::Event::PointerButton { pos: p, button: LEFT, pressed, modifiers: egui::Modifiers::NONE };
+        let mut commands = Vec::new();
+        for events in [vec![egui::Event::PointerMoved(p)], vec![], vec![button(true)], vec![button(false)], vec![]] {
+            commands.extend(view_frame(app, ctx, l, events).platform_output.commands);
+        }
+        commands
+    }
+
+    fn test_ctx() -> egui::Context {
+        let ctx = egui::Context::default();
+        ctx.set_fonts(markup::font_definitions());
+        ctx
+    }
+
+    #[test]
+    fn the_navigator_shows_only_when_zoomed_in_and_isnt_rebuilt_by_panning() {
+        let (mut app, _) = app_zoomed_in();
+        let (ctx, l) = (test_ctx(), app.cache.values().next().unwrap().clone());
+        app.settings.gpu_scaling = false;
+        app.view = View::Fit;
+        view_frame(&mut app, &ctx, &l, vec![]);
+        assert!(app.navigator.is_none());
+        app.view = crate::view::actual_size(Vec2::splat(1000.0));
+        view_frame(&mut app, &ctx, &l, vec![]);
+        let first = app.navigator.as_ref().unwrap().1.id();
+        app.view = view::pan(app.view, Vec2::splat(50.0), Vec2::splat(1000.0), Rect::from_min_size(Pos2::ZERO, Vec2::splat(400.0)), 1.0);
+        view_frame(&mut app, &ctx, &l, vec![]);
+        assert_eq!(app.navigator.as_ref().unwrap().1.id(), first);
+        app.edit(Doc::rotate_right);
+        app.view = crate::view::actual_size(Vec2::splat(1000.0));
+        view_frame(&mut app, &ctx, &l, vec![]);
+        assert_ne!(app.navigator.as_ref().unwrap().1.id(), first, "it follows the edits");
+    }
+
+    #[test]
+    fn clicking_the_navigator_moves_the_view_and_not_the_tool() {
+        let (mut app, _) = app_zoomed_in();
+        let (ctx, l) = (test_ctx(), app.cache.values().next().unwrap().clone());
+        app.tool = Tool::Draw(Shape::Rect);
+        let viewport = Rect::from_min_size(Pos2::ZERO, Vec2::splat(400.0));
+        let nav = view::navigator_rect(Vec2::splat(1000.0), viewport);
+        click_at(&mut app, &ctx, &l, nav.right_bottom() - Vec2::splat(10.0));
+        let (_, crop) = view::layout(app.view, Vec2::splat(1000.0), viewport, 1.0);
+        assert!(crop.max.x > 999.0 && crop.max.y > 999.0, "{crop:?}");
+        assert!(app.doc().unwrap().elements.is_empty());
+    }
+
+    #[test]
+    fn the_navigator_follows_a_rotated_image() {
+        let (mut app, path) = app_with_image();
+        let frame = Frame { w: 1000, h: 500, pixels: vec![0; 1_500_000], alpha: false, delay: std::time::Duration::ZERO };
+        let l = Arc::new(Loaded { frames: vec![frame], file_size: 6, svg: None });
+        app.cache.insert(path, l.clone());
+        app.edit(Doc::rotate_right);
+        let (size, viewport) = (Vec2::new(500.0, 1000.0), Rect::from_min_size(Pos2::ZERO, Vec2::splat(400.0)));
+        app.view = crate::view::actual_size(size);
+        let ctx = test_ctx();
+        let nav = view::navigator_rect(size, viewport);
+        assert!(nav.height() > nav.width());
+        click_at(&mut app, &ctx, &l, nav.right_bottom() - Vec2::splat(2.0));
+        let (_, crop) = view::layout(app.view, size, viewport, 1.0);
+        assert!(crop.max.x > 499.0 && crop.max.y > 999.0, "{crop:?}");
+    }
+
+    /// `app_with_image` with a transparent pixel on the left and a red one on the right, picking.
+    fn app_picking() -> (App, Arc<Loaded>) {
+        let (mut app, path) = app_with_image();
+        let frame = Frame { w: 2, h: 1, pixels: vec![0, 0, 255, 128, 255, 16, 0, 255], alpha: true, delay: std::time::Duration::ZERO };
+        let l = Arc::new(Loaded { frames: vec![frame], file_size: 8, svg: None });
+        app.cache.insert(path, l.clone());
+        app.run_actions(&[Action::CopyColor], &egui::Context::default(), false);
+        assert!(app.tool == Tool::CopyColor);
+        (app, l)
+    }
+
+    #[test]
+    fn copy_color_copies_the_pixel_clicked() {
+        let (mut app, l) = app_picking();
+        let ctx = test_ctx();
+        let copied = |text: &str| egui::OutputCommand::CopyText(text.into());
+        assert!(click_at(&mut app, &ctx, &l, Pos2::new(300.0, 200.0)).contains(&copied("#FF1000")));
+        assert!(click_at(&mut app, &ctx, &l, Pos2::new(100.0, 200.0)).contains(&copied("#0000FF80")), "not opaque");
+        // What's seen, not the file: here flipped.
+        app.edit(Doc::flip_horizontal);
+        assert!(click_at(&mut app, &ctx, &l, Pos2::new(100.0, 200.0)).contains(&copied("#FF1000")));
+        press_key(&mut app, Key::Escape);
+        assert!(app.tool == Tool::Pan);
+    }
+
+    #[derive(Debug)]
+    struct Dropped(PathBuf);
+
+    impl egui::DroppedFile for Dropped {
+        fn path(&self) -> &std::path::Path {
+            &self.0
+        }
+
+        fn bytes(&self) -> Result<Vec<u8>, String> {
+            Err("unused".into())
+        }
+    }
+
+    #[test]
+    fn a_dropped_file_reaches_the_app_through_egui() {
+        let dir = temp_folder("drop-egui", &["b.png"]);
+        let (mut app, _) = app_with_image();
+        let ctx = egui::Context::default();
+        ctx.set_fonts(markup::font_definitions());
+        let mut input = egui::RawInput::default();
+        input.dropped_files.push(Arc::new(Dropped(dir.join("b.png"))));
+        frame(&mut app, &ctx, input);
+        assert_eq!(app.files, [dir.join("b.png")]);
+        std::fs::remove_dir_all(dir).unwrap();
     }
 
     #[test]

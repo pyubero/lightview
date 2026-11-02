@@ -8,6 +8,10 @@ use std::path::PathBuf;
 pub(super) enum Action {
     Open,
     SaveAs,
+    SaveCopy,
+    CopyPath,
+    ShowInFolder,
+    Rename,
     OpenRecent(PathBuf),
     Close,
     Info,
@@ -23,6 +27,8 @@ pub(super) enum Action {
     FlipVertical,
     PrevImage,
     NextImage,
+    FirstImage,
+    LastImage,
     Play,
     Pause,
     NextFrame,
@@ -37,6 +43,7 @@ pub(super) enum Action {
     AutoLevels,
     ResetAdjust,
     Measure,
+    CopyColor,
     ShowToolbar,
     Pick(Pick),
     Describe,
@@ -67,9 +74,11 @@ const fn key(key: Key) -> KeyboardShortcut {
 }
 
 /// Keyboard shortcuts, also shown in the menus. Ctrl+Plus is an alias for Ctrl+=.
-pub(super) const SHORTCUTS: [(KeyboardShortcut, Action); 19] = [
+pub(super) const SHORTCUTS: [(KeyboardShortcut, Action); 23] = [
     (ctrl(Key::O), Action::Open),
     (KeyboardShortcut::new(Modifiers { shift: true, ..Modifiers::COMMAND }, Key::S), Action::SaveAs),
+    // After Ctrl+Shift+S, which it would also match.
+    (ctrl(Key::S), Action::SaveCopy),
     (ctrl(Key::W), Action::Close),
     (ctrl(Key::I), Action::Info),
     (ctrl(Key::Equals), Action::ZoomIn),
@@ -80,6 +89,9 @@ pub(super) const SHORTCUTS: [(KeyboardShortcut, Action); 19] = [
     (key(Key::F11), Action::Fullscreen),
     (key(Key::ArrowLeft), Action::PrevImage),
     (key(Key::ArrowRight), Action::NextImage),
+    (key(Key::Home), Action::FirstImage),
+    (key(Key::End), Action::LastImage),
+    (key(Key::F2), Action::Rename),
     (ctrl(Key::L), Action::RotateLeft),
     (ctrl(Key::R), Action::RotateRight),
     // Before Ctrl+Z, which would also match Ctrl+Shift+Z.
@@ -121,8 +133,13 @@ impl App {
                 });
                 item(ui, tr("Close"), Action::Close, true, actions);
                 ui.separator();
+                item(ui, tr("Save Copy"), Action::SaveCopy, self.can_save_copy(), actions);
                 item(ui, tr("Save As…"), Action::SaveAs, can_save, actions);
                 ui.separator();
+                let open = self.current().is_some();
+                item(ui, tr("Copy Path"), Action::CopyPath, open, actions);
+                item(ui, tr("Show in File Manager"), Action::ShowInFolder, open, actions);
+                item(ui, tr("Rename…"), Action::Rename, open && self.restoring.is_none(), actions);
                 if ui.add_enabled(self.current().is_some(), egui::Button::new(tr("Delete Image…")).shortcut_text("Delete")).clicked() {
                     actions.push(Action::DeleteImage);
                 }
@@ -152,6 +169,8 @@ impl App {
             ui.menu_button(tr("View"), |ui| {
                 item(ui, tr("Previous Image"), Action::PrevImage, self.index > 0, actions);
                 item(ui, tr("Next Image"), Action::NextImage, self.index + 1 < self.files.len(), actions);
+                item(ui, tr("First Image"), Action::FirstImage, self.index > 0, actions);
+                item(ui, tr("Last Image"), Action::LastImage, self.index + 1 < self.files.len(), actions);
                 ui.separator();
                 item(ui, tr("Zoom In"), Action::ZoomIn, has_image, actions);
                 item(ui, tr("Zoom Out"), Action::ZoomOut, has_image, actions);
@@ -212,6 +231,9 @@ impl App {
                 let measuring = self.tool == Tool::Measure;
                 if ui.add_enabled(has_image, egui::Button::selectable(measuring, tr("Measure"))).clicked() {
                     actions.push(Action::Measure);
+                }
+                if ui.add_enabled(has_image, egui::Button::selectable(self.tool == Tool::CopyColor, tr("Copy Color"))).clicked() {
+                    actions.push(Action::CopyColor);
                 }
                 ui.separator();
                 item(ui, tr("Sketch"), Action::Pick(Pick::Draw(Shape::Sketch)), has_image, actions);

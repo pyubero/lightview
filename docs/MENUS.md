@@ -11,8 +11,12 @@ when" says otherwise. `▸` marks a submenu.
 | Open Recent ▸ | | always | The last 10 files opened explicitly (hover shows the full path); "No recent files" when empty. |
 | Close | Ctrl+W | always | Closes the window (asks first if there are unsaved edits). |
 | — | | | |
+| Save Copy | Ctrl+S | a still image is loaded, with unsaved edits | Writes `name-edited.ext` next to the original with no dialog (`-edited-2` and so on; SVG and ICO become PNG). Never replaces a file. |
 | Save As… | Ctrl+Shift+S | a still image is loaded | Saves a copy with all edits; the format follows the extension (JPEG at quality 90 with EXIF kept, PNG, lossless WebP, BMP, TIFF, GIF). |
 | — | | | |
+| Copy Path | | an image is open | Copies the file's full path as text. |
+| Show in File Manager | | an image is open | Opens the file manager with the file highlighted, or just its folder if the desktop can't highlight. |
+| Rename… | F2 | an image is open, no AI job running | Asks for the new file name, with the extension left unselected. Never replaces a file; edits stay. |
 | Delete Image… | Delete | an image is open | Asks first (Enter accepts), then moves the file to the Trash. Ctrl+Z restores it. |
 
 ## Edit
@@ -29,13 +33,15 @@ when" says otherwise. `▸` marks a submenu.
 | Select All | Ctrl+A | | Selects the whole image. |
 | Deselect | Ctrl+Shift+A | there's a selection | |
 | — | | | |
-| Settings… | Ctrl+, | always | GPU image scaling, interpolation, background colour, default window size, sort order. |
+| Settings… | Ctrl+, | always | GPU image scaling, interpolation, background colour, pixel grid (lines between pixels from 8× up), default window size, sort order. |
 
 ## View
 | Item | Shortcut | Enabled when | Does |
 |---|---|---|---|
 | Previous Image | ← | not on the first image of the folder | |
 | Next Image | → | not on the last image of the folder | |
+| First Image | Home | not on the first image of the folder | |
+| Last Image | End | not on the last image of the folder | |
 | — | | | |
 | Zoom In | Ctrl+= (or Ctrl++) | | Also the mouse wheel / pinch. |
 | Zoom Out | Ctrl+− | | |
@@ -85,6 +91,7 @@ when" says otherwise. `▸` marks a submenu.
 | Elliptical Selection | | | |
 | Lasso | | | |
 | Measure | | | Drag a line; distance, ΔX, ΔY in image pixels (ticked while active). |
+| Copy Color | | | Click a pixel to copy its colour as `#RRGGBB` (`#RRGGBBAA` if it isn't opaque), as it's seen with the edits (ticked while active). |
 | — | | | |
 | Sketch | | | Freehand. |
 | Shapes ▸ | | | Rectangle, Rounded Rectangle, Ellipse, Line, Arrow. |
@@ -106,6 +113,14 @@ thickness, fill, font size, zoom) · Undo · Redo · Done.
 | Enter | Applies the crop (Crop tool) or the correction (Correct Perspective). |
 | Esc | Cancels the drawing in progress, else leaves the current tool, else leaves full screen. |
 | Delete / Backspace | Deletes the selected element (Select tool), else the selection; with neither, Delete (not Backspace) offers to delete the image. |
+| Mouse back / forward buttons | Previous / next image. |
 | Mouse wheel / pinch | Zoom at the pointer. |
 | Right-drag | Pans, with any tool. |
 | Drag | Uses the current tool; with no tool, pans. |
+
+## Without a menu
+| What | Does |
+|---|---|
+| Drag a file or folder onto the window | Opens the file, or the folder's first image (asks first if there are unsaved edits). X11 and Windows only: not supported on Wayland yet. |
+| Navigator (bottom-right, while zoomed in) | The whole image with what's on screen marked; click or drag on it to move there. |
+| The open file changes on disk | Reloads it at the same zoom. With unsaved edits, a dialog offers Reload or Keep Edits. |

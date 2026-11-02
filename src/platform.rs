@@ -64,6 +64,41 @@ pub fn open(target: impl AsRef<OsStr>) {
     drop(command(program).arg(target).spawn());
 }
 
+/// `path` as a `file://` URI, escaped so that a comma can't split `dbus-send`'s array.
+#[cfg(target_os = "linux")]
+fn file_uri(path: &Path) -> String {
+    use percent_encoding::{NON_ALPHANUMERIC, percent_encode};
+    use std::os::unix::ffi::OsStrExt;
+    const ESCAPED: &percent_encoding::AsciiSet = &NON_ALPHANUMERIC.remove(b'/').remove(b'-').remove(b'_').remove(b'.').remove(b'~');
+    format!("file://{}", percent_encode(path.as_os_str().as_bytes(), ESCAPED))
+}
+
+/// Opens the file manager with `path` highlighted, or just its folder if the desktop can't do that.
+#[cfg(target_os = "linux")]
+pub fn show_in_folder(path: &Path) {
+    let (uri, dir) = (file_uri(path), path.parent().unwrap_or(Path::new("/")).to_path_buf());
+    std::thread::spawn(move || {
+        let call = ["--session", "--print-reply", "--dest=org.freedesktop.FileManager1", "/org/freedesktop/FileManager1", "org.freedesktop.FileManager1.ShowItems"];
+        let shown = command("dbus-send").args(call).arg(format!("array:string:{uri}")).arg("string:").output();
+        if !shown.is_ok_and(|o| o.status.success()) {
+            open(dir);
+        }
+    });
+}
+
+/// Opens Explorer with `path` highlighted. It takes `/select,` and the quoted path as one argument,
+/// which `Command::arg`'s own quoting would break, and doesn't understand `canonicalize`'s `\\\\?\\` form.
+#[cfg(windows)]
+pub fn show_in_folder(path: &Path) {
+    use std::os::windows::process::CommandExt;
+    let path = path.to_string_lossy();
+    let path = match path.strip_prefix(r"\\?\UNC\") {
+        Some(share) => format!(r"\\{share}"),
+        None => path.strip_prefix(r"\\?\").unwrap_or(&path).to_string(),
+    };
+    drop(command("explorer").raw_arg(format!("/select,\"{path}\"")).spawn());
+}
+
 /// The user's locale, like `es-ES`.
 // shortcut: this is the regional format, not the display language; use GetUserPreferredUILanguages if they often differ.
 #[cfg(windows)]
@@ -77,4 +112,14 @@ pub fn locale() -> Option<String> {
 #[cfg(not(windows))]
 pub fn locale() -> Option<String> {
     None
+}
+
+#[cfg(all(test, target_os = "linux"))]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn file_uris_are_escaped() {
+        assert_eq!(file_uri(Path::new("/a b/c,d/café-1_2.jpg")), "file:///a%20b/c%2Cd/caf%C3%A9-1_2.jpg");
+    }
 }

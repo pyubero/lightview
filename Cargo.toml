@@ -28,6 +28,10 @@ trash = { version = "5.2.9", default-features = false, features = ["coinit_apart
 # Already in the dependency tree (winit); only for SetDllDirectoryW (GPU support) and the system language.
 windows-sys = { version = "0.61", features = ["Win32_Globalization", "Win32_System_LibraryLoader"] }
 
+[target.'cfg(target_os = "linux")'.dependencies]
+# Already in the dependency tree; for the file URI that Show in File Manager sends.
+percent-encoding = "2.3"
+
 # Unoptimised decoders are 10–50× slower; keep dependencies fast in debug builds.
 [profile.dev.package."*"]
 opt-level = 3

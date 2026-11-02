@@ -6,7 +6,7 @@ use image::metadata::Orientation;
 use image::{DynamicImage, ImageDecoder, ImageEncoder, ImageReader};
 use std::fs::File;
 use std::io::{BufWriter, Seek, Write};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 const JPEG_QUALITY: u8 = 90;
 
@@ -32,11 +32,43 @@ pub fn formats_for(source: &Path) -> [(&'static str, &'static [&'static str]); 6
     formats
 }
 
+/// `source`, as PNG if its format can't be written.
+fn writable(source: &Path) -> PathBuf {
+    let read_only = source.extension().is_some_and(|e| READ_ONLY.iter().any(|r| e.eq_ignore_ascii_case(r)));
+    if read_only { source.with_extension("png") } else { source.to_path_buf() }
+}
+
 /// The name Save As starts with: the source's, unless its format can't be written.
 pub fn suggested_name(source: &Path) -> String {
-    let read_only = source.extension().is_some_and(|e| READ_ONLY.iter().any(|r| e.eq_ignore_ascii_case(r)));
-    let name = if read_only { source.with_extension("png") } else { source.to_path_buf() };
-    name.file_name().unwrap_or_default().to_string_lossy().into_owned()
+    writable(source).file_name().unwrap_or_default().to_string_lossy().into_owned()
+}
+
+/// Claims the first free name for a copy next to `source` (`photo-edited.jpg`, then
+/// `photo-edited-2.jpg`…) with an empty file, so that no two saves pick the same name and nothing
+/// is overwritten. It has the source's permissions, which `write_atomic` keeps.
+pub fn reserve_copy(source: &Path) -> Result<PathBuf, String> {
+    let writable = writable(source);
+    let (stem, ext) = (writable.file_stem().unwrap_or_default(), writable.extension());
+    let mut n = 1;
+    loop {
+        let mut name = stem.to_os_string();
+        name.push(if n == 1 { "-edited".to_string() } else { format!("-edited-{n}") });
+        if let Some(ext) = ext {
+            name.push(".");
+            name.push(ext);
+        }
+        let dest = source.with_file_name(name);
+        match File::options().write(true).create_new(true).open(&dest) {
+            Ok(file) => {
+                if let Ok(original) = std::fs::metadata(source) {
+                    let _ = file.set_permissions(original.permissions());
+                }
+                return Ok(dest);
+            }
+            Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => n += 1,
+            Err(e) => return Err(e.to_string()),
+        }
+    }
 }
 
 /// Saves `frame` with the edits in `doc` to `dest`, in the format of its extension.
@@ -117,6 +149,39 @@ fn source_exif(source: &Path) -> Option<Vec<u8>> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_copy_takes_the_first_free_name() {
+        let dir = std::env::temp_dir().join(format!("lightview-copy-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let source = dir.join("photo.jpg");
+        std::fs::write(&source, b"original").unwrap();
+        let names: Vec<PathBuf> = (0..3).map(|_| reserve_copy(&source).unwrap()).collect();
+        assert_eq!(names, [dir.join("photo-edited.jpg"), dir.join("photo-edited-2.jpg"), dir.join("photo-edited-3.jpg")]);
+        std::fs::write(dir.join("photo-edited-4.jpg"), b"someone else's").unwrap();
+        assert_eq!(reserve_copy(&source).unwrap(), dir.join("photo-edited-5.jpg"));
+        assert_eq!(std::fs::read(dir.join("photo-edited-4.jpg")).unwrap(), b"someone else's");
+        assert_eq!(std::fs::read(source).unwrap(), b"original");
+        std::fs::write(dir.join("logo.svg"), b"").unwrap();
+        assert_eq!(reserve_copy(&dir.join("logo.svg")).unwrap(), dir.join("logo-edited.png"));
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_copy_of_a_private_file_stays_private() {
+        use std::os::unix::fs::PermissionsExt;
+        let dir = std::env::temp_dir().join(format!("lightview-private-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let source = dir.join("photo.png");
+        std::fs::write(&source, b"").unwrap();
+        std::fs::set_permissions(&source, std::fs::Permissions::from_mode(0o600)).unwrap();
+        let dest = reserve_copy(&source).unwrap();
+        let frame = Frame { w: 1, h: 1, pixels: vec![0; 3], alpha: false, delay: Duration::ZERO };
+        save(&frame, &Doc::new(1, 1), &source, &dest).unwrap();
+        assert_eq!(std::fs::metadata(&dest).unwrap().permissions().mode() & 0o777, 0o600);
+        std::fs::remove_dir_all(dir).unwrap();
+    }
     use std::time::Duration;
 
     #[test]

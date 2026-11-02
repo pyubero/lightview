@@ -1358,6 +1358,7 @@ dependencies = [
  "libloading 0.8.9",
  "little_exif",
  "ort",
+ "percent-encoding",
  "resvg",
  "rfd",
  "ron",

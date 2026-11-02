@@ -286,3 +286,25 @@ LaMa — best quality, slower	LaMa — melhor qualidade, mais lento
 MI-GAN — fast	MI-GAN — rápido
 ONNX export by Carve on Hugging Face; its origin isn't verified.	Exportação ONNX da Carve no Hugging Face; a sua origem não foi verificada.
 the selection is empty	a seleção está vazia
+No images in {name}	Sem imagens em {name}
+Can't open {name}: not a supported image	Não é possível abrir {name}: não é uma imagem suportada
+Save Copy	Guardar cópia
+Copy Path	Copiar caminho
+Show in File Manager	Mostrar no gestor de ficheiros
+Rename…	Mudar o nome…
+First Image	Primeira imagem
+Last Image	Última imagem
+Copied the path	Caminho copiado
+Rename Image	Mudar o nome da imagem
+Rename	Mudar o nome
+That isn't a valid file name	Esse nome de ficheiro não é válido
+{name} already exists	{name} já existe
+File changed on disk	O ficheiro mudou no disco
+{name} changed on disk. Reloading it discards your edits.	{name} mudou no disco. Recarregar descarta as suas edições.
+Reload	Recarregar
+Keep Edits	Manter edições
+Pixel grid	Grelha de píxeis
+Shows the edges of the pixels when zoomed far in.	Mostra as margens dos píxeis com muito zoom.
+Click a pixel to copy its colour · Esc to stop	Clique num píxel para copiar a cor · Esc para sair
+Copied {color}	{color} copiado
+Copy Color	Copiar cor

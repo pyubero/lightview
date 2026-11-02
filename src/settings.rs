@@ -121,11 +121,13 @@ pub struct Settings {
     pub default_asked: bool,
     /// UI body text, in points; the other text styles keep their proportions to it.
     pub font_size: f32,
+    /// Lines between the pixels when zoomed far in.
+    pub pixel_grid: bool,
 }
 
 impl Default for Settings {
     fn default() -> Self {
-        Settings { gpu_scaling: false, interpolation: Interpolation::Bilinear, background: [0, 0, 0], window_size: [1280.0, 720.0], sort: SortOrder::Name, ai: AiSettings::default(), language: None, default_asked: false, font_size: DEFAULT_FONT_SIZE }
+        Settings { gpu_scaling: false, interpolation: Interpolation::Bilinear, background: [0, 0, 0], window_size: [1280.0, 720.0], sort: SortOrder::Name, ai: AiSettings::default(), language: None, default_asked: false, font_size: DEFAULT_FONT_SIZE, pixel_grid: false }
     }
 }
 
@@ -221,6 +223,10 @@ pub fn ui(ui: &mut egui::Ui, s: &mut Settings) {
         ui.color_edit_button_srgb(&mut s.background);
         ui.end_row();
 
+        ui.label(tr("Pixel grid"));
+        ui.checkbox(&mut s.pixel_grid, "").on_hover_text(tr("Shows the edges of the pixels when zoomed far in."));
+        ui.end_row();
+
         ui.label(tr("Default window size"));
         ui.vertical(|ui| {
             ui.horizontal(|ui| {
@@ -252,7 +258,7 @@ mod tests {
     fn storage_round_trip() {
         let mut ai = AiSettings { model: Some("mine.onnx".into()), ..AiSettings::default() };
         ai.overrides.insert("mine.onnx".into(), Preprocess::auto(512));
-        let s = Settings { gpu_scaling: true, interpolation: Interpolation::Lanczos3, background: [1, 2, 3], window_size: [800.0, 600.0], sort: SortOrder::DateModified, ai, language: Some(Language::German), default_asked: true, font_size: 18.0 };
+        let s = Settings { gpu_scaling: true, interpolation: Interpolation::Lanczos3, background: [1, 2, 3], window_size: [800.0, 600.0], sort: SortOrder::DateModified, ai, language: Some(Language::German), default_asked: true, font_size: 18.0, pixel_grid: true };
         // eframe stores each value as a RON string inside a RON map.
         let kv = HashMap::from([(KEY.to_string(), ron::to_string(&s).unwrap()), ("recent".to_string(), "/a".to_string())]);
         assert_eq!(parse(&ron::to_string(&kv).unwrap()), s);

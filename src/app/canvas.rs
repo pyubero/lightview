@@ -210,6 +210,14 @@ impl App {
             let lens = Element::lens(Rect::from_min_size(Pos2::ZERO, size).clamp(view::to_image(dest, crop, p)), size, style);
             markup::paint(&ui.painter().with_clip_rect(dest), &lens, &|p| view::to_screen(dest, crop, p), dest.width() / crop.width(), texture, &uv, None);
         }
+        if self.settings.pixel_grid {
+            let painter = ui.painter().with_clip_rect(dest.intersect(viewport));
+            // On pixel centres, or a line blurs across two screen pixels.
+            let snap = |p: Pos2| Pos2::new(painter.round_to_pixel_center(p.x), painter.round_to_pixel_center(p.y));
+            for [a, b] in view::grid_lines(dest, crop, ppp) {
+                painter.line_segment([snap(a), snap(b)], egui::Stroke::new(1.0 / ppp, Color32::from_rgba_unmultiplied(128, 128, 128, 120)));
+            }
+        }
         self.paint_selection(ui, dest, crop);
         if self.tool == Tool::Crop {
             self.paint_crop(ui, dest, crop, viewport);
@@ -220,8 +228,49 @@ impl App {
         if self.tool == Tool::Measure {
             self.paint_measure(ui, &edited, dest, crop, viewport);
         }
+        if self.tool == Tool::CopyColor {
+            bubble(ui.painter(), Pos2::new(viewport.center().x, viewport.top() + 24.0), tr("Click a pixel to copy its colour · Esc to stop"));
+        }
+        if view::zoomed_in(crop, doc.size_vec()) {
+            let scale = view::scale(view, doc.size_vec(), viewport, ppp);
+            self.navigator(ui, frame, source, &doc, key, crop, scale, viewport);
+        }
         if self.timings {
             self.report_timings(ctx, full.is_some(), frame_wh);
+        }
+    }
+
+    /// The whole image small in a corner while zoomed in, with what's on screen marked; clicking
+    /// or dragging on it moves there. `key` is the main texture's.
+    // shortcut: an animation shows the frame it was first built from, and markup not flattened (over 16 MP, or during a change) is missing.
+    #[allow(clippy::too_many_arguments)]
+    fn navigator(&mut self, ui: &egui::Ui, frame: &Frame, source: &Doc, doc: &Doc, key: TexKey, crop: Rect, scale: f32, viewport: Rect) {
+        let ctx = ui.ctx();
+        let (img, ppp) = (doc.size_vec(), ctx.pixels_per_point());
+        let rect = view::navigator_rect(img, viewport);
+        let size = [(rect.width() * ppp).round().max(1.0) as u32, (rect.height() * ppp).round().max(1.0) as u32];
+        let src = source.to_source(doc.bounds());
+        let interpolation = Interpolation::Bilinear;
+        let key = TexKey { gpu: false, interpolation, transform: doc.transform, crop: [src.min.x, src.min.y, src.width(), src.height()], size, adjust: doc.adjust, anim_frame: 0, ..key };
+        if self.navigator.as_ref().map(|n| n.0) != Some(key) {
+            let mut pixels = resize(frame, src, size, doc.transform, interpolation);
+            if !doc.adjust.is_identity() {
+                doc.adjust.apply(&mut pixels, if frame.alpha { 4 } else { 3 });
+            }
+            let image = to_color_image(frame.alpha, [size[0] as usize, size[1] as usize], &pixels);
+            self.navigator = Some((key, ctx.load_texture("navigator", image, TextureOptions::LINEAR)));
+        }
+        let Some((_, texture)) = &self.navigator else { return };
+        let response = ui.interact(rect, ui.scope_id().with("navigator"), egui::Sense::click_and_drag());
+        let painter = ui.painter().with_clip_rect(viewport);
+        painter.rect_filled(rect.expand(1.0), 0.0, Color32::from_black_alpha(190));
+        painter.image(texture.id(), rect, Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)), Color32::WHITE);
+        let k = rect.size() / img;
+        let shown = Rect::from_min_max(rect.min + crop.min.to_vec2() * k, rect.min + crop.max.to_vec2() * k);
+        painter.rect_stroke(shown, 0.0, egui::Stroke::new(3.0, Color32::from_black_alpha(160)), egui::StrokeKind::Middle);
+        painter.rect_stroke(shown, 0.0, egui::Stroke::new(1.0, Color32::WHITE), egui::StrokeKind::Middle);
+        if response.is_pointer_button_down_on() && let Some(p) = response.interact_pointer_pos() {
+            self.view = View::Manual { scale, center: ((p - rect.min) / k).to_pos2() };
         }
     }
 
