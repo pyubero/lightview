@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Image → Straighten…: turn the image by any angle up to 45° under a grid; it's cropped to the largest rectangle of the same shape. Ctrl+Z undoes it.
+- The crop snaps to 1:1, 4:3, 3:2 or 16:9 (either way round) when it's within 3%, and shows the ratio.
+- Image → Greyscale and Invert Colors. Greyscale is Saturation at −1, so it shows in Adjust Color.
+- Image → Remove Red Eye and Pixelate Selection work on the selected area. Pixelation uses a randomly placed grid and random noise, so the same picture never pixelates the same way twice. For text, a solid shape is still safer.
 - EXIF editing now works on PNG and TIFF files too, multi-page TIFFs and APNGs included, and always saves a copy in the same format. A PNG copy uses the standard `eXIf` chunk. WebP metadata is shown but not edited, because the library lightview uses damages WebP files when it writes them. Every copy is checked against the original's pixels before it's saved.
 - File → Copy File puts the image file itself on the clipboard, for pasting into a chat, an email or a file manager. Like a copied image, it stays on the clipboard while lightview runs.
 - Camera RAW files (CR2, CR3, NEF, ARW, DNG, RAF, ORF, RW2) open instantly from the JPEG preview the camera stores in them, rotated as shot. The inspector shows their EXIF, read only. Save As writes a PNG of the preview.

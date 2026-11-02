@@ -278,6 +278,16 @@ impl App {
                     }
                 }
                 Action::ResetAdjust => self.edit(|d| d.adjust = Adjust::default()),
+                Action::Greyscale => self.edit(|d| d.adjust.saturation = if d.adjust.saturation == -1.0 { 0.0 } else { -1.0 }),
+                Action::Invert => self.edit(|d| d.adjust.invert = !d.adjust.invert),
+                Action::RedEye => self.patch_selection(edit::remove_red_eye, tr("Red eye removed")),
+                Action::Pixelate => self.patch_selection(edit::pixelate, tr("Pixelated")),
+                Action::Straighten => {
+                    if self.doc().is_some() {
+                        self.finish_text();
+                        (self.tool, self.straighten, self.crop_rect, self.selected) = (Tool::Straighten, 0.0, None, None);
+                    }
+                }
                 Action::Measure if self.tool == Tool::Measure => (self.tool, self.measure) = (Tool::Pan, None),
                 Action::Measure if self.doc().is_some() => (self.tool, self.crop_rect) = (Tool::Measure, None),
                 Action::CopyColor if self.tool == Tool::CopyColor => self.tool = Tool::Pan,
@@ -360,6 +370,9 @@ impl App {
             self.edit(|d| d.crop_to(r));
             self.tool = Tool::Pan;
         }
+        if enter && self.tool == Tool::Straighten && !self.perspective_prompt {
+            self.apply_straighten();
+        }
         if enter && self.tool == Tool::Perspective && !self.perspective_prompt && self.adjusting.is_none() {
             if self.doc.as_ref().is_some_and(|d| !d.elements.is_empty()) {
                 self.perspective_prompt = true;
@@ -403,8 +416,8 @@ impl App {
             return drag;
         }
         match self.tool {
-            Tool::Pan if drag.dragged() => self.view = view::pan(self.view, drag.drag_delta(), img, viewport, ppp),
-            Tool::Pan => {}
+            Tool::Pan | Tool::Straighten if drag.dragged() => self.view = view::pan(self.view, drag.drag_delta(), img, viewport, ppp),
+            Tool::Pan | Tool::Straighten => {}
             Tool::Select | Tool::Draw(_) => self.markup_input(ctx, &drag, dest, vis, doc),
             Tool::Selection(kind) => self.selection_input(ctx, &drag, dest, vis, img, kind),
             Tool::Crop | Tool::Measure => self.crop_measure_input(ctx, &drag, dest, vis, img),
@@ -466,7 +479,7 @@ impl App {
         if drag.dragged() && let (Some(a), Some(p)) = (self.drag_start, drag.interact_pointer_pos()) {
             match (self.tool, &mut self.measure) {
                 (Tool::Measure, Some(m)) => m[self.measure_drag] = at(p),
-                (Tool::Crop, _) => self.crop_rect = Some(Rect::from_two_pos(a, at(p))),
+                (Tool::Crop, _) => self.crop_rect = Some(Rect::from_two_pos(a, view::snap_ratio(a, at(p), bounds))),
                 _ => {}
             }
         }

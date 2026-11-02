@@ -41,6 +41,8 @@ enum Tool {
     Pan,
     Crop,
     Perspective,
+    /// Turning the image by `App::straighten` degrees.
+    Straighten,
     Measure,
     CopyColor,
     Select,
@@ -133,6 +135,8 @@ pub struct App {
     perspective_drag: Option<usize>,
     /// Asking before flattening the markup into the corrected image.
     perspective_prompt: bool,
+    /// Straighten's angle in degrees, clockwise.
+    straighten: f32,
     /// Measure tool: the two endpoints (image px) and which one is being dragged.
     measure: Option<[Pos2; 2]>,
     measure_drag: usize,
@@ -210,7 +214,7 @@ impl App {
             files: start.into_iter().collect(), index: 0,
             cache: HashMap::new(), preview: None, error: None, view: View::Fit,
             texture: None, tex_key: None, resized: None, baked: None, sharp: None, sharp_wanted: 1, flat: None, generation: 0, anim_frame: 0, anim_due: None, anim_paused: false,
-            doc: None, undo: Vec::new(), redo: Vec::new(), deleted: Vec::new(), delete_prompt: false, renaming: None, watched, own_stamp: None, changed_prompt: false, navigator: None, saved: None, tool: Tool::Pan, drag_start: None, right_pan: false, crop_rect: None, perspective: None, perspective_drag: None, perspective_prompt: false, measure: None, measure_drag: 1,
+            doc: None, undo: Vec::new(), redo: Vec::new(), deleted: Vec::new(), delete_prompt: false, renaming: None, watched, own_stamp: None, changed_prompt: false, navigator: None, saved: None, tool: Tool::Pan, drag_start: None, right_pan: false, crop_rect: None, perspective: None, perspective_drag: None, perspective_prompt: false, straighten: 0.0, measure: None, measure_drag: 1,
             show_toolbar, style: None, selected: None, grab: Grab::None, editing_text: None, focus_text: false, change_base: None, last_restyle: None, selection: None, element_textures: HashMap::new(),
             resize_dialog: None, adjusting: None, curve_panel: None, pending: None, show_ai_models: false, license_prompt: None, restoring: None, restore_runs: 0, compare: None, enhance_notice: None, visible: None, downloading: HashSet::new(),
             title: String::new(),
@@ -760,6 +764,43 @@ impl App {
             Ok(()) => (self.tool, self.perspective) = (Tool::Pan, None),
             Err(e) => self.set_status(e),
         }
+    }
+
+    /// Straighten: the auto-crop of the turned image goes through Correct Perspective, which asks
+    /// before merging the markup and keeps colour live.
+    fn apply_straighten(&mut self) {
+        let Some(doc) = self.doc() else { return };
+        if self.straighten == 0.0 {
+            self.tool = Tool::Pan;
+            return;
+        }
+        self.perspective = Some(edit::straighten_corners(doc.size_vec(), self.straighten));
+        if doc.elements.is_empty() {
+            self.apply_perspective();
+        } else {
+            self.perspective_prompt = true;
+        }
+    }
+
+    /// Changes the selected pixels, as shown, with `f`, as a patch over them that Ctrl+Z removes.
+    fn patch_selection(&mut self, f: fn(&mut image::RgbaImage), done: &str) {
+        let Some((l, doc)) = self.current().and_then(|p| Some((self.cache.get(p)?.clone(), self.doc()?))) else { return };
+        let Some(sel) = self.selection.clone().filter(|s| !s.is_empty()) else { return };
+        let region = Rect::from_min_max(sel.bbox().min.floor(), sel.bbox().max.ceil()).intersect(doc.bounds());
+        if region.width() < 1.0 || region.height() < 1.0 {
+            return;
+        }
+        let frame = &l.frames[self.anim_frame.min(l.frames.len() - 1)];
+        let mut patch = match edit::render(frame, &doc) {
+            Ok(img) => image::imageops::crop_imm(&img.into_rgba8(), region.min.x as u32, region.min.y as u32, region.width() as u32, region.height() as u32).to_image(),
+            Err(e) => return self.set_status(e),
+        };
+        f(&mut patch);
+        clip_to(&mut patch, &sel, region.min);
+        let style = Style::for_image(region.size());
+        self.edit(|d| d.elements.push(Element::pasted(Arc::new(patch), region.min, region.size(), style)));
+        self.selection = None;
+        self.set_status(done);
     }
 
     /// Adds a clipboard image (straight RGBA) as a movable element, centred and fitted inside the image.
@@ -1321,6 +1362,63 @@ mod tests {
     fn file_paste() {
         let files = arboard::Clipboard::new().unwrap().get().file_list().unwrap();
         assert_eq!(files, [copied_file().canonicalize().unwrap()]);
+    }
+
+    #[test]
+    fn pixelate_and_red_eye_patch_the_selection_and_undo() {
+        let (mut app, path) = app_with_image();
+        let frame = Frame { w: 40, h: 30, pixels: (0..40 * 30 * 3).map(|i| (i % 251) as u8).collect(), alpha: false, delay: std::time::Duration::ZERO };
+        app.cache.insert(path, Arc::new(Loaded { frames: vec![frame], file_size: 6, svg: None }));
+        let ctx = egui::Context::default();
+        for action in [Action::Pixelate, Action::RedEye] {
+            app.selection = Some(crate::markup::Selection::Ellipse(Rect::from_min_size(Pos2::new(5.0, 4.0), Vec2::new(20.0, 16.0))));
+            app.run_actions(&[action.clone()], &ctx, false);
+            let doc = app.doc().unwrap();
+            assert_eq!(doc.elements.len(), 1, "one patch");
+            assert_eq!(doc.elements[0].points, [Pos2::new(5.0, 4.0), Pos2::new(25.0, 20.0)]);
+            assert!(app.selection.is_none(), "the result is shown, not outlined");
+            app.run_actions(&[Action::Undo], &ctx, false);
+            assert!(app.doc().unwrap().elements.is_empty());
+        }
+        // Nothing to patch without a selection.
+        app.run_actions(&[Action::Pixelate], &ctx, false);
+        assert!(app.doc().unwrap().elements.is_empty());
+    }
+
+    #[test]
+    fn greyscale_and_invert_are_one_undo_step_each() {
+        let (mut app, _) = app_with_image();
+        let ctx = egui::Context::default();
+        app.run_actions(&[Action::Greyscale], &ctx, false);
+        app.run_actions(&[Action::Invert], &ctx, false);
+        let a = app.doc().unwrap().adjust;
+        assert!(a.saturation == -1.0 && a.invert);
+        app.run_actions(&[Action::Undo], &ctx, false);
+        assert_eq!((app.doc().unwrap().adjust.saturation, app.doc().unwrap().adjust.invert), (-1.0, false));
+        app.run_actions(&[Action::Greyscale], &ctx, false);
+        assert!(app.doc().unwrap().adjust.is_identity(), "Greyscale toggles back");
+    }
+
+    #[test]
+    fn straighten_applies_through_perspective() {
+        let (mut app, path) = app_with_image();
+        let frame = Frame { w: 40, h: 30, pixels: vec![128; 40 * 30 * 3], alpha: false, delay: std::time::Duration::ZERO };
+        app.cache.insert(path, Arc::new(Loaded { frames: vec![frame], file_size: 6, svg: None }));
+        let ctx = egui::Context::default();
+        app.run_actions(&[Action::Straighten], &ctx, false);
+        assert!(app.tool == Tool::Straighten);
+        app.straighten = 0.0;
+        app.apply_straighten();
+        assert!(app.tool == Tool::Pan && app.doc().unwrap().base.is_none(), "0° changes nothing");
+        app.run_actions(&[Action::Straighten], &ctx, false);
+        app.straighten = 8.0;
+        app.apply_straighten();
+        let doc = app.doc().unwrap();
+        let k = edit::straighten_crop(Vec2::new(40.0, 30.0), 8.0);
+        assert!(app.tool == Tool::Pan && doc.base.is_some());
+        assert_eq!(doc.size, [(40.0 * k).round() as u32, (30.0 * k).round() as u32]);
+        app.run_actions(&[Action::Undo], &ctx, false);
+        assert_eq!(app.doc().unwrap().size, [40, 30]);
     }
 
     #[test]

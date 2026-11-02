@@ -1,4 +1,4 @@
-use super::App;
+use super::{App, Tool};
 use crate::curves::curves_ui;
 use crate::edit;
 use crate::i18n::{tr, trf};
@@ -45,6 +45,7 @@ impl App {
         self.restore_progress(ctx, viewport);
         self.compare_bar(ctx, viewport);
         self.adjust_panel(ctx);
+        self.straighten_panel(ctx);
         self.discard_dialog(ctx);
         self.delete_dialog(ctx);
         self.rename_dialog(ctx);
@@ -153,6 +154,25 @@ impl App {
             if choice == Some(true) {
                 self.edit(|d| d.adjust = adjust);
             }
+        }
+    }
+
+    /// Straighten's angle. The canvas shows the image turned and its crop; Done or Enter applies it.
+    pub(super) fn straighten_panel(&mut self, ctx: &egui::Context) {
+        if self.tool != Tool::Straighten || self.perspective_prompt {
+            return;
+        }
+        let mut open = true;
+        let choice = egui::Window::new(tr("Straighten")).open(&mut open).resizable(false).collapsible(false).show(ctx, |ui| {
+            ui.add(egui::Slider::new(&mut self.straighten, -45.0..=45.0).step_by(0.1).fixed_decimals(1).suffix("°"));
+            ui.add_space(6.0);
+            edit::done_cancel(ui)
+        }).and_then(|r| r.inner).flatten();
+        match choice {
+            Some(true) => self.apply_straighten(),
+            Some(false) => self.tool = Tool::Pan,
+            None if !open => self.tool = Tool::Pan,
+            None => {}
         }
     }
 

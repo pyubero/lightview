@@ -328,3 +328,14 @@ the written file didn't check out: the image changed	le fichier écrit n'est pas
 Copy File	Copier le fichier
 Copied the file	Fichier copié
 Couldn't copy the file: {e}	Impossible de copier le fichier : {e}
+Straighten…	Redresser…
+Straighten	Redresser
+Greyscale	Niveaux de gris
+Invert Colors	Inverser les couleurs
+Remove Red Eye	Supprimer les yeux rouges
+Pixelate Selection	Pixéliser la sélection
+Select the eyes first, then choose this.	Sélectionnez d'abord les yeux, puis choisissez ceci.
+Hides faces. For text, a solid shape is safer: pixelation can sometimes be undone.	Masque les visages. Pour du texte, une forme pleine est plus sûre : la pixélisation peut parfois être inversée.
+Red eye removed	Yeux rouges supprimés
+Pixelated	Pixélisé
+Turn until the lines run straight · Enter to apply · Esc to cancel	Tournez jusqu'à ce que les lignes soient droites · Entrée pour appliquer · Échap pour annuler

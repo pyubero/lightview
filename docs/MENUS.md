@@ -62,9 +62,10 @@ when" says otherwise. `▸` marks a submenu.
 ## Image
 | Item | Shortcut | Enabled when | Does |
 |---|---|---|---|
-| Crop | | | With a selection: crops to it (erasing outside an ellipse or lasso). Without: the crop tool (drag a rectangle, Enter applies, Esc cancels). |
+| Crop | | | With a selection: crops to it (erasing outside an ellipse or lasso). Without: the crop tool (drag a rectangle, Enter applies, Esc cancels). Within 3% of 1:1, 4:3, 3:2 or 16:9 (either way round) it snaps to that ratio, and shows it. |
 | Resize… | | | Width, height, keep aspect ratio, percentage, resolution (DPI). |
 | Correct Perspective | | a still image is loaded, Adjust Color/Curves closed | Drag four corners onto something rectangular; Enter straightens it and crops to it, Esc cancels. Markup is flattened into the image, after asking. |
+| Straighten… | | as Correct Perspective | A panel with an angle (−45° to 45°): the image turns live under a grid, with its auto-crop (the largest crop of the same shape) outlined. Done or Enter applies it through Correct Perspective, Esc cancels. |
 | — | | | |
 | Rotate Left | Ctrl+L | | |
 | Rotate Right | Ctrl+R | | |
@@ -75,6 +76,11 @@ when" says otherwise. `▸` marks a submenu.
 | Adjust Curves… | | | Panel with a curve per channel in RGB, HSL or HSV, over a histogram, and a line describing the channel; Done makes it one undo step. |
 | Auto Levels | | | Applies at once. |
 | Reset Color Adjustments | | | Applies at once. |
+| Greyscale | | Adjust Color/Curves closed | Ticked while on. Sets Saturation to −1 (and back to 0), so Adjust Color shows it. |
+| Invert Colors | | Adjust Color/Curves closed | Ticked while on. Inverts after every other colour adjustment. |
+| — | | | |
+| Remove Red Eye | | a selection, no AI job running | Removes the red from very red pixels in the selection. One undo step. |
+| Pixelate Selection | | a selection, no AI job running | Pixelates the selection on a randomly placed grid, with random noise in each block. One undo step. Its hint says a solid shape is safer for text. |
 | — | | | |
 | *AI Image Processing* | | | (a heading, not an item) |
 | Remove Background | | AI runtime and a background model installed, no AI job running | |
@@ -111,7 +117,7 @@ thickness, fill, font size, zoom) · Undo · Redo · Done.
 ## Keys without a menu item
 | Key | Does |
 |---|---|
-| Enter | Applies the crop (Crop tool) or the correction (Correct Perspective). |
+| Enter | Applies the crop (Crop tool), the correction (Correct Perspective) or the angle (Straighten). |
 | Esc | Cancels the drawing in progress, else leaves the current tool, else leaves full screen. |
 | Delete / Backspace | Deletes the selected element (Select tool), else the selection; with neither, Delete (not Backspace) offers to delete the image. |
 | Mouse back / forward buttons | Previous / next image. |

@@ -55,6 +55,8 @@ pub struct Adjust {
     pub tint: f32,
     /// After the above, before saturation.
     pub curves: Curves,
+    /// Last: every channel becomes 255 − v.
+    pub invert: bool,
 }
 
 impl Adjust {
@@ -62,9 +64,9 @@ impl Adjust {
         *self == Adjust::default()
     }
 
-    /// The sliders at zero; the curves stay, since they have their own panel.
+    /// The sliders at zero; the curves and Invert stay, since they're set elsewhere.
     fn sliders_reset(&self) -> Adjust {
-        Adjust { curves: self.curves, ..Adjust::default() }
+        Adjust { curves: self.curves, invert: self.invert, ..Adjust::default() }
     }
 
     /// Adjusts RGB (`channels` 3) or RGBA (4) pixels in place.
@@ -85,14 +87,15 @@ impl Adjust {
         let colors = self.curves.color_tables();
         // Fixed point (×256), so the per-pixel loop stays cheap enough for live sliders.
         let sat = ((1.0 + self.saturation) * 256.0).round() as i32;
+        let flip = if self.invert { 255 } else { 0 };
         let pass = |px: &mut [u8]| {
             let rgb = [luts[0][px[0] as usize], luts[1][px[1] as usize], luts[2][px[2] as usize]];
             let [r, g, b] = colors.as_ref().map_or(rgb, |c| c.map(rgb));
             if sat == 256 {
-                (px[0], px[1], px[2]) = (r, g, b);
+                (px[0], px[1], px[2]) = (r ^ flip, g ^ flip, b ^ flip);
             } else {
                 let l = (77 * r as i32 + 150 * g as i32 + 29 * b as i32) >> 8;
-                let mix = |v: u8| (l + (((v as i32 - l) * sat + 128) >> 8)).clamp(0, 255) as u8;
+                let mix = |v: u8| (l + (((v as i32 - l) * sat + 128) >> 8)).clamp(0, 255) as u8 ^ flip;
                 (px[0], px[1], px[2]) = (mix(r), mix(g), mix(b));
             }
         };
@@ -137,6 +140,78 @@ pub fn auto_levels(frame: &Frame, crop: Rect) -> [f32; 2] {
     let hi = levels.iter().map(|l| l[1]).max().unwrap_or(255) as f32 / 255.0;
     // `Adjust::apply` with lo → 0 and hi → 1, solved for its gain and contrast.
     [(-(lo + hi).log2()).clamp(-3.0, 3.0), ((lo + hi) / (hi - lo) - 1.0).clamp(0.0, 1.0)]
+}
+
+/// The scale (0–1) of the largest crop with `size`'s aspect ratio that fits inside `size`
+/// turned by `degrees`: Straighten's auto-crop.
+pub fn straighten_crop(size: Vec2, degrees: f32) -> f32 {
+    let (sin, cos) = degrees.abs().to_radians().sin_cos();
+    (size.x / (size.x * cos + size.y * sin)).min(size.y / (size.x * sin + size.y * cos))
+}
+
+/// Straighten's auto-crop in the unturned image (output px), clockwise from the top left: the
+/// rectangle that becomes upright once the image is turned by `degrees` (clockwise on screen).
+pub fn straighten_corners(size: Vec2, degrees: f32) -> [Pos2; 4] {
+    let half = size * straighten_crop(size, degrees) / 2.0;
+    let centre = (size / 2.0).to_pos2();
+    let back = egui::emath::Rot2::from_angle(-degrees.to_radians());
+    [Vec2::new(-half.x, -half.y), Vec2::new(half.x, -half.y), half, Vec2::new(-half.x, half.y)].map(|c| centre + back * c)
+}
+
+/// Red eye: pixels whose red is half as much again as their green and their blue take the green
+/// and blue's mean as their red, which keeps a pupil dark. Skin and yellows fail that test.
+pub fn remove_red_eye(img: &mut image::RgbaImage) {
+    for px in img.pixels_mut() {
+        let [r, g, b, _] = px.0.map(u32::from);
+        if r > 60 && 2 * r > 3 * g.max(b) {
+            px[0] = ((g + b) / 2) as u8;
+        }
+    }
+}
+
+/// Pixelates `img` with a grid at a random offset, and gives each block its mean colour plus
+/// random noise, so the same picture never pixelates the same way twice.
+// shortcut: coarse colours and shapes still show (the user's choice, so it still looks pixelated); text is safer under a solid shape.
+pub fn pixelate(img: &mut image::RgbaImage) {
+    use std::hash::BuildHasher;
+    // Keyed by the OS for each process, so this needs no extra crate.
+    let random = std::collections::hash_map::RandomState::new();
+    let mut n = 0u64;
+    let mut next = move || {
+        n += 1;
+        random.hash_one(n)
+    };
+    let (w, h) = img.dimensions();
+    let block = (w.min(h) / 8).max(4);
+    let offset = [next() % block as u64, next() % block as u64].map(|o| o as u32);
+    // Where blocks start: the first is cut short by the offset.
+    let starts = |len: u32, offset: u32| {
+        let first = if offset == 0 { block } else { offset };
+        std::iter::once(0).chain((first..len).step_by(block as usize)).collect::<Vec<u32>>()
+    };
+    let (xs, ys) = (starts(w, offset[0]), starts(h, offset[1]));
+    for (j, &y0) in ys.iter().enumerate() {
+        let y1 = ys.get(j + 1).copied().unwrap_or(h);
+        for (i, &x0) in xs.iter().enumerate() {
+            let x1 = xs.get(i + 1).copied().unwrap_or(w);
+            let mut sum = [0u64; 3];
+            for y in y0..y1 {
+                for x in x0..x1 {
+                    for c in 0..3 {
+                        sum[c] += img.get_pixel(x, y)[c] as u64;
+                    }
+                }
+            }
+            let count = ((x1 - x0) * (y1 - y0)) as u64;
+            let colour: [u8; 3] = std::array::from_fn(|c| ((sum[c] / count) as i32 + (next() % 41) as i32 - 20).clamp(0, 255) as u8);
+            for y in y0..y1 {
+                for x in x0..x1 {
+                    let px = img.get_pixel_mut(x, y);
+                    px.0[..3].copy_from_slice(&colour);
+                }
+            }
+        }
+    }
 }
 
 impl Doc {
@@ -566,6 +641,110 @@ pub fn resize_ui(ui: &mut egui::Ui, d: &mut ResizeDialog) -> Option<bool> {
 mod tests {
     use super::*;
     use std::time::Duration;
+
+    #[test]
+    fn invert_and_greyscale() {
+        let mut px = vec![10, 200, 30, 255, 0, 255, 128, 7];
+        Adjust { invert: true, ..Adjust::default() }.apply(&mut px, 4);
+        assert_eq!(px, [245, 55, 225, 255, 255, 0, 127, 7], "colour flipped, alpha kept");
+        let mut px = vec![10, 200, 30];
+        Adjust { saturation: -1.0, ..Adjust::default() }.apply(&mut px, 3);
+        assert!(px[0] == px[1] && px[1] == px[2], "{px:?}");
+        // Invert comes last, after greyscale.
+        let mut both = vec![10, 200, 30];
+        Adjust { saturation: -1.0, invert: true, ..Adjust::default() }.apply(&mut both, 3);
+        assert_eq!(both, px.iter().map(|v| 255 - v).collect::<Vec<u8>>());
+    }
+
+    /// Invert is per pixel, so the saved file is the view's pixels inverted at any size or crop.
+    #[test]
+    fn invert_matches_at_any_scale() {
+        let mut doc = Doc::new(6, 5);
+        doc.crop_to(Rect::from_min_max(Pos2::new(1.0, 1.0), Pos2::new(5.0, 4.0)));
+        doc.resize(8, 6);
+        let plain = render(&frame(), &doc).unwrap().into_bytes();
+        let inverted = render(&frame(), &Doc { adjust: Adjust { invert: true, ..Adjust::default() }, ..doc }).unwrap().into_bytes();
+        assert_eq!(inverted, plain.iter().map(|v| 255 - v).collect::<Vec<u8>>());
+    }
+
+    #[test]
+    fn straighten_crop_keeps_the_aspect_inside_the_turned_image() {
+        let size = Vec2::new(400.0, 300.0);
+        assert_eq!(straighten_crop(size, 0.0), 1.0);
+        assert!((straighten_crop(Vec2::splat(100.0), 45.0) - std::f32::consts::FRAC_1_SQRT_2).abs() < 1e-5);
+        assert_eq!(straighten_crop(size, 10.0), straighten_crop(size, -10.0));
+        for angle in [-45.0, -12.5, 3.0, 30.0] {
+            let c = straighten_corners(size, angle);
+            let bounds = Rect::from_min_size(Pos2::ZERO, size).expand(1e-3);
+            assert!(c.iter().all(|&p| bounds.contains(p)), "{angle}: {c:?}");
+            let (w, h) = (c[0].distance(c[1]), c[1].distance(c[2]));
+            assert!((w / h - 4.0 / 3.0).abs() < 1e-4, "{angle}");
+            // The top edge runs at −angle in the unturned image, so it's level once turned.
+            let d = c[1] - c[0];
+            assert!((d.y.atan2(d.x).to_degrees() + angle).abs() < 1e-3, "{angle}");
+        }
+    }
+
+    /// A line drawn 10° off level comes out level, at the auto-crop's size.
+    #[test]
+    fn straighten_levels_a_tilted_line() {
+        let (w, h) = (200u32, 120u32);
+        let mut pixels = vec![255u8; (w * h * 3) as usize];
+        let tilt = 10f32.to_radians().tan();
+        for x in 0..w {
+            let y = (60.0 + (x as f32 - 100.0) * tilt).round() as u32;
+            for dy in 0..2 {
+                pixels[(((y + dy) * w + x) * 3) as usize] = 0;
+            }
+        }
+        let decoded = Frame { w, h, pixels, alpha: false, delay: Duration::ZERO };
+        let mut doc = Doc::new(w, h);
+        doc.perspective(&decoded, straighten_corners(doc.size_vec(), -10.0)).unwrap();
+        let k = straighten_crop(Vec2::new(w as f32, h as f32), 10.0);
+        assert_eq!(doc.size, [(w as f32 * k).round() as u32, (h as f32 * k).round() as u32]);
+        let out = render(&decoded, &doc).unwrap().into_rgb8();
+        // Each column's darkest row: the same all the way along.
+        let rows: Vec<u32> = (10..out.width() - 10).map(|x| (0..out.height()).min_by_key(|&y| out.get_pixel(x, y)[0]).unwrap()).collect();
+        let (lo, hi) = (rows.iter().min().unwrap(), rows.iter().max().unwrap());
+        assert!(hi - lo <= 2, "{lo}..{hi}");
+    }
+
+    #[test]
+    fn red_eye_only_touches_red() {
+        // A red pupil, grey, a dark red too dim to matter, yellow, and skin.
+        let mut img = image::RgbaImage::from_vec(5, 1, vec![220, 40, 30, 255, 120, 110, 100, 255, 50, 10, 10, 255, 200, 180, 30, 128, 220, 160, 130, 255]).unwrap();
+        remove_red_eye(&mut img);
+        assert_eq!(img.into_raw(), [35, 40, 30, 255, 120, 110, 100, 255, 50, 10, 10, 255, 200, 180, 30, 128, 220, 160, 130, 255]);
+    }
+
+    #[test]
+    fn pixelate_blocks_are_noisy_means_on_a_random_grid() {
+        let (w, h) = (64u32, 40u32);
+        let source = image::RgbaImage::from_fn(w, h, |x, y| image::Rgba([(x * 4) as u8, (y * 6) as u8, 100, 200]));
+        let block = (w.min(h) / 8).max(4);
+        let run = || {
+            let mut img = source.clone();
+            pixelate(&mut img);
+            img
+        };
+        let a = run();
+        // Blocks are uniform: every pixel matches its neighbour unless a block edge runs between them.
+        let edges = |horizontal: bool| -> Vec<u32> {
+            let len = if horizontal { w } else { h };
+            (1..len).filter(|&i| (0..if horizontal { h } else { w }).any(|j| if horizontal { a.get_pixel(i, j) != a.get_pixel(i - 1, j) } else { a.get_pixel(j, i) != a.get_pixel(j, i - 1) })).collect()
+        };
+        for (edges, len) in [(edges(true), w), (edges(false), h)] {
+            assert!(edges.windows(2).all(|e| e[1] - e[0] == block), "{edges:?}");
+            assert!(edges.len() as u32 >= len / block - 1);
+        }
+        // Each block is its mean plus at most ±20, and alpha is kept.
+        for (x, y, px) in a.enumerate_pixels() {
+            let mean = source.get_pixel(x, y);
+            assert!(px[2].abs_diff(100) <= 20 && px[3] == 200, "{px:?}");
+            assert!(px[0].abs_diff(mean[0]) <= 20 + block as u8 * 4, "{x},{y}");
+        }
+        assert!((0..5).any(|_| run() != a), "two runs never matched");
+    }
 
     /// 6×5 RGB frame, red channel = pixel index.
     fn frame() -> Frame {

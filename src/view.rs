@@ -173,9 +173,50 @@ pub fn grid_lines(dest: Rect, crop: Rect, ppp: f32) -> Vec<[Pos2; 2]> {
     columns.chain(rows).collect()
 }
 
+/// The ratios a crop snaps to (width : height).
+const RATIOS: [(f32, &str); 7] = [(1.0, "1:1"), (4.0 / 3.0, "4:3"), (3.0 / 4.0, "3:4"), (3.0 / 2.0, "3:2"), (2.0 / 3.0, "2:3"), (16.0 / 9.0, "16:9"), (9.0 / 16.0, "9:16")];
+/// How close a crop has to be to a ratio to snap to it.
+const SNAP: f32 = 0.03;
+
+/// The dragged corner `b` of a crop from `a`, moved up or down so that the crop has the ratio it's
+/// within 3% of, unless that would take it outside `bounds`.
+pub fn snap_ratio(a: Pos2, b: Pos2, bounds: Rect) -> Pos2 {
+    let d = b - a;
+    if d.x == 0.0 || d.y == 0.0 {
+        return b;
+    }
+    let near = RATIOS.iter().map(|&(ratio, _)| ratio).find(|ratio| ((d.x / d.y).abs() / ratio - 1.0).abs() <= SNAP);
+    near.map(|ratio| Pos2::new(b.x, a.y + d.x.abs() / ratio * d.y.signum())).filter(|&p| bounds.expand(0.01).contains(p)).unwrap_or(b)
+}
+
+/// The ratio `r` has, if it's one a crop snaps to (allowing for whole-pixel rounding).
+pub fn ratio_name(r: Rect) -> Option<&'static str> {
+    let tolerance = 1.0 / r.width().min(r.height()).max(1.0) + 1e-3;
+    RATIOS.iter().find(|(ratio, _)| (r.aspect_ratio() / ratio - 1.0).abs() <= tolerance).map(|&(_, name)| name)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn crops_snap_to_common_ratios() {
+        let bounds = Rect::from_min_size(Pos2::ZERO, Vec2::new(1000.0, 800.0));
+        let a = Pos2::new(100.0, 100.0);
+        // 400 × 305 is within 3% of 4:3: the height becomes 300.
+        assert_eq!(snap_ratio(a, Pos2::new(500.0, 405.0), bounds), Pos2::new(500.0, 400.0));
+        assert_eq!(ratio_name(Rect::from_two_pos(a, Pos2::new(500.0, 400.0))), Some("4:3"));
+        // 5% off: left alone.
+        assert_eq!(snap_ratio(a, Pos2::new(500.0, 415.0), bounds), Pos2::new(500.0, 415.0));
+        // Dragged up and left, in portrait.
+        assert_eq!(snap_ratio(Pos2::new(500.0, 500.0), Pos2::new(410.0, 342.0), bounds), Pos2::new(410.0, 340.0));
+        assert_eq!(ratio_name(Rect::from_two_pos(Pos2::new(500.0, 500.0), Pos2::new(410.0, 340.0))), Some("9:16"));
+        // Square, from a near square.
+        assert_eq!(snap_ratio(a, Pos2::new(300.0, 302.0), bounds), Pos2::new(300.0, 300.0));
+        // A snap that would leave the image doesn't happen.
+        assert_eq!(snap_ratio(Pos2::new(0.0, 700.0), Pos2::new(160.0, 795.0), bounds), Pos2::new(160.0, 795.0));
+        assert_eq!(ratio_name(Rect::from_two_pos(a, Pos2::new(500.0, 415.0))), None);
+    }
 
     fn panel(w: f32, h: f32) -> Rect {
         Rect::from_min_size(Pos2::ZERO, Vec2::new(w, h))

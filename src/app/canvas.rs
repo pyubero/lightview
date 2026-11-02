@@ -181,21 +181,22 @@ impl App {
             let painter = ui.painter().with_clip_rect(dest.intersect(viewport));
             painter.add(markup::checker(dest.intersect(viewport), None));
         }
-        if gpu {
-            // Each screen corner samples the source point the transform maps it from.
-            let mut mesh = egui::Mesh::with_texture(texture);
-            let shown = [crop.left_top(), crop.right_top(), crop.right_bottom(), crop.left_bottom()];
-            let screen = [dest.left_top(), dest.right_top(), dest.right_bottom(), dest.left_bottom()];
-            for (pos, p) in screen.into_iter().zip(shown) {
-                let uv = (source.source_point(p).to_vec2() / frame_size).to_pos2();
-                mesh.vertices.push(egui::epaint::Vertex { pos, uv, color: Color32::WHITE });
-            }
-            mesh.add_triangle(0, 1, 2);
-            mesh.add_triangle(0, 2, 3);
-            ui.painter().add(mesh);
-        } else {
-            ui.painter().image(texture, dest, Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)), Color32::WHITE);
+        // Straighten turns the drawn image about its centre: no pixel work while the slider moves.
+        // shortcut: markup and the checkerboard stay upright meanwhile; turn them too if that's confusing.
+        let centre = view::to_screen(dest, crop, doc.bounds().center());
+        let turn = egui::emath::Rot2::from_angle(if self.tool == Tool::Straighten { self.straighten.to_radians() } else { 0.0 });
+        let mut mesh = egui::Mesh::with_texture(texture);
+        let shown = [crop.left_top(), crop.right_top(), crop.right_bottom(), crop.left_bottom()];
+        let screen = [dest.left_top(), dest.right_top(), dest.right_bottom(), dest.left_bottom()];
+        let unit = [Pos2::new(0.0, 0.0), Pos2::new(1.0, 0.0), Pos2::new(1.0, 1.0), Pos2::new(0.0, 1.0)];
+        for ((pos, p), unit) in screen.into_iter().zip(shown).zip(unit) {
+            // The GPU texture is the whole frame: each corner samples the source point the transform maps it from.
+            let uv = if gpu { (source.source_point(p).to_vec2() / frame_size).to_pos2() } else { unit };
+            mesh.vertices.push(egui::epaint::Vertex { pos: centre + turn * (pos - centre), uv, color: Color32::WHITE });
         }
+        mesh.add_triangle(0, 1, 2);
+        mesh.add_triangle(0, 2, 3);
+        ui.painter().with_clip_rect(viewport).add(mesh);
         let frame_wh = [frame.w, frame.h];
         self.visible = full.is_some().then_some(crop);
         self.paint_compare(ui, dest, crop);
@@ -224,6 +225,9 @@ impl App {
         }
         if self.tool == Tool::Perspective {
             self.paint_perspective(ui, dest, crop, viewport);
+        }
+        if self.tool == Tool::Straighten {
+            self.paint_straighten(ui, doc.size_vec(), dest, crop, viewport);
         }
         if self.tool == Tool::Measure {
             self.paint_measure(ui, &edited, dest, crop, viewport);
@@ -351,12 +355,42 @@ impl App {
                     painter.rect_filled(side, 0.0, shade);
                 }
                 painter.rect_stroke(r, 0.0, egui::Stroke::new(1.0, Color32::WHITE), egui::StrokeKind::Middle);
+                if let Some(name) = self.crop_rect.and_then(view::ratio_name) {
+                    bubble(&painter, Pos2::new(r.center().x, r.top() + 20.0), name);
+                }
             }
             None => {
                 painter.rect_filled(dest, 0.0, shade);
             }
         }
         bubble(ui.painter(), Pos2::new(viewport.center().x, viewport.top() + 24.0), tr("Drag to select · Enter to crop · Esc to cancel"));
+    }
+
+    /// Straighten: the crop the turned image will get, with a grid to line things up against.
+    fn paint_straighten(&self, ui: &egui::Ui, size: Vec2, dest: Rect, crop: Rect, viewport: Rect) {
+        let image = Rect::from_two_pos(view::to_screen(dest, crop, Pos2::ZERO), view::to_screen(dest, crop, size.to_pos2()));
+        let kept = Rect::from_center_size(image.center(), image.size() * edit::straighten_crop(size, self.straighten));
+        let painter = ui.painter().with_clip_rect(viewport);
+        let shade = Color32::from_black_alpha(160);
+        for side in [
+            Rect::from_x_y_ranges(viewport.x_range(), viewport.top()..=kept.top()),
+            Rect::from_x_y_ranges(viewport.x_range(), kept.bottom()..=viewport.bottom()),
+            Rect::from_x_y_ranges(viewport.left()..=kept.left(), kept.y_range()),
+            Rect::from_x_y_ranges(kept.right()..=viewport.right(), kept.y_range()),
+        ] {
+            painter.rect_filled(side, 0.0, shade);
+        }
+        const LINES: usize = 8;
+        let lines = (1..LINES).flat_map(|i| {
+            let (x, y) = (kept.left() + kept.width() * i as f32 / LINES as f32, kept.top() + kept.height() * i as f32 / LINES as f32);
+            [[Pos2::new(x, kept.top()), Pos2::new(x, kept.bottom())], [Pos2::new(kept.left(), y), Pos2::new(kept.right(), y)]]
+        });
+        for [a, b] in lines {
+            painter.line_segment([a, b], egui::Stroke::new(3.0, Color32::from_black_alpha(90)));
+            painter.line_segment([a, b], egui::Stroke::new(1.0, Color32::from_white_alpha(140)));
+        }
+        painter.rect_stroke(kept, 0.0, egui::Stroke::new(1.5, Color32::WHITE), egui::StrokeKind::Middle);
+        bubble(ui.painter(), Pos2::new(viewport.center().x, viewport.top() + 24.0), tr("Turn until the lines run straight · Enter to apply · Esc to cancel"));
     }
 
     fn paint_perspective(&self, ui: &egui::Ui, dest: Rect, crop: Rect, viewport: Rect) {

@@ -328,3 +328,14 @@ the written file didn't check out: the image changed	die geschriebene Datei ist 
 Copy File	Datei kopieren
 Copied the file	Datei kopiert
 Couldn't copy the file: {e}	Die Datei konnte nicht kopiert werden: {e}
+Straighten…	Gerade ausrichten…
+Straighten	Gerade ausrichten
+Greyscale	Graustufen
+Invert Colors	Farben umkehren
+Remove Red Eye	Rote Augen entfernen
+Pixelate Selection	Auswahl verpixeln
+Select the eyes first, then choose this.	Wähle zuerst die Augen aus und dann dies.
+Hides faces. For text, a solid shape is safer: pixelation can sometimes be undone.	Verbirgt Gesichter. Für Text ist eine deckende Form sicherer: Verpixelung lässt sich manchmal rückgängig machen.
+Red eye removed	Rote Augen entfernt
+Pixelated	Verpixelt
+Turn until the lines run straight · Enter to apply · Esc to cancel	Drehen, bis die Linien gerade verlaufen · Eingabe zum Anwenden · Esc zum Abbrechen

@@ -33,8 +33,9 @@ and it never goes online on its own.
   a file or folder onto the window to open it (X11 and Windows; not supported on Wayland yet). While zoomed in, a navigator thumbnail shows where
   you are, and a pixel grid and a Copy Color tool help with detail work. The image reloads when its
   file changes on disk.
-- **Editing.** Crop, perspective correction, resize, rotate, flip, colour adjustments, auto levels and curves in RGB, HSL or
-  HSV, with full undo and redo.
+- **Editing.** Crop (snapping to common ratios), perspective correction, straighten, resize,
+  rotate, flip, colour adjustments, auto levels, curves in RGB, HSL or HSV, greyscale, invert,
+  red-eye removal and pixelating a selection, with full undo and redo.
 - **File actions.** Save a quick copy with Ctrl+S, copy the path, show the file in your file manager
   and rename it with F2. Neither Save Copy nor Rename ever replaces another file.
 - **Safe deleting.** Deleting asks first and moves the image to the system Trash, and Ctrl+Z brings

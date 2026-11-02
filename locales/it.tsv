@@ -328,3 +328,14 @@ the written file didn't check out: the image changed	il file scritto non è corr
 Copy File	Copia file
 Copied the file	File copiato
 Couldn't copy the file: {e}	Impossibile copiare il file: {e}
+Straighten…	Raddrizza…
+Straighten	Raddrizza
+Greyscale	Scala di grigi
+Invert Colors	Inverti colori
+Remove Red Eye	Rimuovi occhi rossi
+Pixelate Selection	Pixella selezione
+Select the eyes first, then choose this.	Seleziona prima gli occhi, poi scegli questo.
+Hides faces. For text, a solid shape is safer: pixelation can sometimes be undone.	Nasconde i volti. Per il testo è più sicura una forma piena: la pixellatura a volte si può annullare.
+Red eye removed	Occhi rossi rimossi
+Pixelated	Pixellato
+Turn until the lines run straight · Enter to apply · Esc to cancel	Ruota finché le linee sono dritte · Invio per applicare · Esc per annullare

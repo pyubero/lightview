@@ -328,3 +328,14 @@ the written file didn't check out: the image changed	el archivo escrito no es co
 Copy File	Copiar archivo
 Copied the file	Archivo copiado
 Couldn't copy the file: {e}	No se pudo copiar el archivo: {e}
+Straighten…	Enderezar…
+Straighten	Enderezar
+Greyscale	Escala de grises
+Invert Colors	Invertir colores
+Remove Red Eye	Eliminar ojos rojos
+Pixelate Selection	Pixelar selección
+Select the eyes first, then choose this.	Selecciona primero los ojos y luego elige esto.
+Hides faces. For text, a solid shape is safer: pixelation can sometimes be undone.	Oculta caras. Para texto es más seguro una forma sólida: el pixelado a veces se puede revertir.
+Red eye removed	Ojos rojos eliminados
+Pixelated	Pixelado
+Turn until the lines run straight · Enter to apply · Esc to cancel	Gira hasta que las líneas queden rectas · Intro para aplicar · Esc para cancelar

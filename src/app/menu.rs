@@ -42,6 +42,11 @@ pub(super) enum Action {
     AdjustColor,
     AdjustCurves,
     AutoLevels,
+    Greyscale,
+    Invert,
+    Straighten,
+    RedEye,
+    Pixelate,
     ResetAdjust,
     Measure,
     CopyColor,
@@ -208,6 +213,7 @@ impl App {
                 item(ui, tr("Resize…"), Action::Resize, has_image, actions);
                 // Done in Adjust Color goes back to the edits from before the panel opened.
                 item(ui, tr("Correct Perspective"), Action::Perspective, can_save && self.adjusting.is_none(), actions);
+                item(ui, tr("Straighten…"), Action::Straighten, can_save && self.adjusting.is_none(), actions);
                 ui.separator();
                 item(ui, tr("Rotate Left"), Action::RotateLeft, has_image, actions);
                 item(ui, tr("Rotate Right"), Action::RotateRight, has_image, actions);
@@ -218,6 +224,22 @@ impl App {
                 item(ui, tr("Adjust Curves…"), Action::AdjustCurves, has_image, actions);
                 item(ui, tr("Auto Levels"), Action::AutoLevels, has_image, actions);
                 item(ui, tr("Reset Color Adjustments"), Action::ResetAdjust, has_image, actions);
+                let adjust = self.doc().map(|d| d.adjust).unwrap_or_default();
+                for (label, action, on) in [(tr("Greyscale"), Action::Greyscale, adjust.saturation == -1.0), (tr("Invert Colors"), Action::Invert, adjust.invert)] {
+                    if ui.add_enabled(has_image && self.adjusting.is_none(), egui::Button::new(label).selected(on)).clicked() {
+                        actions.push(action);
+                    }
+                }
+                ui.separator();
+                let patch = has_image && self.selection.is_some() && self.restoring.is_none();
+                for (label, action, hint) in [
+                    (tr("Remove Red Eye"), Action::RedEye, tr("Select the eyes first, then choose this.")),
+                    (tr("Pixelate Selection"), Action::Pixelate, tr("Hides faces. For text, a solid shape is safer: pixelation can sometimes be undone.")),
+                ] {
+                    if ui.add_enabled(patch, egui::Button::new(label)).on_hover_text(hint).on_disabled_hover_text(hint).clicked() {
+                        actions.push(action);
+                    }
+                }
                 ui.separator();
                 ui.weak(tr("AI Image Processing"));
                 let runtime = crate::ai::runtime_installed();
