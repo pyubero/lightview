@@ -1436,6 +1436,7 @@ version = "0.2.1"
 dependencies = [
  "ab_glyph",
  "arboard",
+ "crc32fast",
  "eframe",
  "fast_image_resize",
  "image",
@@ -1452,6 +1453,7 @@ dependencies = [
  "ron",
  "serde",
  "sha2",
+ "tiff",
  "tiny-skia 0.11.4",
  "trash",
  "windows",

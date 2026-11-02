@@ -42,8 +42,8 @@ and it never goes online on its own.
 - **Selection and clipboard.** Rectangle, ellipse and lasso selections, plus cut, copy and paste of
   images.
 - **Markup.** Freehand sketching, shapes, arrows, text, highlights, a magnifier and a measuring tool.
-- **Metadata.** An inspector sidebar for image information, and EXIF editing for JPEGs, which always
-  saves to a copy.
+- **Metadata.** An inspector sidebar for image information, and EXIF editing for JPEG, PNG and
+  TIFF files, which always saves to a copy. WebP and RAW metadata is shown, not edited.
 - **Six languages.** English, Spanish, French, German, Italian and Portuguese. lightview starts in
   your system's language and you can change it in Edit → Settings.
 

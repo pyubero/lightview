@@ -8,6 +8,8 @@ repository = "https://github.com/pyubero/lightview"
 
 [dependencies]
 ab_glyph = "0.2.32"
+# Already in the build through `png`; the checksum of the standard PNG EXIF chunk.
+crc32fast = "1.5"
 arboard = { version = "3.7.0", default-features = false, features = ["image-data"] }
 eframe = { version = "0.37.0", default-features = false, features = ["glow", "wayland", "x11", "persistence", "clipboard"] }
 fast_image_resize = "6.1.0"
@@ -46,6 +48,8 @@ opt-level = 3
 [dev-dependencies]
 # Already in the build through `image`; writes a test APNG.
 png = "0.18"
+# Already in the build through `image`; writes multi-page TIFFs for tests.
+tiff = "0.11"
 
 [build-dependencies]
 winresource = "0.1.34"

@@ -86,7 +86,6 @@ Drag to measure in image pixels · Esc to stop	Arraste para medir em píxeis da 
 Drag to select · Enter to crop · Esc to cancel	Arraste para selecionar · Enter para recortar · Esc para cancelar
 Drag the corners onto a rectangle · Enter to apply · Esc to cancel	Arraste os cantos sobre um retângulo · Enter para aplicar · Esc para cancelar
 Drawings, text and pasted images will be merged into the image and can't be edited afterwards. Ctrl+Z undoes it.	Os desenhos, textos e imagens coladas serão fundidos com a imagem e deixarão de poder ser editados. Ctrl+Z anula.
-EXIF is shown for JPEG files only	Os dados EXIF só são mostrados em ficheiros JPEG
 Edit	Editar
 Edit the image description	Editar a descrição da imagem
 Ellipse	Elipse
@@ -261,7 +260,6 @@ no data folder	sem pasta de dados
 no frames	sem fotogramas
 no subject found	nenhum motivo encontrado
 pick an .onnx file	escolha um ficheiro .onnx
-the copy must be a .jpg file	a cópia tem de ser um ficheiro .jpg
 the download didn't match its checksum	a transferência não corresponde à soma de verificação
 the model has no image input	o modelo não tem entrada de imagem
 the model's output changed size between tiles	a saída do modelo mudou de tamanho entre blocos
@@ -323,3 +321,10 @@ this RAW file has no embedded preview	este ficheiro RAW não tem pré-visualiza�
 {format} (embedded preview)	{format} (pré-visualização incorporada)
 EXIF isn't read from this kind of RAW file yet	O EXIF deste tipo de ficheiro RAW ainda não é lido
 A RAW file's metadata is shown, not edited.	Os metadados de um ficheiro RAW são mostrados, não editados.
+A WebP file's metadata is shown, not edited.	Os metadados de um ficheiro WebP são mostrados, não editados.
+EXIF is shown for JPEG, PNG, WebP, TIFF and RAW files	Os dados EXIF são mostrados em ficheiros JPEG, PNG, WebP, TIFF e RAW
+the copy must be a .{ext} file	a cópia tem de ser um ficheiro .{ext}
+the written file didn't check out: the image changed	o ficheiro escrito não está correto: a imagem mudou
+Copy File	Copiar ficheiro
+Copied the file	Ficheiro copiado
+Couldn't copy the file: {e}	Não foi possível copiar o ficheiro: {e}

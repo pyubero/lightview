@@ -86,7 +86,6 @@ Drag to measure in image pixels · Esc to stop	Trascina per misurare in pixel de
 Drag to select · Enter to crop · Esc to cancel	Trascina per selezionare · Invio per ritagliare · Esc per annullare
 Drag the corners onto a rectangle · Enter to apply · Esc to cancel	Trascina gli angoli su un rettangolo · Invio per applicare · Esc per annullare
 Drawings, text and pasted images will be merged into the image and can't be edited afterwards. Ctrl+Z undoes it.	Disegni, testi e immagini incollate verranno uniti all'immagine e non potranno più essere modificati. Ctrl+Z annulla.
-EXIF is shown for JPEG files only	I dati EXIF vengono mostrati solo per i file JPEG
 Edit	Modifica
 Edit the image description	Modifica la descrizione dell'immagine
 Ellipse	Ellisse
@@ -261,7 +260,6 @@ no data folder	nessuna cartella dati
 no frames	nessun fotogramma
 no subject found	nessun soggetto trovato
 pick an .onnx file	scegli un file .onnx
-the copy must be a .jpg file	la copia deve essere un file .jpg
 the download didn't match its checksum	il download non corrisponde al suo checksum
 the model has no image input	il modello non ha un ingresso immagine
 the model's output changed size between tiles	l'uscita del modello ha cambiato dimensioni tra le tessere
@@ -323,3 +321,10 @@ this RAW file has no embedded preview	questo file RAW non ha un'anteprima incorp
 {format} (embedded preview)	{format} (anteprima incorporata)
 EXIF isn't read from this kind of RAW file yet	L'EXIF di questo tipo di file RAW non viene ancora letto
 A RAW file's metadata is shown, not edited.	I metadati di un file RAW vengono mostrati, non modificati.
+A WebP file's metadata is shown, not edited.	I metadati di un file WebP vengono mostrati, non modificati.
+EXIF is shown for JPEG, PNG, WebP, TIFF and RAW files	I dati EXIF vengono mostrati per i file JPEG, PNG, WebP, TIFF e RAW
+the copy must be a .{ext} file	la copia deve essere un file .{ext}
+the written file didn't check out: the image changed	il file scritto non è corretto: l'immagine è cambiata
+Copy File	Copia file
+Copied the file	File copiato
+Couldn't copy the file: {e}	Impossibile copiare il file: {e}

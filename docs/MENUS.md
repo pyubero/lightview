@@ -15,6 +15,7 @@ when" says otherwise. `▸` marks a submenu.
 | Save As… | Ctrl+Shift+S | a still image is loaded | Saves a copy with all edits; the format follows the extension (JPEG at quality 90 with EXIF kept, PNG, lossless WebP, BMP, TIFF, GIF). |
 | — | | | |
 | Copy Path | | an image is open | Copies the file's full path as text. |
+| Copy File | | an image is open | Puts the file itself on the clipboard, for pasting into a chat or a file manager. It stays there while lightview runs. |
 | Show in File Manager | | an image is open | Opens the file manager with the file highlighted, or just its folder if the desktop can't highlight. |
 | Rename… | F2 | an image is open, no AI job running | Asks for the new file name, with the extension left unselected. Never replaces a file; edits stay. |
 | Delete Image… | Delete | an image is open | Asks first (Enter accepts), then moves the file to the Trash. Ctrl+Z restores it. |

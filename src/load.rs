@@ -27,8 +27,6 @@ const MAX_FILE_BYTES: u64 = 1 << 30;
 pub const MAX_ANIMATION_BYTES: usize = 1 << 30;
 /// The `image` crate's default allocation limit, which many of its decoders don't apply themselves.
 pub const MAX_CANVAS_BYTES: u64 = 512 << 20;
-/// Real files chain two IFDs (the image and its thumbnail).
-const MAX_IFD_CHAIN: usize = 8;
 /// A TIFF's pages, including the thumbnails that are skipped.
 const MAX_TIFF_IFDS: usize = 4096;
 
@@ -562,10 +560,12 @@ fn next_ifd_ptr(tiff: &[u8]) -> Option<usize> {
 /// stops on one that loops. Whatever can't be read counts as the end.
 pub fn ifd_chain_ends(tiff: &[u8]) -> bool {
     let Some((u16_at, u32_at)) = tiff_readers(tiff) else { return true };
-    let mut ifd = u32_at(4);
-    for _ in 0..MAX_IFD_CHAIN {
+    // A multi-page TIFF has an IFD per page, so this goes by repeats, not length.
+    let (mut ifd, mut seen) = (u32_at(4), HashSet::new());
+    while seen.len() < MAX_TIFF_IFDS {
         match ifd {
             None | Some(0) => return true,
+            Some(at) if !seen.insert(at) => return false,
             Some(at) => ifd = u16_at(at).and_then(|entries| u32_at(at + 2 + entries * 12)),
         }
     }

@@ -10,6 +10,7 @@ pub(super) enum Action {
     SaveAs,
     SaveCopy,
     CopyPath,
+    CopyFile,
     ShowInFolder,
     Rename,
     OpenRecent(PathBuf),
@@ -140,6 +141,7 @@ impl App {
                 ui.separator();
                 let open = self.current().is_some();
                 item(ui, tr("Copy Path"), Action::CopyPath, open, actions);
+                item(ui, tr("Copy File"), Action::CopyFile, open, actions);
                 item(ui, tr("Show in File Manager"), Action::ShowInFolder, open, actions);
                 item(ui, tr("Rename…"), Action::Rename, open && self.restoring.is_none(), actions);
                 if ui.add_enabled(self.current().is_some(), egui::Button::new(tr("Delete Image…")).shortcut_text("Delete")).clicked() {

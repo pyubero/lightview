@@ -40,8 +40,20 @@ pub struct Dialog {
     pub resolution: Option<String>,
     /// Read-only listing of every other tag.
     others: Vec<String>,
-    /// Shown but not edited: a RAW file's.
-    read_only: bool,
+    /// Why this file's EXIF is shown but not edited, if it isn't.
+    read_only: Option<&'static str>,
+}
+
+/// The file types whose EXIF is shown, by extension. RAW files are read through `raw` instead.
+pub fn kind(path: &Path) -> Option<FileExtension> {
+    match path.extension()?.to_str()?.to_ascii_lowercase().as_str() {
+        "jpg" | "jpeg" => Some(FileExtension::JPEG),
+        // The flag only changes `as_u8_vec`: writing always makes a zTXt chunk, which `standard_png_exif` replaces.
+        "png" => Some(FileExtension::PNG { as_zTXt_chunk: false }),
+        "webp" => Some(FileExtension::WEBP),
+        "tif" | "tiff" => Some(FileExtension::TIFF),
+        _ => None,
+    }
 }
 
 /// little_exif can panic on input it doesn't expect; turn that into an error.
@@ -59,13 +71,13 @@ fn ifd_chains_end(jpeg: &[u8]) -> bool {
     jpeg.windows(4).enumerate().all(|(i, w)| !matches!(w, b"II\x2a\0" | b"MM\0\x2a") || ifd_chain_ends(&jpeg[i..]))
 }
 
-/// Parses the EXIF of a JPEG buffer. Refuses when the file has EXIF that little_exif reads
+/// Parses the EXIF of a file of type `kind`. Refuses when the file has EXIF that little_exif reads
 /// as empty, since writing that back would silently wipe it.
-fn metadata(jpeg: &Vec<u8>) -> Result<Metadata, String> {
+fn metadata(jpeg: &Vec<u8>, kind: FileExtension) -> Result<Metadata, String> {
     if !ifd_chains_end(jpeg) {
         return Err(tr("this file's EXIF couldn't be processed").into());
     }
-    let m = guarded(|| Metadata::new_from_vec(jpeg, FileExtension::JPEG))?;
+    let m = guarded(|| Metadata::new_from_vec(jpeg, kind))?;
     let has_exif = ImageReader::new(Cursor::new(jpeg))
         .with_guessed_format()
         .ok()
@@ -107,7 +119,7 @@ fn raw_metadata(all: &[u8]) -> Result<Metadata, String> {
         return cr3_metadata(all);
     }
     if let Some(head) = crate::raw::embedded_jpeg(all).and_then(crate::raw::exif_header)
-        && let Ok(m) = metadata(&head)
+        && let Ok(m) = metadata(&head, FileExtension::JPEG)
         && (&m).into_iter().next().is_some()
     {
         return Ok(m);
@@ -242,15 +254,24 @@ fn location(m: &Metadata) -> Option<(f64, f64)> {
     Some((if south { -lat } else { lat }, if west { -lon } else { lon }))
 }
 
-/// Reads `path` (a JPEG) for the inspector.
+/// Reads `path` for the inspector: a file with a `kind`, or a RAW file.
 pub fn read(path: &Path) -> Result<Dialog, String> {
     read_bytes(path, &std::fs::read(path).map_err(|e| e.to_string())?)
 }
 
 /// `read`, for a file already in memory.
 pub fn read_bytes(path: &Path, bytes: &[u8]) -> Result<Dialog, String> {
-    let read_only = crate::raw::is_raw(path);
-    let m = if read_only { raw_metadata(bytes)? } else { metadata(&bytes.to_vec())? };
+    let raw = crate::raw::is_raw(path);
+    let kind = if raw { FileExtension::TIFF } else { self::kind(path).ok_or(tr("EXIF is shown for JPEG, PNG, WebP, TIFF and RAW files"))? };
+    let m = if raw { raw_metadata(bytes)? } else { metadata(&bytes.to_vec(), kind)? };
+    let read_only = if raw {
+        Some(tr_key("A RAW file's metadata is shown, not edited."))
+    } else if kind == FileExtension::WEBP {
+        // little_exif 0.6.23 refuses lossy WebP and corrupts the image data of the rest.
+        Some(tr_key("A WebP file's metadata is shown, not edited."))
+    } else {
+        None
+    };
     let original: Values = FIELDS.map(|(_, tag)| string_value(&m, &tag(String::new())));
     let key = |t: &ExifTag| (t.get_group(), t.as_u16());
     let shown: Vec<_> = FIELDS.iter().map(|(_, tag)| key(&tag(String::new()))).collect();
@@ -262,8 +283,65 @@ pub fn read_bytes(path: &Path, bytes: &[u8]) -> Result<Dialog, String> {
     Ok(Dialog { path: path.to_path_buf(), values: original.clone(), original, gps: location(&m), remove_gps: false, summary: summary(&m), resolution: resolution(&m), others, read_only })
 }
 
-/// Drops the XMP segments that mention a location: little_exif only rewrites the EXIF one.
-fn drop_xmp_location(jpeg: &mut Vec<u8>) {
+/// Drops the XMP that mentions a location: little_exif only rewrites the EXIF.
+fn drop_xmp_location(bytes: &mut Vec<u8>, kind: FileExtension) {
+    match kind {
+        FileExtension::JPEG => drop_jpeg_xmp_location(bytes),
+        FileExtension::PNG { .. } => drop_png_xmp_location(bytes),
+        // TIFF keeps XMP in tag 0x02BC, which `apply` removes.
+        _ => {}
+    }
+}
+
+/// The PNG's chunks: where each starts, its type and its data. Stops at anything malformed.
+fn png_chunks(png: &[u8]) -> Vec<(usize, [u8; 4], &[u8])> {
+    let mut chunks = Vec::new();
+    let mut at = 8;
+    while let Some(head) = png.get(at..at + 8) {
+        let len = u32::from_be_bytes(head[..4].try_into().unwrap()) as usize;
+        let Some(data) = png.get(at + 8..).and_then(|rest| rest.get(..len)) else { break };
+        if png.len() < at + 12 + len {
+            break;
+        }
+        chunks.push((at, head[4..8].try_into().unwrap(), data));
+        at += 12 + len;
+    }
+    chunks
+}
+
+/// Drops `iTXt` XMP that names GPS, or is compressed and so can't be checked.
+fn drop_png_xmp_location(png: &mut Vec<u8>) {
+    const XMP: &[u8] = b"XML:com.adobe.xmp\0";
+    let doomed: Vec<(usize, usize)> = png_chunks(png)
+        .into_iter()
+        .filter(|(_, kind, data)| kind == b"iTXt" && data.starts_with(XMP) && (data.get(XMP.len()) != Some(&0) || data.windows(3).any(|w| w == b"GPS")))
+        .map(|(at, _, data)| (at, at + 12 + data.len()))
+        .collect();
+    for (start, end) in doomed.into_iter().rev() {
+        png.drain(start..end);
+    }
+}
+
+/// Replaces the zTXt "Raw profile type exif" chunk that little_exif writes with a standard
+/// `eXIf` chunk holding `m`: the `image` crate, browsers and Windows read only that one.
+fn standard_png_exif(png: &mut Vec<u8>, m: &Metadata) -> Result<(), String> {
+    let mut tiff = m.encode().map_err(|e| e.to_string())?;
+    if tiff.starts_with(b"Exif\0\0") {
+        tiff.drain(..6);
+    }
+    let chunks = png_chunks(png);
+    let legacy = chunks.iter().find(|(_, kind, data)| kind == b"zTXt" && data.starts_with(b"Raw profile type exif\0")).map(|&(at, _, data)| (at, at + 12 + data.len()));
+    let Some((start, end)) = legacy else { return Err(tr("this file's EXIF couldn't be processed").into()) };
+    let mut chunk = (tiff.len() as u32).to_be_bytes().to_vec();
+    chunk.extend(b"eXIf");
+    chunk.extend(&tiff);
+    chunk.extend(crc32fast::hash(&chunk[4..]).to_be_bytes());
+    png.splice(start..end, chunk);
+    Ok(())
+}
+
+/// Drops the XMP segments that mention a location.
+fn drop_jpeg_xmp_location(jpeg: &mut Vec<u8>) {
     const XMP: [&[u8]; 2] = [b"http://ns.adobe.com/xap/1.0/\0", b"http://ns.adobe.com/xmp/extension/\0"];
     let mut at = 2;
     while let Some(&[0xFF, marker, high, low]) = jpeg.get(at..).and_then(|rest| rest.first_chunk::<4>()) {
@@ -277,10 +355,14 @@ fn drop_xmp_location(jpeg: &mut Vec<u8>) {
     }
 }
 
-/// Applies the edits to a JPEG buffer. Only changed fields are touched; MakerNote is always
+/// Applies the edits to a file of type `kind`. Only changed fields are touched; MakerNote is always
 /// dropped. The result is checked before it's returned, so a bad write never reaches disk.
-fn apply(jpeg: &mut Vec<u8>, original: &Values, values: &Values, remove_gps: bool) -> Result<(), String> {
-    let mut m = metadata(jpeg)?;
+fn apply(jpeg: &mut Vec<u8>, kind: FileExtension, original: &Values, values: &Values, remove_gps: bool) -> Result<(), String> {
+    if kind == FileExtension::WEBP {
+        return Err(tr("A WebP file's metadata is shown, not edited.").into());
+    }
+    let pixels = image::load_from_memory(jpeg).map_err(|e| e.to_string())?;
+    let mut m = metadata(jpeg, kind)?;
     for (i, (_, tag)) in FIELDS.iter().enumerate() {
         let value = values[i].trim();
         if value == original[i] {
@@ -299,14 +381,21 @@ fn apply(jpeg: &mut Vec<u8>, original: &Values, values: &Values, remove_gps: boo
             m.remove_tag_by_hex_group(hex, ExifTagGroup::GPS);
         }
         m.remove_tag(ExifTag::GPSInfo(Vec::new()));
+        // A TIFF's XMP packet.
+        if m.get_tag_by_hex(0x02BC, Some(ExifTagGroup::GENERIC)).any(|t| t.value_as_u8_vec(&m.get_endian()).windows(3).any(|w| w == b"GPS")) {
+            m.remove_tag_by_hex_group(0x02BC, ExifTagGroup::GENERIC);
+        }
     }
-    guarded(|| m.write_to_vec(jpeg, FileExtension::JPEG))?;
+    guarded(|| m.write_to_vec(jpeg, kind))?;
+    if matches!(kind, FileExtension::PNG { .. }) {
+        standard_png_exif(jpeg, &m)?;
+    }
     if remove_gps {
-        drop_xmp_location(jpeg);
+        drop_xmp_location(jpeg, kind);
     }
 
     // Check the written file: values as asked, location gone if asked, image still decodes.
-    let check = metadata(jpeg).map_err(|e| trf("the written file didn't check out: {e}", &[("e", &e)]))?;
+    let check = metadata(jpeg, kind).map_err(|e| trf("the written file didn't check out: {e}", &[("e", &e)]))?;
     for (i, (label, tag)) in FIELDS.iter().enumerate() {
         if string_value(&check, &tag(String::new())) != values[i].trim() {
             return Err(trf("the written file didn't check out: {label} wasn't saved", &[("label", &tr(label))]));
@@ -315,22 +404,26 @@ fn apply(jpeg: &mut Vec<u8>, original: &Values, values: &Values, remove_gps: boo
     if remove_gps && (&check).into_iter().any(|t| t.get_group() == ExifTagGroup::GPS) {
         return Err(tr("the written file didn't check out: the location wasn't removed").into());
     }
-    image::load_from_memory(jpeg).map_err(|e| trf("the written file didn't check out: {e}", &[("e", &e)]))?;
+    // TIFF's EXIF is the file's own structure, which little_exif writes over.
+    if image::load_from_memory(jpeg).map_err(|e| trf("the written file didn't check out: {e}", &[("e", &e)]))? != pixels {
+        return Err(tr("the written file didn't check out: the image changed").into());
+    }
     Ok(())
 }
 
 /// Writes a copy of `source` with the edited EXIF to `dest`. The source is never modified.
 pub fn write_copy(source: &Path, dest: &Path, original: &Values, values: &Values, remove_gps: bool) -> Result<(), String> {
-    let ext = dest.extension().and_then(|e| e.to_str()).unwrap_or_default().to_ascii_lowercase();
-    if ext != "jpg" && ext != "jpeg" {
-        return Err(tr("the copy must be a .jpg file").into());
+    let kind = self::kind(source).ok_or(tr("EXIF is shown for JPEG, PNG, WebP, TIFF and RAW files"))?;
+    if self::kind(dest) != Some(kind) {
+        let ext = source.extension().unwrap_or_default().to_string_lossy().to_lowercase();
+        return Err(trf("the copy must be a .{ext} file", &[("ext", &ext)]));
     }
     let dest_canonical = dest.parent().and_then(|d| std::fs::canonicalize(d).ok()).map(|d| d.join(dest.file_name().unwrap_or_default()));
     if dest_canonical == std::fs::canonicalize(source).ok() {
         return Err(tr("choose a new name: the original is never modified").into());
     }
     let mut jpeg = std::fs::read(source).map_err(|e| e.to_string())?;
-    apply(&mut jpeg, original, values, remove_gps)?;
+    apply(&mut jpeg, kind, original, values, remove_gps)?;
     write_atomic(dest, |out| out.write_all(&jpeg).map_err(|e| e.to_string()))
 }
 
@@ -367,7 +460,7 @@ pub fn sections_ui(ui: &mut egui::Ui, d: &mut Dialog) -> bool {
                 ui.label(tr(label));
                 ui.vertical(|ui| {
                     let hint = if i == DATE { "YYYY:MM:DD HH:MM:SS" } else { "" };
-                    ui.add(egui::TextEdit::singleline(&mut d.values[i]).hint_text(hint).desired_width(f32::INFINITY).interactive(!d.read_only));
+                    ui.add(egui::TextEdit::singleline(&mut d.values[i]).hint_text(hint).desired_width(f32::INFINITY).interactive(d.read_only.is_none()));
                     if i == DATE && !valid_date(&d.values[i]) {
                         ui.colored_label(ui.visuals().error_fg_color, tr("Use YYYY:MM:DD HH:MM:SS"));
                     }
@@ -395,7 +488,7 @@ pub fn sections_ui(ui: &mut egui::Ui, d: &mut Dialog) -> bool {
                     open(format!("https://www.openstreetmap.org/?mlat={lat}&mlon={lon}#map=16/{lat}/{lon}"));
                 }
             });
-            if !d.read_only {
+            if d.read_only.is_none() {
                 ui.checkbox(&mut d.remove_gps, tr("Remove location from the copy"));
             }
         }
@@ -405,11 +498,11 @@ pub fn sections_ui(ui: &mut egui::Ui, d: &mut Dialog) -> bool {
     });
     egui::CollapsingHeader::new(tr("Accessibility")).default_open(true).show(ui, |ui| {
         ui.label(tr("Image description"));
-        ui.add(egui::TextEdit::multiline(&mut d.values[DESCRIPTION]).hint_text(tr("Describe the image for people who can't see it")).desired_rows(3).desired_width(f32::INFINITY).interactive(!d.read_only));
+        ui.add(egui::TextEdit::multiline(&mut d.values[DESCRIPTION]).hint_text(tr("Describe the image for people who can't see it")).desired_rows(3).desired_width(f32::INFINITY).interactive(d.read_only.is_none()));
     });
     ui.add_space(6.0);
-    if d.read_only {
-        ui.weak(tr("A RAW file's metadata is shown, not edited."));
+    if let Some(why) = d.read_only {
+        ui.weak(tr(why));
         return false;
     }
     let changed = d.changed();
@@ -473,7 +566,7 @@ mod tests {
         let path = dir.join("a.raf");
         std::fs::write(&path, &raf).unwrap();
         let d = read(&path).unwrap();
-        assert!(d.read_only);
+        assert!(d.read_only.is_some());
         // Its sidebar never offers a copy.
         let ctx = egui::Context::default();
         crate::markup::font_definitions();
@@ -487,7 +580,7 @@ mod tests {
         // An Olympus file is a TIFF with its own magic number.
         let orf = crate::raw::tests::tiff(b"IIRO", 1, &[&crate::raw::tests::jpeg(8, 8)]);
         std::fs::write(dir.join("b.orf"), orf).unwrap();
-        assert!(read(&dir.join("b.orf")).is_ok_and(|d| d.read_only));
+        assert!(read(&dir.join("b.orf")).is_ok_and(|d| d.read_only.is_some()));
         std::fs::remove_dir_all(dir).unwrap();
     }
     use little_exif::rational::uR64;
@@ -582,7 +675,7 @@ mod tests {
 
         for remove_gps in [false, true] {
             let mut jpeg = before.clone();
-            apply(&mut jpeg, &d.original, &values, remove_gps).unwrap();
+            apply(&mut jpeg, FileExtension::JPEG, &d.original, &values, remove_gps).unwrap();
             let m = Metadata::new_from_vec(&jpeg, FileExtension::JPEG).unwrap();
             assert_eq!(string_value(&m, &ExifTag::ImageDescription(String::new())), "A walk");
             assert!(m.get_tag(&ExifTag::Artist(String::new())).next().is_none());
@@ -626,16 +719,16 @@ mod tests {
         };
         const LOOPING: &[u8] = b"II\x2a\0\x08\0\0\0\0\0\x08\0\0\0";
         let with_prefix = [b"Exif\0\0".as_slice(), LOOPING].concat();
-        assert!(metadata(&with_segment(plain.clone(), 0xE1, &with_prefix)).is_err());
+        assert!(metadata(&with_segment(plain.clone(), 0xE1, &with_prefix), FileExtension::JPEG).is_err());
         // little_exif doesn't need the prefix.
-        assert!(metadata(&with_segment(plain.clone(), 0xE1, LOOPING)).is_err());
+        assert!(metadata(&with_segment(plain.clone(), 0xE1, LOOPING), FileExtension::JPEG).is_err());
         // Behind another segment, and behind the image data.
-        assert!(metadata(&with_segment(with_segment(plain.clone(), 0xE1, &with_prefix), 0xFE, b"comment")).is_err());
+        assert!(metadata(&with_segment(with_segment(plain.clone(), 0xE1, &with_prefix), 0xFE, b"comment"), FileExtension::JPEG).is_err());
         let mut after_image = plain.clone();
         after_image.truncate(after_image.len() - 2);
         let tail = with_segment(vec![0xFF, 0xD8], 0xE1, &with_prefix);
         after_image.extend(&tail[2..]);
-        assert!(metadata(&after_image).is_err());
+        assert!(metadata(&after_image, FileExtension::JPEG).is_err());
     }
 
     #[test]
@@ -645,13 +738,184 @@ mod tests {
         let kept = with_segment_after_exif(sample_jpeg(), &xmp("<dc:title>Walk</dc:title>"));
         let d = read_vec(&sample_jpeg(), "xmp");
         let (mut a, mut b, mut c) = (jpeg.clone(), jpeg, kept);
-        apply(&mut a, &d.original, &d.original, true).unwrap();
-        apply(&mut b, &d.original, &d.original, false).unwrap();
-        apply(&mut c, &d.original, &d.original, true).unwrap();
+        apply(&mut a, FileExtension::JPEG, &d.original, &d.original, true).unwrap();
+        apply(&mut b, FileExtension::JPEG, &d.original, &d.original, false).unwrap();
+        apply(&mut c, FileExtension::JPEG, &d.original, &d.original, true).unwrap();
         let has = |jpeg: &[u8], text: &[u8]| jpeg.windows(text.len()).any(|w| w == text);
         assert!(!has(&a, b"GPSLatitude"), "the location survived in XMP");
         assert!(has(&b, b"GPSLatitude"), "only removed on request");
         assert!(has(&c, b"Walk"), "XMP without a location stays");
+    }
+
+    /// `sample_jpeg`'s tags on a 16×8 image in `format`.
+    fn sample(format: image::ImageFormat) -> Vec<u8> {
+        let pixels: Vec<u8> = (0..16 * 8 * 3).map(|i| (i * 7) as u8).collect();
+        let mut bytes = Vec::new();
+        image::RgbImage::from_raw(16, 8, pixels).unwrap().write_to(&mut Cursor::new(&mut bytes), format).unwrap();
+        seeded(bytes, kind(Path::new(&format!("a.{}", format.extensions_str()[0]))).unwrap())
+    }
+
+    /// `bytes` with `sample_jpeg`'s tags, written the way little_exif writes them.
+    fn seeded(mut bytes: Vec<u8>, kind: FileExtension) -> Vec<u8> {
+        let tagged = Metadata::new_from_vec(&sample_jpeg(), FileExtension::JPEG).unwrap();
+        // A TIFF's own tags (size, strips) have to stay.
+        let mut m = Metadata::new_from_vec(&bytes, kind).unwrap_or_else(|_| Metadata::new());
+        for tag in &tagged {
+            m.set_tag(tag.clone());
+        }
+        m.write_to_vec(&mut bytes, kind).unwrap();
+        bytes
+    }
+
+    fn temp_dir(name: &str) -> PathBuf {
+        let dir = std::env::temp_dir().join(format!("lightview-exif-{name}-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        dir
+    }
+
+    /// Edits `bytes` (saved as `name`) through `write_copy` and reads the copy back.
+    fn edit_copy(dir: &Path, name: &str, bytes: &[u8], remove_gps: bool) -> (Dialog, Vec<u8>) {
+        let source = dir.join(name);
+        std::fs::write(&source, bytes).unwrap();
+        let d = read(&source).unwrap();
+        assert_eq!((d.original[1].as_str(), d.original[4].as_str()), ("Ana", "Acme"), "{name}");
+        assert!(d.gps.is_some() && d.read_only.is_none(), "{name}");
+        let mut values = d.original.clone();
+        values[0] = "A walk".into();
+        values[1] = "Bea".into();
+        let dest = dir.join(format!("copy-{name}"));
+        write_copy(&source, &dest, &d.original, &values, remove_gps).unwrap();
+        assert_eq!(std::fs::read(&source).unwrap(), bytes, "the source is never touched");
+        (read(&dest).unwrap(), std::fs::read(&dest).unwrap())
+    }
+
+    #[test]
+    fn png_and_tiff_edits_reopen() {
+        let dir = temp_dir("formats");
+        let pages = seeded(std::fs::read("tests/data/pages.tif").unwrap(), FileExtension::TIFF);
+        let files = [("a.png", sample(image::ImageFormat::Png)), ("a.tif", sample(image::ImageFormat::Tiff)), ("pages.tif", pages)];
+        for (name, bytes) in files {
+            for remove_gps in [false, true] {
+                let (copy, written) = edit_copy(&dir, name, &bytes, remove_gps);
+                assert_eq!((copy.original[0].as_str(), copy.original[1].as_str(), copy.original[4].as_str()), ("A walk", "Bea", "Acme"), "{name}");
+                assert_eq!(copy.gps.is_some(), !remove_gps, "{name}");
+                assert_eq!(image::load_from_memory(&written).unwrap(), image::load_from_memory(&bytes).unwrap(), "{name}: the pixels");
+                let m = Metadata::new_from_vec(&written, kind(Path::new(name)).unwrap()).unwrap();
+                assert!(m.get_tag(&ExifTag::MakerNote(Vec::new())).next().is_none(), "{name}: MakerNote dropped");
+            }
+        }
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn png_exif_is_written_as_the_standard_chunk() {
+        let dir = temp_dir("exif-chunk");
+        let (_, written) = edit_copy(&dir, "a.png", &sample(image::ImageFormat::Png), false);
+        std::fs::remove_dir_all(dir).unwrap();
+        let types: Vec<[u8; 4]> = png_chunks(&written).into_iter().map(|(_, kind, _)| kind).collect();
+        assert!(types.contains(b"eXIf") && !types.contains(b"zTXt"), "{types:?}");
+        // So Save As and other programs see it too.
+        let exif = ImageReader::new(Cursor::new(&written)).with_guessed_format().unwrap().into_decoder().unwrap().exif_metadata().unwrap();
+        assert!(exif.is_some_and(|e| e.windows(3).any(|w| w == b"Bea")));
+    }
+
+    #[test]
+    fn many_pages_and_animations_survive() {
+        let dir = temp_dir("frames");
+        // More pages than the old eight-IFD limit allowed.
+        let page = image::RgbImage::from_pixel(2, 2, image::Rgb([9, 9, 9]));
+        let mut pages = Vec::new();
+        {
+            let mut enc = tiff::encoder::TiffEncoder::new(Cursor::new(&mut pages)).unwrap();
+            for _ in 0..12 {
+                enc.write_image::<tiff::encoder::colortype::RGB8>(2, 2, page.as_raw()).unwrap();
+            }
+        }
+        assert!(crate::load::ifd_chain_ends(&pages));
+        let apng = seeded(std::fs::read("tests/data/anim.apng").unwrap(), FileExtension::PNG { as_zTXt_chunk: false });
+        let (_, written) = edit_copy(&dir, "anim.png", &apng, true);
+        std::fs::remove_dir_all(dir).unwrap();
+        let frames = |png: &[u8]| image::codecs::png::PngDecoder::new(Cursor::new(png)).unwrap().apng().unwrap().into_frames().count();
+        use image::AnimationDecoder;
+        assert_eq!(frames(&written), 2);
+    }
+
+    /// little_exif also takes the `exif:` properties out of a PNG's XMP on every write, so the
+    /// location there goes whether or not it's asked; the rest of the XMP stays.
+    #[test]
+    fn png_xmp_naming_a_location_goes() {
+        let chunk = |kind: &[u8], data: &[u8]| {
+            let mut c = (data.len() as u32).to_be_bytes().to_vec();
+            c.extend(kind);
+            c.extend(data);
+            c.extend(crc32fast::hash(&c[4..]).to_be_bytes());
+            c
+        };
+        // A zlib stream of one stored (uncompressed) block.
+        let zlib = |text: &[u8]| {
+            let mut z = vec![0x78, 0x01, 0x01];
+            z.extend((text.len() as u16).to_le_bytes());
+            z.extend((!(text.len() as u16)).to_le_bytes());
+            z.extend(text);
+            let (mut a, mut b) = (1u32, 0u32);
+            for &byte in text {
+                a = (a + byte as u32) % 65521;
+                b = (b + a) % 65521;
+            }
+            z.extend(((b << 16) | a).to_be_bytes());
+            z
+        };
+        let with_xmp = |text: &str, compressed: u8| {
+            let mut png = sample(image::ImageFormat::Png);
+            let mut data = b"XML:com.adobe.xmp\0".to_vec();
+            data.extend([compressed, 0, 0, 0]);
+            data.extend(if compressed == 1 { zlib(text.as_bytes()) } else { text.as_bytes().to_vec() });
+            png.splice(33..33, chunk(b"iTXt", &data));
+            png
+        };
+        let dir = temp_dir("png-xmp");
+        let has = |png: &[u8], text: &[u8]| png.windows(text.len()).any(|w| w == text);
+        let gps = with_xmp(r#"<rdf:Description exif:GPSLatitude="40,25N"/>"#, 0);
+        assert!(!has(&edit_copy(&dir, "gps.png", &gps, true).1, b"GPSLatitude"));
+        assert!(!has(&edit_copy(&dir, "gps.png", &gps, false).1, b"GPSLatitude"));
+        assert!(has(&edit_copy(&dir, "title.png", &with_xmp("<dc:title>Walk</dc:title>", 0), true).1, b"Walk"));
+        // Compressed XMP can't be checked, so it goes too.
+        let packed = with_xmp("<dc:title>Packed</dc:title>", 1);
+        assert!(has(&packed, b"Packed"));
+        assert!(!has(&edit_copy(&dir, "packed.png", &packed, true).1, b"Packed"));
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn webp_metadata_is_shown_not_edited() {
+        let dir = temp_dir("webp");
+        use image::ImageEncoder;
+        let mut webp = Vec::new();
+        let mut enc = image::codecs::webp::WebPEncoder::new_lossless(&mut webp);
+        let tiff = Metadata::new_from_vec(&sample_jpeg(), FileExtension::JPEG).unwrap().encode().unwrap();
+        enc.set_exif_metadata(tiff.strip_prefix(b"Exif\0\0").unwrap_or(&tiff).to_vec()).unwrap();
+        enc.write_image(&[7; 16 * 8 * 3], 16, 8, image::ExtendedColorType::Rgb8).unwrap();
+        let source = dir.join("a.webp");
+        std::fs::write(&source, &webp).unwrap();
+        let d = read(&source).unwrap();
+        assert_eq!((d.read_only, d.original[1].as_str()), (Some("A WebP file's metadata is shown, not edited."), "Ana"));
+        let mut values = d.original.clone();
+        values[1] = "Bea".into();
+        assert!(write_copy(&source, &dir.join("b.webp"), &d.original, &values, false).is_err());
+        assert!(!dir.join("b.webp").exists());
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn a_copy_keeps_the_source_format() {
+        let dir = temp_dir("same-format");
+        let source = dir.join("a.png");
+        std::fs::write(&source, sample(image::ImageFormat::Png)).unwrap();
+        let d = read(&source).unwrap();
+        for wrong in ["b.jpg", "b.tif", "b"] {
+            assert_eq!(write_copy(&source, &dir.join(wrong), &d.original, &d.original, true).err(), Some(trf("the copy must be a .{ext} file", &[("ext", &"png")])), "{wrong}");
+        }
+        std::fs::remove_dir_all(dir).unwrap();
     }
 
     #[test]
@@ -667,7 +931,7 @@ mod tests {
 
         assert!(write_copy(&source, &source, &d.original, &values, true).is_err());
         assert!(write_copy(&source, &dir.join("./photo.jpg"), &d.original, &values, true).is_err());
-        assert!(write_copy(&source, &dir.join("copy.png"), &d.original, &values, true).is_err());
+        assert!(write_copy(&source, &dir.join("copy.png"), &d.original, &values, true).is_err(), "another format");
         write_copy(&source, &dir.join("copy.jpg"), &d.original, &values, true).unwrap();
         let copy = read(&dir.join("copy.jpg")).unwrap();
         let source_after = std::fs::read(&source).unwrap();

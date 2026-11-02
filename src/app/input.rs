@@ -236,6 +236,7 @@ impl App {
                         self.set_status(tr("Copied the path"));
                     }
                 }
+                Action::CopyFile => self.copy_file(),
                 Action::ShowInFolder => {
                     if let Some(path) = self.current() {
                         crate::platform::show_in_folder(path);
@@ -521,6 +522,25 @@ impl App {
                 Action::ActualSize => view::actual_size(img),
                 _ => self.view,
             };
+        }
+    }
+
+    /// Puts the current file on the clipboard as a file, for pasting into chats and file managers.
+    // shortcut: GNOME Files may want x-special/gnome-copied-files, which arboard doesn't offer; add it if that's reported.
+    fn copy_file(&mut self) {
+        let Some(path) = self.current().cloned() else { return };
+        let clipboard = match self.file_clipboard.take() {
+            Some(c) => Ok(c),
+            None => arboard::Clipboard::new(),
+        };
+        let result = clipboard.and_then(|mut c| {
+            let copied = c.set().file_list(&[&path]);
+            self.file_clipboard = Some(c);
+            copied
+        });
+        match result {
+            Ok(()) => self.set_status(tr("Copied the file")),
+            Err(e) => self.set_status(trf("Couldn't copy the file: {e}", &[("e", &e)])),
         }
     }
 

@@ -181,6 +181,8 @@ pub struct App {
     close_next: bool,
     /// A short message shown at the bottom (e.g. "Saved …"), with when it appeared.
     status: Option<(String, Instant)>,
+    /// Holds what Copy File put on the clipboard: on Linux it's gone once this is dropped.
+    file_clipboard: Option<arboard::Clipboard>,
 }
 
 impl App {
@@ -212,7 +214,7 @@ impl App {
             show_toolbar, style: None, selected: None, grab: Grab::None, editing_text: None, focus_text: false, change_base: None, last_restyle: None, selection: None, element_textures: HashMap::new(),
             resize_dialog: None, adjusting: None, curve_panel: None, pending: None, show_ai_models: false, license_prompt: None, restoring: None, restore_runs: 0, compare: None, enhance_notice: None, visible: None, downloading: HashSet::new(),
             title: String::new(),
-            window_reported: false, preview_reported: None, full_reported: false, nav_start: None, close_next: false, status: None,
+            window_reported: false, preview_reported: None, full_reported: false, nav_start: None, close_next: false, status: None, file_clipboard: None,
         }
     }
 
@@ -650,7 +652,9 @@ impl App {
         let save = egui::Panel::right("inspector").size_range(240.0..=320.0).default_size(320.0).resizable(true).show(ui, |ui| inspector::ui(ui, ins, l, doc.as_ref())).inner;
         let Some(d) = ins.exif.as_ref().ok().filter(|_| save) else { return };
         let stem = d.path.file_stem().unwrap_or_default().to_string_lossy();
-        let mut file_dialog = rfd::FileDialog::new().set_file_name(format!("{stem}-edited.jpg")).add_filter("JPEG", &["jpg", "jpeg"]);
+        // The copy keeps the original's format: only its EXIF changes.
+        let ext = d.path.extension().unwrap_or_default().to_string_lossy().to_lowercase();
+        let mut file_dialog = rfd::FileDialog::new().set_file_name(format!("{stem}-edited.{ext}")).add_filter(ext.to_uppercase(), &[&ext]);
         if let Some(dir) = d.path.parent() {
             file_dialog = file_dialog.set_directory(dir);
         }
@@ -1291,6 +1295,41 @@ mod tests {
         let img = arboard::Clipboard::new().unwrap().get_image().unwrap();
         assert_eq!((img.width, img.height), (4, 3));
         assert_eq!(img.bytes[..8], [0, 1, 2, 3, 4, 5, 6, 7]);
+    }
+
+    /// The file Copy File copies in `file_copy` and `file_paste` look for.
+    fn copied_file() -> PathBuf {
+        std::env::temp_dir().join("lightview-copy-file.png")
+    }
+
+    /// Copy File between two processes (needs a desktop session):
+    /// `cargo test file_copy -- --ignored & sleep 3; cargo test file_paste -- --ignored`
+    #[test]
+    #[ignore]
+    fn file_copy() {
+        let (mut app, _) = app_with_image();
+        std::fs::write(copied_file(), b"png").unwrap();
+        app.files = vec![copied_file()];
+        app.run_actions(&[Action::CopyFile], &egui::Context::default(), false);
+        assert_eq!(app.status.as_ref().map(|s| s.0.as_str()), Some(tr("Copied the file")));
+        // The app holds the clipboard; so does this, for a while.
+        std::thread::sleep(std::time::Duration::from_secs(8));
+    }
+
+    #[test]
+    #[ignore]
+    fn file_paste() {
+        let files = arboard::Clipboard::new().unwrap().get().file_list().unwrap();
+        assert_eq!(files, [copied_file().canonicalize().unwrap()]);
+    }
+
+    #[test]
+    fn copy_file_says_what_happened() {
+        let (mut app, _) = app_with_image();
+        // A file that isn't there can't go on the clipboard, with or without a desktop session.
+        app.files = vec![PathBuf::from("/nowhere/lightview.png")];
+        app.run_actions(&[Action::CopyFile], &egui::Context::default(), false);
+        assert!(app.status.as_ref().is_some_and(|s| s.0.starts_with(&trf("Couldn't copy the file: {e}", &[("e", &"")]))), "{:?}", app.status);
     }
 
     /// One frame of `handle_keys` with `key` pressed.

@@ -86,7 +86,6 @@ Drag to measure in image pixels · Esc to stop	Ziehen zum Messen in Bildpixeln �
 Drag to select · Enter to crop · Esc to cancel	Ziehen zum Auswählen · Eingabe zum Zuschneiden · Esc zum Abbrechen
 Drag the corners onto a rectangle · Enter to apply · Esc to cancel	Ecken auf ein Rechteck ziehen · Eingabe zum Anwenden · Esc zum Abbrechen
 Drawings, text and pasted images will be merged into the image and can't be edited afterwards. Ctrl+Z undoes it.	Zeichnungen, Texte und eingefügte Bilder werden mit dem Bild zusammengeführt und können danach nicht mehr bearbeitet werden. Strg+Z macht es rückgängig.
-EXIF is shown for JPEG files only	EXIF wird nur bei JPEG-Dateien angezeigt
 Edit	Bearbeiten
 Edit the image description	Bildbeschreibung bearbeiten
 Ellipse	Ellipse
@@ -261,7 +260,6 @@ no data folder	kein Datenordner
 no frames	keine Einzelbilder
 no subject found	kein Motiv gefunden
 pick an .onnx file	Wählen Sie eine .onnx-Datei
-the copy must be a .jpg file	die Kopie muss eine .jpg-Datei sein
 the download didn't match its checksum	der Download stimmt nicht mit seiner Prüfsumme überein
 the model has no image input	das Modell hat keinen Bildeingang
 the model's output changed size between tiles	die Modellausgabe änderte ihre Größe zwischen den Kacheln
@@ -323,3 +321,10 @@ this RAW file has no embedded preview	Dieses RAW-Bild hat keine eingebettete Vor
 {format} (embedded preview)	{format} (eingebettete Vorschau)
 EXIF isn't read from this kind of RAW file yet	EXIF wird aus dieser Art RAW-Datei noch nicht gelesen
 A RAW file's metadata is shown, not edited.	Die Metadaten einer RAW-Datei werden angezeigt, nicht bearbeitet.
+A WebP file's metadata is shown, not edited.	Die Metadaten einer WebP-Datei werden angezeigt, nicht bearbeitet.
+EXIF is shown for JPEG, PNG, WebP, TIFF and RAW files	EXIF wird für JPEG-, PNG-, WebP-, TIFF- und RAW-Dateien angezeigt
+the copy must be a .{ext} file	die Kopie muss eine .{ext}-Datei sein
+the written file didn't check out: the image changed	die geschriebene Datei ist fehlerhaft: das Bild hat sich verändert
+Copy File	Datei kopieren
+Copied the file	Datei kopiert
+Couldn't copy the file: {e}	Die Datei konnte nicht kopiert werden: {e}
