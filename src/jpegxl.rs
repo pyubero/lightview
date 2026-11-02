@@ -12,6 +12,15 @@ pub fn is_jxl(bytes: &[u8]) -> bool {
     bytes.starts_with(&[0xFF, 0x0A]) || bytes.starts_with(b"\0\0\0\x0CJXL \r\n\x87\n")
 }
 
+/// The colours to convert from, as the decoder will output them, read from the header.
+pub fn color(mut bytes: &[u8]) -> Option<moxcms::ColorProfile> {
+    let mut decoder = JxlDecoder::new(JxlDecoderOptions::default());
+    if decoder.process(&mut bytes, None, None).ok()? != Event::BasicInfo {
+        return None;
+    }
+    crate::color::to_srgb(&decoder.output_color_profile()?.try_as_icc()?)
+}
+
 /// Decodes every frame that fits the animation budget, always to 8-bit RGB(A).
 pub fn decode(mut bytes: &[u8]) -> Result<Vec<Frame>, String> {
     let mut options = JxlDecoderOptions::default();

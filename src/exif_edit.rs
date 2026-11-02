@@ -101,9 +101,11 @@ fn shortened(value: &impl std::fmt::Debug, max: usize) -> String {
 }
 
 /// A RAW file's EXIF: its preview's own when it has some (RAF, RW2, iPhone DNG), else the camera's
-/// TIFF structure (CR2, NEF, ARW, DNG, ORF).
-// shortcut: CR3 keeps its EXIF in two TIFF blocks (CMT1, CMT2) that aren't read; join them if it's asked for.
+/// TIFF structure (CR2, NEF, ARW, DNG, ORF), or CR3's two TIFF blocks.
 fn raw_metadata(all: &[u8]) -> Result<Metadata, String> {
+    if crate::raw::is_cr3(all) {
+        return cr3_metadata(all);
+    }
     if let Some(head) = crate::raw::embedded_jpeg(all).and_then(crate::raw::exif_header)
         && let Ok(m) = metadata(&head)
         && (&m).into_iter().next().is_some()
@@ -121,6 +123,50 @@ fn raw_metadata(all: &[u8]) -> Result<Metadata, String> {
         return Err(tr("this file's EXIF couldn't be processed").into());
     }
     guarded(|| Metadata::new_from_vec(&tiff, FileExtension::TIFF)).map_err(|_| tr("EXIF isn't read from this kind of RAW file yet").into())
+}
+
+/// CR3's `CMT1` (IFD0), with `CMT2`'s Exif tags added.
+fn cr3_metadata(all: &[u8]) -> Result<Metadata, String> {
+    let parse = |tiff: Vec<u8>| -> Result<Metadata, String> {
+        if !ifd_chain_ends(&tiff) {
+            return Err(tr("this file's EXIF couldn't be processed").into());
+        }
+        guarded(|| Metadata::new_from_vec(&tiff, FileExtension::TIFF))
+    };
+    let mut m = parse(crate::raw::cr3_box(all, b"CMT1").ok_or(tr("this file's EXIF couldn't be processed"))?.to_vec())?;
+    if let Some(exif) = crate::raw::cr3_box(all, b"CMT2").and_then(as_exif_ifd)
+        && let Ok(e) = parse(exif)
+    {
+        for tag in &e {
+            if tag.get_group() == ExifTagGroup::EXIF {
+                m.set_tag(tag.clone());
+            }
+        }
+    }
+    Ok(m)
+}
+
+/// `tiff` with a new IFD0 whose only entry points at the old one as the Exif IFD: CMT2 holds Exif
+/// tags at the top level, where a reader doesn't know them. Nothing moves, so offsets stay valid.
+fn as_exif_ifd(tiff: &[u8]) -> Option<Vec<u8>> {
+    let (_, u32_at) = crate::load::tiff_readers(tiff)?;
+    let (exif_ifd, le) = (u32::try_from(u32_at(4)?).ok()?, tiff[0] == b'I');
+    let u16_bytes = |v: u16| if le { v.to_le_bytes() } else { v.to_be_bytes() };
+    let u32_bytes = |v: u32| if le { v.to_le_bytes() } else { v.to_be_bytes() };
+    let mut out = tiff.to_vec();
+    if out.len() % 2 == 1 {
+        out.push(0);
+    }
+    let ifd0 = u32::try_from(out.len()).ok()?;
+    out.extend(u16_bytes(1));
+    // Tag 0x8769 (Exif IFD), type 4 (LONG), one value.
+    out.extend(u16_bytes(0x8769));
+    out.extend(u16_bytes(4));
+    out.extend(u32_bytes(1));
+    out.extend(u32_bytes(exif_ifd));
+    out.extend(u32_bytes(0));
+    out[4..8].copy_from_slice(&u32_bytes(ifd0));
+    Some(out)
 }
 
 fn string_value(m: &Metadata, tag: &ExifTag) -> String {
@@ -198,9 +244,13 @@ fn location(m: &Metadata) -> Option<(f64, f64)> {
 
 /// Reads `path` (a JPEG) for the inspector.
 pub fn read(path: &Path) -> Result<Dialog, String> {
-    let bytes = std::fs::read(path).map_err(|e| e.to_string())?;
+    read_bytes(path, &std::fs::read(path).map_err(|e| e.to_string())?)
+}
+
+/// `read`, for a file already in memory.
+pub fn read_bytes(path: &Path, bytes: &[u8]) -> Result<Dialog, String> {
     let read_only = crate::raw::is_raw(path);
-    let m = if read_only { raw_metadata(&bytes)? } else { metadata(&bytes)? };
+    let m = if read_only { raw_metadata(bytes)? } else { metadata(&bytes.to_vec())? };
     let original: Values = FIELDS.map(|(_, tag)| string_value(&m, &tag(String::new())));
     let key = |t: &ExifTag| (t.get_group(), t.as_u16());
     let shown: Vec<_> = FIELDS.iter().map(|(_, tag)| key(&tag(String::new()))).collect();
@@ -377,6 +427,28 @@ pub fn sections_ui(ui: &mut egui::Ui, d: &mut Dialog) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// A CR3-like file: CMT1 names the camera, CMT2 holds the exposure time at its top level.
+    #[test]
+    fn a_cr3s_exif_comes_from_both_blocks() {
+        let mut cmt1 = b"II*\0\x08\0\0\0\x01\0".to_vec();
+        cmt1.extend([0x0F, 0x01, 2, 0, 6, 0, 0, 0, 26, 0, 0, 0, 0, 0, 0, 0]);
+        cmt1.extend(b"Canon\0");
+        let mut cmt2 = b"II*\0\x08\0\0\0\x01\0".to_vec();
+        cmt2.extend([0x9A, 0x82, 5, 0, 1, 0, 0, 0, 26, 0, 0, 0, 0, 0, 0, 0]);
+        cmt2.extend([1, 0, 0, 0, 125, 0, 0, 0]);
+        let mut cr3 = b"\0\0\0\x18ftypcrx \0\0\0\x01crx isom".to_vec();
+        for (name, block) in [(b"CMT1", &cmt1), (b"CMT2", &cmt2)] {
+            cr3.extend(((block.len() + 8) as u32).to_be_bytes());
+            cr3.extend(name);
+            cr3.extend(block);
+        }
+        let m = raw_metadata(&cr3).unwrap();
+        assert_eq!(string_value(&m, &ExifTag::Make(String::new())), "Canon");
+        assert_eq!(rationals(&m, &ExifTag::ExposureTime(Vec::new())), Some(1.0 / 125.0));
+        // Without the wrapping, the exposure would be an unknown tag.
+        assert!(as_exif_ifd(b"II*\0").is_none());
+    }
 
     #[test]
     fn long_tags_are_cut_without_being_written_out() {

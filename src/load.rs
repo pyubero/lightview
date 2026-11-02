@@ -245,11 +245,23 @@ fn load(path: &Path, target: [u32; 2], color_managed: bool, on_preview: impl Fn(
         return Ok(Loaded { frames: vec![frame], file_size, svg: Some(tree) });
     }
     // Goes by extension, so a file named anything else can't reach native code.
+    // Converts frames from `profile` to sRGB, with colour management on.
+    let manage = |frames: &mut [Frame], profile: Option<moxcms::ColorProfile>| {
+        for frame in frames.iter_mut() {
+            if let Some(profile) = profile.as_ref().filter(|_| color_managed) {
+                color::convert(profile, frame);
+            }
+        }
+    };
     if heif::is_native(path) {
-        return Ok(Loaded { frames: vec![to_frame(heif::decode(bytes)?, Duration::ZERO)], file_size, svg: None });
+        let mut frames = vec![to_frame(heif::decode(bytes)?, Duration::ZERO)];
+        manage(&mut frames, catching(|| Ok(heif::color(bytes))).ok().flatten());
+        return Ok(Loaded { frames, file_size, svg: None });
     }
     if jpegxl::is_jxl(bytes) {
-        return Ok(Loaded { frames: jpegxl::decode(bytes)?, file_size, svg: None });
+        let mut frames = jpegxl::decode(bytes)?;
+        manage(&mut frames, catching(|| Ok(jpegxl::color(bytes))).ok().flatten());
+        return Ok(Loaded { frames, file_size, svg: None });
     }
     let mut reader = ImageReader::new(Cursor::new(bytes));
     // TGA has no magic bytes; the guess below keeps this when it finds nothing.
@@ -259,6 +271,8 @@ fn load(path: &Path, target: [u32; 2], color_managed: bool, on_preview: impl Fn(
     let reader = reader.with_guessed_format().map_err(|e| e.to_string())?;
     let format = reader.format();
 
+    // An animation's profile, read before its frames are.
+    let mut animation_icc = None;
     let animation: Option<Frames> = match format {
         Some(ImageFormat::Gif) => {
             let mut d = GifDecoder::new(Cursor::new(bytes)).map_err(|e| e.to_string())?;
@@ -267,11 +281,13 @@ fn load(path: &Path, target: [u32; 2], color_managed: bool, on_preview: impl Fn(
             Some(d.into_frames())
         }
         Some(ImageFormat::Png) => {
-            let d = PngDecoder::with_limits(Cursor::new(bytes), Limits::default()).map_err(|e| e.to_string())?;
+            let mut d = PngDecoder::with_limits(Cursor::new(bytes), Limits::default()).map_err(|e| e.to_string())?;
+            animation_icc = d.icc_profile().ok().flatten();
             if d.is_apng().map_err(|e| e.to_string())? { Some(d.apng().map_err(|e| e.to_string())?.into_frames()) } else { None }
         }
         Some(ImageFormat::WebP) => {
-            let d = WebPDecoder::new(Cursor::new(bytes)).map_err(|e| e.to_string())?;
+            let mut d = WebPDecoder::new(Cursor::new(bytes)).map_err(|e| e.to_string())?;
+            animation_icc = d.icc_profile().ok().flatten();
             let (w, h) = d.dimensions();
             if d.has_animation() && w as u64 * h as u64 * 4 > MAX_CANVAS_BYTES {
                 return Err(tr("this image is too large to open").into());
@@ -297,11 +313,12 @@ fn load(path: &Path, target: [u32; 2], color_managed: bool, on_preview: impl Fn(
         if frames.is_empty() {
             return Err(tr("no frames").into());
         }
+        manage(&mut frames, animation_icc.and_then(|icc| catching(|| Ok(color::to_srgb(&icc))).ok().flatten()));
         return Ok(Loaded { frames, file_size, svg: None });
     }
 
     let mut decoder = reader.into_decoder().map_err(|e| e.to_string())?;
-    // shortcut: animations stay unconverted, and PNG's gAMA/cHRM/cICP without an ICC profile are ignored; handle them if they're reported.
+    // shortcut: PNG's gAMA/cHRM/cICP without an ICC profile are ignored; handle them if they're reported.
     let icc = if color_managed { decoder.icc_profile().ok().flatten() } else { None };
     // A profile that upsets the library costs the conversion, not the image.
     let profile = icc.and_then(|icc| catching(|| Ok(color::to_srgb(&icc))).ok().flatten());
@@ -361,7 +378,7 @@ fn load(path: &Path, target: [u32; 2], color_managed: bool, on_preview: impl Fn(
         return Ok(Loaded { frames: vec![first], file_size, svg: None });
     }
     on_preview(first.clone());
-    Ok(Loaded { frames: decode_pages(bytes.to_vec(), first, &pages), file_size, svg: None })
+    Ok(Loaded { frames: decode_pages(bytes.to_vec(), first, &pages, profile.as_ref()), file_size, svg: None })
 }
 
 /// How long an animation frame stays up. Like browsers: under 20 ms means "unspecified" and plays at 100 ms.
@@ -421,13 +438,17 @@ fn tiff_pages(tiff: &[u8]) -> Vec<u32> {
 /// to be the same size. Each page goes through `image` by pointing the header at it, which keeps
 /// all its pixel formats. A page that won't decode is left out, and pages stop at the memory budget.
 // shortcut: a small page looks small next to a big one; give pages their own size if that's reported.
-fn decode_pages(mut tiff: Vec<u8>, first: Frame, pages: &[u32]) -> Vec<Frame> {
+fn decode_pages(mut tiff: Vec<u8>, first: Frame, pages: &[u32], profile: Option<&moxcms::ColorProfile>) -> Vec<Frame> {
     let mut frames = vec![first];
     let le = tiff[0] == b'I';
     let mut canvas = (frames[0].w, frames[0].h);
     for &ifd in pages {
         tiff[4..8].copy_from_slice(&if le { ifd.to_le_bytes() } else { ifd.to_be_bytes() });
-        let Ok(page) = catching(|| decode_page(&tiff)) else { continue };
+        let Ok(mut page) = catching(|| decode_page(&tiff)) else { continue };
+        // shortcut: every page takes the first page's profile; read each page's if mixed ones are reported.
+        if let Some(profile) = profile {
+            color::convert(profile, &mut page);
+        }
         let grown = (canvas.0.max(page.w), canvas.1.max(page.h));
         if (frames.len() + 1) as u64 * grown.0 as u64 * grown.1 as u64 * 4 > MAX_ANIMATION_BYTES as u64 {
             break;
@@ -753,6 +774,44 @@ mod tests {
     }
 
     #[test]
+    fn an_animation_is_converted_too() {
+        use image::ImageEncoder;
+        let dir = std::env::temp_dir().join(format!("lightview-wideanim-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("a.webp");
+        // A lossless WebP with a profile: the still path; then the same through the animation path is
+        // checked by an APNG below.
+        let mut enc = image::codecs::webp::WebPEncoder::new_lossless(std::fs::File::create(&path).unwrap());
+        enc.set_icc_profile(moxcms::ColorProfile::new_display_p3().encode().unwrap()).unwrap();
+        DynamicImage::ImageRgb8(image::RgbImage::from_pixel(4, 4, image::Rgb([200, 100, 50]))).write_with_encoder(enc).unwrap();
+        assert!(load(&path, [100, 100], true, |_| {}).unwrap().frames[0].pixels[0].abs_diff(215) <= 2);
+        // APNG with an iCCP chunk, written by hand: two frames.
+        let apng = dir.join("b.png");
+        std::fs::write(&apng, apng_with_icc(&moxcms::ColorProfile::new_display_p3().encode().unwrap())).unwrap();
+        let l = load(&apng, [100, 100], true, |_| {}).unwrap();
+        assert_eq!(l.frames.len(), 2);
+        assert!(l.frames.iter().all(|f| f.pixels[0].abs_diff(215) <= 2), "{:?}", l.frames.iter().map(|f| f.pixels[0]).collect::<Vec<_>>());
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    /// A 2-frame 1×1 APNG of (200, 100, 50) with `icc` in an iCCP chunk.
+    fn apng_with_icc(icc: &[u8]) -> Vec<u8> {
+        let mut png = Vec::new();
+        {
+            let mut info = png::Info::with_size(1, 1);
+            info.color_type = png::ColorType::Rgb;
+            info.icc_profile = Some(std::borrow::Cow::Owned(icc.to_vec()));
+            let mut enc = png::Encoder::with_info(&mut png, info).unwrap();
+            enc.set_animated(2, 0).unwrap();
+            let mut w = enc.write_header().unwrap();
+            w.write_image_data(&[200, 100, 50]).unwrap();
+            w.write_image_data(&[200, 100, 50]).unwrap();
+            w.finish().unwrap();
+        }
+        png
+    }
+
+    #[test]
     fn a_broken_profile_costs_the_conversion_not_the_image() {
         use image::ImageEncoder;
         let dir = std::env::temp_dir().join(format!("lightview-badicc-{}", std::process::id()));
@@ -994,7 +1053,7 @@ mod tests {
     fn many_small_pages_cant_grow_to_a_giant_canvas() {
         let first = Frame { w: 30000, h: 30000, pixels: Vec::new(), alpha: false, delay: Duration::ZERO };
         let tiff = tiff_file(&[(1, 1, 0, false), (1, 1, 0, false)]);
-        let frames = decode_pages(tiff.clone(), Frame { w: 1, h: 1, ..first }, &tiff_pages(&tiff));
+        let frames = decode_pages(tiff.clone(), Frame { w: 1, h: 1, ..first }, &tiff_pages(&tiff), None);
         assert_eq!(frames.len(), 2);
     }
 

@@ -1,13 +1,33 @@
 //! Colour management: images with an ICC profile are converted to sRGB as they're decoded, so
 //! everything after that (screen, edits, Copy, AI) works in one space. Assumes an sRGB monitor.
 use crate::load::Frame;
-use moxcms::{ColorProfile, DataColorSpace, Layout, TransformOptions};
+use moxcms::{CicpProfile, ColorProfile, DataColorSpace, Layout, MatrixCoefficients, TransformOptions};
 
 /// The profile to convert from, or `None` when there's nothing to do: `icc` is unreadable, isn't
 /// RGB, or is sRGB under whatever name. The bytes are untrusted. Most tagged photos stop here, so
 /// the check is a few colours through the transform, not a comparison of curves.
 pub fn to_srgb(icc: &[u8]) -> Option<ColorProfile> {
-    let profile = ColorProfile::new_from_slice(icc).ok()?;
+    needed(ColorProfile::new_from_slice(icc).ok()?)
+}
+
+/// The same for colours given as coded primaries and transfer (ITU-T H.273), as HEIC and AVIF
+/// often do instead of a profile. Unspecified ones mean sRGB.
+// Windows' HEIC path reads no colour information, so it has no caller there.
+#[cfg_attr(windows, allow(dead_code))]
+pub fn from_cicp(primaries: u8, transfer: u8) -> Option<ColorProfile> {
+    // 0, 2 and 3 are reserved or unspecified, which `try_from` lets through.
+    if [0, 2, 3].contains(&primaries) {
+        return None;
+    }
+    let cicp = CicpProfile { color_primaries: primaries.try_into().ok()?, transfer_characteristics: transfer.try_into().ok()?, matrix_coefficients: MatrixCoefficients::Identity, full_range: true };
+    let mut profile = ColorProfile::new_srgb();
+    // Its result says false even when the primaries were set (moxcms 0.8.1), so the probe decides.
+    profile.update_rgb_colorimetry_from_cicp(cicp);
+    needed(profile)
+}
+
+/// `profile`, unless converting from it would change nothing.
+fn needed(profile: ColorProfile) -> Option<ColorProfile> {
     if profile.color_space != DataColorSpace::Rgb {
         return None;
     }
@@ -71,6 +91,17 @@ mod tests {
     fn adobe_rgb_matches_lcms() {
         let icc = ColorProfile::new_adobe_rgb().encode().unwrap();
         matches(&icc, [[227, 100, 42], [0, 181, 83], [0, 12, 245], [129, 129, 129], [255, 0, 0], [0, 255, 0]]);
+    }
+
+    #[test]
+    fn coded_display_p3_matches_lcms_and_bt709_is_srgb() {
+        let mut frame = Frame { w: 1, h: 1, pixels: vec![200, 100, 50], alpha: false, delay: Duration::ZERO };
+        // Primaries 12 (P3, D65) with the sRGB curve (13), as an iPhone's HEIC says.
+        convert(&from_cicp(12, 13).unwrap(), &mut frame);
+        assert!(frame.pixels.iter().zip([215, 93, 31]).all(|(a, b)| a.abs_diff(b) <= 2), "{:?}", frame.pixels);
+        assert!(from_cicp(1, 13).is_none(), "BT.709 is sRGB's primaries");
+        assert!(from_cicp(2, 2).is_none(), "unspecified");
+        assert!(from_cicp(255, 255).is_none());
     }
 
     #[test]

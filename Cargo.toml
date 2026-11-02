@@ -43,5 +43,9 @@ percent-encoding = "2.3"
 [profile.dev.package."*"]
 opt-level = 3
 
+[dev-dependencies]
+# Already in the build through `image`; writes a test APNG.
+png = "0.18"
+
 [build-dependencies]
 winresource = "0.1.34"

@@ -17,9 +17,16 @@ fn fits(w: u64, h: u64) -> Result<(), String> {
 }
 
 #[cfg(not(windows))]
-pub use libheif::decode;
+pub use libheif::{color, decode};
 #[cfg(windows)]
 pub use wic::decode;
+
+/// Windows' codecs hand over sRGB-ish pixels with no colour information read here.
+// shortcut: a Display P3 HEIC shows unconverted on Windows; read WIC's colour context if it's reported.
+#[cfg(windows)]
+pub fn color(_: &[u8]) -> Option<moxcms::ColorProfile> {
+    None
+}
 
 #[cfg(not(windows))]
 mod libheif {
@@ -54,10 +61,25 @@ mod libheif {
         image_height: unsafe extern "C" fn(Image, c_int) -> c_int,
         plane: unsafe extern "C" fn(Image, c_int, *mut c_int) -> *const u8,
         image_release: unsafe extern "C" fn(Image),
+        // Colour information; optional, so a libheif without them still decodes.
+        profile_size: Option<unsafe extern "C" fn(Handle) -> usize>,
+        profile: Option<unsafe extern "C" fn(Handle, *mut c_void) -> Error>,
+        nclx: Option<unsafe extern "C" fn(Handle, *mut *mut Nclx) -> Error>,
+        nclx_free: Option<unsafe extern "C" fn(*mut Nclx)>,
         // Keeps the function pointers above valid.
         _lib: libloading::Library,
     }
 
+    /// The start of libheif's `heif_color_profile_nclx`: only these fields are read.
+    #[repr(C)]
+    pub(super) struct Nclx {
+        version: u8,
+        primaries: c_int,
+        transfer: c_int,
+    }
+
+    /// Bigger embedded profiles are ignored.
+    const MAX_PROFILE: usize = 4 << 20;
     const COLORSPACE_RGB: c_int = 1;
     const CHROMA_RGB: c_int = 10;
     const CHROMA_RGBA: c_int = 11;
@@ -85,6 +107,10 @@ mod libheif {
                     image_height: *lib.get(b"heif_image_get_height\0").ok()?,
                     plane: *lib.get(b"heif_image_get_plane_readonly\0").ok()?,
                     image_release: *lib.get(b"heif_image_release\0").ok()?,
+                    profile_size: lib.get(b"heif_image_handle_get_raw_color_profile_size\0").ok().map(|s| *s),
+                    profile: lib.get(b"heif_image_handle_get_raw_color_profile\0").ok().map(|s| *s),
+                    nclx: lib.get(b"heif_image_handle_get_nclx_color_profile\0").ok().map(|s| *s),
+                    nclx_free: lib.get(b"heif_nclx_color_profile_free\0").ok().map(|s| *s),
                     _lib: lib,
                 })
             }
@@ -130,6 +156,46 @@ mod libheif {
                     let out = copy(lib, image, alpha);
                     (lib.image_release)(image);
                     out
+                })();
+                (lib.handle_release)(handle);
+                out
+            })();
+            (lib.context_free)(context);
+            out
+        }
+    }
+
+    /// The colours to convert from: the embedded ICC profile, else the coded primaries.
+    pub fn color(bytes: &[u8]) -> Option<moxcms::ColorProfile> {
+        let lib = lib()?;
+        // SAFETY: as in `decode_with`; the profile buffer is exactly the size libheif reports, and
+        // the nclx struct is libheif's own, read only through its leading fields and then freed.
+        unsafe {
+            let context = (lib.context_alloc)();
+            if context.is_null() {
+                return None;
+            }
+            let out = (|| {
+                check((lib.read)(context, bytes.as_ptr(), bytes.len(), null())).ok()?;
+                let mut handle = null_mut();
+                check((lib.primary)(context, &mut handle)).ok()?;
+                let out = (|| {
+                    let size = lib.profile_size.map_or(0, |f| f(handle));
+                    if size > 0 && size <= MAX_PROFILE {
+                        let mut icc = vec![0u8; size];
+                        check((lib.profile?)(handle, icc.as_mut_ptr().cast())).ok()?;
+                        return crate::color::to_srgb(&icc);
+                    }
+                    let mut nclx = null_mut();
+                    check((lib.nclx?)(handle, &mut nclx)).ok()?;
+                    if nclx.is_null() {
+                        return None;
+                    }
+                    let (primaries, transfer) = ((*nclx).primaries, (*nclx).transfer);
+                    if let Some(free) = lib.nclx_free {
+                        free(nclx);
+                    }
+                    crate::color::from_cicp(u8::try_from(primaries).ok()?, u8::try_from(transfer).ok()?)
                 })();
                 (lib.handle_release)(handle);
                 out
@@ -226,6 +292,16 @@ mod tests {
             assert!(r > 180 && b < 80 && r2 < 80 && b2 > 180, "{name}: {r} {b} {r2} {b2}");
         }
         assert!(decode(b"\0\0\0\x18ftypheic not really").is_err());
+    }
+
+    #[test]
+    fn plain_test_files_need_no_conversion() {
+        if lib().is_some() {
+            for name in ["tiny.heic", "tiny.avif", "rotated.heic"] {
+                assert!(color(&std::fs::read(format!("tests/data/{name}")).unwrap()).is_none(), "{name}");
+            }
+            assert!(color(b"\0\0\0\x18ftypheic not really").is_none());
+        }
     }
 
     #[test]

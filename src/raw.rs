@@ -83,7 +83,7 @@ pub fn exif_header(jpeg: &[u8]) -> Option<Vec<u8>> {
 /// TIFF structure (CR2, NEF, ARW, DNG, ORF, RW2) or of CR3's `CMT1` box. `None` for RAF, whose
 /// preview carries its own EXIF.
 pub fn orientation(b: &[u8]) -> Option<Orientation> {
-    let tiff = if b.get(4..8) == Some(b"ftyp") { cr3_cmt1(b)? } else { b };
+    let tiff = if is_cr3(b) { cr3_box(b, b"CMT1")? } else { b };
     let (u16_at, u32_at) = tiff_readers(tiff)?;
     let ifd0 = u32_at(4)?;
     // u16 entries at most, each read bounds-checked.
@@ -96,10 +96,16 @@ pub fn orientation(b: &[u8]) -> Option<Orientation> {
     None
 }
 
-/// The TIFF structure in a CR3's `CMT1` box (IFD0), found near the start of the file.
-fn cr3_cmt1(b: &[u8]) -> Option<&[u8]> {
+/// An ISO box file, which among RAW formats means CR3.
+pub fn is_cr3(b: &[u8]) -> bool {
+    b.get(4..8) == Some(b"ftyp")
+}
+
+/// The TIFF structure in a CR3's metadata box, found near the start of the file: `CMT1` holds
+/// IFD0, `CMT2` the Exif tags.
+pub fn cr3_box<'a>(b: &'a [u8], name: &[u8; 4]) -> Option<&'a [u8]> {
     let head = &b[..b.len().min(1 << 16)];
-    let at = head.windows(4).position(|w| w == b"CMT1")?;
+    let at = head.windows(4).position(|w| w == name)?;
     let size = u32::from_be_bytes(b.get(at.checked_sub(4)?..at)?.try_into().ok()?) as usize;
     b.get(at + 4..(at - 4).checked_add(size)?)
 }

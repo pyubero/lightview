@@ -22,10 +22,11 @@ impl Inspector {
     pub fn new(path: &Path) -> Self {
         let jpeg = path.extension().and_then(|e| e.to_str()).is_some_and(|e| e.eq_ignore_ascii_case("jpg") || e.eq_ignore_ascii_case("jpeg"));
         let raw = crate::raw::is_raw(path);
+        // Read once: RAW files run to tens of megabytes, and this is the UI thread.
+        let all = if raw { std::fs::read(path).ok() } else { None };
         // A RAW file's colours are its preview's.
         let icc = if raw {
-            std::fs::read(path).ok().and_then(|all| {
-                let preview = crate::raw::embedded_jpeg(&all)?;
+            all.as_deref().and_then(crate::raw::embedded_jpeg).and_then(|preview| {
                 ImageReader::new(std::io::Cursor::new(preview)).with_guessed_format().ok()?.into_decoder().ok()?.icc_profile().ok()?
             })
         } else {
@@ -37,7 +38,11 @@ impl Inspector {
         };
         // shortcut: EXIF is read for JPEGs only, like EXIF editing; little_exif can also read PNG/WebP if wanted.
         // On the UI thread, where a panic would close the app and lose unsaved edits.
-        let exif = if jpeg || raw { crate::load::catching(|| exif_edit::read(path)) } else { Err(tr("EXIF is shown for JPEG files only").into()) };
+        let exif = if let Some(all) = &all {
+            crate::load::catching(|| exif_edit::read_bytes(path, all))
+        } else if jpeg {
+            crate::load::catching(|| exif_edit::read(path))
+        } else { Err(tr("EXIF is shown for JPEG files only").into()) };
         let jfif_dpi = jpeg.then(|| std::fs::File::open(path).ok()).flatten().and_then(|mut f| {
             let mut head = [0u8; 18];
             std::io::Read::read_exact(&mut f, &mut head).ok()?;
