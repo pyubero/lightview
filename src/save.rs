@@ -21,7 +21,7 @@ pub const FORMATS: [(&str, &[&str]); 6] = [
 ];
 
 /// Formats that open but can't be written. Save As offers PNG for them, which keeps transparency.
-const READ_ONLY: [&str; 17] = ["svg", "ico", "qoi", "tga", "pnm", "pbm", "pgm", "ppm", "pam", "dds", "hdr", "exr", "jxl", "heic", "heif", "hif", "avif"];
+const READ_ONLY: [&str; 25] = ["svg", "ico", "qoi", "tga", "pnm", "pbm", "pgm", "ppm", "pam", "dds", "hdr", "exr", "jxl", "heic", "heif", "hif", "avif", "cr2", "cr3", "nef", "arw", "dng", "raf", "orf", "rw2"];
 
 /// `FORMATS` with the format of `source` first: file dialogs start on the first filter.
 pub fn formats_for(source: &Path) -> [(&'static str, &'static [&'static str]); 6] {

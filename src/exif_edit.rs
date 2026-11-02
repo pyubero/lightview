@@ -40,6 +40,8 @@ pub struct Dialog {
     pub resolution: Option<String>,
     /// Read-only listing of every other tag.
     others: Vec<String>,
+    /// Shown but not edited: a RAW file's.
+    read_only: bool,
 }
 
 /// little_exif can panic on input it doesn't expect; turn that into an error.
@@ -73,6 +75,52 @@ fn metadata(jpeg: &Vec<u8>) -> Result<Metadata, String> {
         return Err(tr("couldn't read this file's EXIF safely").into());
     }
     Ok(m)
+}
+
+/// `value`'s debug text, cut at `max` characters without writing the rest: a tag can hold
+/// megabytes (a RAW file's maker notes), and formatting them all took a second.
+fn shortened(value: &impl std::fmt::Debug, max: usize) -> String {
+    struct Upto(String, usize);
+    impl std::fmt::Write for Upto {
+        fn write_str(&mut self, s: &str) -> std::fmt::Result {
+            for c in s.chars() {
+                if self.1 == 0 {
+                    return Err(std::fmt::Error);
+                }
+                self.0.push(c);
+                self.1 -= 1;
+            }
+            Ok(())
+        }
+    }
+    let mut out = Upto(String::new(), max);
+    match std::fmt::write(&mut out, format_args!("{value:?}")) {
+        Ok(()) => out.0,
+        Err(_) => out.0 + "…",
+    }
+}
+
+/// A RAW file's EXIF: its preview's own when it has some (RAF, RW2, iPhone DNG), else the camera's
+/// TIFF structure (CR2, NEF, ARW, DNG, ORF).
+// shortcut: CR3 keeps its EXIF in two TIFF blocks (CMT1, CMT2) that aren't read; join them if it's asked for.
+fn raw_metadata(all: &[u8]) -> Result<Metadata, String> {
+    if let Some(head) = crate::raw::embedded_jpeg(all).and_then(crate::raw::exif_header)
+        && let Ok(m) = metadata(&head)
+        && (&m).into_iter().next().is_some()
+    {
+        return Ok(m);
+    }
+    let mut tiff = all.to_vec();
+    // Olympus changes only the magic number, which little_exif checks.
+    match tiff.get(..4) {
+        Some(b"IIRO") => tiff[2..4].copy_from_slice(&[42, 0]),
+        Some(b"MMOR") => tiff[2..4].copy_from_slice(&[0, 42]),
+        _ => {}
+    }
+    if !ifd_chain_ends(&tiff) {
+        return Err(tr("this file's EXIF couldn't be processed").into());
+    }
+    guarded(|| Metadata::new_from_vec(&tiff, FileExtension::TIFF)).map_err(|_| tr("EXIF isn't read from this kind of RAW file yet").into())
 }
 
 fn string_value(m: &Metadata, tag: &ExifTag) -> String {
@@ -150,20 +198,18 @@ fn location(m: &Metadata) -> Option<(f64, f64)> {
 
 /// Reads `path` (a JPEG) for the inspector.
 pub fn read(path: &Path) -> Result<Dialog, String> {
-    let jpeg = std::fs::read(path).map_err(|e| e.to_string())?;
-    let m = metadata(&jpeg)?;
+    let bytes = std::fs::read(path).map_err(|e| e.to_string())?;
+    let read_only = crate::raw::is_raw(path);
+    let m = if read_only { raw_metadata(&bytes)? } else { metadata(&bytes)? };
     let original: Values = FIELDS.map(|(_, tag)| string_value(&m, &tag(String::new())));
     let key = |t: &ExifTag| (t.get_group(), t.as_u16());
     let shown: Vec<_> = FIELDS.iter().map(|(_, tag)| key(&tag(String::new()))).collect();
     let others = (&m)
         .into_iter()
         .filter(|t| !shown.contains(&key(t)))
-        .map(|t| {
-            let s = format!("{t:?}");
-            if s.chars().count() > 90 { format!("{}…", s.chars().take(90).collect::<String>()) } else { s }
-        })
+        .map(|t| shortened(&t, 90))
         .collect();
-    Ok(Dialog { path: path.to_path_buf(), values: original.clone(), original, gps: location(&m), remove_gps: false, summary: summary(&m), resolution: resolution(&m), others })
+    Ok(Dialog { path: path.to_path_buf(), values: original.clone(), original, gps: location(&m), remove_gps: false, summary: summary(&m), resolution: resolution(&m), others, read_only })
 }
 
 /// Drops the XMP segments that mention a location: little_exif only rewrites the EXIF one.
@@ -271,7 +317,7 @@ pub fn sections_ui(ui: &mut egui::Ui, d: &mut Dialog) -> bool {
                 ui.label(tr(label));
                 ui.vertical(|ui| {
                     let hint = if i == DATE { "YYYY:MM:DD HH:MM:SS" } else { "" };
-                    ui.add(egui::TextEdit::singleline(&mut d.values[i]).hint_text(hint).desired_width(f32::INFINITY));
+                    ui.add(egui::TextEdit::singleline(&mut d.values[i]).hint_text(hint).desired_width(f32::INFINITY).interactive(!d.read_only));
                     if i == DATE && !valid_date(&d.values[i]) {
                         ui.colored_label(ui.visuals().error_fg_color, tr("Use YYYY:MM:DD HH:MM:SS"));
                     }
@@ -299,7 +345,9 @@ pub fn sections_ui(ui: &mut egui::Ui, d: &mut Dialog) -> bool {
                     open(format!("https://www.openstreetmap.org/?mlat={lat}&mlon={lon}#map=16/{lat}/{lon}"));
                 }
             });
-            ui.checkbox(&mut d.remove_gps, tr("Remove location from the copy"));
+            if !d.read_only {
+                ui.checkbox(&mut d.remove_gps, tr("Remove location from the copy"));
+            }
         }
         None => {
             ui.weak(tr("No location in this file"));
@@ -307,9 +355,13 @@ pub fn sections_ui(ui: &mut egui::Ui, d: &mut Dialog) -> bool {
     });
     egui::CollapsingHeader::new(tr("Accessibility")).default_open(true).show(ui, |ui| {
         ui.label(tr("Image description"));
-        ui.add(egui::TextEdit::multiline(&mut d.values[DESCRIPTION]).hint_text(tr("Describe the image for people who can't see it")).desired_rows(3).desired_width(f32::INFINITY));
+        ui.add(egui::TextEdit::multiline(&mut d.values[DESCRIPTION]).hint_text(tr("Describe the image for people who can't see it")).desired_rows(3).desired_width(f32::INFINITY).interactive(!d.read_only));
     });
     ui.add_space(6.0);
+    if d.read_only {
+        ui.weak(tr("A RAW file's metadata is shown, not edited."));
+        return false;
+    }
     let changed = d.changed();
     let save = ui.horizontal_wrapped(|ui| {
         let save = ui.add_enabled(changed && valid_date(&d.values[DATE]), egui::Button::new(tr("Save copy…"))).clicked();
@@ -325,6 +377,47 @@ pub fn sections_ui(ui: &mut egui::Ui, d: &mut Dialog) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn long_tags_are_cut_without_being_written_out() {
+        assert_eq!(shortened(&"abc", 90), "\"abc\"");
+        assert_eq!(shortened(&vec![7u8; 10_000_000], 12), "[7, 7, 7, 7,…");
+    }
+
+    #[test]
+    fn a_raw_files_exif_is_shown_read_only() {
+        use image::ImageEncoder;
+        let dir = std::env::temp_dir().join(format!("lightview-rawexif-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        // A RAF-like file whose preview carries EXIF with a camera model.
+        let mut exif = crate::raw::tests::tiff(b"II*\0", 1, &[]);
+        exif[8..10].copy_from_slice(&1u16.to_le_bytes());
+        let mut preview = Vec::new();
+        let mut enc = image::codecs::jpeg::JpegEncoder::new(&mut preview);
+        enc.set_exif_metadata(exif).unwrap();
+        enc.write_image(&[90; 8 * 8 * 3], 8, 8, image::ExtendedColorType::Rgb8).unwrap();
+        let mut raf = b"FUJIFILMCCD-RAW 0201FF383501".to_vec();
+        raf.extend(&preview);
+        let path = dir.join("a.raf");
+        std::fs::write(&path, &raf).unwrap();
+        let d = read(&path).unwrap();
+        assert!(d.read_only);
+        // Its sidebar never offers a copy.
+        let ctx = egui::Context::default();
+        crate::markup::font_definitions();
+        ctx.set_fonts(crate::markup::font_definitions());
+        let mut d = d;
+        d.values[0] = "changed".into();
+        let mut save = true;
+        let mut output = ctx.run_ui(egui::RawInput::default(), |ui| save = sections_ui(ui, &mut d));
+        output.textures_delta.clear();
+        assert!(!save);
+        // An Olympus file is a TIFF with its own magic number.
+        let orf = crate::raw::tests::tiff(b"IIRO", 1, &[&crate::raw::tests::jpeg(8, 8)]);
+        std::fs::write(dir.join("b.orf"), orf).unwrap();
+        assert!(read(&dir.join("b.orf")).is_ok_and(|d| d.read_only));
+        std::fs::remove_dir_all(dir).unwrap();
+    }
     use little_exif::rational::uR64;
 
     #[test]

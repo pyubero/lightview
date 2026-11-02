@@ -51,6 +51,14 @@
           <RegistryValue Root="HKLM" Key="Software\Classes\.heif\OpenWithProgids" Name="lightview.Image" Value="" Type="string" />
           <RegistryValue Root="HKLM" Key="Software\Classes\.hif\OpenWithProgids" Name="lightview.Image" Value="" Type="string" />
           <RegistryValue Root="HKLM" Key="Software\Classes\.avif\OpenWithProgids" Name="lightview.Image" Value="" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\Classes\.cr2\OpenWithProgids" Name="lightview.Image" Value="" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\Classes\.cr3\OpenWithProgids" Name="lightview.Image" Value="" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\Classes\.nef\OpenWithProgids" Name="lightview.Image" Value="" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\Classes\.arw\OpenWithProgids" Name="lightview.Image" Value="" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\Classes\.dng\OpenWithProgids" Name="lightview.Image" Value="" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\Classes\.raf\OpenWithProgids" Name="lightview.Image" Value="" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\Classes\.orf\OpenWithProgids" Name="lightview.Image" Value="" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\Classes\.rw2\OpenWithProgids" Name="lightview.Image" Value="" Type="string" />
 
           <!-- …and as an app in Settings → Default apps. -->
           <RegistryValue Root="HKLM" Key="Software\lightview\Capabilities" Name="ApplicationName" Value="lightview" Type="string" />
@@ -80,6 +88,14 @@
           <RegistryValue Root="HKLM" Key="Software\lightview\Capabilities\FileAssociations" Name=".heif" Value="lightview.Image" Type="string" />
           <RegistryValue Root="HKLM" Key="Software\lightview\Capabilities\FileAssociations" Name=".hif" Value="lightview.Image" Type="string" />
           <RegistryValue Root="HKLM" Key="Software\lightview\Capabilities\FileAssociations" Name=".avif" Value="lightview.Image" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\lightview\Capabilities\FileAssociations" Name=".cr2" Value="lightview.Image" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\lightview\Capabilities\FileAssociations" Name=".cr3" Value="lightview.Image" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\lightview\Capabilities\FileAssociations" Name=".nef" Value="lightview.Image" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\lightview\Capabilities\FileAssociations" Name=".arw" Value="lightview.Image" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\lightview\Capabilities\FileAssociations" Name=".dng" Value="lightview.Image" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\lightview\Capabilities\FileAssociations" Name=".raf" Value="lightview.Image" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\lightview\Capabilities\FileAssociations" Name=".orf" Value="lightview.Image" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\lightview\Capabilities\FileAssociations" Name=".rw2" Value="lightview.Image" Type="string" />
           <RegistryValue Root="HKLM" Key="Software\RegisteredApplications" Name="lightview" Value="Software\lightview\Capabilities" Type="string" />
         </Component>
 

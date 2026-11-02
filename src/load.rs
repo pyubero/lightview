@@ -1,7 +1,7 @@
 use crate::edit::Doc;
 use crate::i18n::{tr, trf};
 use crate::settings::SortOrder;
-use crate::{color, heif, jpegxl, svg, turbo};
+use crate::{color, heif, jpegxl, raw, svg, turbo};
 use eframe::egui;
 use image::codecs::{gif::GifDecoder, png::PngDecoder, webp::WebPDecoder};
 use image::metadata::Orientation;
@@ -15,8 +15,8 @@ use std::sync::atomic::{AtomicBool, Ordering as AtomicOrdering};
 use std::sync::{Arc, Condvar, Mutex, OnceLock, mpsc};
 use std::time::{Duration, SystemTime};
 
-pub const EXTENSIONS: [&str; 25] = [
-    "jpg", "jpeg", "png", "gif", "webp", "bmp", "tif", "tiff", "svg", "ico", "qoi", "tga", "pnm", "pbm", "pgm", "ppm", "pam", "dds", "hdr", "exr", "jxl", "heic", "heif", "hif", "avif",
+pub const EXTENSIONS: [&str; 33] = [
+    "jpg", "jpeg", "png", "gif", "webp", "bmp", "tif", "tiff", "svg", "ico", "qoi", "tga", "pnm", "pbm", "pgm", "ppm", "pam", "dds", "hdr", "exr", "jxl", "heic", "heif", "hif", "avif", "cr2", "cr3", "nef", "arw", "dng", "raf", "orf", "rw2",
 ];
 /// The ones only native decoders read: see `heif`.
 pub const NATIVE_EXTENSIONS: [&str; 4] = ["heic", "heif", "hif", "avif"];
@@ -231,21 +231,27 @@ fn load(path: &Path, target: [u32; 2], color_managed: bool, on_preview: impl Fn(
     if meta.len() > MAX_FILE_BYTES {
         return Err(tr("this image is too large to open").into());
     }
-    let bytes = std::fs::read(path).map_err(|e| e.to_string())?;
-    let file_size = bytes.len() as u64;
+    let all = std::fs::read(path).map_err(|e| e.to_string())?;
+    let file_size = all.len() as u64;
+    // A RAW file is shown by its JPEG preview, which goes through the usual path from here.
+    let (bytes, raw_orientation): (&[u8], _) = if raw::is_raw(path) {
+        (raw::embedded_jpeg(&all).ok_or(tr("this RAW file has no embedded preview"))?, raw::orientation(&all))
+    } else {
+        (&all, None)
+    };
     if path.extension().is_some_and(|e| e.eq_ignore_ascii_case("svg")) {
-        let tree = svg::load(&bytes)?;
+        let tree = svg::load(bytes)?;
         let frame = svg::render(&tree, 1).ok_or("the SVG renderer failed")?;
         return Ok(Loaded { frames: vec![frame], file_size, svg: Some(tree) });
     }
     // Goes by extension, so a file named anything else can't reach native code.
     if heif::is_native(path) {
-        return Ok(Loaded { frames: vec![to_frame(heif::decode(&bytes)?, Duration::ZERO)], file_size, svg: None });
+        return Ok(Loaded { frames: vec![to_frame(heif::decode(bytes)?, Duration::ZERO)], file_size, svg: None });
     }
-    if jpegxl::is_jxl(&bytes) {
-        return Ok(Loaded { frames: jpegxl::decode(&bytes)?, file_size, svg: None });
+    if jpegxl::is_jxl(bytes) {
+        return Ok(Loaded { frames: jpegxl::decode(bytes)?, file_size, svg: None });
     }
-    let mut reader = ImageReader::new(Cursor::new(&bytes));
+    let mut reader = ImageReader::new(Cursor::new(bytes));
     // TGA has no magic bytes; the guess below keeps this when it finds nothing.
     if let Ok(format) = ImageFormat::from_path(path) {
         reader.set_format(format);
@@ -255,17 +261,17 @@ fn load(path: &Path, target: [u32; 2], color_managed: bool, on_preview: impl Fn(
 
     let animation: Option<Frames> = match format {
         Some(ImageFormat::Gif) => {
-            let mut d = GifDecoder::new(Cursor::new(&bytes)).map_err(|e| e.to_string())?;
+            let mut d = GifDecoder::new(Cursor::new(bytes)).map_err(|e| e.to_string())?;
             // Unlike with `ImageReader`, it starts without any.
             d.set_limits(Limits::default()).map_err(|e| e.to_string())?;
             Some(d.into_frames())
         }
         Some(ImageFormat::Png) => {
-            let d = PngDecoder::with_limits(Cursor::new(&bytes), Limits::default()).map_err(|e| e.to_string())?;
+            let d = PngDecoder::with_limits(Cursor::new(bytes), Limits::default()).map_err(|e| e.to_string())?;
             if d.is_apng().map_err(|e| e.to_string())? { Some(d.apng().map_err(|e| e.to_string())?.into_frames()) } else { None }
         }
         Some(ImageFormat::WebP) => {
-            let d = WebPDecoder::new(Cursor::new(&bytes)).map_err(|e| e.to_string())?;
+            let d = WebPDecoder::new(Cursor::new(bytes)).map_err(|e| e.to_string())?;
             let (w, h) = d.dimensions();
             if d.has_animation() && w as u64 * h as u64 * 4 > MAX_CANVAS_BYTES {
                 return Err(tr("this image is too large to open").into());
@@ -307,7 +313,10 @@ fn load(path: &Path, target: [u32; 2], color_managed: bool, on_preview: impl Fn(
         frame
     };
     let exif = decoder.exif_metadata().ok().flatten();
-    let orientation = decoder.orientation().map_err(|e| e.to_string())?;
+    let orientation = match raw_orientation {
+        Some(o) => o,
+        None => decoder.orientation().map_err(|e| e.to_string())?,
+    };
     if format == Some(ImageFormat::Jpeg)
         && let Some(thumb) = exif.as_deref().and_then(exif_thumbnail)
         && let Ok(mut img) = image::load_from_memory(thumb)
@@ -320,7 +329,7 @@ fn load(path: &Path, target: [u32; 2], color_managed: bool, on_preview: impl Fn(
         let rotated = matches!(orientation, Orientation::Rotate90 | Orientation::Rotate270 | Orientation::Rotate90FlipH | Orientation::Rotate270FlipH);
         let den = scale_denominator(if rotated { (h, w) } else { (w, h) }, target);
         // The scope joins the reduced-size decode, so its preview always arrives before the full image.
-        let (bytes, on_preview, finish) = (&bytes, &on_preview, &finish);
+        let (on_preview, finish) = (&on_preview, &finish);
         std::thread::scope(|s| {
             if let Some(den) = den {
                 s.spawn(move || {
@@ -347,12 +356,12 @@ fn load(path: &Path, target: [u32; 2], color_managed: bool, on_preview: impl Fn(
     img.apply_orientation(orientation);
     let img = if matches!(format, Some(ImageFormat::Hdr | ImageFormat::OpenExr)) { tone_map(img) } else { img };
     let first = finish(img);
-    let pages = if format == Some(ImageFormat::Tiff) { tiff_pages(&bytes) } else { Vec::new() };
+    let pages = if format == Some(ImageFormat::Tiff) { tiff_pages(bytes) } else { Vec::new() };
     if pages.is_empty() {
         return Ok(Loaded { frames: vec![first], file_size, svg: None });
     }
     on_preview(first.clone());
-    Ok(Loaded { frames: decode_pages(bytes.clone(), first, &pages), file_size, svg: None })
+    Ok(Loaded { frames: decode_pages(bytes.to_vec(), first, &pages), file_size, svg: None })
 }
 
 /// How long an animation frame stays up. Like browsers: under 20 ms means "unspecified" and plays at 100 ms.
@@ -498,13 +507,15 @@ fn thumbnail_range(tiff: &[u8]) -> Option<std::ops::Range<usize>> {
     tiff.get(range.clone()).map(|_| range)
 }
 
-type Reader<'a> = Box<dyn Fn(usize) -> Option<usize> + 'a>;
+pub type Reader<'a> = Box<dyn Fn(usize) -> Option<usize> + 'a>;
 
 /// Bounds-checked u16 and u32 readers in the TIFF block's byte order.
-fn tiff_readers(tiff: &[u8]) -> Option<(Reader<'_>, Reader<'_>)> {
+/// Readers for a TIFF structure's integers. Olympus (`IIRO`, `MMOR`) and Panasonic (`IIU\0`)
+/// RAW files change only the magic number.
+pub fn tiff_readers(tiff: &[u8]) -> Option<(Reader<'_>, Reader<'_>)> {
     let le = match tiff.get(0..4)? {
-        [b'I', b'I', 42, 0] => true,
-        [b'M', b'M', 0, 42] => false,
+        [b'I', b'I', 42, 0] | [b'I', b'I', b'R', b'O'] | [b'I', b'I', b'U', 0] => true,
+        [b'M', b'M', 0, 42] | [b'M', b'M', b'O', b'R'] => false,
         _ => return None,
     };
     let u16_at = move |o: usize| {
@@ -1299,4 +1310,10 @@ mod tests {
         assert_eq!(by_name, ["a.webp", "b2.png", "b10.JPG"]);
         assert_eq!(by_date, ["b2.png", "a.webp", "b10.JPG"]);
     }
+}
+
+/// `load` for tests elsewhere: the frame's size, or the error.
+#[cfg(test)]
+pub fn load_for_test(path: &Path) -> Result<(u32, u32), String> {
+    load(path, [1280, 720], true, |_| {}).map(|l| (l.frames[0].w, l.frames[0].h))
 }

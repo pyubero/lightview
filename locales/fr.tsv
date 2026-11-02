@@ -319,3 +319,7 @@ Previous Page	Page précédente
 page {n} of {count}	page {n} sur {count}
 Colour management	Gestion des couleurs
 Converts images with a colour profile to sRGB, so wide-gamut photos look right on an sRGB monitor. Turn it off for a wide-gamut monitor.	Convertit en sRGB les images ayant un profil de couleur, pour que les photos à large gamut s'affichent correctement sur un écran sRGB. Désactivez-la sur un écran à large gamut.
+this RAW file has no embedded preview	ce fichier RAW n'a pas d'aperçu intégré
+{format} (embedded preview)	{format} (aperçu intégré)
+EXIF isn't read from this kind of RAW file yet	L'EXIF de ce type de fichier RAW n'est pas encore lu
+A RAW file's metadata is shown, not edited.	Les métadonnées d'un fichier RAW sont affichées, pas modifiées.

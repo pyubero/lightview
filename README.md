@@ -28,6 +28,7 @@ and it never goes online on its own.
   tools are optional, and nothing is installed until you ask for it.
 - **Viewing.** Fit to window, actual size, zoom at the pointer, pan, full screen, EXIF orientation,
   colour management (photos with a colour profile, such as Display P3 or Adobe RGB, are shown in sRGB),
+  camera RAW files shown instantly from the preview the camera stores in them,
   animated GIF and WebP playback with frame stepping, and SVGs that stay sharp as you zoom in. Drag
   a file or folder onto the window to open it (X11 and Windows; not supported on Wayland yet). While zoomed in, a navigator thumbnail shows where
   you are, and a pixel grid and a Copy Color tool help with detail work. The image reloads when its
@@ -63,6 +64,7 @@ and it never goes online on its own.
 | APNG | Yes (animated) | No |
 | QOI, TGA, PNM, DDS | Yes | No |
 | HDR, EXR | Yes (tone-mapped to 8 bits) | No |
+| Camera RAW: CR2, CR3, NEF, ARW, DNG, RAF, ORF, RW2 | The embedded JPEG preview, rotated as shot | No |
 
 Animated images and multi-page TIFFs can be viewed, but not saved yet. HEIC and AVIF files open only when they are shown, without being decoded ahead, because their decoders are native code.
 

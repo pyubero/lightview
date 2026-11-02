@@ -14,6 +14,7 @@ mod jpegxl;
 mod load;
 mod markup;
 mod platform;
+mod raw;
 mod save;
 mod settings;
 mod svg;

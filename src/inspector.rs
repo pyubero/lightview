@@ -21,14 +21,23 @@ pub struct Inspector {
 impl Inspector {
     pub fn new(path: &Path) -> Self {
         let jpeg = path.extension().and_then(|e| e.to_str()).is_some_and(|e| e.eq_ignore_ascii_case("jpg") || e.eq_ignore_ascii_case("jpeg"));
-        let icc = ImageReader::open(path).ok().and_then(|r| r.with_guessed_format().ok()?.into_decoder().ok()?.icc_profile().ok()?);
+        let raw = crate::raw::is_raw(path);
+        // A RAW file's colours are its preview's.
+        let icc = if raw {
+            std::fs::read(path).ok().and_then(|all| {
+                let preview = crate::raw::embedded_jpeg(&all)?;
+                ImageReader::new(std::io::Cursor::new(preview)).with_guessed_format().ok()?.into_decoder().ok()?.icc_profile().ok()?
+            })
+        } else {
+            ImageReader::open(path).ok().and_then(|r| r.with_guessed_format().ok()?.into_decoder().ok()?.icc_profile().ok()?)
+        };
         let profile = match icc {
             Some(icc) => icc_description(&icc).unwrap_or_else(|| tr("Embedded (unnamed)").into()),
             None => tr("None (sRGB assumed)").into(),
         };
         // shortcut: EXIF is read for JPEGs only, like EXIF editing; little_exif can also read PNG/WebP if wanted.
         // On the UI thread, where a panic would close the app and lose unsaved edits.
-        let exif = if jpeg { crate::load::catching(|| exif_edit::read(path)) } else { Err(tr("EXIF is shown for JPEG files only").into()) };
+        let exif = if jpeg || raw { crate::load::catching(|| exif_edit::read(path)) } else { Err(tr("EXIF is shown for JPEG files only").into()) };
         let jfif_dpi = jpeg.then(|| std::fs::File::open(path).ok()).flatten().and_then(|mut f| {
             let mut head = [0u8; 18];
             std::io::Read::read_exact(&mut f, &mut head).ok()?;
@@ -45,7 +54,10 @@ pub fn ui(ui: &mut egui::Ui, ins: &mut Inspector, loaded: &Loaded, doc: Option<&
     egui::ScrollArea::vertical().auto_shrink([false, true]).show(ui, |ui| {
         egui::CollapsingHeader::new(tr("General")).default_open(true).show(ui, |ui| {
             let (w, h) = (loaded.frames[0].w, loaded.frames[0].h);
-            let ext = ins.path.extension().unwrap_or_default().to_string_lossy().to_uppercase();
+            let mut ext = ins.path.extension().unwrap_or_default().to_string_lossy().to_uppercase();
+            if crate::raw::is_raw(&ins.path) {
+                ext = trf("{format} (embedded preview)", &[("format", &ext)]);
+            }
             let mut dimensions = format!("{w} × {h} px");
             if let Some(d) = doc.filter(|d| d.size != [w, h]) {
                 dimensions += &format!(" ({})", trf("edited: {w} × {h}", &[("w", &d.size[0]), ("h", &d.size[1])]));

@@ -17,4 +17,4 @@ Exec=lightview %f
 Icon=lightview
 Terminal=false
 Categories=Graphics;Viewer;
-MimeType=image/jpeg;image/png;image/gif;image/webp;image/bmp;image/tiff;image/svg+xml;image/vnd.microsoft.icon;image/x-icon;image/jxl;image/heic;image/heif;image/avif;image/apng;image/qoi;image/x-qoi;image/x-tga;image/x-portable-anymap;image/x-portable-bitmap;image/x-portable-graymap;image/x-portable-pixmap;image/x-dds;image/vnd.radiance;image/x-exr;
+MimeType=image/jpeg;image/png;image/gif;image/webp;image/bmp;image/tiff;image/svg+xml;image/vnd.microsoft.icon;image/x-icon;image/jxl;image/heic;image/heif;image/avif;image/apng;image/qoi;image/x-qoi;image/x-tga;image/x-portable-anymap;image/x-portable-bitmap;image/x-portable-graymap;image/x-portable-pixmap;image/x-dds;image/vnd.radiance;image/x-exr;image/x-canon-cr2;image/x-canon-cr3;image/x-nikon-nef;image/x-sony-arw;image/x-adobe-dng;image/x-fuji-raf;image/x-olympus-orf;image/x-panasonic-rw2;

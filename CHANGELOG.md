@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Camera RAW files (CR2, CR3, NEF, ARW, DNG, RAF, ORF, RW2) open instantly from the JPEG preview the camera stores in them, rotated as shot. The inspector shows their EXIF, read only (not yet for CR3). Save As writes a PNG of the preview.
 - Colour management: photos with a colour profile (Display P3 from phones, Adobe RGB from cameras) are converted to sRGB, so they no longer look dull. sRGB images cost nothing extra. Settings → Colour management turns it off for wide-gamut monitors; Save As then keeps the original profile.
 - Drag a file or folder onto the window to open it, on X11 and Windows. Not supported on Wayland yet.
 - File → Save Copy (Ctrl+S) writes `photo-edited.jpg` next to the original with no dialog, and never replaces a file.
