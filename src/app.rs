@@ -234,10 +234,17 @@ impl App {
             .collect()
     }
 
+    /// What to decode: the window, without what's cached. Native decoders only get the image on
+    /// screen: see `heif`.
+    fn to_decode(&self) -> Vec<PathBuf> {
+        let current = self.current();
+        self.window().into_iter().filter(|p| !self.cache.contains_key(p) && (Some(p) == current || !crate::heif::is_native(p))).collect()
+    }
+
     fn request_decodes(&mut self) {
         let window = self.window();
         self.cache.retain(|p, _| window.contains(p));
-        self.loader.want(window.into_iter().filter(|p| !self.cache.contains_key(p)).collect());
+        self.loader.want(self.to_decode());
     }
 
     fn handle(&mut self, msg: Msg) {
@@ -769,7 +776,10 @@ impl App {
         let name = path.file_name().unwrap_or_default().to_string_lossy();
         let zoom = zoom.map_or(String::new(), |z| format!(" — {z:.2}×"));
         match self.cache.get(path) {
-            Some(l) => format!("{name} — {}×{} — {}{zoom}", l.frames[0].w, l.frames[0].h, format_size(l.file_size)),
+            Some(l) => {
+                let page = if l.paged() { format!(" — {}", trf("page {n} of {count}", &[("n", &(self.anim_frame + 1)), ("count", &l.frames.len())])) } else { String::new() };
+                format!("{name}{page} — {}×{} — {}{zoom}", l.frames[0].w, l.frames[0].h, format_size(l.file_size))
+            }
             None => name.into_owned(),
         }
     }
@@ -982,6 +992,35 @@ mod tests {
         assert!(app.sharp.is_some());
         app.reset_shown();
         assert!(app.sharp.is_none() && app.sharp_wanted == 1);
+    }
+
+    #[test]
+    fn native_decoders_only_get_the_image_on_screen() {
+        let (mut app, _) = app_with_image();
+        app.cache.clear();
+        app.files = ["/a.heic", "/b.avif", "/c.png"].map(PathBuf::from).to_vec();
+        app.index = 1;
+        assert_eq!(app.to_decode(), ["/b.avif", "/c.png"].map(PathBuf::from));
+        app.index = 2;
+        assert_eq!(app.to_decode(), ["/c.png"].map(PathBuf::from));
+    }
+
+    #[test]
+    fn pages_step_by_hand_and_never_play() {
+        let (mut app, path) = app_with_image();
+        let page = |shade: u8| Frame { w: 2, h: 1, pixels: vec![shade; 6], alpha: false, delay: std::time::Duration::ZERO };
+        let loaded = Arc::new(Loaded { frames: vec![page(0), page(1), page(2)], file_size: 6, svg: None });
+        app.cache.insert(path, loaded.clone());
+        let ctx = egui::Context::default();
+        for _ in 0..3 {
+            app.animate(&ctx, &loaded, &[]);
+        }
+        assert_eq!(app.anim_frame, 0);
+        assert!(app.make_title(None).contains(trf("page {n} of {count}", &[("n", &1), ("count", &3)]).as_str()));
+        app.animate(&ctx, &loaded, &[crate::app::menu::Action::NextFrame]);
+        assert_eq!(app.anim_frame, 1);
+        app.animate(&ctx, &loaded, &[crate::app::menu::Action::PrevFrame, crate::app::menu::Action::PrevFrame]);
+        assert_eq!(app.anim_frame, 2);
     }
 
     #[test]

@@ -536,7 +536,7 @@ impl App {
             self.anim_frame = (self.anim_frame + step) % frames.len();
             self.anim_paused = true;
         }
-        if frames.len() > 1 && !self.anim_paused {
+        if frames.len() > 1 && !self.anim_paused && !l.paged() {
             let now = Instant::now();
             let due = *self.anim_due.get_or_insert(now + frames[self.anim_frame].delay);
             if now >= due {

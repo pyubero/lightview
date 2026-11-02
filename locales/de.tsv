@@ -308,3 +308,12 @@ Shows the edges of the pixels when zoomed far in.	Zeigt bei starker Vergrößeru
 Click a pixel to copy its colour · Esc to stop	Pixel anklicken, um die Farbe zu kopieren · Esc zum Beenden
 Copied {color}	{color} kopiert
 Copy Color	Farbe kopieren
+this file is damaged or cut short	Diese Datei ist beschädigt oder unvollständig
+HEIC and AVIF files need libheif, which isn't installed	HEIC- und AVIF-Dateien benötigen libheif, das nicht installiert ist
+this file needs a libheif decoder plugin, which isn't installed	diese Datei benötigt ein libheif-Decoder-Plugin, das nicht installiert ist
+this file needs Microsoft's HEIF Image Extensions and HEVC or AV1 Video Extensions	diese Datei benötigt Microsofts HEIF-Bilderweiterungen und HEVC- oder AV1-Videoerweiterungen
+Pages	Seiten
+Next Page	Nächste Seite
+Previous Page	Vorherige Seite
+{format}, {count} pages	{format}, {count} Seiten
+page {n} of {count}	Seite {n} von {count}

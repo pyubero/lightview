@@ -21,7 +21,7 @@ pub const FORMATS: [(&str, &[&str]); 6] = [
 ];
 
 /// Formats that open but can't be written. Save As offers PNG for them, which keeps transparency.
-const READ_ONLY: [&str; 2] = ["svg", "ico"];
+const READ_ONLY: [&str; 17] = ["svg", "ico", "qoi", "tga", "pnm", "pbm", "pgm", "ppm", "pam", "dds", "hdr", "exr", "jxl", "heic", "heif", "hif", "avif"];
 
 /// `FORMATS` with the format of `source` first: file dialogs start on the first filter.
 pub fn formats_for(source: &Path) -> [(&'static str, &'static [&'static str]); 6] {
@@ -191,6 +191,15 @@ mod tests {
         assert_eq!(first("a.jpeg")[0], "JPEG");
         assert_eq!(first("a.tiff")[0], "TIFF");
         assert_eq!(first("a.xyz"), FORMATS.map(|(n, _)| n));
+    }
+
+    #[test]
+    fn view_only_formats_save_as_png() {
+        for ext in crate::load::EXTENSIONS.iter().filter(|e| !FORMATS.iter().any(|(_, exts)| exts.contains(e))) {
+            let name = format!("a.{ext}");
+            assert_eq!(suggested_name(Path::new(&name)), "a.png");
+            assert_eq!(formats_for(Path::new(&name))[0].0, "PNG");
+        }
     }
 
     #[test]

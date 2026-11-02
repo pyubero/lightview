@@ -11,7 +11,8 @@ ab_glyph = "0.2.32"
 arboard = { version = "3.7.0", default-features = false, features = ["image-data"] }
 eframe = { version = "0.37.0", default-features = false, features = ["glow", "wayland", "x11", "persistence", "clipboard"] }
 fast_image_resize = "6.1.0"
-image = { version = "0.25.10", default-features = false, features = ["jpeg", "png", "gif", "webp", "bmp", "tiff", "ico"] }
+image = { version = "0.25.10", default-features = false, features = ["jpeg", "png", "gif", "webp", "bmp", "tiff", "ico", "qoi", "tga", "pnm", "dds", "hdr", "exr"] }
+jxl = "0.8"
 libloading = "0.8"
 little_exif = "0.6"
 # ONNX Runtime itself is loaded at run time from the copy Tools → Download AI Runtime… installs.
@@ -27,6 +28,8 @@ trash = { version = "5.2.9", default-features = false, features = ["coinit_apart
 [target.'cfg(windows)'.dependencies]
 # Already in the dependency tree (winit); only for SetDllDirectoryW (GPU support) and the system language.
 windows-sys = { version = "0.61", features = ["Win32_Globalization", "Win32_System_LibraryLoader"] }
+# Already in the dependency tree (trash); for HEIC and AVIF through the system's own codecs (WIC).
+windows = { version = "0.62", features = ["Win32_Foundation", "Win32_Graphics_Imaging", "Win32_System_Com"] }
 
 [target.'cfg(target_os = "linux")'.dependencies]
 # Already in the dependency tree; for the file URI that Show in File Manager sends.

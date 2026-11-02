@@ -23,7 +23,7 @@ Priority: optional
 Architecture: amd64
 Installed-Size: $(du -sk "$stage/usr" | cut -f1)
 Depends: libc6 (>= 2.35), libgcc-s1, xdg-utils
-Recommends: libturbojpeg | libturbojpeg0, curl, unzip
+Recommends: libturbojpeg | libturbojpeg0, libheif1, libheif-plugin-libde265, libheif-plugin-dav1d | libheif-plugin-aomdec, curl, unzip
 Maintainer: Pablo Yubero
 Description: A simple, fast image viewer
  Opens images instantly, with light editing and optional local AI tools.

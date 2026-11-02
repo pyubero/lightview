@@ -74,7 +74,7 @@ const fn key(key: Key) -> KeyboardShortcut {
 }
 
 /// Keyboard shortcuts, also shown in the menus. Ctrl+Plus is an alias for Ctrl+=.
-pub(super) const SHORTCUTS: [(KeyboardShortcut, Action); 23] = [
+pub(super) const SHORTCUTS: [(KeyboardShortcut, Action); 25] = [
     (ctrl(Key::O), Action::Open),
     (KeyboardShortcut::new(Modifiers { shift: true, ..Modifiers::COMMAND }, Key::S), Action::SaveAs),
     // After Ctrl+Shift+S, which it would also match.
@@ -91,6 +91,8 @@ pub(super) const SHORTCUTS: [(KeyboardShortcut, Action); 23] = [
     (key(Key::ArrowRight), Action::NextImage),
     (key(Key::Home), Action::FirstImage),
     (key(Key::End), Action::LastImage),
+    (key(Key::PageDown), Action::NextFrame),
+    (key(Key::PageUp), Action::PrevFrame),
     (key(Key::F2), Action::Rename),
     (ctrl(Key::L), Action::RotateLeft),
     (ctrl(Key::R), Action::RotateRight),
@@ -182,8 +184,15 @@ impl App {
                 let label = if self.show_info { tr("Hide Image Information") } else { tr("Show Image Information") };
                 item(ui, label, Action::Info, has_image, actions);
                 ui.separator();
+                let paged = loaded.is_some_and(|l| l.paged());
                 let animated = loaded.is_some_and(|l| l.frames.len() > 1);
-                ui.add_enabled_ui(animated, |ui| {
+                if paged {
+                    ui.menu_button(tr("Pages"), |ui| {
+                        item(ui, tr("Next Page"), Action::NextFrame, true, actions);
+                        item(ui, tr("Previous Page"), Action::PrevFrame, true, actions);
+                    });
+                }
+                ui.add_enabled_ui(animated && !paged, |ui| {
                     ui.menu_button(tr("Animation"), |ui| {
                         item(ui, tr("Play Animation"), Action::Play, self.anim_paused, actions);
                         item(ui, tr("Pause Animation"), Action::Pause, !self.anim_paused, actions);

@@ -54,11 +54,16 @@ and it never goes online on its own.
 | WebP | Yes | Yes (lossless) |
 | GIF | Yes | Yes |
 | BMP | Yes | Yes |
-| TIFF | Yes (first page) | Yes |
+| TIFF | Yes (every page) | Yes (single-page files) |
 | SVG | Yes | No |
 | ICO | Yes (largest size) | No |
+| JPEG XL | Yes | No |
+| HEIC, AVIF | Yes, with the system's codecs: libheif and its plugins on Linux, Microsoft's HEIF and HEVC or AV1 Video Extensions on Windows | No |
+| APNG | Yes (animated) | No |
+| QOI, TGA, PNM, DDS | Yes | No |
+| HDR, EXR | Yes (tone-mapped to 8 bits) | No |
 
-Animated images can be viewed, but not saved yet.
+Animated images and multi-page TIFFs can be viewed, but not saved yet. HEIC and AVIF files open only when they are shown, without being decoded ahead, because their decoders are native code.
 
 ## Screenshots
 

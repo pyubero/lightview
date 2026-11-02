@@ -16,7 +16,7 @@ ROOT = Path(__file__).parent
 TARGET = sys.argv[1] if len(sys.argv) > 1 else "x86_64-unknown-linux-gnu"
 NAME = re.compile(r"(licen[cs]e|copying|notice)", re.I)
 # Published without their licence file; the same project's or author's other crate has the same text.
-SIBLING = {"alloc-stdlib": "alloc-no-stdlib", "clipboard-win": "error-code"}
+SIBLING = {"alloc-stdlib": "alloc-no-stdlib", "clipboard-win": "error-code", "pulp-wasm-simd-flag": "pulp"}
 
 
 def license_files(crate_dir):

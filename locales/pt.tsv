@@ -308,3 +308,12 @@ Shows the edges of the pixels when zoomed far in.	Mostra as margens dos píxeis 
 Click a pixel to copy its colour · Esc to stop	Clique num píxel para copiar a cor · Esc para sair
 Copied {color}	{color} copiado
 Copy Color	Copiar cor
+this file is damaged or cut short	este ficheiro está danificado ou incompleto
+HEIC and AVIF files need libheif, which isn't installed	os ficheiros HEIC e AVIF precisam do libheif, que não está instalado
+this file needs a libheif decoder plugin, which isn't installed	este ficheiro precisa de um plugin de descodificação do libheif, que não está instalado
+this file needs Microsoft's HEIF Image Extensions and HEVC or AV1 Video Extensions	este ficheiro precisa das extensões de imagem HEIF e das extensões de vídeo HEVC ou AV1 da Microsoft
+Pages	Páginas
+Next Page	Página seguinte
+Previous Page	Página anterior
+{format}, {count} pages	{format}, {count} páginas
+page {n} of {count}	página {n} de {count}

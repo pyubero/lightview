@@ -17,4 +17,4 @@ Exec=lightview %f
 Icon=lightview
 Terminal=false
 Categories=Graphics;Viewer;
-MimeType=image/jpeg;image/png;image/gif;image/webp;image/bmp;image/tiff;image/svg+xml;image/vnd.microsoft.icon;image/x-icon;
+MimeType=image/jpeg;image/png;image/gif;image/webp;image/bmp;image/tiff;image/svg+xml;image/vnd.microsoft.icon;image/x-icon;image/jxl;image/heic;image/heif;image/avif;image/apng;image/qoi;image/x-qoi;image/x-tga;image/x-portable-anymap;image/x-portable-bitmap;image/x-portable-graymap;image/x-portable-pixmap;image/x-dds;image/vnd.radiance;image/x-exr;

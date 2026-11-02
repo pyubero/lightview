@@ -10,6 +10,9 @@
 - A navigator thumbnail in the corner while zoomed in: click or drag on it to move around.
 - Settings → Pixel grid shows the edges of the pixels from 8× zoom up.
 - Tools → Copy Color copies the hex value of the pixel you click.
+- New formats, view only (Save As offers PNG): JPEG XL, HEIC and AVIF, APNG (animated), QOI, TGA, PNM, DDS, and HDR and EXR (tone-mapped to 8 bits).
+- HEIC and AVIF use the system's decoders: libheif and its plugins on Linux, and Microsoft's HEIF and HEVC or AV1 Video Extensions on Windows. A clear message says what's missing. Because those decoders are native code, these files are only decoded when they're shown, never ahead.
+- Multi-page TIFFs show every page: Page Down and Page Up, or View → Pages. Thumbnail pages are skipped, and a file with several pages can't be saved yet.
 
 ## 0.2.1 (2026-11-01)
 

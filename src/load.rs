@@ -1,9 +1,9 @@
 use crate::edit::Doc;
 use crate::i18n::{tr, trf};
 use crate::settings::SortOrder;
-use crate::{svg, turbo};
+use crate::{heif, jpegxl, svg, turbo};
 use eframe::egui;
-use image::codecs::{gif::GifDecoder, webp::WebPDecoder};
+use image::codecs::{gif::GifDecoder, png::PngDecoder, webp::WebPDecoder};
 use image::metadata::Orientation;
 use image::{AnimationDecoder, DynamicImage, Frames, ImageDecoder, ImageFormat, ImageReader, Limits};
 use std::cmp::Ordering;
@@ -14,16 +14,22 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, Condvar, Mutex, OnceLock, mpsc};
 use std::time::{Duration, SystemTime};
 
-pub const EXTENSIONS: [&str; 10] = ["jpg", "jpeg", "png", "gif", "webp", "bmp", "tif", "tiff", "svg", "ico"];
+pub const EXTENSIONS: [&str; 25] = [
+    "jpg", "jpeg", "png", "gif", "webp", "bmp", "tif", "tiff", "svg", "ico", "qoi", "tga", "pnm", "pbm", "pgm", "ppm", "pam", "dds", "hdr", "exr", "jxl", "heic", "heif", "hif", "avif",
+];
+/// The ones only native decoders read: see `heif`.
+pub const NATIVE_EXTENSIONS: [&str; 4] = ["heic", "heif", "hif", "avif"];
 
 /// Bigger files are refused before they're read.
 const MAX_FILE_BYTES: u64 = 1 << 30;
 /// The memory an animation's frames may hold: what a tiny file can ask for has no other limit.
-const MAX_ANIMATION_BYTES: usize = 1 << 30;
-/// The `image` crate's default allocation limit, which its WebP animations don't apply.
-const MAX_CANVAS_BYTES: u64 = 512 << 20;
+pub const MAX_ANIMATION_BYTES: usize = 1 << 30;
+/// The `image` crate's default allocation limit, which many of its decoders don't apply themselves.
+pub const MAX_CANVAS_BYTES: u64 = 512 << 20;
 /// Real files chain two IFDs (the image and its thumbnail).
 const MAX_IFD_CHAIN: usize = 8;
+/// A TIFF's pages, including the thumbnails that are skipped.
+const MAX_TIFF_IFDS: usize = 4096;
 
 #[derive(Clone)]
 pub struct Frame {
@@ -41,6 +47,13 @@ pub struct Loaded {
     pub file_size: u64,
     /// For an SVG, which can be drawn again sharper when zoomed in.
     pub svg: Option<Arc<resvg::usvg::Tree>>,
+}
+
+impl Loaded {
+    /// Whether the frames are pages to step through, not an animation to play.
+    pub fn paged(&self) -> bool {
+        self.frames.len() > 1 && self.frames[0].delay.is_zero()
+    }
 }
 
 pub enum Msg {
@@ -216,7 +229,19 @@ fn load(path: &Path, target: [u32; 2], on_preview: impl Fn(Frame) + Sync) -> Res
         let frame = svg::render(&tree, 1).ok_or("the SVG renderer failed")?;
         return Ok(Loaded { frames: vec![frame], file_size, svg: Some(tree) });
     }
-    let reader = ImageReader::new(Cursor::new(&bytes)).with_guessed_format().map_err(|e| e.to_string())?;
+    // Goes by extension, so a file named anything else can't reach native code.
+    if heif::is_native(path) {
+        return Ok(Loaded { frames: vec![to_frame(heif::decode(&bytes)?, Duration::ZERO)], file_size, svg: None });
+    }
+    if jpegxl::is_jxl(&bytes) {
+        return Ok(Loaded { frames: jpegxl::decode(&bytes)?, file_size, svg: None });
+    }
+    let mut reader = ImageReader::new(Cursor::new(&bytes));
+    // TGA has no magic bytes; the guess below keeps this when it finds nothing.
+    if let Ok(format) = ImageFormat::from_path(path) {
+        reader.set_format(format);
+    }
+    let reader = reader.with_guessed_format().map_err(|e| e.to_string())?;
     let format = reader.format();
 
     let animation: Option<Frames> = match format {
@@ -225,6 +250,10 @@ fn load(path: &Path, target: [u32; 2], on_preview: impl Fn(Frame) + Sync) -> Res
             // Unlike with `ImageReader`, it starts without any.
             d.set_limits(Limits::default()).map_err(|e| e.to_string())?;
             Some(d.into_frames())
+        }
+        Some(ImageFormat::Png) => {
+            let d = PngDecoder::with_limits(Cursor::new(&bytes), Limits::default()).map_err(|e| e.to_string())?;
+            if d.is_apng().map_err(|e| e.to_string())? { Some(d.apng().map_err(|e| e.to_string())?.into_frames()) } else { None }
         }
         Some(ImageFormat::WebP) => {
             let d = WebPDecoder::new(Cursor::new(&bytes)).map_err(|e| e.to_string())?;
@@ -242,9 +271,7 @@ fn load(path: &Path, target: [u32; 2], on_preview: impl Fn(Frame) + Sync) -> Res
         for f in animation {
             let f = f.map_err(|e| e.to_string())?;
             let (n, d) = f.delay().numer_denom_ms();
-            // Like browsers: delays under 20 ms mean "unspecified" and play at 100 ms.
-            let ms = if d == 0 || n / d < 20 { 100 } else { n / d };
-            let frame = to_frame(DynamicImage::ImageRgba8(f.into_buffer()), Duration::from_millis(ms.into()));
+            let frame = to_frame(DynamicImage::ImageRgba8(f.into_buffer()), frame_delay(n.checked_div(d).unwrap_or(0)));
             held += frame.pixels.len() + size_of::<Frame>();
             frames.push(frame);
             // A long animation plays as far as it fits.
@@ -289,10 +316,126 @@ fn load(path: &Path, target: [u32; 2], on_preview: impl Fn(Frame) + Sync) -> Res
     });
     let mut img = match turbo.flatten() {
         Some(img) => DynamicImage::ImageRgb8(img),
-        None => DynamicImage::from_decoder(decoder).map_err(|e| e.to_string())?,
+        None => {
+            // Most decoders ignore the allocation limit, and this would allocate what a tiny header asks for.
+            if decoder.total_bytes() > MAX_CANVAS_BYTES {
+                return Err(tr("this image is too large to open").into());
+            }
+            DynamicImage::from_decoder(decoder).map_err(|e| e.to_string())?
+        }
     };
     img.apply_orientation(orientation);
-    Ok(Loaded { frames: vec![to_frame(img, Duration::ZERO)], file_size, svg: None })
+    let img = if matches!(format, Some(ImageFormat::Hdr | ImageFormat::OpenExr)) { tone_map(img) } else { img };
+    let first = to_frame(img, Duration::ZERO);
+    let pages = if format == Some(ImageFormat::Tiff) { tiff_pages(&bytes) } else { Vec::new() };
+    if pages.is_empty() {
+        return Ok(Loaded { frames: vec![first], file_size, svg: None });
+    }
+    on_preview(first.clone());
+    Ok(Loaded { frames: decode_pages(bytes.clone(), first, &pages), file_size, svg: None })
+}
+
+/// How long an animation frame stays up. Like browsers: under 20 ms means "unspecified" and plays at 100 ms.
+pub fn frame_delay(ms: u32) -> Duration {
+    Duration::from_millis(if ms < 20 { 100 } else { ms.into() })
+}
+
+/// Linear HDR values to sRGB bytes. Extended Reinhard with the peak as white keeps everything
+/// from 0 to 1 as it is, and only compresses what's brighter.
+fn tone_map(img: DynamicImage) -> DynamicImage {
+    let (w, h) = (img.width(), img.height());
+    let (px, channels): (&[f32], usize) = match &img {
+        DynamicImage::ImageRgb32F(b) => (b.as_raw(), 3),
+        DynamicImage::ImageRgba32F(b) => (b.as_raw(), 4),
+        _ => return img,
+    };
+    let peak = px.chunks_exact(channels).flat_map(|p| &p[..3]).copied().filter(|v| v.is_finite()).fold(1.0, f32::max);
+    const STEPS: usize = 1 << 14;
+    let curve: Vec<u8> = (0..=STEPS)
+        .map(|i| {
+            let v = i as f32 / STEPS as f32;
+            ((if v <= 0.003_130_8 { 12.92 * v } else { 1.055 * v.powf(1.0 / 2.4) - 0.055 }) * 255.0 + 0.5) as u8
+        })
+        .collect();
+    let map = |v: f32| {
+        let v = if v.is_finite() { v.max(0.0) } else { 0.0 };
+        curve[((v * (1.0 + v / (peak * peak)) / (1.0 + v)).min(1.0) * STEPS as f32 + 0.5) as usize]
+    };
+    let mut pixels = Vec::with_capacity(px.len());
+    for p in px.chunks_exact(channels) {
+        pixels.extend(p[..3].iter().map(|&v| map(v)));
+        if channels == 4 {
+            pixels.push((p[3].clamp(0.0, 1.0) * 255.0 + 0.5) as u8);
+        }
+    }
+    let out = if channels == 4 { image::RgbaImage::from_raw(w, h, pixels).map(DynamicImage::ImageRgba8) } else { image::RgbImage::from_raw(w, h, pixels).map(DynamicImage::ImageRgb8) };
+    out.expect("one pixel out for each one in")
+}
+
+/// Where a TIFF's pages after the first start. Thumbnails ("reduced-resolution" subfiles) aren't pages.
+// shortcut: BigTIFF shows its first page only, because `tiff_readers` reads classic TIFF; extend it if that's reported.
+fn tiff_pages(tiff: &[u8]) -> Vec<u32> {
+    let Some((u16_at, u32_at)) = tiff_readers(tiff) else { return Vec::new() };
+    let (mut pages, mut seen, mut next) = (Vec::new(), HashSet::new(), u32_at(4));
+    while let Some(ifd) = next.filter(|&at| at != 0 && seen.len() < MAX_TIFF_IFDS && seen.insert(at)) {
+        let Some(entries) = u16_at(ifd) else { break };
+        let reduced = (0..entries).map(|i| ifd + 2 + i * 12).any(|entry| u16_at(entry) == Some(0x00FE) && u32_at(entry + 8).is_some_and(|flags| flags & 1 == 1));
+        if !reduced && seen.len() > 1 {
+            pages.push(ifd as u32);
+        }
+        next = u32_at(ifd + 2 + entries * 12);
+    }
+    pages
+}
+
+/// `first` and the pages at `pages`, on one canvas: `Doc` and the texture cache take every frame
+/// to be the same size. Each page goes through `image` by pointing the header at it, which keeps
+/// all its pixel formats. A page that won't decode is left out, and pages stop at the memory budget.
+// shortcut: a small page looks small next to a big one; give pages their own size if that's reported.
+fn decode_pages(mut tiff: Vec<u8>, first: Frame, pages: &[u32]) -> Vec<Frame> {
+    let mut frames = vec![first];
+    let le = tiff[0] == b'I';
+    let mut canvas = (frames[0].w, frames[0].h);
+    for &ifd in pages {
+        tiff[4..8].copy_from_slice(&if le { ifd.to_le_bytes() } else { ifd.to_be_bytes() });
+        let Ok(page) = catching(|| decode_page(&tiff)) else { continue };
+        let grown = (canvas.0.max(page.w), canvas.1.max(page.h));
+        if (frames.len() + 1) as u64 * grown.0 as u64 * grown.1 as u64 * 4 > MAX_ANIMATION_BYTES as u64 {
+            break;
+        }
+        canvas = grown;
+        frames.push(page);
+    }
+    for frame in &mut frames {
+        pad(frame, canvas);
+    }
+    frames
+}
+
+fn decode_page(tiff: &[u8]) -> Result<Frame, String> {
+    let mut decoder = ImageReader::with_format(Cursor::new(tiff), ImageFormat::Tiff).into_decoder().map_err(|e| e.to_string())?;
+    if decoder.total_bytes() > MAX_CANVAS_BYTES {
+        return Err(tr("this image is too large to open").into());
+    }
+    let orientation = decoder.orientation().map_err(|e| e.to_string())?;
+    let mut img = DynamicImage::from_decoder(decoder).map_err(|e| e.to_string())?;
+    img.apply_orientation(orientation);
+    Ok(to_frame(img, Duration::ZERO))
+}
+
+/// Centres `frame` on a black (or clear) canvas.
+fn pad(frame: &mut Frame, (w, h): (u32, u32)) {
+    if (frame.w, frame.h) == (w, h) {
+        return;
+    }
+    let channels = if frame.alpha { 4 } else { 3 };
+    let (x, y) = (((w - frame.w) / 2) as usize, ((h - frame.h) / 2) as usize);
+    let mut pixels = vec![0; w as usize * h as usize * channels];
+    for (i, row) in frame.pixels.chunks_exact(frame.w as usize * channels).enumerate() {
+        let at = ((y + i) * w as usize + x) * channels;
+        pixels[at..at + row.len()].copy_from_slice(row);
+    }
+    (frame.w, frame.h, frame.pixels) = (w, h, pixels);
 }
 
 /// The largest JPEG scale-down (8, 4 or 2) whose output still covers `img` (upright) when
@@ -635,6 +778,202 @@ mod tests {
         assert_eq!(&f.pixels[f.pixels.len() - 4..], [200, 100, 50, 200]);
     }
 
+    /// Encodes through the `image` crate, then opens the file as `name` says.
+    fn round_trip(name: &str, img: DynamicImage) -> Loaded {
+        let mut bytes = Vec::new();
+        let format = ImageFormat::from_path(name).unwrap();
+        img.write_to(&mut Cursor::new(&mut bytes), format).unwrap();
+        load_bytes(name, &bytes).unwrap()
+    }
+
+    fn fixture(name: &str) -> Vec<u8> {
+        std::fs::read(format!("tests/data/{name}")).unwrap()
+    }
+
+    #[test]
+    fn opens_the_cheap_formats() {
+        let img = image::RgbImage::from_fn(3, 2, |x, y| image::Rgb([x as u8 * 40, y as u8 * 40, 200]));
+        for name in ["a.qoi", "a.tga", "a.ppm"] {
+            let f = &round_trip(name, DynamicImage::ImageRgb8(img.clone())).frames[0];
+            assert_eq!((f.w, f.h), (3, 2), "{name}");
+            assert_eq!(&f.pixels[f.pixels.len() - 3..], [80, 40, 200], "{name}");
+        }
+        let f = &load_bytes("a.dds", &fixture("tiny.dds")).unwrap().frames[0];
+        assert_eq!((f.w, f.h, &f.pixels[..3]), (4, 4, &[255, 0, 0][..]));
+    }
+
+    #[test]
+    fn hdr_formats_are_tone_mapped() {
+        let img = image::Rgb32FImage::from_fn(2, 1, |x, _| image::Rgb(if x == 0 { [0.5, 0.5, 0.5] } else { [100.0, 100.0, 100.0] }));
+        for name in ["a.hdr", "a.exr"] {
+            let f = &round_trip(name, DynamicImage::ImageRgb32F(img.clone())).frames[0];
+            assert_eq!(f.pixels[3], 255, "{name}: the peak is white");
+            assert!(f.pixels[0] > 100 && f.pixels[0] < 188, "{name}: {}", f.pixels[0]);
+        }
+    }
+
+    #[test]
+    fn tone_mapping() {
+        let map = |v: Vec<f32>| tone_map(DynamicImage::ImageRgb32F(image::Rgb32FImage::from_raw(v.len() as u32 / 3, 1, v).unwrap())).into_bytes();
+        // Within 0–1, only the sRGB curve.
+        assert_eq!(map(vec![0.0, 0.214, 1.0]), [0, 127, 255]);
+        assert_eq!(map(vec![f32::NAN, f32::INFINITY, -1.0, 100.0, 1.0, 0.0])[..4], [0, 0, 0, 255]);
+        let rgba = tone_map(DynamicImage::ImageRgba32F(image::Rgba32FImage::from_raw(1, 1, vec![1.0, 1.0, 1.0, 0.5]).unwrap()));
+        assert_eq!(rgba.into_bytes(), [255, 255, 255, 128]);
+    }
+
+    #[test]
+    fn plays_apng_and_leaves_still_pngs_alone() {
+        let loaded = load_bytes("anim.png", &fixture("anim.apng")).unwrap();
+        assert_eq!(loaded.frames.iter().map(|f| f.delay.as_millis()).collect::<Vec<_>>(), [50, 200]);
+        assert_eq!((loaded.frames[0].pixels[0], loaded.frames[1].pixels[0]), (0, 255));
+        assert_eq!(round_trip("still.png", DynamicImage::ImageRgb8(image::RgbImage::new(2, 2))).frames[0].delay, Duration::ZERO);
+    }
+
+    #[test]
+    fn opens_jpeg_xl() {
+        for name in ["tiny.jxl", "lossless.jxl"] {
+            let f = &load_bytes("a.jxl", &fixture(name)).unwrap().frames[0];
+            assert_eq!((f.w, f.h, f.alpha), (64, 48, false), "{name}");
+            let px = &f.pixels[(24 * 64 + 8) * 3..][..3];
+            assert!(px[0] > 180 && px[2] < 80, "{name}: {px:?}");
+        }
+        let f = &load_bytes("a.jxl", &fixture("alpha.jxl")).unwrap().frames[0];
+        assert_eq!((f.alpha, f.pixels[3]), (true, 128));
+        // By content, like the other formats.
+        assert_eq!(load_bytes("misnamed.png", &fixture("tiny.jxl")).unwrap().frames[0].w, 64);
+    }
+
+    /// A little-endian TIFF of 8-bit grey pages: width, height, shade, whether it's a thumbnail.
+    fn tiff_file(pages: &[(u32, u32, u8, bool)]) -> Vec<u8> {
+        let mut t = b"II\x2a\0\x08\0\0\0".to_vec();
+        for (i, &(w, h, shade, reduced)) in pages.iter().enumerate() {
+            let tags: [(u16, u16, u32); 9] = [(0xFE, 4, reduced as u32), (0x100, 4, w), (0x101, 4, h), (0x102, 3, 8), (0x103, 3, 1), (0x106, 3, 1), (0x111, 4, 0), (0x116, 4, h), (0x117, 4, w * h)];
+            let start = t.len() as u32;
+            let data = start + 2 + 9 * 12 + 4;
+            let next = data + w * h;
+            t.extend(9u16.to_le_bytes());
+            for (tag, kind, value) in tags {
+                t.extend(tag.to_le_bytes());
+                t.extend(kind.to_le_bytes());
+                t.extend(1u32.to_le_bytes());
+                t.extend((if tag == 0x111 { data } else { value }).to_le_bytes());
+            }
+            t.extend((if i + 1 == pages.len() { 0 } else { next }).to_le_bytes());
+            t.resize(next as usize, shade);
+        }
+        t
+    }
+
+    #[test]
+    fn tiff_pages_share_one_canvas_and_skip_thumbnails() {
+        let previews = Mutex::new(0);
+        let path = std::env::temp_dir().join(format!("lightview-{}-pages.tif", std::process::id()));
+        std::fs::write(&path, tiff_file(&[(2, 2, 10, false), (1, 1, 99, true), (4, 2, 200, false)])).unwrap();
+        let loaded = load(&path, [100, 100], |_| *previews.lock().unwrap() += 1).unwrap();
+        std::fs::remove_file(&path).unwrap();
+        assert!(loaded.paged());
+        assert_eq!(*previews.lock().unwrap(), 1, "the first page shows while the rest decode");
+        assert_eq!(loaded.frames.iter().map(|f| (f.w, f.h)).collect::<Vec<_>>(), [(4, 2), (4, 2)]);
+        // Centred on black.
+        assert_eq!(&loaded.frames[0].pixels[..9], [0, 0, 0, 10, 10, 10, 10, 10, 10]);
+        assert_eq!(loaded.frames[1].pixels[0], 200);
+        // One page, as before.
+        assert!(!load_bytes("one.tif", &tiff_file(&[(2, 2, 10, false)])).unwrap().paged());
+    }
+
+    #[test]
+    fn tiff_page_lists_end() {
+        let mut t = tiff_file(&[(1, 1, 0, false), (1, 1, 0, false)]);
+        // The second page's "next" points back at itself, or at the first.
+        let second = u32::from_le_bytes(t[8 + 2 + 9 * 12..][..4].try_into().unwrap());
+        let link = second as usize + 2 + 9 * 12;
+        assert_eq!(tiff_pages(&t), [second]);
+        for target in [8, second] {
+            t[link..link + 4].copy_from_slice(&target.to_le_bytes());
+            assert_eq!(tiff_pages(&t), [second]);
+        }
+        t[link..link + 4].copy_from_slice(&u32::MAX.to_le_bytes());
+        assert_eq!(tiff_pages(&t), [second]);
+        let good = tiff_file(&[(1, 1, 0, false), (1, 1, 0, false)]);
+        for len in 0..good.len() {
+            let _ = tiff_pages(&good[..len]);
+        }
+    }
+
+    #[test]
+    fn many_small_pages_cant_grow_to_a_giant_canvas() {
+        let first = Frame { w: 30000, h: 30000, pixels: Vec::new(), alpha: false, delay: Duration::ZERO };
+        let tiff = tiff_file(&[(1, 1, 0, false), (1, 1, 0, false)]);
+        let frames = decode_pages(tiff.clone(), Frame { w: 1, h: 1, ..first }, &tiff_pages(&tiff));
+        assert_eq!(frames.len(), 2);
+    }
+
+    #[test]
+    fn a_native_format_with_another_name_never_reaches_its_decoder() {
+        for name in ["tiny.heic", "tiny.avif"] {
+            assert!(load_bytes("photo.jpg", &fixture(name)).is_err(), "{name}");
+            assert!(load_bytes("photo.png", &fixture(name)).is_err(), "{name}");
+        }
+    }
+
+    #[test]
+    fn saying_too_much_in_a_header_is_refused() {
+        let be = 60000u32.to_be_bytes();
+        let mut qoi = b"qoif".to_vec();
+        qoi.extend(be);
+        qoi.extend(be);
+        qoi.extend([4, 0, 0, 0, 0, 0, 0, 0, 1]);
+        let mut tga = vec![0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xFF, 0xFF, 0xFF, 0xFF, 32, 0];
+        tga.extend([0; 64]);
+        let mut dds = fixture("tiny.dds");
+        dds[12..20].copy_from_slice(&[0xFF, 0xFF, 0xFF, 0x7F, 0xFF, 0xFF, 0xFF, 0x7F]);
+        let mut exr = Vec::new();
+        DynamicImage::ImageRgb32F(image::Rgb32FImage::new(2, 2)).write_to(&mut Cursor::new(&mut exr), ImageFormat::OpenExr).unwrap();
+        let window = exr.windows(10).position(|w| w == b"dataWindow").unwrap() + b"dataWindow\0box2i\0".len() + 4;
+        exr[window + 8..window + 16].copy_from_slice(&[0xFF, 0xFF, 0, 0, 0xFF, 0xFF, 0, 0]);
+        let cases: [(&str, Vec<u8>); 6] = [
+            ("a.qoi", qoi),
+            ("a.tga", tga),
+            ("a.pnm", b"P6\n60000 60000\n255\n\0\0\0".to_vec()),
+            ("a.hdr", b"#?RADIANCE\nFORMAT=32-bit_rle_rgbe\n\n-Y 60000 +X 60000\n\0\0".to_vec()),
+            ("a.dds", dds),
+            ("a.exr", exr),
+        ];
+        for (name, bytes) in cases {
+            assert!(load_bytes(name, &bytes).is_err(), "{name}");
+        }
+    }
+
+    #[test]
+    fn a_giant_jpeg_xl_is_refused() {
+        // 16384 × 16384 in 35 KB, which would take 1 GiB. `jxl`'s Level 5 limit refuses it first.
+        assert!(load_bytes("a.jxl", &fixture("giant.jxl")).is_err());
+    }
+
+    #[test]
+    fn cut_short_files_fail_cleanly() {
+        let mut files: Vec<(&str, Vec<u8>)> = vec![("a.jxl", fixture("tiny.jxl")), ("a.jxl", fixture("alpha.jxl")), ("a.dds", fixture("tiny.dds")), ("a.png", fixture("anim.apng"))];
+        let img = DynamicImage::ImageRgb32F(image::Rgb32FImage::new(4, 4));
+        for (name, format) in [("a.exr", ImageFormat::OpenExr), ("a.hdr", ImageFormat::Hdr)] {
+            let mut bytes = Vec::new();
+            img.write_to(&mut Cursor::new(&mut bytes), format).unwrap();
+            files.push((name, bytes));
+        }
+        let small = DynamicImage::ImageRgb8(image::RgbImage::new(4, 4));
+        for (name, format) in [("a.qoi", ImageFormat::Qoi), ("a.tga", ImageFormat::Tga), ("a.ppm", ImageFormat::Pnm)] {
+            let mut bytes = Vec::new();
+            small.write_to(&mut Cursor::new(&mut bytes), format).unwrap();
+            files.push((name, bytes));
+        }
+        files.push(("a.tif", tiff_file(&[(2, 2, 1, false), (2, 2, 2, false)])));
+        for (name, bytes) in files {
+            for len in 0..bytes.len() {
+                let _ = load_bytes(name, &bytes[..len]);
+            }
+        }
+    }
+
     #[test]
     fn opens_tiff() {
         let path = std::env::temp_dir().join(format!("lightview-{}.tif", std::process::id()));
@@ -771,7 +1110,10 @@ mod tests {
     }
 
     fn load_bytes(name: &str, bytes: &[u8]) -> Result<Loaded, String> {
-        let path = std::env::temp_dir().join(format!("lightview-{}-{name}", std::process::id()));
+        // Tests run in parallel, and many use the same names.
+        static NEXT: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+        let n = NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        let path = std::env::temp_dir().join(format!("lightview-{}-{n}-{name}", std::process::id()));
         std::fs::write(&path, bytes).unwrap();
         let loaded = load(&path, [1280, 720], |_| {});
         std::fs::remove_file(&path).unwrap();
@@ -863,7 +1205,7 @@ mod tests {
     fn folder_filter_and_order() {
         let dir = std::env::temp_dir().join(format!("lightview-test-{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
-        for f in ["b10.JPG", "b2.png", "a.webp", "notes.txt", "clip.mp4", "photo.heic"] {
+        for f in ["b10.JPG", "b2.png", "a.webp", "notes.txt", "clip.mp4", "layers.psd"] {
             std::fs::write(dir.join(f), b"").unwrap();
         }
         // Oldest: b2.png, then a.webp, then b10.JPG.

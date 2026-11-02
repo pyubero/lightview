@@ -54,7 +54,11 @@ pub fn ui(ui: &mut egui::Ui, ins: &mut Inspector, loaded: &Loaded, doc: Option<&
             let rows = [
                 (tr("Name"), ins.path.file_name().unwrap_or_default().to_string_lossy().into_owned()),
                 (tr("Folder"), ins.path.parent().map(|p| p.display().to_string()).unwrap_or_default()),
-                (tr("Format"), if loaded.frames.len() > 1 { trf("{format}, {count} frames", &[("format", &ext), ("count", &loaded.frames.len())]) } else { ext }),
+                (tr("Format"), match loaded.frames.len() {
+                    1 => ext,
+                    count if loaded.paged() => trf("{format}, {count} pages", &[("format", &ext), ("count", &count)]),
+                    count => trf("{format}, {count} frames", &[("format", &ext), ("count", &count)]),
+                }),
                 (tr("File size"), format_size(loaded.file_size)),
                 (tr("Dimensions"), dimensions),
                 (tr("Resolution"), resolution),
