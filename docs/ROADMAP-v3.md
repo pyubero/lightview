@@ -124,17 +124,7 @@ All view only at first, with the same zoom, edit and Save As path as other forma
 
 
 
-### 32. More local AI (L)
-This is where lightview leads, so it deserves to stay ahead. Each model goes through the existing catalog, licence and pin flow.
-- **AMD and Intel GPUs.** Only NVIDIA works today. Upscayl's reach on any GPU shows what's missing. Try ONNX Runtime's WebGPU provider (Vulkan on Linux, D3D12 on Windows), a separate plugin. Linux support needs a test, and Microsoft is steering new work away from DirectML, so it's not the first choice.
-- **Blur or replace the background:** reuses Remove Background's mask, so no new model (Windows Photos).
-- **Select an object:** MobileSAM (reported as Apache-2.0, about 3 s per image on an i5 CPU; check upstream), then use it with Crop, Remove Object or Delete. Preview's Smart Lasso and ACDSee's AI Object Selection are the comparison. Reopens v2's "no smart lasso".
-- DONT IMPLEMENT: **Auto-find the corners** in Correct Perspective, for documents and screens.
-- DONT IMPLEMENT: **2× upscaling,** the "later" item from 18b: shrink first, then upscale, for a smaller result.
-- **Colourise old photos:** DDColor. The code is Apache-2.0; the weights' licence needs checking.
-- **Restore faces:** GFPGAN is Apache-2.0 with bundled third-party licences, which need a careful read. CodeFormer's S-Lab licence is non-commercial, so it's out.
-- **Describe image:** fill the Accessibility description with a local caption model. Needs a small model with a clean licence.
-- **Done when** each model passes the same checks as v2's: a real test photo, CPU fallback, and clean cancelling.
+### 32. More local AI — postponed to `ROADMAP-v4.md` (2026-11-02)
 
 ### DONT IMPLEMENT: 33. Compare two images (M)
 - DONT IMPLEMENT: Two images side by side or with the before/after divider, with zoom and pan linked (Oculante). The draggable divider already exists for AI previews.
@@ -181,7 +171,6 @@ None of these should change without the user's approval.
 |---|---|
 | JPEG quality fixed at 90 (M6) | Milestone 27 |
 | Save As keeps GPS (M6, 2026-11-01 audit) | Milestone 27, as an opt-in |
-| No smart lasso (v2) | Milestone 32, click to select |
 | `.deb` and `.msi` only, no tarball (2026-10-31) | Milestone 34 |
 | No thumbnail grid or gallery (v1) | Filmstrip, if kept |
 
@@ -193,4 +182,4 @@ Recommendations first; the answer is the user's in each case.
 3. **Colour management.** Decode time or display time? Recommended: settle with a short spike, because it decides what saved files contain.
 4. **macOS.** Port or not? Recommended: not in v3, because there's no Mac to test on and Preview is already free there.
 5. **Borderline items.** Keep, trim or drop? Recommended: keep the filmstrip and batch convert with their limits, drop archives.
-6. **Licences to verify before adding:** PP-OCRv5 models, MobileSAM, DDColor weights, GFPGAN's bundled parts, `jxl-oxide`, `rqrr`.
+6. **Licences to verify before adding:** PP-OCRv5 models, `jxl-oxide`, `rqrr`. Milestone 32's are in `ROADMAP-v4.md`.
