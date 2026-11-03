@@ -24,6 +24,10 @@ and it never goes online on its own.
   full undo and redo. Deleting moves the image to the Trash, and Ctrl+Z brings it back.
 - **Mark up without a second app.** Arrows, shapes, freehand, text, highlights and a magnifier,
   right on the image.
+- **Tidy up duplicates and bursts.** Group Duplicates in Folder finds copies, look-alikes and burst
+  shots and moves each group into its own folder. You pick how alike the images must be and how big
+  a group has to be, and see the groups before anything moves. Nothing is deleted, and Ctrl+Z puts
+  everything back.
 - **Local AI tools.** Remove a background or an object, denoise, upscale, brighten night photos
   and copy text out of an image, all on your own computer and offline. Nothing is installed until
   you ask for it ([AI tools](#ai-tools)).
