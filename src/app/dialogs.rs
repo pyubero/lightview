@@ -197,6 +197,16 @@ impl App {
         Some(crate::retouch::auto_levels(doc.source(&self.cache.get(self.current()?)?.frames[0]), doc.crop))
     }
 
+    /// Resize Optimally's size for the current image, and whether that's its size already. Never
+    /// larger: the output can't need more pixels than the crop's detail.
+    pub(super) fn optimal_size(&self) -> Option<([u32; 2], bool)> {
+        let doc = self.doc()?;
+        let fraction = crate::resize_optimally::fraction(doc.source(&self.cache.get(self.current()?)?.frames[0]), doc.crop);
+        let scale = (fraction * doc.crop.width() / doc.plain_size()[0] as f32).min(1.0);
+        let size = doc.size.map(|v| ((v as f32 * scale).round() as u32).max(1));
+        Some((size, size == doc.size))
+    }
+
     /// The Adjust Color or Adjust Curves panel: it changes the edits live, and Done makes them one undo step.
     pub(super) fn adjust_panel(&mut self, ctx: &egui::Context) {
         let (Some(before), Some(mut doc)) = (self.shown.adjusting.clone(), self.doc()) else { return };

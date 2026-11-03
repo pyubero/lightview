@@ -293,6 +293,16 @@ impl App {
                     }
                 }
                 Action::Resize => self.resize_dialog = self.doc().map(|d| ResizeDialog::new(&d)),
+                Action::ResizeOptimally => {
+                    if let Some(([w, h], unchanged)) = self.optimal_size() {
+                        if unchanged {
+                            self.set_status(tr("Already at its optimal size"));
+                        } else {
+                            self.edit(|d| d.resize(w, h));
+                            self.set_status(trf("Resized to {w} × {h} px", &[("w", &w), ("h", &h)]));
+                        }
+                    }
+                }
                 Action::Info => self.show_info = !self.show_info,
                 Action::Settings => self.show_settings = true,
                 Action::AdjustColor => {

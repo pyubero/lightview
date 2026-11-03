@@ -418,3 +418,7 @@ About {s} s left	Осталось около {s} с
 About {m} min left	Осталось около {m} мин
 Smallest group	Наименьшая группа
 Groups with fewer images stay where they are.	Группы с меньшим числом изображений остаются на месте.
+Resize Optimally	Оптимальный размер
+Shrinks the image to the size its detail needs, measured on its sharpest part. Never enlarges; Ctrl+Z undoes it.	Уменьшает изображение до размера, который нужен его деталям, по самой резкой части. Никогда не увеличивает; Ctrl+Z отменяет.
+Already at its optimal size	Уже оптимального размера
+Resized to {w} × {h} px	Размер изменён на {w} × {h} px

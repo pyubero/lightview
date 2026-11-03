@@ -39,6 +39,7 @@ pub(super) enum Action {
     Crop,
     Perspective,
     Resize,
+    ResizeOptimally,
     AdjustColor,
     AdjustCurves,
     AutoLevels,
@@ -164,6 +165,7 @@ pub(super) fn bindable_menus() -> [(&'static str, Vec<(Action, &'static str)>); 
     let image = vec![
         (Action::Crop, tr_key("Crop")),
         (Action::Resize, tr_key("Resize…")),
+        (Action::ResizeOptimally, tr_key("Resize Optimally")),
         (Action::Perspective, tr_key("Correct Perspective")),
         (Action::Straighten, tr_key("Straighten…")),
         (Action::RotateLeft, tr_key("Rotate Left")),
@@ -273,7 +275,7 @@ impl App {
             Action::ReadText(true) => has_image && !self.reading,
             Action::GroupDuplicates => self.files.len() > 1 && self.grouping.is_none(),
             Action::Copy | Action::Paste | Action::SelectAll | Action::Info | Action::ZoomIn | Action::ZoomOut | Action::Fit | Action::ActualSize => has_image,
-            Action::Crop | Action::Resize | Action::RotateLeft | Action::RotateRight | Action::FlipHorizontal | Action::FlipVertical => has_image,
+            Action::Crop | Action::Resize | Action::ResizeOptimally | Action::RotateLeft | Action::RotateRight | Action::FlipHorizontal | Action::FlipVertical => has_image,
             Action::AdjustColor | Action::AdjustCurves | Action::AutoLevels | Action::ResetAdjust => has_image,
             Action::SelectTool(SelKind::Object) => ready(Task::Segment),
             Action::ShowToolbar | Action::SelectTool(_) | Action::Measure | Action::CopyColor | Action::Pick(_) => has_image,
@@ -397,6 +399,7 @@ impl App {
             ui.menu_button(tr("Image"), |ui| {
                 item(ui, Action::Crop, actions);
                 item(ui, Action::Resize, actions);
+                hinted(ui, Action::ResizeOptimally, tr("Shrinks the image to the size its detail needs, measured on its sharpest part. Never enlarges; Ctrl+Z undoes it."), actions);
                 item(ui, Action::Perspective, actions);
                 item(ui, Action::Straighten, actions);
                 ui.separator();

@@ -12,6 +12,7 @@ mod files;
 mod heif;
 mod i18n;
 mod inspector;
+mod resize_optimally;
 mod jpegxl;
 mod load;
 mod markup;

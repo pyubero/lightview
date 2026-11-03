@@ -69,6 +69,7 @@ when" says otherwise. `▸` marks a submenu.
 |---|---|---|---|
 | Crop | | | With a selection: crops to it (erasing outside an ellipse or lasso). Without: the crop tool (drag a rectangle, Enter applies, Esc cancels). Within 3% of 1:1, 4:3, 3:2 or 16:9 (either way round) it snaps to that ratio, and shows it. |
 | Resize… | | | Width, height, keep aspect ratio, percentage, resolution (DPI). |
+| Resize Optimally | | | Shrinks the image to the size its detail needs, measured on its sharpest 1024 px area; never enlarges. One undo step. |
 | Correct Perspective | | a still image is loaded, Adjust Color/Curves closed | Drag four corners onto something rectangular; Enter straightens it and crops to it, Esc cancels. Markup is flattened into the image, after asking. |
 | Straighten… | | as Correct Perspective | A panel with an angle (−180° to 180°): the image turns live under a grid, with its new bounds outlined. Done or Enter applies it through Correct Perspective: the canvas grows to fit the turned image and the new corners get the background colour (transparent with alpha), so cropping is left to you. Esc cancels. |
 | — | | | |

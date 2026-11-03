@@ -418,3 +418,7 @@ About {s} s left	Noch etwa {s} s
 About {m} min left	Noch etwa {m} min
 Smallest group	Kleinste Gruppe
 Groups with fewer images stay where they are.	Gruppen mit weniger Bildern bleiben, wo sie sind.
+Resize Optimally	Optimal skalieren
+Shrinks the image to the size its detail needs, measured on its sharpest part. Never enlarges; Ctrl+Z undoes it.	Verkleinert das Bild auf die Größe, die seine Details brauchen, gemessen am schärfsten Teil. Vergrößert nie; Strg+Z macht es rückgängig.
+Already at its optimal size	Hat bereits die optimale Größe
+Resized to {w} × {h} px	Skaliert auf {w} × {h} px

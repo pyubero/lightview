@@ -50,6 +50,16 @@ edit can be undone and redone.
   transparent), so you can crop afterwards.
 - **Resize** by width and height, or by percentage, with the aspect ratio kept or not, and set the
   resolution (DPI).
+- **Resize Optimally** shrinks the image to its *intrinsic* size: the size its detail actually
+  needs. A 10 MP photo stretched to 40 MP, or a soft, out-of-focus shot, comes back to about the
+  size where it starts losing detail. lightview shrinks and enlarges the image back at 20 sizes,
+  measures how much detail each round trip loses, and finds where the losses start rising
+  steeply. It measures the sharpest 1024 px area of the image (or of the crop), since flat areas
+  like sky have no detail to measure. It takes about a fifth of a second. It never
+  enlarges, running it again leaves the image as it is, and Ctrl+Z undoes it. Limits: it's an
+  estimate, in steps of about 11%. Images enlarged with an AI upscaler, or with
+  nearest-neighbour (blocky pixels), and very noisy photos can look like they already have full
+  detail. Only the brightness is measured, so fine colour detail doesn't count.
 - **Rotate and flip.**
 - **Adjust Color:** exposure, contrast, saturation and tint, with **Auto Levels** to stretch the
   image to its full range.

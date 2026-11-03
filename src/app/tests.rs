@@ -529,6 +529,48 @@ fn greyscale_and_invert_are_one_undo_step_each() {
     assert!(app.doc().unwrap().adjust.is_identity(), "Greyscale toggles back");
 }
 
+/// Runs Resize Optimally on a `w`×`h` image of seeded rectangles enlarged `factor`× with Lanczos3.
+fn resize_optimally(w: u32, h: u32, factor: u32) -> App {
+    let (mut app, path) = app_with_image();
+    let mut s = 7u32;
+    let mut next = |n: u32| {
+        s = s.wrapping_mul(1664525).wrapping_add(1013904223);
+        (s >> 8) % n
+    };
+    let mut pixels = vec![128u8; (w * h * 3) as usize];
+    for _ in 0..w * h / 100 {
+        let size = 2u32 << next(5);
+        let (x0, y0, rw, rh, v) = (next(w), next(h), size / 2 + next(size), size / 2 + next(size), next(256) as u8);
+        for y in y0..(y0 + rh).min(h) {
+            pixels[(y * w + x0) as usize * 3..(y * w + (x0 + rw).min(w)) as usize * 3].fill(v);
+        }
+    }
+    let native = Frame { w, h, pixels, alpha: false, delay: std::time::Duration::ZERO };
+    let (bw, bh) = (w * factor, h * factor);
+    let alg = fast_image_resize::ResizeAlg::Convolution(fast_image_resize::FilterType::Lanczos3);
+    let big = Frame { w: bw, h: bh, pixels: edit::resize(&native, Rect::from_min_size(Pos2::ZERO, Vec2::new(w as f32, h as f32)), bw, bh, alg), alpha: false, delay: std::time::Duration::ZERO };
+    app.cache.insert(path, Arc::new(Loaded { frames: vec![big], file_size: 6, svg: None }));
+    app.run_actions(&[Action::ResizeOptimally], &egui::Context::default(), false);
+    app
+}
+
+#[test]
+fn resize_optimally_undoes_an_enlargement() {
+    let mut app = resize_optimally(300, 200, 2);
+    let size = app.doc().unwrap().size;
+    assert!((250..=360).contains(&size[0]) && (size[1] as i32 * 3 - size[0] as i32 * 2).abs() <= 3, "{size:?}");
+    assert_eq!(app.status.as_ref().unwrap().0, trf("Resized to {w} × {h} px", &[("w", &size[0]), ("h", &size[1])]));
+    app.run_actions(&[Action::Undo], &egui::Context::default(), false);
+    assert_eq!(app.doc().unwrap().size, [600, 400], "one undo step");
+}
+
+#[test]
+fn resize_optimally_keeps_a_native_image() {
+    let app = resize_optimally(400, 300, 1);
+    assert_eq!(app.doc().unwrap().size, [400, 300]);
+    assert_eq!(app.status.as_ref().unwrap().0, tr("Already at its optimal size"));
+}
+
 #[test]
 fn read_text_shows_what_it_found() {
     let (mut app, path) = app_with_image();
