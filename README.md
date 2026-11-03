@@ -30,7 +30,8 @@ and it never goes online on its own.
 - **Private by design.** No telemetry, no account, and it never goes online on its own.
 - **Multilingual.** It starts in your system's language, and currently supports nine languages.
 - **Accessibility features.** Menus, dialogs and settings can be read by a screen reader such as
-  Orca or Narrator. All actions can be assigned their own keyboard shortcut.
+  Orca or Narrator. All actions can be assigned their own keyboard shortcut. UI font size 
+  adaptable, and cusotmizable high contrast theme.
 
 Every feature, and the supported formats, are described in [`FEATURES.md`](docs/FEATURES.md).
 
