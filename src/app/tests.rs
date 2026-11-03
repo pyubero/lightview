@@ -1294,3 +1294,12 @@ fn group_duplicates_moves_look_alikes_and_undoes() {
     assert!(listed("a.png") && listed("b.png") && !dir.join("a").exists());
     std::fs::remove_dir_all(&dir).unwrap();
 }
+
+#[test]
+fn group_duplicates_estimates_time_left() {
+    assert_eq!(super::group::time_left(0.5, 10, 100), None, "too early to tell");
+    assert_eq!(super::group::time_left(2.0, 2, 100), None, "too few images");
+    assert_eq!(super::group::time_left(3.0, 10, 20).as_deref(), Some("About 3 s left"));
+    assert_eq!(super::group::time_left(10.0, 10, 100).as_deref(), Some("About 2 min left"));
+    assert_eq!(super::group::time_left(10.0, 100, 100), None, "done");
+}

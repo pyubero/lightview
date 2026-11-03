@@ -414,3 +414,5 @@ Images moved back: {n}	Imagens repostas: {n}
 {name}: already in the folder	{name}: já está na pasta
 {name}: its old name is taken	{name}: o nome antigo está ocupado
 the file is gone	o ficheiro já não existe
+About {s} s left	Faltam cerca de {s} s
+About {m} min left	Faltam cerca de {m} min

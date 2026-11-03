@@ -414,3 +414,5 @@ Images moved back: {n}	Imágenes devueltas: {n}
 {name}: already in the folder	{name}: ya está en la carpeta
 {name}: its old name is taken	{name}: su nombre anterior está ocupado
 the file is gone	el archivo ya no existe
+About {s} s left	Quedan unos {s} s
+About {m} min left	Quedan unos {m} min

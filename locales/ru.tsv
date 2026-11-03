@@ -414,3 +414,5 @@ Images moved back: {n}	Возвращено изображений: {n}
 {name}: already in the folder	{name}: уже в папке
 {name}: its old name is taken	{name}: старое имя занято
 the file is gone	файла больше нет
+About {s} s left	Осталось около {s} с
+About {m} min left	Осталось около {m} мин

@@ -10,6 +10,7 @@ use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::time::Instant;
 
 /// The histogram's last bar holds every distance above this.
 const BARS: u32 = 32;
@@ -25,6 +26,8 @@ pub(super) struct Grouping {
     /// Uploaded once a thumbnail is first on screen; dropped with the dialog.
     textures: HashMap<usize, TextureHandle>,
     cancel: Arc<AtomicBool>,
+    /// When comparing started, for the time left.
+    started: Instant,
     /// Filled in once every image is compared.
     pub(super) review: Option<Review>,
 }
@@ -68,6 +71,19 @@ impl Drop for Grouping {
     }
 }
 
+/// "About … left" from the pace so far; nothing until a few images and a second have gone by.
+pub(super) fn time_left(elapsed: f64, done: usize, total: usize) -> Option<String> {
+    if done < 3 || elapsed < 1.0 || done >= total {
+        return None;
+    }
+    let secs = (elapsed / done as f64 * (total - done) as f64).ceil() as u64;
+    Some(if secs < 60 {
+        trf("About {s} s left", &[("s", &secs.max(1).to_string())])
+    } else {
+        trf("About {m} min left", &[("m", &secs.div_ceil(60).to_string())])
+    })
+}
+
 /// What the threshold means, in words.
 fn meaning(t: u32) -> &'static str {
     match t {
@@ -86,7 +102,7 @@ impl App {
         let cancel = Arc::new(AtomicBool::new(false));
         dedupe::hash_all(files.clone(), self.group_runs, self.settings.color_managed, cancel.clone(), self.notify.clone());
         let n = files.len();
-        self.grouping = Some(Grouping { run: self.group_runs, files, hashed: vec![None; n], failed: Vec::new(), done: 0, thumbs: vec![None; n], textures: HashMap::new(), cancel, review: None });
+        self.grouping = Some(Grouping { run: self.group_runs, files, hashed: vec![None; n], failed: Vec::new(), done: 0, thumbs: vec![None; n], textures: HashMap::new(), cancel, started: Instant::now(), review: None });
     }
 
     pub(super) fn group_dialog(&mut self, ctx: &egui::Context) {
@@ -98,6 +114,11 @@ impl App {
             let Some(r) = g.review.as_mut() else {
                 ui.label(trf("Comparing images: {done} of {total}", &[("done", &g.done.to_string()), ("total", &g.files.len().to_string())]));
                 ui.add(egui::ProgressBar::new(g.done as f32 / g.files.len().max(1) as f32));
+                if let Some(left) = time_left(g.started.elapsed().as_secs_f64(), g.done, g.files.len()) {
+                    ui.label(left);
+                }
+                // Keeps the estimate ticking between images that take long.
+                ui.ctx().request_repaint_after(std::time::Duration::from_secs(1));
                 ui.add_space(6.0);
                 close = ui.button(tr("Cancel")).clicked();
                 return;

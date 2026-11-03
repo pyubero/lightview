@@ -414,3 +414,5 @@ Images moved back: {n}	Zurückverschobene Bilder: {n}
 {name}: already in the folder	{name}: schon im Ordner
 {name}: its old name is taken	{name}: der alte Name ist vergeben
 the file is gone	die Datei ist nicht mehr da
+About {s} s left	Noch etwa {s} s
+About {m} min left	Noch etwa {m} min

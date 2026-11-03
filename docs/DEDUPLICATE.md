@@ -71,7 +71,7 @@ Nothing is stored on disk: no hash database, no thumbnail cache, no file in the 
 One thing lightview won't control: the operating system keeps recently read files in RAM (the page cache), so a second run right after the first reads from memory and is faster. Dropping that needs root or per-file calls that would also evict files other apps are using, and a cold run isn't more correct, only slower. Benchmarks should time the first run after a reboot, or with `echo 3 | sudo tee /proc/sys/vm/drop_caches`.
 
 ## Cancelling
-The hashing screen shows "Comparing images: 312 of 1 204" with a progress bar and Cancel. Cancel stops the workers after their current file and drops everything. Nothing has moved until the Move button, so cancelling at any point before it leaves the folder untouched.
+The hashing screen shows "Comparing images: 312 of 1 204" with a progress bar, the time left at the pace so far ("About 40 s left", "About 3 min left", shown once 3 images and a second have gone by) and Cancel. Cancel stops the workers after their current file and drops everything. Nothing has moved until the Move button, so cancelling at any point before it leaves the folder untouched.
 
 ## Limits (for `docs/FEATURES.md` and the menu hover hint)
 - Rotated or mirrored copies aren't found (pHash isn't rotation-invariant), unless the rotation is only an EXIF flag.
