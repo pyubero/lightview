@@ -448,21 +448,27 @@ impl App {
         let before = doc.clone();
         f(&mut doc);
         if doc != before {
-            if doc.geometry() != before.geometry() {
-                // The measurement's and selection's points are in the old image coordinates.
-                (self.view, self.shown.selection) = (View::Fit, None);
-                if let Tool::Measure { ends, .. } = &mut self.shown.tool {
-                    *ends = None;
-                }
-            }
-            if doc.base != before.base {
-                self.generation += 1;
-            }
+            self.replace_doc(doc);
             self.shown.undo.push(before);
             self.shown.redo.clear();
-            self.shown.doc = Some(doc);
             self.shown.last_restyle = None;
         }
+    }
+
+    /// Makes `doc` the current edits. Points in the old image's coordinates go when the geometry
+    /// changes, and new `Doc.base` pixels need new textures, which `TexKey` can't see.
+    fn replace_doc(&mut self, doc: Doc) {
+        let current = self.doc();
+        if current.as_ref().is_none_or(|d| d.geometry() != doc.geometry()) {
+            (self.view, self.shown.selection) = (View::Fit, None);
+            if let Tool::Measure { ends, .. } = &mut self.shown.tool {
+                *ends = None;
+            }
+        }
+        if current.is_some_and(|d| d.base != doc.base) {
+            self.generation += 1;
+        }
+        self.shown.doc = Some(doc);
     }
 
     /// The current edits, to change in place; pair with `commit`.
@@ -494,17 +500,8 @@ impl App {
         let (from, to) = if undo { (&mut self.shown.undo, &mut self.shown.redo) } else { (&mut self.shown.redo, &mut self.shown.undo) };
         let Some(doc) = from.pop() else { return };
         (self.shown.selected, self.shown.editing_text, self.shown.change_base, self.shown.last_restyle) = (None, None, None, None);
-        if current.base != doc.base {
-            self.generation += 1;
-        }
         to.push(current);
-        if self.shown.doc.as_ref().is_none_or(|d| d.geometry() != doc.geometry()) {
-            (self.view, self.shown.selection) = (View::Fit, None);
-                if let Tool::Measure { ends, .. } = &mut self.shown.tool {
-                    *ends = None;
-                }
-        }
-        self.shown.doc = Some(doc);
+        self.replace_doc(doc);
     }
 
     /// Runs `p` now, or asks first when that would lose unsaved edits.

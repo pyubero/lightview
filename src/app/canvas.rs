@@ -38,6 +38,16 @@ pub(super) struct TexKey {
     baked: Option<BakeKey>,
 }
 
+/// The pixels `draw` starts from, with the view and edits for them: the decoded frame, or the
+/// `base` pixels that Correct Perspective made from it; until it's decoded, the preview, fitted
+/// and unedited.
+fn source<'a>(full: Option<&'a Loaded>, base: Option<&'a Frame>, doc: Option<Doc>, preview: Option<&'a Frame>, anim_frame: usize, view: View) -> (Option<&'a Frame>, View, Doc) {
+    match (full, doc) {
+        (Some(l), Some(doc)) => (Some(base.unwrap_or(&l.frames[anim_frame])), view, doc),
+        _ => (preview, View::Fit, preview.map_or(Doc::new(1, 1), |f| Doc::new(f.w, f.h))),
+    }
+}
+
 impl App {
     /// The image with its markup at image resolution, as saving writes it, so the view is
     /// faithful on a low-res image. While a change is in progress the markup stays at screen
@@ -128,16 +138,15 @@ impl App {
         }
     }
 
-    /// Draws the current image (or its preview, or the error) and everything over it.
+    /// Draws the current image (or its preview, or the error) and everything over it. The pixels
+    /// come from `source`, then the flattened markup, the baked shrink or the sharp SVG render
+    /// replace them where one applies, each from its cache.
     pub(super) fn draw(&mut self, ui: &egui::Ui, full: Option<&Loaded>, doc: Option<Doc>, hovered_at: Option<Pos2>, viewport: Rect) {
         let ctx = ui.ctx();
         let ppp = ctx.pixels_per_point();
         let preview = self.shown.preview.clone();
         let base = doc.as_ref().and_then(|d| d.base.clone());
-        let (frame, view, doc) = match (full, doc) {
-            (Some(l), Some(doc)) => (Some(base.as_ref().map_or(&l.frames[self.shown.anim_frame], |b| &*b.0)), self.view, doc),
-            _ => (preview.as_deref(), View::Fit, preview.as_ref().map(|f| Doc::new(f.w, f.h)).unwrap_or(Doc::new(1, 1))),
-        };
+        let (frame, view, doc) = source(full, base.as_ref().map(|b| &*b.0), doc, preview.as_deref(), self.shown.anim_frame, self.view);
         // Flattened pixels hold every edit, so they're drawn as a plain image of the output's size.
         let edited = doc.clone();
         let flat = self.flattened(full, &doc);
@@ -508,5 +517,23 @@ mod tests {
         // Rotated right, the top row reads bottom-left then top-left of the source: 3, 0.
         let red: Vec<u8> = out.chunks(3).map(|p| p[0]).collect();
         assert_eq!(red, [3, 0, 4, 1, 5, 2]);
+    }
+
+    #[test]
+    fn source_picks_the_pixels_to_start_from() {
+        let frame = |w| Frame { w, h: 1, pixels: vec![0; w as usize * 3], alpha: false, delay: std::time::Duration::ZERO };
+        let l = Loaded { frames: vec![frame(2), frame(3)], file_size: 6, svg: None };
+        let (preview, base) = (frame(4), frame(5));
+        let edited = Doc { transform: Transform::default().rotate_right(), ..Doc::new(2, 1) };
+        let zoomed = View::Manual { scale: 2.0, center: Pos2::ZERO };
+        // Decoding: the preview, fitted, without the edits.
+        let (f, v, d) = source(None, None, None, Some(&preview), 0, zoomed);
+        assert!(f.unwrap().w == 4 && v == View::Fit && d == Doc::new(4, 1));
+        assert!(source(None, None, None, None, 0, zoomed).0.is_none());
+        // Decoded: the animation's frame, with the view and edits.
+        let (f, v, d) = source(Some(&l), None, Some(edited.clone()), Some(&preview), 1, zoomed);
+        assert!(f.unwrap().w == 3 && v == zoomed && d == edited);
+        // Correct Perspective's pixels replace the decoded ones.
+        assert_eq!(source(Some(&l), Some(&base), Some(edited), None, 0, zoomed).0.unwrap().w, 5);
     }
 }
