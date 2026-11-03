@@ -27,13 +27,10 @@ and it never goes online on its own.
 - **Local AI tools.** Remove a background or an object, denoise, upscale, brighten night photos
   and copy text out of an image, all on your own computer and offline. Nothing is installed until
   you ask for it ([AI tools](#ai-tools)).
-- **Opens what others don't.** Camera RAW files at once, HEIC and AVIF, JPEG XL, SVGs that stay
-  sharp as you zoom, HDR and EXR, and animations you can step through frame by frame.
 - **Private by design.** No telemetry, no account, and it never goes online on its own.
-- **Nine languages.** It starts in your system's language, and any menu item can get your own
-  shortcut.
-- **Works with screen readers.** Menus, dialogs and settings can be read by a screen reader such as
-  Orca or Narrator.
+- **Multilingual.** It starts in your system's language, and currently supports nine languages.
+- **Accessibility features.** Menus, dialogs and settings can be read by a screen reader such as
+  Orca or Narrator. All actions can be assigned their own keyboard shortcut.
 
 Every feature, and the supported formats, are described in [`FEATURES.md`](docs/FEATURES.md).
 
