@@ -9,7 +9,7 @@ when" says otherwise. `▸` marks a submenu.
 ## File
 | Item | Shortcut | Enabled when | Does |
 |---|---|---|---|
-| Open… | Ctrl+O | always | System file dialog; lists jpg, jpeg, png, gif, webp, bmp, tif, tiff, svg, ico and the camera RAW formats (cr2, cr3, nef, arw, dng, raf, orf, rw2). |
+| Open… | Ctrl+O | always | System file dialog; lists every format lightview opens (see [`FEATURES.md`](FEATURES.md#supported-formats)). |
 | Open Recent ▸ | | always | The last 10 files opened explicitly (hover shows the full path); "No recent files" when empty. |
 | Close | Ctrl+W | always | Closes the window (asks first if there are unsaved edits). |
 | — | | | |
@@ -53,13 +53,16 @@ when" says otherwise. `▸` marks a submenu.
 | — | | | |
 | Enter Full Screen | F11 | always | Esc leaves full screen. |
 | — | | | |
-| Show / Hide Image Information | Ctrl+I | | The inspector sidebar: General, EXIF (editable for JPEGs, saves a copy), Location, Accessibility (image description). |
+| Show / Hide Image Information | Ctrl+I | | The inspector sidebar: General, EXIF (editable for JPEG, PNG and TIFF, saving a copy; WebP and RAW read only), Location, Accessibility (image description). |
 | — | | | |
-| Animation ▸ | | the image is animated | |
+| Pages ▸ | | shown only for a multi-page TIFF | |
+| &nbsp;&nbsp;Next Page | PageDown | | |
+| &nbsp;&nbsp;Previous Page | PageUp | | |
+| Animation ▸ | | the image is animated (not a multi-page TIFF) | |
 | &nbsp;&nbsp;Play Animation | | it's paused | |
 | &nbsp;&nbsp;Pause Animation | | it's playing | |
-| &nbsp;&nbsp;Next Frame | | | Pauses and steps forward. |
-| &nbsp;&nbsp;Previous Frame | | | Pauses and steps back. |
+| &nbsp;&nbsp;Next Frame | PageDown | | Pauses and steps forward. |
+| &nbsp;&nbsp;Previous Frame | PageUp | | Pauses and steps back. |
 
 ## Image
 | Item | Shortcut | Enabled when | Does |
@@ -67,7 +70,7 @@ when" says otherwise. `▸` marks a submenu.
 | Crop | | | With a selection: crops to it (erasing outside an ellipse or lasso). Without: the crop tool (drag a rectangle, Enter applies, Esc cancels). Within 3% of 1:1, 4:3, 3:2 or 16:9 (either way round) it snaps to that ratio, and shows it. |
 | Resize… | | | Width, height, keep aspect ratio, percentage, resolution (DPI). |
 | Correct Perspective | | a still image is loaded, Adjust Color/Curves closed | Drag four corners onto something rectangular; Enter straightens it and crops to it, Esc cancels. Markup is flattened into the image, after asking. |
-| Straighten… | | as Correct Perspective | A panel with an angle (−45° to 45°): the image turns live under a grid, with its auto-crop (the largest crop of the same shape) outlined. Done or Enter applies it through Correct Perspective, Esc cancels. |
+| Straighten… | | as Correct Perspective | A panel with an angle (−180° to 180°): the image turns live under a grid, with its new bounds outlined. Done or Enter applies it through Correct Perspective: the canvas grows to fit the turned image and the new corners get the background colour (transparent with alpha), so cropping is left to you. Esc cancels. |
 | — | | | |
 | Rotate Left | Ctrl+L | | |
 | Rotate Right | Ctrl+R | | |
