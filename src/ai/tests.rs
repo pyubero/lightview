@@ -144,6 +144,8 @@ fn short_gpu_errors() {
     let trace = "/onnxruntime_src/onnxruntime/core/providers/cuda/cuda_call.cc:154 std::conditional_t<THRW, void> onnxruntime::CudaCall(…) CUDA failure 100: no CUDA-capable device is detected ; GPU=-1 ; hostname=x ; file=cuda_execution_provider.cc";
     assert_eq!(short_error(trace), "CUDA failure 100: no CUDA-capable device is detected");
     assert_eq!(short_error("libcudnn.so.9: not found"), "libcudnn.so.9: not found");
+    let webgpu = "ep_plugin_provider_interfaces.cc:71 virtual … Error creating execution provider: [ONNXRuntimeError] : 11 : EP_FAIL : webgpu_context.cc:130 … adapter_result.status == wgpu::RequestAdapterStatus::Success was false. Failed to get a WebGPU adapter: No supported adapters\n\n";
+    assert_eq!(short_error(webgpu), "Failed to get a WebGPU adapter: No supported adapters");
     assert!(short_error(&"x".repeat(500)).chars().count() <= 161);
 }
 
@@ -379,6 +381,42 @@ fn gpu_restore() {
     }
     let worst = results[0].as_raw().iter().zip(results[1].as_raw()).map(|(a, b)| a.abs_diff(*b)).max().unwrap();
     eprintln!("largest GPU/CPU difference: {worst}");
+    assert!(worst <= 2);
+}
+
+/// Installs the WebGPU plugin the way the dialog does (6 MB): `cargo test install_webgpu -- --ignored`.
+#[test]
+#[ignore]
+fn install_webgpu() {
+    download_webgpu().unwrap();
+    assert!(webgpu_installed());
+}
+
+/// With the WebGPU plugin installed: `LIGHTVIEW_AI=crop.png LIGHTVIEW_AI_MODEL=<file>
+/// cargo test --release webgpu_restore -- --ignored --nocapture`. Like `gpu_restore`, but
+/// always on WebGPU, even where the CUDA build is loaded.
+#[test]
+#[ignore]
+fn webgpu_restore() {
+    let img = image::open(std::env::var("LIGHTVIEW_AI").unwrap()).unwrap().into_rgba8();
+    let file = std::env::var("LIGHTVIEW_AI_MODEL").unwrap();
+    let env = environment().unwrap();
+    assert!(WEBGPU_LOADED.load(Ordering::Relaxed), "{:?}", gpu_error());
+    for d in env.devices() {
+        eprintln!("device: {:?} {:?} {:?}", d.ep(), d.hardware_device().vendor(), d.hardware_device().ty());
+    }
+    // Skip CUDA, so the GPU attempt is WebGPU's.
+    GPU_LOADED.store(false, Ordering::Relaxed);
+    let mut results = Vec::new();
+    for gpu in [true, false] {
+        set_use_gpu(gpu);
+        let t = std::time::Instant::now();
+        let out = restore(&file, &img, &|_| {}, &AtomicBool::new(false)).unwrap();
+        eprintln!("use_gpu {gpu}: on_gpu {} in {:.0} ms, error {:?}", on_gpu(), t.elapsed().as_secs_f64() * 1000.0, gpu_error().map(|e| short_error(&e)));
+        results.push(out);
+    }
+    let worst = results[0].as_raw().iter().zip(results[1].as_raw()).map(|(a, b)| a.abs_diff(*b)).max().unwrap();
+    eprintln!("largest WebGPU/CPU difference: {worst}");
     assert!(worst <= 2);
 }
 

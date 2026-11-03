@@ -97,7 +97,7 @@ when" says otherwise. `▸` marks a submenu.
 | Remove Object | | AI runtime and a Remove Object model installed, a selection, no AI job running | Fills in the selection, with no preview; Ctrl+Z undoes it. |
 | Recognize Text | | AI runtime and a Recognize Text model installed, not already reading | Reads the text in the selection's bounds, or the whole image, and shows it in a window with Copy. Upright text only; a large image is searched at up to 1920 px, so select small text to read it at full size. |
 | — | | | |
-| AI Models… | | always | Choose, download (after accepting licences) or add models per task; GPU support. Real-ESRGAN and DarkIR are never downloaded: users convert them and copy them in (see `README.md`). |
+| AI Models… | | always | Choose, download (after accepting licences) or add models per task; GPU support (NVIDIA via CUDA, or any Vulkan / Direct3D 12 card via WebGPU). Real-ESRGAN and DarkIR are never downloaded: users convert them and copy them in (see `README.md`). |
 | Download AI Runtime… | | always; only shown while the runtime is missing | Downloads ONNX Runtime (after accepting its licence). |
 
 ## Tools

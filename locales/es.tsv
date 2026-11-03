@@ -82,6 +82,7 @@ Download	Descargar
 Download AI Runtime…	Descargar motor de IA…
 Download GPU Support	Descargar soporte para GPU
 Downloaded from Microsoft (ONNX Runtime) and NVIDIA (CUDA libraries, via their official PyPI packages).	Se descarga de Microsoft (ONNX Runtime) y NVIDIA (bibliotecas CUDA, mediante sus paquetes oficiales de PyPI).
+Downloaded from Microsoft's official PyPI package (onnxruntime-ep-webgpu).	Se descarga del paquete oficial de Microsoft en PyPI (onnxruntime-ep-webgpu).
 Downloaded {file}	Descargado: {file}
 Downloading GPU support ({mb} MB)…	Descargando el soporte para GPU ({mb} MB)…
 Downloading the AI runtime…	Descargando el motor de IA…
@@ -112,6 +113,7 @@ Folder	Carpeta
 Font size	Tamaño de letra
 For a faithful clean-up, use Denoise instead.	Para una limpieza fiel al original, usa Reducir ruido.
 Format	Formato
+GPU (AMD, Intel and others, experimental)	GPU (AMD, Intel y otras, experimental)
 GPU (NVIDIA)	GPU (NVIDIA)
 GPU image scaling	Escalado de imagen por GPU
 GPU support	Soporte para GPU
@@ -154,6 +156,7 @@ Name	Nombre
 Nearest	Vecino más cercano
 Next Frame	Fotograma siguiente
 Next Image	Imagen siguiente
+no graphics card with Vulkan or Direct3D 12 was found	no se encontró ninguna tarjeta gráfica con Vulkan o Direct3D 12
 No location in this file	Este archivo no tiene ubicación
 No model installed yet.	Aún no hay ningún modelo instalado.
 No object found in the box	No se encontró ningún objeto en el recuadro
@@ -206,6 +209,7 @@ Revert	Revertir
 Rotate Left	Girar a la izquierda
 Rotate Right	Girar a la derecha
 Rounded Rectangle	Rectángulo redondeado
+Run the AI tools on any graphics card with Vulkan or Direct3D 12 ({mb} MB download, WebGPU). A weak built-in graphics chip can be slower than the CPU.	Ejecuta las herramientas de IA en cualquier tarjeta gráfica con Vulkan o Direct3D 12 (descarga de {mb} MB, WebGPU). Un chip gráfico integrado poco potente puede ser más lento que la CPU.
 Run the AI tools on the graphics card ({mb} MB download, NVIDIA's CUDA libraries).	Ejecuta las herramientas de IA en la tarjeta gráfica (descarga de {mb} MB, bibliotecas CUDA de NVIDIA).
 Running {file}…	Ejecutando {file}…
 SCUNet σ15 — light noise	SCUNet σ15 — ruido ligero

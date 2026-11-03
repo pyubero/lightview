@@ -82,6 +82,7 @@ Download	Herunterladen
 Download AI Runtime…	KI-Laufzeit herunterladen…
 Download GPU Support	GPU-Unterstützung herunterladen
 Downloaded from Microsoft (ONNX Runtime) and NVIDIA (CUDA libraries, via their official PyPI packages).	Wird von Microsoft (ONNX Runtime) und NVIDIA (CUDA-Bibliotheken, über deren offizielle PyPI-Pakete) heruntergeladen.
+Downloaded from Microsoft's official PyPI package (onnxruntime-ep-webgpu).	Heruntergeladen aus dem offiziellen PyPI-Paket von Microsoft (onnxruntime-ep-webgpu).
 Downloaded {file}	Heruntergeladen: {file}
 Downloading GPU support ({mb} MB)…	GPU-Unterstützung wird heruntergeladen ({mb} MB)…
 Downloading the AI runtime…	KI-Laufzeit wird heruntergeladen…
@@ -112,6 +113,7 @@ Folder	Ordner
 Font size	Schriftgröße
 For a faithful clean-up, use Denoise instead.	Für eine originalgetreue Bereinigung verwenden Sie stattdessen Rauschen entfernen.
 Format	Format
+GPU (AMD, Intel and others, experimental)	GPU (AMD, Intel und andere, experimentell)
 GPU (NVIDIA)	GPU (NVIDIA)
 GPU image scaling	Bildskalierung per GPU
 GPU support	GPU-Unterstützung
@@ -154,6 +156,7 @@ Name	Name
 Nearest	Nächster Nachbar
 Next Frame	Nächstes Einzelbild
 Next Image	Nächstes Bild
+no graphics card with Vulkan or Direct3D 12 was found	es wurde keine Grafikkarte mit Vulkan oder Direct3D 12 gefunden
 No location in this file	Diese Datei enthält keinen Standort
 No model installed yet.	Noch kein Modell installiert.
 No object found in the box	Kein Objekt im Rahmen gefunden
@@ -206,6 +209,7 @@ Revert	Zurücksetzen
 Rotate Left	Nach links drehen
 Rotate Right	Nach rechts drehen
 Rounded Rectangle	Abgerundetes Rechteck
+Run the AI tools on any graphics card with Vulkan or Direct3D 12 ({mb} MB download, WebGPU). A weak built-in graphics chip can be slower than the CPU.	Die KI-Werkzeuge auf jeder Grafikkarte mit Vulkan oder Direct3D 12 ausführen ({mb} MB Download, WebGPU). Ein schwacher integrierter Grafikchip kann langsamer sein als die CPU.
 Run the AI tools on the graphics card ({mb} MB download, NVIDIA's CUDA libraries).	KI-Werkzeuge auf der Grafikkarte ausführen ({mb} MB Download, CUDA-Bibliotheken von NVIDIA).
 Running {file}…	{file} wird ausgeführt…
 SCUNet σ15 — light noise	SCUNet σ15 — leichtes Rauschen

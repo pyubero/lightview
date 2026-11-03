@@ -82,6 +82,7 @@ Download	Downloaden
 Download AI Runtime…	AI-runtime downloaden…
 Download GPU Support	GPU-ondersteuning downloaden
 Downloaded from Microsoft (ONNX Runtime) and NVIDIA (CUDA libraries, via their official PyPI packages).	Gedownload van Microsoft (ONNX Runtime) en NVIDIA (CUDA-bibliotheken, via hun officiële PyPI-pakketten).
+Downloaded from Microsoft's official PyPI package (onnxruntime-ep-webgpu).	Gedownload van het officiële PyPI-pakket van Microsoft (onnxruntime-ep-webgpu).
 Downloaded {file}	{file} gedownload
 Downloading GPU support ({mb} MB)…	GPU-ondersteuning downloaden ({mb} MB)…
 Downloading the AI runtime…	AI-runtime downloaden…
@@ -112,6 +113,7 @@ Folder	Map
 Font size	Lettergrootte
 For a faithful clean-up, use Denoise instead.	Gebruik voor een getrouwe opschoning liever Ruis verwijderen.
 Format	Formaat
+GPU (AMD, Intel and others, experimental)	GPU (AMD, Intel en andere, experimenteel)
 GPU (NVIDIA)	GPU (NVIDIA)
 GPU image scaling	Afbeeldingen schalen op de GPU
 GPU support	GPU-ondersteuning
@@ -154,6 +156,7 @@ Name	Naam
 Nearest	Dichtstbijzijnde
 Next Frame	Volgend frame
 Next Image	Volgende afbeelding
+no graphics card with Vulkan or Direct3D 12 was found	er is geen videokaart met Vulkan of Direct3D 12 gevonden
 No location in this file	Geen locatie in dit bestand
 No model installed yet.	Nog geen model geïnstalleerd.
 No object found in the box	Geen object gevonden in het kader
@@ -206,6 +209,7 @@ Revert	Terugdraaien
 Rotate Left	Linksom draaien
 Rotate Right	Rechtsom draaien
 Rounded Rectangle	Afgeronde rechthoek
+Run the AI tools on any graphics card with Vulkan or Direct3D 12 ({mb} MB download, WebGPU). A weak built-in graphics chip can be slower than the CPU.	Voer de AI-hulpmiddelen uit op elke videokaart met Vulkan of Direct3D 12 ({mb} MB download, WebGPU). Een zwakke ingebouwde grafische chip kan trager zijn dan de CPU.
 Run the AI tools on the graphics card ({mb} MB download, NVIDIA's CUDA libraries).	De AI-hulpmiddelen op de videokaart draaien ({mb} MB downloaden, de CUDA-bibliotheken van NVIDIA).
 Running {file}…	{file} draait…
 SCUNet σ15 — light noise	SCUNet σ15 — lichte ruis

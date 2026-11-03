@@ -82,6 +82,7 @@ Download	Télécharger
 Download AI Runtime…	Télécharger le moteur d'IA…
 Download GPU Support	Télécharger la prise en charge du GPU
 Downloaded from Microsoft (ONNX Runtime) and NVIDIA (CUDA libraries, via their official PyPI packages).	Téléchargé depuis Microsoft (ONNX Runtime) et NVIDIA (bibliothèques CUDA, via leurs paquets PyPI officiels).
+Downloaded from Microsoft's official PyPI package (onnxruntime-ep-webgpu).	Téléchargé depuis le paquet PyPI officiel de Microsoft (onnxruntime-ep-webgpu).
 Downloaded {file}	Téléchargé : {file}
 Downloading GPU support ({mb} MB)…	Téléchargement de la prise en charge du GPU ({mb} Mo)…
 Downloading the AI runtime…	Téléchargement du moteur d'IA…
@@ -112,6 +113,7 @@ Folder	Dossier
 Font size	Taille de police
 For a faithful clean-up, use Denoise instead.	Pour un nettoyage fidèle, utilisez plutôt Réduire le bruit.
 Format	Format
+GPU (AMD, Intel and others, experimental)	GPU (AMD, Intel et autres, expérimental)
 GPU (NVIDIA)	GPU (NVIDIA)
 GPU image scaling	Mise à l'échelle par le GPU
 GPU support	Prise en charge du GPU
@@ -154,6 +156,7 @@ Name	Nom
 Nearest	Plus proche voisin
 Next Frame	Image suivante de l'animation
 Next Image	Image suivante
+no graphics card with Vulkan or Direct3D 12 was found	aucune carte graphique avec Vulkan ou Direct3D 12 n'a été trouvée
 No location in this file	Aucun emplacement dans ce fichier
 No model installed yet.	Aucun modèle installé pour l'instant.
 No object found in the box	Aucun objet trouvé dans le cadre
@@ -206,6 +209,7 @@ Revert	Rétablir l'original
 Rotate Left	Pivoter à gauche
 Rotate Right	Pivoter à droite
 Rounded Rectangle	Rectangle arrondi
+Run the AI tools on any graphics card with Vulkan or Direct3D 12 ({mb} MB download, WebGPU). A weak built-in graphics chip can be slower than the CPU.	Exécuter les outils d'IA sur toute carte graphique avec Vulkan ou Direct3D 12 (téléchargement de {mb} Mo, WebGPU). Une puce graphique intégrée peu puissante peut être plus lente que le processeur.
 Run the AI tools on the graphics card ({mb} MB download, NVIDIA's CUDA libraries).	Exécuter les outils d'IA sur la carte graphique (téléchargement de {mb} Mo, bibliothèques CUDA de NVIDIA).
 Running {file}…	Exécution de {file}…
 SCUNet σ15 — light noise	SCUNet σ15 — bruit léger

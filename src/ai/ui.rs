@@ -30,25 +30,37 @@ pub fn license_ui(ui: &mut egui::Ui, title: &str, l: &License, step: usize, coun
     .inner
 }
 
-/// The GPU row of the AI Models dialog.
-fn gpu_ui(ui: &mut egui::Ui, use_gpu: &mut bool, downloading: bool, out: &mut ModelsOut) {
-    if !nvidia_driver() && !gpu_installed() {
-        return;
+/// The GPU rows of the AI Models dialog: NVIDIA (CUDA) and any other card (WebGPU).
+fn gpu_ui(ui: &mut egui::Ui, use_gpu: &mut bool, busy: &HashSet<String>, runtime: bool, out: &mut ModelsOut) {
+    let button = |ui: &mut egui::Ui, downloading: bool| ui.add_enabled(!downloading, egui::Button::new(if downloading { tr("Downloading…") } else { tr("Download GPU Support") })).clicked();
+    if nvidia_driver() || gpu_installed() {
+        ui.add_space(4.0);
+        ui.strong(tr("GPU (NVIDIA)"));
+        if !gpu_installed() {
+            ui.horizontal(|ui| {
+                ui.label(trf("Run the AI tools on the graphics card ({mb} MB download, NVIDIA's CUDA libraries).", &[("mb", &GPU_DOWNLOAD_MB)]));
+                out.download_gpu = button(ui, busy.contains("gpu"));
+            });
+        }
     }
-    ui.add_space(4.0);
-    ui.strong(tr("GPU (NVIDIA)"));
-    if gpu_installed() {
+    // The plugin runs on the AI runtime, so it needs that first.
+    if runtime {
+        ui.add_space(4.0);
+        ui.strong(tr("GPU (AMD, Intel and others, experimental)"));
+        if !webgpu_installed() {
+            ui.horizontal(|ui| {
+                ui.label(trf("Run the AI tools on any graphics card with Vulkan or Direct3D 12 ({mb} MB download, WebGPU). A weak built-in graphics chip can be slower than the CPU.", &[("mb", &WEBGPU_DOWNLOAD_MB)]));
+                out.download_webgpu = button(ui, busy.contains("webgpu"));
+            });
+        }
+    }
+    if gpu_installed() || webgpu_installed() {
         ui.checkbox(use_gpu, tr("Use the GPU")).on_hover_text(tr("Denoise and Enhance run about 10× faster on a GTX 1050"));
         if gpu_needs_restart() {
             ui.colored_label(ui.visuals().warn_fg_color, tr("Restart lightview to start using the GPU."));
         } else if let Some(e) = gpu_error().filter(|_| *use_gpu) {
             ui.colored_label(ui.visuals().warn_fg_color, trf("The GPU couldn't be used, so the CPU is: {e}", &[("e", &short_error(&e))]));
         }
-    } else {
-        ui.horizontal(|ui| {
-            ui.label(trf("Run the AI tools on the graphics card ({mb} MB download, NVIDIA's CUDA libraries).", &[("mb", &GPU_DOWNLOAD_MB)]));
-            out.download_gpu = ui.add_enabled(!downloading, egui::Button::new(if downloading { tr("Downloading…") } else { tr("Download GPU Support") })).clicked();
-        });
     }
 }
 
@@ -68,6 +80,7 @@ pub fn enhance_notice(file: &str) -> Vec<String> {
 #[derive(Default)]
 pub struct ModelsOut {
     pub download_gpu: bool,
+    pub download_webgpu: bool,
     /// An index into `CATALOG`.
     pub download: Option<usize>,
     /// Read this model's input size.
@@ -84,7 +97,7 @@ pub fn models_ui(ui: &mut egui::Ui, s: &mut AiSettings, installed: &[String], bu
     if !runtime {
         ui.colored_label(ui.visuals().warn_fg_color, tr("The AI runtime isn't installed yet: Tools > Download AI Runtime…"));
     }
-    gpu_ui(ui, &mut s.use_gpu, busy.contains("gpu"), &mut out);
+    gpu_ui(ui, &mut s.use_gpu, busy, runtime, &mut out);
     let name = |f: &str| {
         let mb = models_dir().ok().and_then(|d| std::fs::metadata(d.join(f)).ok()).map_or(0, |m| m.len().div_ceil(1_000_000));
         match known(f) {

@@ -16,15 +16,12 @@ pub(super) fn session(file: &str) -> Result<ort::session::Session, String> {
         let mut builder = builder.with_intra_threads(threads).map_err(|e| e.to_string())?;
         builder.commit_from_file(&path).map_err(|e| e.to_string())
     };
-    if !(USE_GPU.load(Ordering::Relaxed) && { environment()?; GPU_LOADED.load(Ordering::Relaxed) }) {
+    let env = environment()?;
+    if !(USE_GPU.load(Ordering::Relaxed) && (GPU_LOADED.load(Ordering::Relaxed) || WEBGPU_LOADED.load(Ordering::Relaxed))) {
         return cpu();
     }
-    // The GPU, falling back to the CPU (and saying why) if it can't be used.
-    let gpu = (|| -> Result<ort::session::Session, String> {
-        let builder = ort::session::Session::builder(environment()?).map_err(|e| e.to_string())?;
-        let mut builder = builder.with_execution_providers([ort::ep::CUDA::default().build().error_on_failure()]).map_err(|e| e.to_string())?;
-        builder.commit_from_file(&path).map_err(|e| e.to_string())
-    })();
+    // The GPU (CUDA when its build is loaded, else WebGPU), falling back to the CPU (and saying why) if it can't be used.
+    let gpu = if GPU_LOADED.load(Ordering::Relaxed) { cuda_session(&path) } else { webgpu_session(env, &path) };
     match gpu {
         Ok(session) => {
             *GPU_ERROR.lock().unwrap() = None;
@@ -37,9 +34,23 @@ pub(super) fn session(file: &str) -> Result<ort::session::Session, String> {
     }
 }
 
+fn cuda_session(path: &Path) -> Result<ort::session::Session, String> {
+    let builder = ort::session::Session::builder(environment()?).map_err(|e| e.to_string())?;
+    let mut builder = builder.with_execution_providers([ort::ep::CUDA::default().build().error_on_failure()]).map_err(|e| e.to_string())?;
+    builder.commit_from_file(path).map_err(|e| e.to_string())
+}
+
+/// A session on the WebGPU plugin's device; an error when it found no GPU.
+pub(super) fn webgpu_session(env: &ort::environment::Environment, path: &Path) -> Result<ort::session::Session, String> {
+    let device = env.devices().find(|d| d.ep().is_ok_and(|ep| ep == WEBGPU_EP)).ok_or(tr("no graphics card with Vulkan or Direct3D 12 was found"))?;
+    let builder = ort::session::Session::builder(env).map_err(|e| e.to_string())?;
+    let mut builder = builder.with_devices([device], None).map_err(|e| e.to_string())?;
+    builder.commit_from_file(path).map_err(|e| e.to_string())
+}
+
 /// Whether the last session runs on the GPU.
 pub fn on_gpu() -> bool {
-    GPU_LOADED.load(Ordering::Relaxed) && USE_GPU.load(Ordering::Relaxed) && gpu_error().is_none()
+    (GPU_LOADED.load(Ordering::Relaxed) || WEBGPU_LOADED.load(Ordering::Relaxed)) && USE_GPU.load(Ordering::Relaxed) && gpu_error().is_none()
 }
 
 /// Denoise / Enhance: runs an image-to-image model over `img` in overlapping tiles.

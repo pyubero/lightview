@@ -82,6 +82,7 @@ Download	Scarica
 Download AI Runtime…	Scarica motore IA…
 Download GPU Support	Scarica il supporto GPU
 Downloaded from Microsoft (ONNX Runtime) and NVIDIA (CUDA libraries, via their official PyPI packages).	Scaricato da Microsoft (ONNX Runtime) e NVIDIA (librerie CUDA, tramite i pacchetti PyPI ufficiali).
+Downloaded from Microsoft's official PyPI package (onnxruntime-ep-webgpu).	Scaricato dal pacchetto PyPI ufficiale di Microsoft (onnxruntime-ep-webgpu).
 Downloaded {file}	Scaricato: {file}
 Downloading GPU support ({mb} MB)…	Download del supporto GPU ({mb} MB)…
 Downloading the AI runtime…	Download del motore IA…
@@ -112,6 +113,7 @@ Folder	Cartella
 Font size	Dimensione del carattere
 For a faithful clean-up, use Denoise instead.	Per una pulizia fedele, usa invece Riduci rumore.
 Format	Formato
+GPU (AMD, Intel and others, experimental)	GPU (AMD, Intel e altre, sperimentale)
 GPU (NVIDIA)	GPU (NVIDIA)
 GPU image scaling	Ridimensionamento con GPU
 GPU support	Supporto GPU
@@ -154,6 +156,7 @@ Name	Nome
 Nearest	Vicino più prossimo
 Next Frame	Fotogramma successivo
 Next Image	Immagine successiva
+no graphics card with Vulkan or Direct3D 12 was found	non è stata trovata alcuna scheda grafica con Vulkan o Direct3D 12
 No location in this file	Nessuna posizione in questo file
 No model installed yet.	Nessun modello ancora installato.
 No object found in the box	Nessun oggetto trovato nel riquadro
@@ -206,6 +209,7 @@ Revert	Ripristina
 Rotate Left	Ruota a sinistra
 Rotate Right	Ruota a destra
 Rounded Rectangle	Rettangolo arrotondato
+Run the AI tools on any graphics card with Vulkan or Direct3D 12 ({mb} MB download, WebGPU). A weak built-in graphics chip can be slower than the CPU.	Esegui gli strumenti IA su qualsiasi scheda grafica con Vulkan o Direct3D 12 (download di {mb} MB, WebGPU). Un chip grafico integrato poco potente può essere più lento della CPU.
 Run the AI tools on the graphics card ({mb} MB download, NVIDIA's CUDA libraries).	Esegui gli strumenti IA sulla scheda grafica (download di {mb} MB, librerie CUDA di NVIDIA).
 Running {file}…	Esecuzione di {file}…
 SCUNet σ15 — light noise	SCUNet σ15 — rumore leggero

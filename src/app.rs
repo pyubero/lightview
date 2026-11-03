@@ -329,7 +329,7 @@ impl App {
             Msg::Downloaded(file, result) => {
                 self.downloading.remove(&file);
                 self.set_status(match result {
-                    Ok(()) if file == "gpu" => tr("GPU support installed: restart lightview to use it").into(),
+                    Ok(()) if file == "gpu" || file == "webgpu" => tr("GPU support installed: restart lightview to use it").into(),
                     Ok(()) => trf("Downloaded {file}", &[("file", &file)]),
                     Err(e) => trf("Couldn't download {file}: {e}", &[("file", &file), ("e", &e)]),
                 });

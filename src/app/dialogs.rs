@@ -15,6 +15,8 @@ pub(super) enum Download {
     Runtime,
     /// ONNX Runtime's GPU build and NVIDIA's CUDA libraries.
     Gpu,
+    /// ONNX Runtime's WebGPU plugin.
+    WebGpu,
 }
 
 /// The Rename dialog's state.
@@ -276,6 +278,8 @@ impl App {
             self.license_prompt = Some((Download::Model(i), 0));
         } else if out.download_gpu {
             self.license_prompt = Some((Download::Gpu, 0));
+        } else if out.download_webgpu {
+            self.license_prompt = Some((Download::WebGpu, 0));
         } else if let Some(file) = out.detect {
             // Opening a big model takes a moment, so not on the UI thread.
             std::thread::spawn(move || notify.send(Msg::Detected(file.clone(), crate::ai::input_size(&file))));
@@ -298,6 +302,7 @@ impl App {
             Download::Model(i) => (tr(crate::ai::CATALOG[i].label), crate::ai::CATALOG[i].licenses, crate::ai::CATALOG[i].converted_by.map(tr)),
             Download::Runtime => (tr("AI runtime (ONNX Runtime)"), std::slice::from_ref(&crate::ai::RUNTIME_LICENSE), None),
             Download::Gpu => (tr("GPU support"), &crate::ai::GPU_LICENSES[..], Some(tr("Downloaded from Microsoft (ONNX Runtime) and NVIDIA (CUDA libraries, via their official PyPI packages)."))),
+            Download::WebGpu => (tr("GPU support"), crate::ai::WEBGPU_LICENSES, Some(tr("Downloaded from Microsoft's official PyPI package (onnxruntime-ep-webgpu)."))),
         };
         let modal = egui::Modal::new(egui::Id::unique("license")).show(ctx, |ui| crate::ai::license_ui(ui, title, &licenses[step], step, licenses.len(), note));
         let close = modal.should_close();
@@ -316,6 +321,11 @@ impl App {
                         self.downloading.insert("gpu".into());
                         self.set_status(trf("Downloading GPU support ({mb} MB)…", &[("mb", &crate::ai::GPU_DOWNLOAD_MB)]));
                         std::thread::spawn(move || notify.send(Msg::Downloaded("gpu".into(), crate::ai::download_gpu())));
+                    }
+                    Download::WebGpu => {
+                        self.downloading.insert("webgpu".into());
+                        self.set_status(trf("Downloading GPU support ({mb} MB)…", &[("mb", &crate::ai::WEBGPU_DOWNLOAD_MB)]));
+                        std::thread::spawn(move || notify.send(Msg::Downloaded("webgpu".into(), crate::ai::download_webgpu())));
                     }
                     Download::Runtime => {
                         self.set_status(tr("Downloading the AI runtime…"));

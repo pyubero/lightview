@@ -104,15 +104,23 @@ Settings are saved in `~/.local/share/lightview/app.ron`.
 
 ## AI tools
 
-Everything runs on your own computer, on the CPU or an NVIDIA GPU. Your images are never uploaded:
+Everything runs on your own computer, on the CPU or a GPU. Your images are never uploaded:
 lightview only goes online to download the runtime and models you ask for, and after that the AI
 tools work offline.
 
 The AI tools are in the Image menu. They need ONNX Runtime, installed with Image → Download AI
 Runtime…, and at least one model for the task. Models live in `~/.local/share/lightview/models`.
 
-Support for NVIDIA GPUs is optional: Image → AI Models… offers a download of about 1.5 GB. If the GPU
-can't be used, lightview falls back to the CPU and shows why.
+GPU support is optional, and Image → AI Models… offers two downloads:
+
+- **NVIDIA** (CUDA, about 1.5 GB): the fastest choice, around 10× faster than the CPU on a GTX 1050.
+- **AMD, Intel and others** (WebGPU, about 6 MB on Linux and 13 MB on Windows; experimental): any
+  graphics card with Vulkan (Linux) or Direct3D 12 (Windows). On a GTX 1050 it denoised 2.5× faster
+  than the CPU, but a weak built-in chip such as Intel UHD 630 was slower than the CPU, so try it
+  and switch "Use the GPU" off if it doesn't help. On Linux it needs the system's Vulkan loader
+  (`libvulkan1`). With both installed, NVIDIA's is used.
+
+If the GPU can't be used, lightview falls back to the CPU and shows why.
 
 There are two kinds of model.
 

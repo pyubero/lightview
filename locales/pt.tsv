@@ -82,6 +82,7 @@ Download	Transferir
 Download AI Runtime…	Transferir motor de IA…
 Download GPU Support	Transferir suporte para GPU
 Downloaded from Microsoft (ONNX Runtime) and NVIDIA (CUDA libraries, via their official PyPI packages).	Transferido da Microsoft (ONNX Runtime) e da NVIDIA (bibliotecas CUDA, através dos pacotes oficiais do PyPI).
+Downloaded from Microsoft's official PyPI package (onnxruntime-ep-webgpu).	Descarregado do pacote oficial da Microsoft no PyPI (onnxruntime-ep-webgpu).
 Downloaded {file}	Transferido: {file}
 Downloading GPU support ({mb} MB)…	A transferir o suporte para GPU ({mb} MB)…
 Downloading the AI runtime…	A transferir o motor de IA…
@@ -112,6 +113,7 @@ Folder	Pasta
 Font size	Tamanho do tipo de letra
 For a faithful clean-up, use Denoise instead.	Para uma limpeza fiel ao original, use antes Reduzir ruído.
 Format	Formato
+GPU (AMD, Intel and others, experimental)	GPU (AMD, Intel e outras, experimental)
 GPU (NVIDIA)	GPU (NVIDIA)
 GPU image scaling	Escalamento de imagem pela GPU
 GPU support	Suporte para GPU
@@ -154,6 +156,7 @@ Name	Nome
 Nearest	Vizinho mais próximo
 Next Frame	Fotograma seguinte
 Next Image	Imagem seguinte
+no graphics card with Vulkan or Direct3D 12 was found	não foi encontrada nenhuma placa gráfica com Vulkan ou Direct3D 12
 No location in this file	Este ficheiro não tem localização
 No model installed yet.	Ainda não há nenhum modelo instalado.
 No object found in the box	Nenhum objeto encontrado na caixa
@@ -206,6 +209,7 @@ Revert	Reverter
 Rotate Left	Rodar para a esquerda
 Rotate Right	Rodar para a direita
 Rounded Rectangle	Retângulo arredondado
+Run the AI tools on any graphics card with Vulkan or Direct3D 12 ({mb} MB download, WebGPU). A weak built-in graphics chip can be slower than the CPU.	Executar as ferramentas de IA em qualquer placa gráfica com Vulkan ou Direct3D 12 (transferência de {mb} MB, WebGPU). Um chip gráfico integrado fraco pode ser mais lento do que a CPU.
 Run the AI tools on the graphics card ({mb} MB download, NVIDIA's CUDA libraries).	Executar as ferramentas de IA na placa gráfica (transferência de {mb} MB, bibliotecas CUDA da NVIDIA).
 Running {file}…	A executar {file}…
 SCUNet σ15 — light noise	SCUNet σ15 — ruído ligeiro

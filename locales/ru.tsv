@@ -82,6 +82,7 @@ Download	Скачать
 Download AI Runtime…	Скачать среду ИИ…
 Download GPU Support	Скачать поддержку GPU
 Downloaded from Microsoft (ONNX Runtime) and NVIDIA (CUDA libraries, via their official PyPI packages).	Скачивается у Microsoft (ONNX Runtime) и NVIDIA (библиотеки CUDA, из их официальных пакетов PyPI).
+Downloaded from Microsoft's official PyPI package (onnxruntime-ep-webgpu).	Загружается из официального пакета Microsoft на PyPI (onnxruntime-ep-webgpu).
 Downloaded {file}	Скачано: {file}
 Downloading GPU support ({mb} MB)…	Скачивание поддержки GPU ({mb} МБ)…
 Downloading the AI runtime…	Скачивание среды ИИ…
@@ -112,6 +113,7 @@ Folder	Папка
 Font size	Размер шрифта
 For a faithful clean-up, use Denoise instead.	Для точной очистки лучше используйте удаление шума.
 Format	Формат
+GPU (AMD, Intel and others, experimental)	GPU (AMD, Intel и другие, экспериментально)
 GPU (NVIDIA)	GPU (NVIDIA)
 GPU image scaling	Масштабирование изображений на GPU
 GPU support	Поддержка GPU
@@ -154,6 +156,7 @@ Name	Имя
 Nearest	Ближайший сосед
 Next Frame	Следующий кадр
 Next Image	Следующее изображение
+no graphics card with Vulkan or Direct3D 12 was found	не найдена видеокарта с Vulkan или Direct3D 12
 No location in this file	В этом файле нет местоположения
 No model installed yet.	Ни одна модель пока не установлена.
 No object found in the box	В рамке не найден объект
@@ -206,6 +209,7 @@ Revert	Вернуть
 Rotate Left	Повернуть влево
 Rotate Right	Повернуть вправо
 Rounded Rectangle	Скруглённый прямоугольник
+Run the AI tools on any graphics card with Vulkan or Direct3D 12 ({mb} MB download, WebGPU). A weak built-in graphics chip can be slower than the CPU.	Запускать инструменты ИИ на любой видеокарте с Vulkan или Direct3D 12 (загрузка {mb} МБ, WebGPU). Слабый встроенный графический чип может работать медленнее процессора.
 Run the AI tools on the graphics card ({mb} MB download, NVIDIA's CUDA libraries).	Запускать инструменты ИИ на видеокарте (скачивание {mb} МБ, библиотеки CUDA от NVIDIA).
 Running {file}…	Выполняется {file}…
 SCUNet σ15 — light noise	SCUNet σ15 — слабый шум

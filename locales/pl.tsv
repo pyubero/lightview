@@ -82,6 +82,7 @@ Download	Pobierz
 Download AI Runtime…	Pobierz środowisko AI…
 Download GPU Support	Pobierz obsługę GPU
 Downloaded from Microsoft (ONNX Runtime) and NVIDIA (CUDA libraries, via their official PyPI packages).	Pobierane od Microsoftu (ONNX Runtime) i NVIDII (biblioteki CUDA, z ich oficjalnych pakietów PyPI).
+Downloaded from Microsoft's official PyPI package (onnxruntime-ep-webgpu).	Pobierany z oficjalnego pakietu Microsoftu w PyPI (onnxruntime-ep-webgpu).
 Downloaded {file}	Pobrano {file}
 Downloading GPU support ({mb} MB)…	Pobieranie obsługi GPU ({mb} MB)…
 Downloading the AI runtime…	Pobieranie środowiska AI…
@@ -112,6 +113,7 @@ Folder	Folder
 Font size	Rozmiar czcionki
 For a faithful clean-up, use Denoise instead.	Do wiernego oczyszczenia użyj raczej usuwania szumu.
 Format	Format
+GPU (AMD, Intel and others, experimental)	GPU (AMD, Intel i inne, eksperymentalnie)
 GPU (NVIDIA)	GPU (NVIDIA)
 GPU image scaling	Skalowanie obrazu na GPU
 GPU support	Obsługa GPU
@@ -154,6 +156,7 @@ Name	Nazwa
 Nearest	Najbliższy sąsiad
 Next Frame	Następna klatka
 Next Image	Następny obraz
+no graphics card with Vulkan or Direct3D 12 was found	nie znaleziono karty graficznej z Vulkan lub Direct3D 12
 No location in this file	Brak lokalizacji w tym pliku
 No model installed yet.	Nie zainstalowano jeszcze żadnego modelu.
 No object found in the box	Nie znaleziono obiektu w ramce
@@ -206,6 +209,7 @@ Revert	Przywróć
 Rotate Left	Obróć w lewo
 Rotate Right	Obróć w prawo
 Rounded Rectangle	Zaokrąglony prostokąt
+Run the AI tools on any graphics card with Vulkan or Direct3D 12 ({mb} MB download, WebGPU). A weak built-in graphics chip can be slower than the CPU.	Uruchamiaj narzędzia AI na dowolnej karcie graficznej z Vulkan lub Direct3D 12 (pobieranie {mb} MB, WebGPU). Słaby zintegrowany układ graficzny może być wolniejszy niż CPU.
 Run the AI tools on the graphics card ({mb} MB download, NVIDIA's CUDA libraries).	Uruchamiaj narzędzia AI na karcie graficznej (pobranie {mb} MB, biblioteki CUDA firmy NVIDIA).
 Running {file}…	Uruchamianie {file}…
 SCUNet σ15 — light noise	SCUNet σ15 — lekki szum
