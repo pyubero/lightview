@@ -184,7 +184,7 @@ impl App {
         // Straighten turns the drawn image about its centre: no pixel work while the slider moves.
         // shortcut: markup and the checkerboard stay upright meanwhile; turn them too if that's confusing.
         let centre = view::to_screen(dest, crop, doc.bounds().center());
-        let turn = egui::emath::Rot2::from_angle(if self.tool == Tool::Straighten { self.straighten.to_radians() } else { 0.0 });
+        let turn = egui::emath::Rot2::from_angle(if let Tool::Straighten(degrees) = self.tool { degrees.to_radians() } else { 0.0 });
         let mut mesh = egui::Mesh::with_texture(texture);
         let shown = [crop.left_top(), crop.right_top(), crop.right_bottom(), crop.left_bottom()];
         let screen = [dest.left_top(), dest.right_top(), dest.right_bottom(), dest.left_bottom()];
@@ -220,17 +220,17 @@ impl App {
             }
         }
         self.paint_selection(ui, dest, crop);
-        if self.tool == Tool::Crop {
-            self.paint_crop(ui, dest, crop, viewport);
+        if let Tool::Crop(rect) = self.tool {
+            self.paint_crop(ui, rect, dest, crop, viewport);
         }
-        if self.tool == Tool::Perspective {
-            self.paint_perspective(ui, dest, crop, viewport);
+        if let Tool::Perspective { corners, .. } = self.tool {
+            self.paint_perspective(ui, corners, dest, crop, viewport);
         }
-        if self.tool == Tool::Straighten {
-            self.paint_straighten(ui, doc.size_vec(), dest, crop, viewport);
+        if let Tool::Straighten(degrees) = self.tool {
+            self.paint_straighten(ui, degrees, doc.size_vec(), dest, crop, viewport);
         }
-        if self.tool == Tool::Measure {
-            self.paint_measure(ui, &edited, dest, crop, viewport);
+        if let Tool::Measure { ends, .. } = self.tool {
+            self.paint_measure(ui, ends, &edited, dest, crop, viewport);
         }
         if self.tool == Tool::CopyColor {
             bubble(ui.painter(), Pos2::new(viewport.center().x, viewport.top() + 24.0), tr("Click a pixel to copy its colour · Esc to stop"));
@@ -340,10 +340,10 @@ impl App {
         painter.extend(egui::Shape::dashed_line(&outline, egui::Stroke::new(1.0, Color32::WHITE), 5.0, 4.0));
     }
 
-    fn paint_crop(&self, ui: &egui::Ui, dest: Rect, crop: Rect, viewport: Rect) {
+    fn paint_crop(&self, ui: &egui::Ui, rect: Option<Rect>, dest: Rect, crop: Rect, viewport: Rect) {
         let painter = ui.painter().with_clip_rect(dest);
         let shade = Color32::from_black_alpha(140);
-        match self.crop_rect.map(|r| Rect::from_two_pos(view::to_screen(dest, crop, r.min), view::to_screen(dest, crop, r.max))) {
+        match rect.map(|r| Rect::from_two_pos(view::to_screen(dest, crop, r.min), view::to_screen(dest, crop, r.max))) {
             Some(r) => {
                 // Darken everything outside the crop.
                 for side in [
@@ -355,7 +355,7 @@ impl App {
                     painter.rect_filled(side, 0.0, shade);
                 }
                 painter.rect_stroke(r, 0.0, egui::Stroke::new(1.0, Color32::WHITE), egui::StrokeKind::Middle);
-                if let Some(name) = self.crop_rect.and_then(view::ratio_name) {
+                if let Some(name) = rect.and_then(view::ratio_name) {
                     bubble(&painter, Pos2::new(r.center().x, r.top() + 20.0), name);
                 }
             }
@@ -367,9 +367,9 @@ impl App {
     }
 
     /// Straighten: the canvas the turned image will get, with a grid to line things up against.
-    fn paint_straighten(&self, ui: &egui::Ui, size: Vec2, dest: Rect, crop: Rect, viewport: Rect) {
+    fn paint_straighten(&self, ui: &egui::Ui, degrees: f32, size: Vec2, dest: Rect, crop: Rect, viewport: Rect) {
         let image = Rect::from_two_pos(view::to_screen(dest, crop, Pos2::ZERO), view::to_screen(dest, crop, size.to_pos2()));
-        let kept = Rect::from_center_size(image.center(), edit::straighten_size(size, self.straighten) * (image.size() / size));
+        let kept = Rect::from_center_size(image.center(), edit::straighten_size(size, degrees) * (image.size() / size));
         let painter = ui.painter().with_clip_rect(viewport);
         let shade = Color32::from_black_alpha(160);
         for side in [
@@ -393,8 +393,7 @@ impl App {
         bubble(ui.painter(), Pos2::new(viewport.center().x, viewport.top() + 24.0), tr("Turn until the lines run straight · Enter to apply · Esc to cancel"));
     }
 
-    fn paint_perspective(&self, ui: &egui::Ui, dest: Rect, crop: Rect, viewport: Rect) {
-        let Some(corners) = self.perspective else { return };
+    fn paint_perspective(&self, ui: &egui::Ui, corners: [Pos2; 4], dest: Rect, crop: Rect, viewport: Rect) {
         let q = corners.map(|p| view::to_screen(dest, crop, p));
         let painter = ui.painter().with_clip_rect(viewport);
         let convex = edit::is_convex(q);
@@ -418,8 +417,8 @@ impl App {
         bubble(ui.painter(), Pos2::new(viewport.center().x, viewport.top() + 24.0), tr("Drag the corners onto a rectangle · Enter to apply · Esc to cancel"));
     }
 
-    fn paint_measure(&self, ui: &egui::Ui, doc: &Doc, dest: Rect, crop: Rect, viewport: Rect) {
-        let hint = match self.measure {
+    fn paint_measure(&self, ui: &egui::Ui, ends: Option<[Pos2; 2]>, doc: &Doc, dest: Rect, crop: Rect, viewport: Rect) {
+        let hint = match ends {
             Some(m) => {
                 let [a, b] = m.map(|p| view::to_screen(dest, crop, p));
                 let painter = ui.painter().with_clip_rect(viewport);

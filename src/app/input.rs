@@ -26,18 +26,19 @@ impl App {
         match self.tool {
             Tool::Select => Some(Pick::Select),
             Tool::Draw(s) => Some(Pick::Draw(s)),
-            Tool::Measure => Some(Pick::Measure),
+            Tool::Measure { .. } => Some(Pick::Measure),
             _ => None,
         }
     }
 
     pub(super) fn set_pick(&mut self, pick: Pick) {
         self.finish_text();
-        (self.crop_rect, self.selected) = (None, None);
+        self.selected = None;
         self.tool = match pick {
             Pick::Select => Tool::Select,
             Pick::Draw(s) => Tool::Draw(s),
-            Pick::Measure => Tool::Measure,
+            Pick::Measure if matches!(self.tool, Tool::Measure { .. }) => self.tool,
+            Pick::Measure => Tool::Measure { ends: None, drag: 0 },
         };
         self.show_toolbar = true;
     }
@@ -282,13 +283,13 @@ impl App {
                 Action::Undo => self.undo_redo(true),
                 Action::Redo => self.undo_redo(false),
                 Action::Crop if self.selection.is_some() => self.image_from_selection(),
-                Action::Crop => (self.tool, self.crop_rect) = (Tool::Crop, None),
+                Action::Crop => self.tool = Tool::Crop(None),
                 Action::Perspective => {
                     if let Some(doc) = self.doc() {
                         self.finish_text();
                         let r = doc.bounds().shrink2(doc.size_vec() * 0.1);
-                        self.perspective = Some([r.left_top(), r.right_top(), r.right_bottom(), r.left_bottom()]);
-                        (self.tool, self.crop_rect, self.selected) = (Tool::Perspective, None, None);
+                        let corners = [r.left_top(), r.right_top(), r.right_bottom(), r.left_bottom()];
+                        (self.tool, self.selected) = (Tool::Perspective { corners, drag: None }, None);
                     }
                 }
                 Action::Resize => self.resize_dialog = self.doc().map(|d| ResizeDialog::new(&d)),
@@ -319,15 +320,15 @@ impl App {
                 Action::Straighten => {
                     if self.doc().is_some() {
                         self.finish_text();
-                        (self.tool, self.straighten, self.crop_rect, self.selected) = (Tool::Straighten, 0.0, None, None);
+                        (self.tool, self.selected) = (Tool::Straighten(0.0), None);
                     }
                 }
-                Action::Measure if self.tool == Tool::Measure => (self.tool, self.measure) = (Tool::Pan, None),
-                Action::Measure => (self.tool, self.crop_rect) = (Tool::Measure, None),
+                Action::Measure if matches!(self.tool, Tool::Measure { .. }) => self.tool = Tool::Pan,
+                Action::Measure => self.tool = Tool::Measure { ends: None, drag: 0 },
                 Action::CopyColor if self.tool == Tool::CopyColor => self.tool = Tool::Pan,
                 Action::CopyColor => {
                     self.finish_text();
-                    (self.tool, self.crop_rect, self.selected) = (Tool::CopyColor, None, None);
+                    (self.tool, self.selected) = (Tool::CopyColor, None);
                 }
                 Action::ShowToolbar => {
                     self.show_toolbar = !self.show_toolbar;
@@ -340,7 +341,7 @@ impl App {
                 Action::Describe => self.show_info = true,
                 Action::SelectTool(kind) => {
                     self.finish_text();
-                    (self.tool, self.crop_rect, self.selected) = (Tool::Selection(*kind), None, None);
+                    (self.tool, self.selected) = (Tool::Selection(*kind), None);
                 }
                 Action::SelectAll => self.selection = self.doc().map(|d| Selection::Rect(d.bounds())),
                 Action::Deselect => self.selection = None,
@@ -397,18 +398,18 @@ impl App {
             if matches!(self.tool, Tool::Selection(_)) {
                 self.selection = None;
             }
-            (self.tool, self.crop_rect, self.measure, self.selected, self.perspective) = (Tool::Pan, None, None, None, None);
+            (self.tool, self.selected) = (Tool::Pan, None);
         } else if esc && !typing && fullscreen {
             ctx.send_viewport_cmd(ViewportCommand::Fullscreen(false));
         }
-        if enter && self.tool == Tool::Crop && let Some(r) = self.crop_rect.take() {
+        if enter && let Tool::Crop(Some(r)) = self.tool {
             self.edit(|d| d.crop_to(r));
             self.tool = Tool::Pan;
         }
-        if enter && self.tool == Tool::Straighten && !self.perspective_prompt {
+        if enter && matches!(self.tool, Tool::Straighten(_)) && !self.perspective_prompt {
             self.apply_straighten();
         }
-        if enter && self.tool == Tool::Perspective && !self.perspective_prompt && self.adjusting.is_none() {
+        if enter && matches!(self.tool, Tool::Perspective { .. }) && !self.perspective_prompt && self.adjusting.is_none() {
             if self.doc.as_ref().is_some_and(|d| !d.elements.is_empty()) {
                 self.perspective_prompt = true;
             } else {
@@ -451,12 +452,12 @@ impl App {
             return drag;
         }
         match self.tool {
-            Tool::Pan | Tool::Straighten if drag.dragged() => self.view = view::pan(self.view, drag.drag_delta(), img, viewport, ppp),
-            Tool::Pan | Tool::Straighten => {}
+            Tool::Pan | Tool::Straighten(_) if drag.dragged() => self.view = view::pan(self.view, drag.drag_delta(), img, viewport, ppp),
+            Tool::Pan | Tool::Straighten(_) => {}
             Tool::Select | Tool::Draw(_) => self.markup_input(ctx, &drag, dest, vis, doc),
             Tool::Selection(kind) => self.selection_input(ctx, &drag, dest, vis, img, kind),
-            Tool::Crop | Tool::Measure => self.crop_measure_input(ctx, &drag, dest, vis, img),
-            Tool::Perspective => self.perspective_input(ctx, &drag, dest, vis, img),
+            Tool::Crop(_) | Tool::Measure { .. } => self.crop_measure_input(ctx, &drag, dest, vis, img),
+            Tool::Perspective { .. } => self.perspective_input(ctx, &drag, dest, vis, img),
             Tool::CopyColor => self.copy_color_input(ctx, &drag, dest, vis, doc),
         }
         drag
@@ -504,17 +505,17 @@ impl App {
         if drag.drag_started() && let Some(o) = origin {
             self.drag_start = Some(at(o));
             // Measure: grab an endpoint near the press, or start a new line.
-            let near = self.measure.and_then(|m| (0..2).find(|&i| view::to_screen(dest, vis, m[i]).distance(o) < 10.0));
-            match near {
-                Some(i) => self.measure_drag = i,
-                None if self.tool == Tool::Measure => (self.measure, self.measure_drag) = (Some([at(o); 2]), 1),
-                None => {}
+            if let Tool::Measure { ends, drag: held } = &mut self.tool {
+                match ends.and_then(|m| (0..2).find(|&i| view::to_screen(dest, vis, m[i]).distance(o) < 10.0)) {
+                    Some(i) => *held = i,
+                    None => (*ends, *held) = (Some([at(o); 2]), 1),
+                }
             }
         }
         if drag.dragged() && let (Some(a), Some(p)) = (self.drag_start, drag.interact_pointer_pos()) {
-            match (self.tool, &mut self.measure) {
-                (Tool::Measure, Some(m)) => m[self.measure_drag] = at(p),
-                (Tool::Crop, _) => self.crop_rect = Some(Rect::from_two_pos(a, view::snap_ratio(a, at(p), bounds))),
+            match &mut self.tool {
+                Tool::Measure { ends: Some(m), drag: held } => m[*held] = at(p),
+                Tool::Crop(rect) => *rect = Some(Rect::from_two_pos(a, view::snap_ratio(a, at(p), bounds))),
                 _ => {}
             }
         }
@@ -542,16 +543,16 @@ impl App {
         if drag.hovered() {
             ctx.set_cursor_icon(CursorIcon::Crosshair);
         }
-        let Some(corners) = &mut self.perspective else { return };
+        let Tool::Perspective { corners, drag: held } = &mut self.tool else { return };
         if drag.drag_started() && let Some(o) = ctx.input(|i| i.pointer.press_origin()) {
             let off = |i: usize| view::to_screen(dest, vis, corners[i]).distance(o);
-            self.perspective_drag = (0..4).min_by(|&a, &b| off(a).total_cmp(&off(b))).filter(|&i| off(i) < 14.0);
+            *held = (0..4).min_by(|&a, &b| off(a).total_cmp(&off(b))).filter(|&i| off(i) < 14.0);
         }
-        if drag.dragged() && let (Some(i), Some(p)) = (self.perspective_drag, drag.interact_pointer_pos()) {
+        if drag.dragged() && let (Some(i), Some(p)) = (*held, drag.interact_pointer_pos()) {
             corners[i] = Rect::from_min_size(Pos2::ZERO, img).clamp(view::to_image(dest, vis, p));
         }
         if drag.drag_stopped() {
-            self.perspective_drag = None;
+            *held = None;
         }
     }
 

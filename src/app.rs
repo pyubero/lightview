@@ -40,11 +40,14 @@ enum SelKind {
 #[derive(Clone, Copy, PartialEq)]
 enum Tool {
     Pan,
-    Crop,
-    Perspective,
-    /// Turning the image by `App::straighten` degrees.
-    Straighten,
-    Measure,
+    /// The crop rect so far, in image px.
+    Crop(Option<Rect>),
+    /// The corners (output px, clockwise from the top left) and which one is being dragged.
+    Perspective { corners: [Pos2; 4], drag: Option<usize> },
+    /// Turning the image by this many degrees, clockwise.
+    Straighten(f32),
+    /// The two endpoints (image px) and which one is being dragged.
+    Measure { ends: Option<[Pos2; 2]>, drag: usize },
     CopyColor,
     Select,
     Draw(Shape),
@@ -126,21 +129,12 @@ pub struct App {
     /// The edits last saved to a copy.
     saved: Option<Doc>,
     tool: Tool,
-    /// Crop tool: where the drag started and the rect so far, in image px.
+    /// Crop, Measure and selection tools: where the drag started, in image px.
     drag_start: Option<Pos2>,
     /// A drag started with the right button is under way: it pans.
     right_pan: bool,
-    crop_rect: Option<Rect>,
-    /// Perspective tool: the corners (output px, clockwise from the top left) and which one is being dragged.
-    perspective: Option<[Pos2; 4]>,
-    perspective_drag: Option<usize>,
     /// Asking before flattening the markup into the corrected image.
     perspective_prompt: bool,
-    /// Straighten's angle in degrees, clockwise.
-    straighten: f32,
-    /// Measure tool: the two endpoints (image px) and which one is being dragged.
-    measure: Option<[Pos2; 2]>,
-    measure_drag: usize,
     show_toolbar: bool,
     /// The style for new markup (None until the toolbar is first used on this image).
     style: Option<Style>,
@@ -225,7 +219,7 @@ impl App {
             files: start.into_iter().collect(), index: 0,
             cache: HashMap::new(), preview: None, error: None, view: View::Fit,
             texture: None, tex_key: None, resized: None, baked: None, sharp: None, sharp_wanted: 1, flat: None, generation: 0, anim_frame: 0, anim_due: None, anim_paused: false,
-            doc: None, undo: Vec::new(), redo: Vec::new(), deleted: Vec::new(), delete_prompt: false, renaming: None, watched, own_stamp: None, changed_prompt: false, navigator: None, saved: None, tool: Tool::Pan, drag_start: None, right_pan: false, crop_rect: None, perspective: None, perspective_drag: None, perspective_prompt: false, straighten: 0.0, measure: None, measure_drag: 1,
+            doc: None, undo: Vec::new(), redo: Vec::new(), deleted: Vec::new(), delete_prompt: false, renaming: None, watched, own_stamp: None, changed_prompt: false, navigator: None, saved: None, tool: Tool::Pan, drag_start: None, right_pan: false, perspective_prompt: false,
             show_toolbar, style: None, selected: None, grab: Grab::None, editing_text: None, focus_text: false, change_base: None, last_restyle: None, selection: None, element_textures: HashMap::new(),
             resize_dialog: None, adjusting: None, curve_panel: None, pending: None, show_ai_models: false, license_prompt: None, restoring: None, restore_runs: 0, compare: None, enhance_notice: None, reading: false, found_text: None, show_shortcuts: false, recording: None, shortcut_error: None, visible: None, downloading: HashSet::new(),
             title: String::new(),
@@ -446,7 +440,10 @@ impl App {
         if doc != before {
             if doc.geometry() != before.geometry() {
                 // The measurement's and selection's points are in the old image coordinates.
-                (self.view, self.measure, self.selection) = (View::Fit, None, None);
+                (self.view, self.selection) = (View::Fit, None);
+                if let Tool::Measure { ends, .. } = &mut self.tool {
+                    *ends = None;
+                }
             }
             if doc.base != before.base {
                 self.generation += 1;
@@ -492,7 +489,10 @@ impl App {
         }
         to.push(current);
         if self.doc.as_ref().is_none_or(|d| d.geometry() != doc.geometry()) {
-            (self.view, self.measure, self.selection) = (View::Fit, None, None);
+            (self.view, self.selection) = (View::Fit, None);
+                if let Tool::Measure { ends, .. } = &mut self.tool {
+                    *ends = None;
+                }
         }
         self.doc = Some(doc);
     }
@@ -587,9 +587,7 @@ impl App {
         self.undo.clear();
         self.redo.clear();
         self.tool = Tool::Pan;
-        self.crop_rect = None;
-        (self.perspective, self.perspective_drag, self.perspective_prompt) = (None, None, false);
-        self.measure = None;
+        self.perspective_prompt = false;
         self.adjusting = None;
         (self.style, self.selected, self.grab, self.editing_text, self.change_base, self.last_restyle) = (None, None, Grab::None, None, None, None);
         self.selection = None;
@@ -779,13 +777,18 @@ impl App {
 
     /// Straightens what the perspective tool's corners enclose, as one undo step.
     fn apply_perspective(&mut self) {
-        let (Some(corners), Some(l)) = (self.perspective, self.current().and_then(|p| self.cache.get(p)).cloned()) else { return };
+        let corners = match self.tool {
+            Tool::Perspective { corners, .. } => Some(corners),
+            Tool::Straighten(degrees) => self.doc().map(|doc| edit::straighten_corners(doc.size_vec(), degrees)),
+            _ => None,
+        };
+        let (Some(corners), Some(l)) = (corners, self.current().and_then(|p| self.cache.get(p)).cloned()) else { return };
         let mut result = Ok(());
         // Straighten's corners lie outside the image: the new corners get the background colour.
-        let fill = (self.tool == Tool::Straighten).then_some(self.settings.background);
+        let fill = matches!(self.tool, Tool::Straighten(_)).then_some(self.settings.background);
         self.edit(|d| result = d.perspective(&l.frames[0], corners, fill));
         match result {
-            Ok(()) => (self.tool, self.perspective) = (Tool::Pan, None),
+            Ok(()) => self.tool = Tool::Pan,
             Err(e) => self.set_status(e),
         }
     }
@@ -794,11 +797,10 @@ impl App {
     /// before merging the markup and keeps colour live.
     fn apply_straighten(&mut self) {
         let Some(doc) = self.doc() else { return };
-        if self.straighten == 0.0 {
+        if self.tool == Tool::Straighten(0.0) {
             self.tool = Tool::Pan;
             return;
         }
-        self.perspective = Some(edit::straighten_corners(doc.size_vec(), self.straighten));
         if doc.elements.is_empty() {
             self.apply_perspective();
         } else {

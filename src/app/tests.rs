@@ -224,7 +224,7 @@ const RIGHT: egui::PointerButton = egui::PointerButton::Secondary;
 
 #[test]
 fn right_drag_pans_with_any_tool() {
-    for tool in [Tool::Draw(Shape::Rect), Tool::Draw(Shape::Magnifier), Tool::Select, Tool::Selection(SelKind::Rect), Tool::Crop, Tool::Measure, Tool::Pan] {
+    for tool in [Tool::Draw(Shape::Rect), Tool::Draw(Shape::Magnifier), Tool::Select, Tool::Selection(SelKind::Rect), Tool::Crop(None), Tool::Measure { ends: None, drag: 0 }, Tool::Pan] {
         let (mut app, start) = app_zoomed_in();
         app.tool = tool;
         feed(&mut app, drag_events(RIGHT));
@@ -232,7 +232,7 @@ fn right_drag_pans_with_any_tool() {
         assert!(!app.right_pan);
         // The tool saw nothing.
         assert!(app.doc().unwrap().elements.is_empty() && app.change_base.is_none());
-        assert!(app.selection.is_none() && app.crop_rect.is_none() && app.measure.is_none());
+        assert!(app.selection.is_none() && app.tool == tool);
     }
 }
 
@@ -484,12 +484,11 @@ fn straighten_applies_through_perspective() {
     app.cache.insert(path, Arc::new(Loaded { frames: vec![frame], file_size: 6, svg: None }));
     let ctx = egui::Context::default();
     app.run_actions(&[Action::Straighten], &ctx, false);
-    assert!(app.tool == Tool::Straighten);
-    app.straighten = 0.0;
+    assert!(app.tool == Tool::Straighten(0.0));
     app.apply_straighten();
     assert!(app.tool == Tool::Pan && app.doc().unwrap().base.is_none(), "0° changes nothing");
     app.run_actions(&[Action::Straighten], &ctx, false);
-    app.straighten = 8.0;
+    app.tool = Tool::Straighten(8.0);
     app.apply_straighten();
     let doc = app.doc().unwrap();
     let s = edit::straighten_size(Vec2::new(40.0, 30.0), 8.0);
@@ -511,6 +510,18 @@ fn copy_file_says_what_happened() {
     assert!(app.status.as_ref().is_some_and(|s| s.0.starts_with(&trf("Couldn't copy the file: {e}", &[("e", &"")]))), "{:?}", app.status);
 }
 
+/// The Perspective tool's corners, while it's the tool.
+fn corners(app: &App) -> Option<[Pos2; 4]> {
+    match app.tool {
+        Tool::Perspective { corners, .. } => Some(corners),
+        _ => None,
+    }
+}
+
+fn set_corners(app: &mut App, corners: [Pos2; 4]) {
+    app.tool = Tool::Perspective { corners, drag: None };
+}
+
 /// One frame of `handle_keys` with `key` pressed.
 fn press_key(app: &mut App, key: Key) {
     let ctx = egui::Context::default();
@@ -529,8 +540,8 @@ fn app_with_corners() -> (App, Arc<Loaded>) {
     app.cache.insert(path, l.clone());
     app.settings.gpu_scaling = false;
     app.run_actions(&[Action::Perspective], &egui::Context::default(), false);
-    assert!(app.tool == Tool::Perspective);
-    app.perspective = Some([Pos2::new(600.0, 100.0), Pos2::new(900.0, 100.0), Pos2::new(900.0, 900.0), Pos2::new(600.0, 900.0)]);
+    assert!(corners(&app).is_some());
+    set_corners(&mut app, [Pos2::new(600.0, 100.0), Pos2::new(900.0, 100.0), Pos2::new(900.0, 900.0), Pos2::new(600.0, 900.0)]);
     (app, l)
 }
 
@@ -554,7 +565,7 @@ fn perspective_shows_undoes_and_redoes() {
     let (mut app, l) = app_with_corners();
     assert_eq!(drawn_range(&mut app, &l), (0, 255));
     press_key(&mut app, Key::Enter);
-    assert!(app.tool == Tool::Pan && app.perspective.is_none());
+    assert!(app.tool == Tool::Pan);
     assert_eq!(app.doc().unwrap().size, [300, 800]);
     assert!(app.dirty());
     assert_eq!(drawn_range(&mut app, &l), (255, 255), "only the white part is left");
@@ -570,7 +581,7 @@ fn perspective_shows_undoes_and_redoes() {
 fn perspective_of_the_same_size_redraws() {
     // Nothing in the texture key but the generation can tell these pixels apart.
     let (mut app, l) = app_with_corners();
-    app.perspective = Some([Pos2::new(0.0, 1000.0), Pos2::new(1000.0, 1000.0), Pos2::new(1000.0, 0.0), Pos2::ZERO]);
+    set_corners(&mut app, [Pos2::new(0.0, 1000.0), Pos2::new(1000.0, 1000.0), Pos2::new(1000.0, 0.0), Pos2::ZERO]);
     drawn_range(&mut app, &l);
     let (key, resized) = (app.tex_key, app.resized.as_ref().unwrap().1.clone());
     press_key(&mut app, Key::Enter);
@@ -590,7 +601,7 @@ fn perspective_asks_before_flattening_markup() {
     // Enter and Esc belong to the dialog while it's open.
     press_key(&mut app, Key::Enter);
     press_key(&mut app, Key::Escape);
-    assert!(app.tool == Tool::Perspective && app.perspective.is_some());
+    assert!(corners(&app).is_some());
     app.apply_perspective();
     assert_eq!(app.doc().unwrap().size, [300, 800]);
     assert!(app.doc().unwrap().elements.is_empty());
@@ -599,29 +610,29 @@ fn perspective_asks_before_flattening_markup() {
 #[test]
 fn perspective_refuses_crossed_corners_and_keeps_the_tool() {
     let (mut app, _) = app_with_corners();
-    app.perspective = app.perspective.map(|[a, b, c, d]| [a, c, b, d]);
+    let [a, b, c, d] = corners(&app).unwrap();
+    set_corners(&mut app, [a, c, b, d]);
     press_key(&mut app, Key::Enter);
-    assert!(app.tool == Tool::Perspective && app.doc.is_none() && app.status.is_some());
+    assert!(corners(&app).is_some() && app.doc.is_none() && app.status.is_some());
 }
 
 #[test]
 fn perspective_corners_follow_the_drag() {
     let (mut app, _) = app_zoomed_in();
-    app.tool = Tool::Perspective;
     let viewport = Rect::from_min_size(Pos2::ZERO, Vec2::splat(400.0));
     let (dest, vis) = crate::view::layout(app.view, Vec2::splat(1000.0), viewport, 1.0);
     let at = |p: f32| crate::view::to_image(dest, vis, Pos2::new(p, p));
     let far = Pos2::new(999.0, 999.0);
-    app.perspective = Some([at(103.0), far, far, far]);
+    set_corners(&mut app, [at(103.0), far, far, far]);
     feed(&mut app, drag_events(LEFT));
-    let moved = app.perspective.unwrap();
+    let moved = corners(&app).unwrap();
     assert!(moved[0].distance(at(190.0)) < 1.0, "{:?}", moved[0]);
     assert_eq!(moved[1], far);
-    assert!(app.perspective_drag.is_none());
+    assert!(matches!(app.tool, Tool::Perspective { drag: None, .. }));
     // A press away from every corner moves none.
-    app.perspective = Some([at(150.0), far, far, far]);
+    set_corners(&mut app, [at(150.0), far, far, far]);
     feed(&mut app, drag_events(LEFT));
-    assert_eq!(app.perspective.unwrap()[0], at(150.0));
+    assert_eq!(corners(&app).unwrap()[0], at(150.0));
 }
 
 /// A temporary folder holding `files`, empty ones. Removed by hand at the end of a test.
@@ -1149,4 +1160,18 @@ fn shortcuts_obey_the_menus_rules() {
     app.cache.insert(path, Arc::new(Loaded { frames: vec![frame.clone(), frame], file_size: 6, svg: None }));
     app.run_actions(&[Action::Perspective], &ctx, false);
     assert!(app.tool == Tool::Pan);
+}
+
+#[test]
+fn a_tool_starts_afresh() {
+    let (mut app, _) = app_with_image();
+    let ctx = egui::Context::default();
+    app.run_actions(&[Action::Crop], &ctx, false);
+    app.tool = Tool::Crop(Some(Rect::from_min_size(Pos2::ZERO, Vec2::splat(1.0))));
+    app.run_actions(&[Action::Measure], &ctx, false);
+    app.tool = Tool::Measure { ends: Some([Pos2::ZERO; 2]), drag: 1 };
+    app.run_actions(&[Action::Crop], &ctx, false);
+    assert!(app.tool == Tool::Crop(None));
+    app.run_actions(&[Action::Measure], &ctx, false);
+    assert!(app.tool == Tool::Measure { ends: None, drag: 0 }, "no line from before");
 }

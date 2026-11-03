@@ -217,12 +217,13 @@ impl App {
 
     /// Straighten's angle. The canvas shows the image turned and its new bounds; Done or Enter applies it.
     pub(super) fn straighten_panel(&mut self, ctx: &egui::Context) {
-        if self.tool != Tool::Straighten || self.perspective_prompt {
+        if self.perspective_prompt {
             return;
         }
+        let Tool::Straighten(degrees) = &mut self.tool else { return };
         let mut open = true;
         let choice = egui::Window::new(tr("Straighten")).open(&mut open).resizable(false).collapsible(false).show(ctx, |ui| {
-            ui.add(egui::Slider::new(&mut self.straighten, -180.0..=180.0).step_by(0.1).fixed_decimals(1).suffix("°"));
+            ui.add(egui::Slider::new(degrees, -180.0..=180.0).step_by(0.1).fixed_decimals(1).suffix("°"));
             ui.add_space(6.0);
             edit::done_cancel(ui)
         }).and_then(|r| r.inner).flatten();

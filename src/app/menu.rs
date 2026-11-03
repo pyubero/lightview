@@ -417,7 +417,7 @@ impl App {
                 for kind in [SelKind::Rect, SelKind::Ellipse, SelKind::Lasso] {
                     selectable(ui, Action::SelectTool(kind), self.tool == Tool::Selection(kind), actions);
                 }
-                selectable(ui, Action::Measure, self.tool == Tool::Measure, actions);
+                selectable(ui, Action::Measure, matches!(self.tool, Tool::Measure { .. }), actions);
                 selectable(ui, Action::CopyColor, self.tool == Tool::CopyColor, actions);
                 hinted(ui, Action::ReadText(true), tr("Reads the selection, or the whole image. Shows what the code says; links are never opened."), actions);
                 ui.separator();
