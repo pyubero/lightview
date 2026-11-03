@@ -225,12 +225,52 @@ pub(super) fn taken(keys: &[(KeyboardShortcut, Action)], sc: KeyboardShortcut, a
 }
 
 impl App {
-    pub(super) fn menu_bar(&self, ui: &mut egui::Ui, actions: &mut Vec<Action>) {
+    /// Whether `action` can run now: its menu item is greyed out otherwise, and its shortcut does nothing.
+    pub(super) fn enabled(&self, action: &Action) -> bool {
+        use crate::ai::Task;
         let loaded = self.current().and_then(|p| self.cache.get(p));
         let has_image = loaded.is_some();
         // shortcut: animated images can't be saved; add GIF re-encoding if it's wanted.
         let can_save = loaded.is_some_and(|l| l.frames.len() == 1);
+        let paged = loaded.is_some_and(|l| l.paged());
+        let animated = loaded.is_some_and(|l| l.frames.len() > 1) && !paged;
+        let selected = self.selection.is_some();
+        let idle = self.restoring.is_none();
+        let ready = |task| has_image && idle && crate::ai::runtime_installed() && crate::ai::choose(self.settings.ai.choice(task), task, &crate::ai::installed()).is_some();
+        match action {
+            Action::Open | Action::OpenRecent(_) | Action::Close | Action::Settings | Action::Fullscreen | Action::AiModels | Action::DownloadRuntime | Action::Describe => true,
+            Action::SaveCopy => self.can_save_copy(),
+            Action::SaveAs => can_save,
+            Action::CopyPath | Action::CopyFile | Action::ShowInFolder | Action::DeleteImage => self.current().is_some(),
+            Action::Rename => self.current().is_some() && idle,
+            Action::Undo => !(self.undo.is_empty() && self.deleted.is_empty()),
+            Action::Redo => !self.redo.is_empty(),
+            Action::Cut | Action::DeleteSelection | Action::Deselect => selected,
+            Action::PrevImage | Action::FirstImage => self.index > 0,
+            Action::NextImage | Action::LastImage => self.index + 1 < self.files.len(),
+            Action::Play => animated && self.anim_paused,
+            Action::Pause => animated && !self.anim_paused,
+            Action::NextFrame | Action::PrevFrame => animated || paged,
+            // Done in Adjust Color goes back to the edits from before the panel opened.
+            Action::Perspective | Action::Straighten => can_save && self.adjusting.is_none(),
+            Action::Greyscale | Action::Invert => has_image && self.adjusting.is_none(),
+            Action::RedEye | Action::Pixelate => has_image && selected && idle,
+            Action::Cutout(_) => ready(Task::Background),
+            Action::Restore(task) => ready(*task),
+            Action::Inpaint => ready(Task::Inpaint) && selected,
+            Action::ReadText(false) => ready(Task::Ocr) && !self.reading,
+            Action::ReadText(true) => has_image && !self.reading,
+            Action::Copy | Action::Paste | Action::SelectAll | Action::Info | Action::ZoomIn | Action::ZoomOut | Action::Fit | Action::ActualSize => has_image,
+            Action::Crop | Action::Resize | Action::RotateLeft | Action::RotateRight | Action::FlipHorizontal | Action::FlipVertical => has_image,
+            Action::AdjustColor | Action::AdjustCurves | Action::AutoLevels | Action::ResetAdjust => has_image,
+            Action::ShowToolbar | Action::SelectTool(_) | Action::Measure | Action::CopyColor | Action::Pick(_) => has_image,
+        }
+    }
+
+    pub(super) fn menu_bar(&self, ui: &mut egui::Ui, actions: &mut Vec<Action>) {
         let keys = shortcuts(&self.settings.shortcuts);
+        let names = bindable();
+        let name = |action: &Action| tr(names.iter().find(|(a, _)| a == action).map_or("", |(_, name)| name));
         // A menu button, with the action's shortcut on the right.
         let button = |ui: &egui::Ui, label: &str, action: &Action| {
             let button = egui::Button::new(label);
@@ -240,15 +280,26 @@ impl App {
             }
         };
         // `Button::selectable` with the shortcut.
-        let selectable = |ui: &egui::Ui, label: &str, action: &Action, on: bool| button(ui, label, action).selected(on).frame_when_inactive(on).frame(true);
-        let item = |ui: &mut egui::Ui, label: &str, action: Action, enabled: bool, actions: &mut Vec<Action>| {
-            if ui.add_enabled(enabled, button(ui, label, &action)).clicked() {
+        let selectable = |ui: &mut egui::Ui, action: Action, on: bool, actions: &mut Vec<Action>| {
+            if ui.add_enabled(self.enabled(&action), button(ui, name(&action), &action).selected(on).frame_when_inactive(on).frame(true)).clicked() {
+                actions.push(action);
+            }
+        };
+        let labelled = |ui: &mut egui::Ui, label: &str, action: Action, actions: &mut Vec<Action>| {
+            if ui.add_enabled(self.enabled(&action), button(ui, label, &action)).clicked() {
+                actions.push(action);
+            }
+        };
+        let item = |ui: &mut egui::Ui, action: Action, actions: &mut Vec<Action>| labelled(ui, name(&action), action, actions);
+        // An item whose hint shows even while it's greyed out.
+        let hinted = |ui: &mut egui::Ui, action: Action, hint: &str, actions: &mut Vec<Action>| {
+            if ui.add_enabled(self.enabled(&action), button(ui, name(&action), &action)).on_hover_text(hint).on_disabled_hover_text(hint).clicked() {
                 actions.push(action);
             }
         };
         egui::MenuBar::new().ui(ui, |ui| {
             ui.menu_button(tr("File"), |ui| {
-                item(ui, tr("Open…"), Action::Open, true, actions);
+                item(ui, Action::Open, actions);
                 ui.menu_button(tr("Open Recent"), |ui| {
                     if self.recent.is_empty() {
                         ui.add_enabled(false, egui::Button::new(tr("No recent files")));
@@ -260,161 +311,131 @@ impl App {
                         }
                     }
                 });
-                item(ui, tr("Close"), Action::Close, true, actions);
+                item(ui, Action::Close, actions);
                 ui.separator();
-                item(ui, tr("Save Copy"), Action::SaveCopy, self.can_save_copy(), actions);
-                item(ui, tr("Save As…"), Action::SaveAs, can_save, actions);
+                item(ui, Action::SaveCopy, actions);
+                item(ui, Action::SaveAs, actions);
                 ui.separator();
-                let open = self.current().is_some();
-                item(ui, tr("Copy Path"), Action::CopyPath, open, actions);
-                item(ui, tr("Copy File"), Action::CopyFile, open, actions);
-                item(ui, tr("Show in File Manager"), Action::ShowInFolder, open, actions);
-                item(ui, tr("Rename…"), Action::Rename, open && self.restoring.is_none(), actions);
-                let delete = button(ui, tr("Delete Image…"), &Action::DeleteImage);
+                item(ui, Action::CopyPath, actions);
+                item(ui, Action::CopyFile, actions);
+                item(ui, Action::ShowInFolder, actions);
+                item(ui, Action::Rename, actions);
+                let delete = button(ui, name(&Action::DeleteImage), &Action::DeleteImage);
                 let delete = if keys.iter().any(|(_, a)| *a == Action::DeleteImage) { delete } else { delete.shortcut_text("Delete") };
-                if ui.add_enabled(self.current().is_some(), delete).clicked() {
+                if ui.add_enabled(self.enabled(&Action::DeleteImage), delete).clicked() {
                     actions.push(Action::DeleteImage);
                 }
             });
             ui.menu_button(tr("Edit"), |ui| {
-                item(ui, tr("Undo"), Action::Undo, !(self.undo.is_empty() && self.deleted.is_empty()), actions);
-                item(ui, tr("Redo"), Action::Redo, !self.redo.is_empty(), actions);
+                item(ui, Action::Undo, actions);
+                item(ui, Action::Redo, actions);
                 ui.separator();
-                let selected = self.selection.is_some();
                 // Ctrl+C/X/V come as clipboard events, not key presses.
-                for (label, action, enabled, keys) in [
-                    (tr("Cut"), Action::Cut, selected, "Ctrl+X"),
-                    (tr("Copy"), Action::Copy, has_image, "Ctrl+C"),
-                    (tr("Paste"), Action::Paste, has_image, "Ctrl+V"),
-                ] {
-                    if ui.add_enabled(enabled, egui::Button::new(label).shortcut_text(keys)).clicked() {
+                for (label, action, keys) in [(tr("Cut"), Action::Cut, "Ctrl+X"), (tr("Copy"), Action::Copy, "Ctrl+C"), (tr("Paste"), Action::Paste, "Ctrl+V")] {
+                    if ui.add_enabled(self.enabled(&action), egui::Button::new(label).shortcut_text(keys)).clicked() {
                         actions.push(action);
                     }
                 }
-                item(ui, tr("Delete Selection"), Action::DeleteSelection, selected, actions);
+                item(ui, Action::DeleteSelection, actions);
                 ui.separator();
-                item(ui, tr("Select All"), Action::SelectAll, has_image, actions);
-                item(ui, tr("Deselect"), Action::Deselect, selected, actions);
+                item(ui, Action::SelectAll, actions);
+                item(ui, Action::Deselect, actions);
                 ui.separator();
-                item(ui, tr("Settings…"), Action::Settings, true, actions);
+                item(ui, Action::Settings, actions);
             });
             ui.menu_button(tr("View"), |ui| {
-                item(ui, tr("Previous Image"), Action::PrevImage, self.index > 0, actions);
-                item(ui, tr("Next Image"), Action::NextImage, self.index + 1 < self.files.len(), actions);
-                item(ui, tr("First Image"), Action::FirstImage, self.index > 0, actions);
-                item(ui, tr("Last Image"), Action::LastImage, self.index + 1 < self.files.len(), actions);
+                item(ui, Action::PrevImage, actions);
+                item(ui, Action::NextImage, actions);
+                item(ui, Action::FirstImage, actions);
+                item(ui, Action::LastImage, actions);
                 ui.separator();
-                item(ui, tr("Zoom In"), Action::ZoomIn, has_image, actions);
-                item(ui, tr("Zoom Out"), Action::ZoomOut, has_image, actions);
-                item(ui, tr("Actual Size"), Action::ActualSize, has_image, actions);
-                item(ui, tr("Fit to Window"), Action::Fit, has_image, actions);
+                item(ui, Action::ZoomIn, actions);
+                item(ui, Action::ZoomOut, actions);
+                item(ui, Action::ActualSize, actions);
+                item(ui, Action::Fit, actions);
                 ui.separator();
-                item(ui, tr("Enter Full Screen"), Action::Fullscreen, true, actions);
+                item(ui, Action::Fullscreen, actions);
                 ui.separator();
                 let label = if self.show_info { tr("Hide Image Information") } else { tr("Show Image Information") };
-                item(ui, label, Action::Info, has_image, actions);
+                labelled(ui, label, Action::Info, actions);
                 ui.separator();
-                let paged = loaded.is_some_and(|l| l.paged());
-                let animated = loaded.is_some_and(|l| l.frames.len() > 1);
+                let paged = self.current().and_then(|p| self.cache.get(p)).is_some_and(|l| l.paged());
                 if paged {
                     ui.menu_button(tr("Pages"), |ui| {
-                        item(ui, tr("Next Page"), Action::NextFrame, true, actions);
-                        item(ui, tr("Previous Page"), Action::PrevFrame, true, actions);
+                        labelled(ui, tr("Next Page"), Action::NextFrame, actions);
+                        labelled(ui, tr("Previous Page"), Action::PrevFrame, actions);
                     });
                 }
-                ui.add_enabled_ui(animated && !paged, |ui| {
+                ui.add_enabled_ui(self.enabled(&Action::NextFrame) && !paged, |ui| {
                     ui.menu_button(tr("Animation"), |ui| {
-                        item(ui, tr("Play Animation"), Action::Play, self.anim_paused, actions);
-                        item(ui, tr("Pause Animation"), Action::Pause, !self.anim_paused, actions);
-                        item(ui, tr("Next Frame"), Action::NextFrame, true, actions);
-                        item(ui, tr("Previous Frame"), Action::PrevFrame, true, actions);
+                        item(ui, Action::Play, actions);
+                        item(ui, Action::Pause, actions);
+                        item(ui, Action::NextFrame, actions);
+                        item(ui, Action::PrevFrame, actions);
                     });
                 });
             });
             ui.menu_button(tr("Image"), |ui| {
-                item(ui, tr("Crop"), Action::Crop, has_image, actions);
-                item(ui, tr("Resize…"), Action::Resize, has_image, actions);
-                // Done in Adjust Color goes back to the edits from before the panel opened.
-                item(ui, tr("Correct Perspective"), Action::Perspective, can_save && self.adjusting.is_none(), actions);
-                item(ui, tr("Straighten…"), Action::Straighten, can_save && self.adjusting.is_none(), actions);
+                item(ui, Action::Crop, actions);
+                item(ui, Action::Resize, actions);
+                item(ui, Action::Perspective, actions);
+                item(ui, Action::Straighten, actions);
                 ui.separator();
-                item(ui, tr("Rotate Left"), Action::RotateLeft, has_image, actions);
-                item(ui, tr("Rotate Right"), Action::RotateRight, has_image, actions);
-                item(ui, tr("Flip Horizontally"), Action::FlipHorizontal, has_image, actions);
-                item(ui, tr("Flip Vertically"), Action::FlipVertical, has_image, actions);
+                item(ui, Action::RotateLeft, actions);
+                item(ui, Action::RotateRight, actions);
+                item(ui, Action::FlipHorizontal, actions);
+                item(ui, Action::FlipVertical, actions);
                 ui.separator();
-                item(ui, tr("Adjust Color…"), Action::AdjustColor, has_image, actions);
-                item(ui, tr("Adjust Curves…"), Action::AdjustCurves, has_image, actions);
-                item(ui, tr("Auto Levels"), Action::AutoLevels, has_image, actions);
-                item(ui, tr("Reset Color Adjustments"), Action::ResetAdjust, has_image, actions);
+                item(ui, Action::AdjustColor, actions);
+                item(ui, Action::AdjustCurves, actions);
+                item(ui, Action::AutoLevels, actions);
+                item(ui, Action::ResetAdjust, actions);
                 let adjust = self.doc().map(|d| d.adjust).unwrap_or_default();
-                for (label, action, on) in [(tr("Greyscale"), Action::Greyscale, adjust.saturation == -1.0), (tr("Invert Colors"), Action::Invert, adjust.invert)] {
-                    if ui.add_enabled(has_image && self.adjusting.is_none(), button(ui, label, &action).selected(on)).clicked() {
+                for (action, on) in [(Action::Greyscale, adjust.saturation == -1.0), (Action::Invert, adjust.invert)] {
+                    if ui.add_enabled(self.enabled(&action), button(ui, name(&action), &action).selected(on)).clicked() {
                         actions.push(action);
                     }
                 }
                 ui.separator();
-                let patch = has_image && self.selection.is_some() && self.restoring.is_none();
-                for (label, action, hint) in [
-                    (tr("Remove Red Eye"), Action::RedEye, tr("Select the eyes first, then choose this.")),
-                    (tr("Pixelate Selection"), Action::Pixelate, tr("Hides faces. For text, a solid shape is safer: pixelation can sometimes be undone.")),
-                ] {
-                    if ui.add_enabled(patch, button(ui, label, &action)).on_hover_text(hint).on_disabled_hover_text(hint).clicked() {
-                        actions.push(action);
-                    }
-                }
+                hinted(ui, Action::RedEye, tr("Select the eyes first, then choose this."), actions);
+                hinted(ui, Action::Pixelate, tr("Hides faces. For text, a solid shape is safer: pixelation can sometimes be undone."), actions);
                 ui.separator();
                 ui.weak(tr("AI Image Processing"));
-                let runtime = crate::ai::runtime_installed();
-                let models = crate::ai::installed();
                 use crate::ai::Task;
-                let ready = |task| has_image && runtime && self.restoring.is_none() && crate::ai::choose(self.settings.ai.choice(task), task, &models).is_some();
-                item(ui, tr("Remove Background"), Action::Cutout(false), ready(Task::Background), actions);
-                item(ui, tr("Remove Background and Crop"), Action::Cutout(true), ready(Task::Background), actions);
-                item(ui, tr("Denoise"), Action::Restore(Task::Denoise), ready(Task::Denoise), actions);
-                item(ui, tr("Enhance Image"), Action::Restore(Task::Enhance), ready(Task::Enhance), actions);
-                item(ui, tr("Remove Object"), Action::Inpaint, ready(Task::Inpaint) && self.selection.is_some(), actions);
+                item(ui, Action::Cutout(false), actions);
+                item(ui, Action::Cutout(true), actions);
+                item(ui, Action::Restore(Task::Denoise), actions);
+                item(ui, Action::Restore(Task::Enhance), actions);
+                item(ui, Action::Inpaint, actions);
                 let hint = tr("Reads the selection, or the whole image. Straighten tilted text first, and select small text in a large image so it's read at full size.");
-                if ui.add_enabled(ready(Task::Ocr) && !self.reading, button(ui, tr("Recognize Text"), &Action::ReadText(false))).on_hover_text(hint).on_disabled_hover_text(hint).clicked() {
-                    actions.push(Action::ReadText(false));
-                }
+                hinted(ui, Action::ReadText(false), hint, actions);
             });
             ui.menu_button(tr("Tools"), |ui| {
                 let label = if self.show_toolbar { tr("Hide Drawing Toolbar") } else { tr("Show Drawing Toolbar") };
-                item(ui, label, Action::ShowToolbar, has_image, actions);
+                labelled(ui, label, Action::ShowToolbar, actions);
                 ui.separator();
-                for (label, kind) in [(tr("Rectangular Selection"), SelKind::Rect), (tr("Elliptical Selection"), SelKind::Ellipse), (tr("Lasso"), SelKind::Lasso)] {
-                    if ui.add_enabled(has_image, selectable(ui, label, &Action::SelectTool(kind), self.tool == Tool::Selection(kind))).clicked() {
-                        actions.push(Action::SelectTool(kind));
-                    }
+                for kind in [SelKind::Rect, SelKind::Ellipse, SelKind::Lasso] {
+                    selectable(ui, Action::SelectTool(kind), self.tool == Tool::Selection(kind), actions);
                 }
-                let measuring = self.tool == Tool::Measure;
-                if ui.add_enabled(has_image, selectable(ui, tr("Measure"), &Action::Measure, measuring)).clicked() {
-                    actions.push(Action::Measure);
-                }
-                if ui.add_enabled(has_image, selectable(ui, tr("Copy Color"), &Action::CopyColor, self.tool == Tool::CopyColor)).clicked() {
-                    actions.push(Action::CopyColor);
-                }
-                let hint = tr("Reads the selection, or the whole image. Shows what the code says; links are never opened.");
-                if ui.add_enabled(has_image && !self.reading, button(ui, tr("Read QR Code"), &Action::ReadText(true))).on_hover_text(hint).on_disabled_hover_text(hint).clicked() {
-                    actions.push(Action::ReadText(true));
-                }
+                selectable(ui, Action::Measure, self.tool == Tool::Measure, actions);
+                selectable(ui, Action::CopyColor, self.tool == Tool::CopyColor, actions);
+                hinted(ui, Action::ReadText(true), tr("Reads the selection, or the whole image. Shows what the code says; links are never opened."), actions);
                 ui.separator();
-                item(ui, tr("Sketch"), Action::Pick(Pick::Draw(Shape::Sketch)), has_image, actions);
-                ui.add_enabled_ui(has_image, |ui| {
+                item(ui, Action::Pick(Pick::Draw(Shape::Sketch)), actions);
+                ui.add_enabled_ui(self.current().is_some_and(|p| self.cache.contains_key(p)), |ui| {
                     ui.menu_button(tr("Shapes"), |ui| {
-                        for (shape, name) in markup::SHAPES.map(|(shape, name)| (shape, tr(name))) {
-                            item(ui, name, Action::Pick(Pick::Draw(shape)), true, actions);
+                        for (shape, _) in markup::SHAPES {
+                            item(ui, Action::Pick(Pick::Draw(shape)), actions);
                         }
                     });
                 });
-                item(ui, tr("Text"), Action::Pick(Pick::Draw(Shape::Text)), has_image, actions);
-                item(ui, tr("Highlight"), Action::Pick(Pick::Draw(Shape::Highlight)), has_image, actions);
-                item(ui, tr("Magnifier"), Action::Pick(Pick::Draw(Shape::Magnifier)), has_image, actions);
+                item(ui, Action::Pick(Pick::Draw(Shape::Text)), actions);
+                item(ui, Action::Pick(Pick::Draw(Shape::Highlight)), actions);
+                item(ui, Action::Pick(Pick::Draw(Shape::Magnifier)), actions);
                 ui.separator();
-                item(ui, tr("AI Models…"), Action::AiModels, true, actions);
+                item(ui, Action::AiModels, actions);
                 if !crate::ai::runtime_installed() {
-                    item(ui, tr("Download AI Runtime…"), Action::DownloadRuntime, true, actions);
+                    item(ui, Action::DownloadRuntime, actions);
                 }
             });
         });

@@ -1134,3 +1134,19 @@ fn recent_list() {
     assert_eq!(recent.len(), RECENT_MAX);
     assert_eq!(recent[0], PathBuf::from("/19"));
 }
+
+#[test]
+fn shortcuts_obey_the_menus_rules() {
+    let (mut app, path) = app_with_image();
+    let ctx = egui::Context::default();
+    // Adjust Color is open: Greyscale would be lost on Done, and Perspective is greyed out.
+    app.adjusting = app.doc();
+    app.run_actions(&[Action::Greyscale, Action::Perspective, Action::Straighten], &ctx, false);
+    assert!(app.doc().unwrap().adjust.is_identity() && app.tool == Tool::Pan);
+    // An animation can't be warped.
+    app.adjusting = None;
+    let frame = app.cache.get(&path).unwrap().frames[0].clone();
+    app.cache.insert(path, Arc::new(Loaded { frames: vec![frame.clone(), frame], file_size: 6, svg: None }));
+    app.run_actions(&[Action::Perspective], &ctx, false);
+    assert!(app.tool == Tool::Pan);
+}

@@ -257,6 +257,9 @@ impl App {
 
     pub(super) fn run_actions(&mut self, actions: &[Action], ctx: &egui::Context, fullscreen: bool) {
         for action in actions {
+            if !self.enabled(action) {
+                continue;
+            }
             match action {
                 Action::Open => self.open_dialog(),
                 Action::SaveAs => self.save_dialog(),
@@ -273,13 +276,13 @@ impl App {
                         crate::platform::show_in_folder(path);
                     }
                 }
-                Action::Rename if self.restoring.is_none() => self.renaming = self.current().map(|p| Renaming::new(p)),
+                Action::Rename => self.renaming = self.current().map(|p| Renaming::new(p)),
                 Action::OpenRecent(path) => self.confirm(Pending::Open(path.clone())),
                 Action::Close => self.confirm(Pending::Close),
                 Action::Undo => self.undo_redo(true),
                 Action::Redo => self.undo_redo(false),
                 Action::Crop if self.selection.is_some() => self.image_from_selection(),
-                Action::Crop if self.doc().is_some() => (self.tool, self.crop_rect) = (Tool::Crop, None),
+                Action::Crop => (self.tool, self.crop_rect) = (Tool::Crop, None),
                 Action::Perspective => {
                     if let Some(doc) = self.doc() {
                         self.finish_text();
@@ -320,9 +323,9 @@ impl App {
                     }
                 }
                 Action::Measure if self.tool == Tool::Measure => (self.tool, self.measure) = (Tool::Pan, None),
-                Action::Measure if self.doc().is_some() => (self.tool, self.crop_rect) = (Tool::Measure, None),
+                Action::Measure => (self.tool, self.crop_rect) = (Tool::Measure, None),
                 Action::CopyColor if self.tool == Tool::CopyColor => self.tool = Tool::Pan,
-                Action::CopyColor if self.doc().is_some() => {
+                Action::CopyColor => {
                     self.finish_text();
                     (self.tool, self.crop_rect, self.selected) = (Tool::CopyColor, None, None);
                 }
@@ -333,9 +336,9 @@ impl App {
                         (self.tool, self.selected) = (Tool::Pan, None);
                     }
                 }
-                Action::Pick(pick) if self.doc().is_some() => self.set_pick(*pick),
+                Action::Pick(pick) => self.set_pick(*pick),
                 Action::Describe => self.show_info = true,
-                Action::SelectTool(kind) if self.doc().is_some() => {
+                Action::SelectTool(kind) => {
                     self.finish_text();
                     (self.tool, self.crop_rect, self.selected) = (Tool::Selection(*kind), None, None);
                 }
