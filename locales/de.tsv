@@ -391,3 +391,26 @@ line	Zeile
 Your own themes go in the themes folder next to the AI models. Choosing a theme again reloads its file.	Eigene Designs gehören in den Ordner themes neben den KI-Modellen. Ein Design erneut zu wählen lädt seine Datei neu.
 Couldn't load the theme, so the base theme is used: {e}	Das Design konnte nicht geladen werden, daher wird das Grunddesign verwendet: {e}
 Open themes folder	Design-Ordner öffnen
+Group Duplicates in Folder…	Duplikate im Ordner gruppieren…
+Group Duplicates in Folder	Duplikate im Ordner gruppieren
+Compares the images in this folder (not its subfolders) and moves each group of look-alikes into a folder of its own. Nothing is deleted, and Ctrl+Z moves them back. Rotated copies and heavy crops aren't found.	Vergleicht die Bilder in diesem Ordner (nicht in Unterordnern) und verschiebt jede Gruppe ähnlicher Bilder in einen eigenen Ordner. Nichts wird gelöscht, Strg+Z verschiebt sie zurück. Gedrehte Kopien und starke Zuschnitte werden nicht erkannt.
+Comparing images: {done} of {total}	Bilder werden verglichen: {done} von {total}
+How different each image is from its closest look-alike:	Wie stark jedes Bild vom ähnlichsten abweicht:
+Largest difference	Größte Abweichung
+{meaning} · suggested: {n}	{meaning} · Vorschlag: {n}
+Identical pixels only	Nur identische Pixel
+Resized or recompressed copies	Verkleinerte oder neu komprimierte Kopien
+Small edits, crops and bursts	Kleine Bearbeitungen, Zuschnitte und Serienbilder
+Merely similar scenes too	Auch nur ähnliche Motive
+Groups: {groups} · Images to move: {moving} · Staying: {staying}	Gruppen: {groups} · Zu verschiebende Bilder: {moving} · Bleiben: {staying}
+Not compared: {n}	Nicht verglichen: {n}
+Not compared	Nicht verglichen
+{name} · difference: {d}	{name} · Abweichung: {d}
+Move	Verschieben
+Images moved: {n} · Folders: {f}	Verschobene Bilder: {n} · Ordner: {f}
+Stopped: {e}	Abgebrochen: {e}
+Images moved back: {n}	Zurückverschobene Bilder: {n}
+{name}: changed since it was compared	{name}: seit dem Vergleich geändert
+{name}: already in the folder	{name}: schon im Ordner
+{name}: its old name is taken	{name}: der alte Name ist vergeben
+the file is gone	die Datei ist nicht mehr da

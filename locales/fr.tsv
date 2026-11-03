@@ -391,3 +391,26 @@ line	ligne
 Your own themes go in the themes folder next to the AI models. Choosing a theme again reloads its file.	Vos propres thèmes vont dans le dossier themes, à côté des modèles d'IA. Choisir à nouveau un thème relit son fichier.
 Couldn't load the theme, so the base theme is used: {e}	Impossible de charger le thème, le thème de base est donc utilisé : {e}
 Open themes folder	Ouvrir le dossier des thèmes
+Group Duplicates in Folder…	Regrouper les doublons du dossier…
+Group Duplicates in Folder	Regrouper les doublons du dossier
+Compares the images in this folder (not its subfolders) and moves each group of look-alikes into a folder of its own. Nothing is deleted, and Ctrl+Z moves them back. Rotated copies and heavy crops aren't found.	Compare les images de ce dossier (pas ses sous-dossiers) et déplace chaque groupe d'images semblables dans un dossier à part. Rien n'est supprimé, et Ctrl+Z les remet en place. Les copies pivotées et les recadrages importants ne sont pas trouvés.
+Comparing images: {done} of {total}	Comparaison des images : {done} sur {total}
+How different each image is from its closest look-alike:	Écart entre chaque image et sa plus proche ressemblante :
+Largest difference	Écart maximal
+{meaning} · suggested: {n}	{meaning} · suggéré : {n}
+Identical pixels only	Pixels identiques uniquement
+Resized or recompressed copies	Copies redimensionnées ou recompressées
+Small edits, crops and bursts	Petites retouches, recadrages et rafales
+Merely similar scenes too	Aussi les scènes simplement semblables
+Groups: {groups} · Images to move: {moving} · Staying: {staying}	Groupes : {groups} · Images à déplacer : {moving} · Restent : {staying}
+Not compared: {n}	Non comparées : {n}
+Not compared	Non comparées
+{name} · difference: {d}	{name} · écart : {d}
+Move	Déplacer
+Images moved: {n} · Folders: {f}	Images déplacées : {n} · Dossiers : {f}
+Stopped: {e}	Arrêté : {e}
+Images moved back: {n}	Images remises en place : {n}
+{name}: changed since it was compared	{name} : modifié depuis la comparaison
+{name}: already in the folder	{name} : déjà dans le dossier
+{name}: its old name is taken	{name} : son ancien nom est pris
+the file is gone	le fichier a disparu

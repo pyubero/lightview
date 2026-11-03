@@ -84,6 +84,8 @@ pub enum Msg {
     Downloaded(String, Result<(), String>),
     /// A model's input size was read.
     Detected(String, Result<u32, String>),
+    /// Group Duplicates run `id` compared the folder's image at this index.
+    Hashed(u64, usize, Result<crate::dedupe::Hashed, String>),
 }
 
 /// Sends messages to the UI and wakes it up. The context is set once eframe has created it;
@@ -134,7 +136,7 @@ impl Loader {
                 };
                 let target = *target.lock().unwrap();
                 let managed = color_managed.load(AtomicOrdering::Relaxed);
-                let msg = match catching(|| load(&path, target, managed, |frame| notify.send(Msg::Preview(path.clone(), frame)))) {
+                let msg = match catching(|| load(&path, target, managed, false, |frame| notify.send(Msg::Preview(path.clone(), frame)))) {
                     Ok(loaded) => Msg::Full(path.clone(), loaded),
                     Err(e) => Msg::Error(path.clone(), e),
                 };
@@ -169,6 +171,13 @@ pub fn catching<T>(f: impl FnOnce() -> Result<T, String>) -> Result<T, String> {
     catch_unwind(AssertUnwindSafe(f)).unwrap_or_else(|_| Err(tr("this file crashed its decoder").into()))
 }
 
+/// A small decode of `path` for comparing images: JPEGs at 1/8 when libjpeg-turbo is there, the
+/// first frame or page of anything else, with the same checks as opening it.
+pub fn small(path: &Path, color_managed: bool) -> Result<Frame, String> {
+    let loaded = catching(|| load(path, [64, 64], color_managed, true, |_| {}))?;
+    loaded.frames.into_iter().next().ok_or_else(|| tr("no frames").into())
+}
+
 /// Starts decoding `path` and listing its folder.
 pub fn start(path: &Path, sort: SortOrder, loader: &Loader, notify: &Notify) {
     loader.want(vec![path.to_path_buf()]);
@@ -183,7 +192,8 @@ pub fn relist(path: &Path, sort: SortOrder, notify: &Notify) {
 
 /// Decodes a file. For JPEGs, `on_preview` first gets the EXIF thumbnail (if any), then,
 /// when libjpeg-turbo is installed, a reduced-size decode just big enough for `target`.
-fn load(path: &Path, target: [u32; 2], color_managed: bool, on_preview: impl Fn(Frame) + Sync) -> Result<Loaded, String> {
+/// `preview_only` returns the reduced-size JPEG decode (and a TIFF's first page) as the image.
+fn load(path: &Path, target: [u32; 2], color_managed: bool, preview_only: bool, on_preview: impl Fn(Frame) + Sync) -> Result<Loaded, String> {
     // The folder's neighbours get here unopened, and any of them may be a FIFO, which would block
     // this worker for ever, or a link to a device that never ends.
     let meta = std::fs::metadata(path).map_err(|e| e.to_string())?;
@@ -310,6 +320,9 @@ fn load(path: &Path, target: [u32; 2], color_managed: bool, on_preview: impl Fn(
         // The scope joins the reduced-size decode, so its preview always arrives before the full image.
         let (on_preview, finish) = (&on_preview, &finish);
         std::thread::scope(|s| {
+            if preview_only {
+                return turbo::decode(bytes, den.unwrap_or(1));
+            }
             if let Some(den) = den {
                 s.spawn(move || {
                     if let Some(small) = turbo::decode(bytes, den) {
@@ -336,7 +349,7 @@ fn load(path: &Path, target: [u32; 2], color_managed: bool, on_preview: impl Fn(
     let img = if matches!(format, Some(ImageFormat::Hdr | ImageFormat::OpenExr)) { tone_map(img) } else { img };
     let first = finish(img);
     let pages = if format == Some(ImageFormat::Tiff) { tiff_pages(bytes) } else { Vec::new() };
-    if pages.is_empty() {
+    if pages.is_empty() || preview_only {
         return Ok(Loaded { frames: vec![first], file_size, svg: None });
     }
     on_preview(first.clone());
@@ -491,9 +504,9 @@ mod tests {
     #[test]
     fn a_wide_gamut_image_is_converted_unless_the_setting_is_off() {
         let path = wide_gamut("a.png");
-        let on = load(&path, [100, 100], true, |_| {}).unwrap();
+        let on = load(&path, [100, 100], true, false, |_| {}).unwrap();
         assert!(on.frames[0].pixels[0].abs_diff(215) <= 2, "{:?}", &on.frames[0].pixels[..3]);
-        let off = load(&path, [100, 100], false, |_| {}).unwrap();
+        let off = load(&path, [100, 100], false, false, |_| {}).unwrap();
         assert_eq!(off.frames[0].pixels[..3], [200, 100, 50]);
         std::fs::remove_dir_all(path.parent().unwrap()).unwrap();
     }
@@ -502,7 +515,7 @@ mod tests {
     fn the_preview_and_the_full_image_get_the_same_colours() {
         let path = wide_gamut("a.jpg");
         let previews = Mutex::new(Vec::new());
-        let loaded = load(&path, [8, 8], true, |frame| previews.lock().unwrap().push(frame.pixels[0])).unwrap();
+        let loaded = load(&path, [8, 8], true, false, |frame| previews.lock().unwrap().push(frame.pixels[0])).unwrap();
         let red = loaded.frames[0].pixels[0];
         assert!(red.abs_diff(215) <= 3, "{red}");
         if turbo::available() {
@@ -523,11 +536,11 @@ mod tests {
         let mut enc = image::codecs::webp::WebPEncoder::new_lossless(std::fs::File::create(&path).unwrap());
         enc.set_icc_profile(moxcms::ColorProfile::new_display_p3().encode().unwrap()).unwrap();
         DynamicImage::ImageRgb8(image::RgbImage::from_pixel(4, 4, image::Rgb([200, 100, 50]))).write_with_encoder(enc).unwrap();
-        assert!(load(&path, [100, 100], true, |_| {}).unwrap().frames[0].pixels[0].abs_diff(215) <= 2);
+        assert!(load(&path, [100, 100], true, false, |_| {}).unwrap().frames[0].pixels[0].abs_diff(215) <= 2);
         // APNG with an iCCP chunk, written by hand: two frames.
         let apng = dir.join("b.png");
         std::fs::write(&apng, apng_with_icc(&moxcms::ColorProfile::new_display_p3().encode().unwrap())).unwrap();
-        let l = load(&apng, [100, 100], true, |_| {}).unwrap();
+        let l = load(&apng, [100, 100], true, false, |_| {}).unwrap();
         assert_eq!(l.frames.len(), 2);
         assert!(l.frames.iter().all(|f| f.pixels[0].abs_diff(215) <= 2), "{:?}", l.frames.iter().map(|f| f.pixels[0]).collect::<Vec<_>>());
         std::fs::remove_dir_all(dir).unwrap();
@@ -559,7 +572,7 @@ mod tests {
         let mut enc = image::codecs::png::PngEncoder::new(std::fs::File::create(&path).unwrap());
         enc.set_icc_profile(vec![0xFF; 4096]).unwrap();
         DynamicImage::ImageRgb8(image::RgbImage::from_pixel(2, 2, image::Rgb([200, 100, 50]))).write_with_encoder(enc).unwrap();
-        assert_eq!(load(&path, [100, 100], true, |_| {}).unwrap().frames[0].pixels[..3], [200, 100, 50]);
+        assert_eq!(load(&path, [100, 100], true, false, |_| {}).unwrap().frames[0].pixels[..3], [200, 100, 50]);
         std::fs::remove_dir_all(dir).unwrap();
     }
 
@@ -567,9 +580,9 @@ mod tests {
     fn opens_svg() {
         let path = std::env::temp_dir().join(format!("lightview-{}.SVG", std::process::id()));
         std::fs::write(&path, r#"<svg xmlns="http://www.w3.org/2000/svg" width="3" height="2"/>"#).unwrap();
-        let loaded = load(&path, [100, 100], true, |_| {}).unwrap();
+        let loaded = load(&path, [100, 100], true, false, |_| {}).unwrap();
         std::fs::write(&path, "broken").unwrap();
-        let broken = load(&path, [100, 100], true, |_| {});
+        let broken = load(&path, [100, 100], true, false, |_| {});
         std::fs::remove_file(&path).unwrap();
         assert_eq!((loaded.frames[0].w, loaded.frames[0].h), (3, 2));
         assert!(loaded.svg.is_some() && broken.is_err());
@@ -579,7 +592,7 @@ mod tests {
     fn opens_ico_with_its_transparency() {
         let path = std::env::temp_dir().join(format!("lightview-{}.ico", std::process::id()));
         image::RgbaImage::from_fn(3, 2, |x, _| image::Rgba([200, 100, 50, x as u8 * 100])).save(&path).unwrap();
-        let loaded = load(&path, [100, 100], true, |_| {});
+        let loaded = load(&path, [100, 100], true, false, |_| {});
         std::fs::remove_file(&path).unwrap();
         let f = &loaded.unwrap().frames[0];
         assert_eq!((f.w, f.h, f.alpha), (3, 2, true));
@@ -678,7 +691,7 @@ mod tests {
         let previews = Mutex::new(0);
         let path = std::env::temp_dir().join(format!("lightview-{}-pages.tif", std::process::id()));
         std::fs::write(&path, tiff_file(&[(2, 2, 10, false), (1, 1, 99, true), (4, 2, 200, false)])).unwrap();
-        let loaded = load(&path, [100, 100], true, |_| *previews.lock().unwrap() += 1).unwrap();
+        let loaded = load(&path, [100, 100], true, false, |_| *previews.lock().unwrap() += 1).unwrap();
         std::fs::remove_file(&path).unwrap();
         assert!(loaded.paged());
         assert_eq!(*previews.lock().unwrap(), 1, "the first page shows while the rest decode");
@@ -787,7 +800,7 @@ mod tests {
         let path = std::env::temp_dir().join(format!("lightview-{}.tif", std::process::id()));
         let img = image::RgbImage::from_fn(3, 2, |x, y| image::Rgb([x as u8 * 40, y as u8 * 40, 200]));
         img.save(&path).unwrap();
-        let loaded = load(&path, [100, 100], true, |_| {});
+        let loaded = load(&path, [100, 100], true, false, |_| {});
         std::fs::remove_file(&path).unwrap();
         let f = &loaded.unwrap().frames[0];
         assert_eq!((f.w, f.h), (3, 2));
@@ -815,7 +828,7 @@ mod tests {
                 enc.encode_frame(image::Frame::from_parts(buf, 0, 0, image::Delay::from_numer_denom_ms(ms, 1))).unwrap();
             }
         }
-        let loaded = load(&path, [1280, 720], true, |_| panic!("GIFs have no preview")).unwrap();
+        let loaded = load(&path, [1280, 720], true, false, |_| panic!("GIFs have no preview")).unwrap();
         std::fs::remove_file(&path).unwrap();
         assert_eq!(loaded.frames.len(), 2);
         assert_eq!((loaded.frames[0].w, loaded.frames[0].h, loaded.frames[0].alpha), (4, 2, true));
@@ -843,7 +856,7 @@ mod tests {
         let n = NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
         let path = std::env::temp_dir().join(format!("lightview-{}-{n}-{name}", std::process::id()));
         std::fs::write(&path, bytes).unwrap();
-        let loaded = load(&path, [1280, 720], true, |_| {});
+        let loaded = load(&path, [1280, 720], true, false, |_| {});
         std::fs::remove_file(&path).unwrap();
         loaded
     }
@@ -884,7 +897,7 @@ mod tests {
         let (fifo, link) = (dir.join("pipe.jpg"), dir.join("zero.jpg"));
         assert!(std::process::Command::new("mkfifo").arg(&fifo).status().unwrap().success());
         std::os::unix::fs::symlink("/dev/zero", &link).unwrap();
-        let results = [&fifo, &link].map(|p| load(p, [100, 100], true, |_| {}).is_err());
+        let results = [&fifo, &link].map(|p| load(p, [100, 100], true, false, |_| {}).is_err());
         std::fs::remove_dir_all(&dir).unwrap();
         assert_eq!(results, [true, true]);
     }
@@ -893,7 +906,7 @@ mod tests {
     fn oversized_files_are_refused() {
         let path = std::env::temp_dir().join(format!("lightview-huge-{}.png", std::process::id()));
         std::fs::File::create(&path).unwrap().set_len(MAX_FILE_BYTES + 1).unwrap();
-        let loaded = load(&path, [100, 100], true, |_| {});
+        let loaded = load(&path, [100, 100], true, false, |_| {});
         std::fs::remove_file(&path).unwrap();
         assert_eq!(loaded.err().as_deref(), Some(tr("this image is too large to open")));
     }
@@ -908,5 +921,5 @@ mod tests {
 /// `load` for tests elsewhere: the frame's size, or the error.
 #[cfg(test)]
 pub fn load_for_test(path: &Path) -> Result<(u32, u32), String> {
-    load(path, [1280, 720], true, |_| {}).map(|l| (l.frames[0].w, l.frames[0].h))
+    load(path, [1280, 720], true, false, |_| {}).map(|l| (l.frames[0].w, l.frames[0].h))
 }

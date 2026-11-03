@@ -1,6 +1,6 @@
 # lightview — Group Duplicates (design)
 
-*Status: design, 2026-11-03, not built. Describes how the tool would behave. `ROADMAP-v3.md` lists "duplicate finding" as a non-goal; the user is open to reopening it (2026-11-03).*
+*Status: built on branch `group-duplicates`, 2026-11-03. Describes how the tool behaves. `ROADMAP-v3.md` lists "duplicate finding" as a non-goal; the user is open to reopening it (2026-11-03).*
 
 ## In one paragraph
 Tools → **Group Duplicates in Folder…** hashes every image in the current folder with a perceptual hash (pHash), shows how close the images are to each other and suggests a threshold, lets the user move a slider while watching the groups change, and then moves each group of look-alikes into a subfolder named after the group's first image. Nothing is deleted, nothing is written except those folders, nothing is cached, and one Ctrl+Z puts every file back.
@@ -18,10 +18,10 @@ Tools → **Group Duplicates in Folder…** hashes every image in the current fo
 
 ## Hashing
 - **Input:** a small decode, not the full image. JPEGs use libjpeg-turbo's 1/8 decode (12 MP → 500×375); other formats decode normally and are resized. EXIF orientation is applied first, so the hash matches what the user sees. The EXIF thumbnail is *not* used: it can be stale after editing elsewhere, and some cameras pad it with black bars.
-- **pHash:** greyscale → 32×32 (RGB-as-grey, `fast_image_resize`) → 2-D DCT → the 8×8 lowest frequencies without the DC term → each bit = coefficient above the median. 64 bits per image. About 40 lines; no new crate.
+- **pHash:** greyscale → 32×32 (RGB-as-grey, `fast_image_resize`) → 2-D DCT → the 8×8 lowest frequencies → each bit = coefficient above their median (as the common `imagehash` pHash). 64 bits per image. About 40 lines; no new crate.
 - **Distance:** Hamming distance between two hashes (`(a ^ b).count_ones()`), 0–64. Unrelated photos land around 28–36; a resized or recompressed copy is usually ≤ 4.
 - **Threads:** its own small pool (the decode pool's 3 workers), separate from `Loader`, so viewing stays responsive. Images are hashed in folder order; each result goes back over the existing message channel.
-- **Time:** dominated by reading and decoding. Roughly 15–25 ms per 12 MP JPEG at 1/8 on this machine, so 1 000 photos ≈ 6–8 s on 3 threads; PNGs and HEICs are slower (full decode). Pairwise distances are cheap: 10 000 images = 50 M popcounts ≈ 50 ms.
+- **Time:** dominated by reading and decoding. Measured 10.9 ms per image (wall time, 3 threads) on 30 generated 12 MP JPEGs with libjpeg-turbo, so 1 000 photos ≈ 11 s; real photos (more detail, bigger files, a cold disk) will be slower; PNGs and HEICs are slower (full decode). Pairwise distances are cheap: 10 000 images = 50 M popcounts ≈ 50 ms.
 
 ## Grouping
 Connected components (single linkage), user's choice:
@@ -71,7 +71,7 @@ Nothing is stored on disk: no hash database, no thumbnail cache, no file in the 
 One thing lightview won't control: the operating system keeps recently read files in RAM (the page cache), so a second run right after the first reads from memory and is faster. Dropping that needs root or per-file calls that would also evict files other apps are using, and a cold run isn't more correct, only slower. Benchmarks should time the first run after a reboot, or with `echo 3 | sudo tee /proc/sys/vm/drop_caches`.
 
 ## Cancelling
-The hashing screen shows "Hashing 312 / 1 204" with a progress bar and Cancel. Cancel stops the workers after their current file and drops everything. Nothing has moved until the Move button, so cancelling at any point before it leaves the folder untouched.
+The hashing screen shows "Comparing images: 312 of 1 204" with a progress bar and Cancel. Cancel stops the workers after their current file and drops everything. Nothing has moved until the Move button, so cancelling at any point before it leaves the folder untouched.
 
 ## Limits (for `docs/FEATURES.md` and the menu hover hint)
 - Rotated or mirrored copies aren't found (pHash isn't rotation-invariant), unless the rotation is only an EXIF flag.

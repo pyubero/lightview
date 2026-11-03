@@ -391,3 +391,26 @@ line	riga
 Your own themes go in the themes folder next to the AI models. Choosing a theme again reloads its file.	I tuoi temi vanno nella cartella themes, accanto ai modelli di IA. Scegliere di nuovo un tema ricarica il suo file.
 Couldn't load the theme, so the base theme is used: {e}	Impossibile caricare il tema, quindi si usa il tema di base: {e}
 Open themes folder	Apri cartella dei temi
+Group Duplicates in Folder…	Raggruppa duplicati nella cartella…
+Group Duplicates in Folder	Raggruppa duplicati nella cartella
+Compares the images in this folder (not its subfolders) and moves each group of look-alikes into a folder of its own. Nothing is deleted, and Ctrl+Z moves them back. Rotated copies and heavy crops aren't found.	Confronta le immagini di questa cartella (non le sottocartelle) e sposta ogni gruppo di immagini simili in una cartella a sé. Non viene eliminato nulla e Ctrl+Z le rimette a posto. Copie ruotate e ritagli ampi non vengono trovati.
+Comparing images: {done} of {total}	Confronto delle immagini: {done} di {total}
+How different each image is from its closest look-alike:	Quanto ogni immagine differisce dalla più somigliante:
+Largest difference	Differenza massima
+{meaning} · suggested: {n}	{meaning} · suggerito: {n}
+Identical pixels only	Solo pixel identici
+Resized or recompressed copies	Copie ridimensionate o ricompresse
+Small edits, crops and bursts	Piccole modifiche, ritagli e raffiche
+Merely similar scenes too	Anche scene solo simili
+Groups: {groups} · Images to move: {moving} · Staying: {staying}	Gruppi: {groups} · Immagini da spostare: {moving} · Restano: {staying}
+Not compared: {n}	Non confrontate: {n}
+Not compared	Non confrontate
+{name} · difference: {d}	{name} · differenza: {d}
+Move	Sposta
+Images moved: {n} · Folders: {f}	Immagini spostate: {n} · Cartelle: {f}
+Stopped: {e}	Interrotto: {e}
+Images moved back: {n}	Immagini rimesse a posto: {n}
+{name}: changed since it was compared	{name}: modificato dopo il confronto
+{name}: already in the folder	{name}: già nella cartella
+{name}: its old name is taken	{name}: il vecchio nome è occupato
+the file is gone	il file non esiste più

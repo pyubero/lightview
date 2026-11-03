@@ -1256,3 +1256,41 @@ fn another_image_starts_afresh() {
     app.navigate(1);
     assert!(app.shown.curve_panel.is_none() && app.shown.adjusting.is_none() && app.shown.tool == Tool::Pan);
 }
+
+#[test]
+fn group_duplicates_moves_look_alikes_and_undoes() {
+    let pattern = |seed: f32| image::RgbImage::from_fn(200, 150, |x, y| {
+        let v = ((x as f32 / 200.0 * (3.0 + seed) + y as f32 / 150.0 * (2.0 + seed * 0.7)).sin() * 0.5 + 0.5) * 220.0;
+        image::Rgb([v as u8, (v * 0.8) as u8, (255.0 - v) as u8])
+    });
+    let dir = temp_folder("group", &[]);
+    pattern(1.0).save(dir.join("a.png")).unwrap();
+    image::imageops::resize(&pattern(1.0), 100, 75, image::imageops::FilterType::Triangle).save(dir.join("b.png")).unwrap();
+    pattern(6.0).save(dir.join("c.png")).unwrap();
+    let (mut app, _) = app_with_image();
+    app.cache.clear();
+    app.files = crate::files::list_folder(&dir.join("a.png"), app.settings.sort);
+    app.index = 0;
+    app.run_actions(&[Action::GroupDuplicates], &egui::Context::default(), false);
+    let until = Instant::now() + std::time::Duration::from_secs(20);
+    while app.grouping.as_ref().is_some_and(|g| g.review.is_none()) && Instant::now() < until {
+        if let Ok(msg) = app.rx.recv_timeout(std::time::Duration::from_millis(100)) {
+            app.handle(msg);
+        }
+    }
+    let ctx = egui::Context::default();
+    ctx.set_fonts(markup::font_definitions());
+    frame(&mut app, &ctx, egui::RawInput::default());
+    let groups = app.grouping.as_ref().and_then(|g| g.review.as_ref()).map(|r| r.groups.1.clone());
+    assert_eq!(groups, Some(vec![vec![0, 1]]), "a and its smaller copy form one group");
+
+    app.move_groups();
+    let listed = |p: &str| dir.join(p).is_file();
+    assert!(listed("a/a.png") && listed("a/b.png") && listed("c.png") && !listed("a.png"));
+    assert_eq!(app.files, [dir.join("c.png")], "the viewer stays in the folder, on what's left");
+    assert!(app.grouping.is_none());
+
+    app.undo_redo(true);
+    assert!(listed("a.png") && listed("b.png") && !dir.join("a").exists());
+    std::fs::remove_dir_all(&dir).unwrap();
+}

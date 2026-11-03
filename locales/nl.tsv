@@ -391,3 +391,26 @@ line	regel
 Your own themes go in the themes folder next to the AI models. Choosing a theme again reloads its file.	Eigen thema's horen in de map themes naast de AI-modellen. Een thema opnieuw kiezen laadt het bestand opnieuw.
 Couldn't load the theme, so the base theme is used: {e}	Het thema kon niet worden geladen, dus het basisthema wordt gebruikt: {e}
 Open themes folder	Themamap openen
+Group Duplicates in Folder…	Duplicaten in map groeperen…
+Group Duplicates in Folder	Duplicaten in map groeperen
+Compares the images in this folder (not its subfolders) and moves each group of look-alikes into a folder of its own. Nothing is deleted, and Ctrl+Z moves them back. Rotated copies and heavy crops aren't found.	Vergelijkt de afbeeldingen in deze map (niet in submappen) en verplaatst elke groep gelijkende afbeeldingen naar een eigen map. Er wordt niets verwijderd en Ctrl+Z zet ze terug. Gedraaide kopieën en sterke uitsneden worden niet gevonden.
+Comparing images: {done} of {total}	Afbeeldingen vergelijken: {done} van {total}
+How different each image is from its closest look-alike:	Hoeveel elke afbeelding verschilt van de meest gelijkende:
+Largest difference	Grootste verschil
+{meaning} · suggested: {n}	{meaning} · voorgesteld: {n}
+Identical pixels only	Alleen identieke pixels
+Resized or recompressed copies	Verkleinde of opnieuw gecomprimeerde kopieën
+Small edits, crops and bursts	Kleine bewerkingen, uitsneden en reeksen
+Merely similar scenes too	Ook alleen gelijkende scènes
+Groups: {groups} · Images to move: {moving} · Staying: {staying}	Groepen: {groups} · Te verplaatsen afbeeldingen: {moving} · Blijven: {staying}
+Not compared: {n}	Niet vergeleken: {n}
+Not compared	Niet vergeleken
+{name} · difference: {d}	{name} · verschil: {d}
+Move	Verplaatsen
+Images moved: {n} · Folders: {f}	Verplaatste afbeeldingen: {n} · Mappen: {f}
+Stopped: {e}	Gestopt: {e}
+Images moved back: {n}	Teruggezette afbeeldingen: {n}
+{name}: changed since it was compared	{name}: gewijzigd sinds de vergelijking
+{name}: already in the folder	{name}: staat al in de map
+{name}: its old name is taken	{name}: de oude naam is bezet
+the file is gone	het bestand is weg

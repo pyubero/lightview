@@ -391,3 +391,26 @@ line	wiersz
 Your own themes go in the themes folder next to the AI models. Choosing a theme again reloads its file.	Własne motywy umieść w folderze themes obok modeli AI. Ponowny wybór motywu wczytuje jego plik od nowa.
 Couldn't load the theme, so the base theme is used: {e}	Nie udało się wczytać motywu, więc używany jest motyw podstawowy: {e}
 Open themes folder	Otwórz folder motywów
+Group Duplicates in Folder…	Grupuj duplikaty w folderze…
+Group Duplicates in Folder	Grupuj duplikaty w folderze
+Compares the images in this folder (not its subfolders) and moves each group of look-alikes into a folder of its own. Nothing is deleted, and Ctrl+Z moves them back. Rotated copies and heavy crops aren't found.	Porównuje obrazy w tym folderze (bez podfolderów) i przenosi każdą grupę podobnych obrazów do osobnego folderu. Nic nie jest usuwane, a Ctrl+Z przenosi je z powrotem. Obrócone kopie i mocne kadrowania nie są wykrywane.
+Comparing images: {done} of {total}	Porównywanie obrazów: {done} z {total}
+How different each image is from its closest look-alike:	Jak bardzo każdy obraz różni się od najbardziej podobnego:
+Largest difference	Największa różnica
+{meaning} · suggested: {n}	{meaning} · sugerowane: {n}
+Identical pixels only	Tylko identyczne piksele
+Resized or recompressed copies	Kopie pomniejszone lub ponownie skompresowane
+Small edits, crops and bursts	Drobne zmiany, kadrowania i serie zdjęć
+Merely similar scenes too	Także tylko podobne sceny
+Groups: {groups} · Images to move: {moving} · Staying: {staying}	Grupy: {groups} · Obrazy do przeniesienia: {moving} · Zostają: {staying}
+Not compared: {n}	Nieporównane: {n}
+Not compared	Nieporównane
+{name} · difference: {d}	{name} · różnica: {d}
+Move	Przenieś
+Images moved: {n} · Folders: {f}	Przeniesione obrazy: {n} · Foldery: {f}
+Stopped: {e}	Przerwano: {e}
+Images moved back: {n}	Przywrócone obrazy: {n}
+{name}: changed since it was compared	{name}: zmieniony od porównania
+{name}: already in the folder	{name}: już jest w folderze
+{name}: its old name is taken	{name}: stara nazwa jest zajęta
+the file is gone	pliku już nie ma

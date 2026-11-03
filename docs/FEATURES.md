@@ -90,6 +90,15 @@ Circle, point out or note something without a second app. Open the drawing toolb
 - Copy the file's path, or show it in your file manager.
 - **Deleting** always asks first, then moves the image to the system Trash. Ctrl+Z brings it back.
 - Before leaving an image with unsaved edits, lightview asks.
+- **Group Duplicates in Folder** (Tools) compares every image in the folder and moves each group of
+  look-alikes, the first one included, into a new folder named after the group's first image. A
+  histogram shows how close the images are, with a suggested threshold; moving the slider shows the
+  groups before anything moves. Images that only change little by little, like a burst, stay in one
+  group. Nothing is deleted or stored on disk, the viewer stays in the folder, and Ctrl+Z moves
+  everything back. Limits: subfolders aren't looked at; rotated or mirrored copies and heavy crops
+  aren't found; very plain images (blank pages) can group together, and a slow series like a
+  timelapse can join into one big group, so lower the slider to split it; sidecar files (`.xmp`)
+  stay behind.
 
 Animated images and multi-page TIFFs can be viewed, but not saved yet.
 

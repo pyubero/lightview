@@ -47,6 +47,7 @@ impl App {
         self.enhance_notice_dialog(ctx);
         self.blur_panel(ctx);
         self.text_dialog(ctx);
+        self.group_dialog(ctx);
         self.restore_progress(ctx, viewport);
         self.compare_bar(ctx, viewport);
         self.adjust_panel(ctx);

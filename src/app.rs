@@ -19,6 +19,7 @@ use std::time::Instant;
 mod ai_tools;
 mod canvas;
 mod dialogs;
+mod group;
 mod input;
 mod menu;
 
@@ -71,6 +72,13 @@ enum Pending {
     Navigate(isize),
     Open(PathBuf),
     Close,
+    Group,
+}
+
+/// Something Ctrl+Z can take back once the edits are all undone.
+enum Removed {
+    Trashed(PathBuf),
+    Grouped(crate::dedupe::Moved),
 }
 
 /// What belongs to the image on screen: all of it starts afresh when another image is shown.
@@ -153,8 +161,8 @@ pub struct App {
     flat: Option<(u64, Doc, Arc<Frame>)>,
     /// Bumped whenever what's shown changes source (navigation, preview → full).
     generation: u64,
-    /// Images moved to the Trash this session, newest last; Ctrl+Z brings them back.
-    deleted: Vec<PathBuf>,
+    /// Images moved to the Trash or into group folders this session, newest last; Ctrl+Z brings them back.
+    deleted: Vec<Removed>,
     delete_prompt: bool,
     renaming: Option<dialogs::Renaming>,
     /// The file the watcher thread keeps an eye on.
@@ -181,6 +189,10 @@ pub struct App {
     enhance_notice: Option<String>,
     /// Blur Background's strength (% of the long side), kept for the session.
     blur_strength: f32,
+    /// Group Duplicates in Folder's dialog, while it's open.
+    grouping: Option<group::Grouping>,
+    /// How many Group Duplicates runs were started: the last run's id.
+    group_runs: u64,
     /// Recognize Text or Read QR Code is running.
     reading: bool,
     /// What they read, and the dialog's title.
@@ -243,7 +255,7 @@ impl App {
             texture: None, tex_key: None, resized: None, baked: None, sharp: None, sharp_wanted: 1, flat: None, generation: 0,
             deleted: Vec::new(), delete_prompt: false, renaming: None, watched, own_stamp: None, navigator: None, drag_start: None, right_pan: false,
             show_toolbar, focus_text: false,
-            resize_dialog: None, pending: None, show_ai_models: false, license_prompt: None, restoring: None, restore_runs: 0, enhance_notice: None, blur_strength: 3.0, reading: false, found_text: None, show_shortcuts: false, recording: None, shortcut_error: None, visible: None, downloading: HashSet::new(),
+            resize_dialog: None, pending: None, show_ai_models: false, license_prompt: None, restoring: None, restore_runs: 0, enhance_notice: None, blur_strength: 3.0, grouping: None, group_runs: 0, reading: false, found_text: None, show_shortcuts: false, recording: None, shortcut_error: None, visible: None, downloading: HashSet::new(),
             title: String::new(),
             window_reported: false, preview_reported: None, full_reported: false, nav_start: None, close_next: false, status: None, file_clipboard: None, canvas, theme_error,
         }
@@ -406,6 +418,11 @@ impl App {
                     self.reload();
                 }
             }
+            Msg::Hashed(run, i, result) => {
+                if let Some(g) = self.grouping.as_mut().filter(|g| g.run == run) {
+                    g.add(i, result);
+                }
+            }
             Msg::Folder(files) => {
                 if let Some(i) = self.current().and_then(|cur| files.iter().position(|p| p == cur)) {
                     self.files = files;
@@ -528,10 +545,13 @@ impl App {
     }
 
     fn undo_redo(&mut self, undo: bool) {
-        if undo && self.shown.undo.is_empty() && let Some(path) = self.deleted.pop() {
-            match files::restore_trashed(&path) {
-                Ok(()) => self.open(path),
-                Err(e) => self.set_status(trf("Couldn't restore the image: {e}", &[("e", &e)])),
+        if undo && self.shown.undo.is_empty() && let Some(removed) = self.deleted.pop() {
+            match removed {
+                Removed::Trashed(path) => match files::restore_trashed(&path) {
+                    Ok(()) => self.open(path),
+                    Err(e) => self.set_status(trf("Couldn't restore the image: {e}", &[("e", &e)])),
+                },
+                Removed::Grouped(moved) => self.ungroup(&moved),
             }
             return;
         }
@@ -553,6 +573,7 @@ impl App {
             Pending::Navigate(delta) => self.navigate(delta),
             Pending::Open(path) => self.open(path),
             Pending::Close => self.close_next = true,
+            Pending::Group => self.group_duplicates(),
         }
     }
 
@@ -773,7 +794,7 @@ impl App {
         self.index = self.index.min(self.files.len().saturating_sub(1));
         self.cache.remove(&path);
         self.recent.retain(|p| *p != path);
-        self.deleted.push(path);
+        self.deleted.push(Removed::Trashed(path));
         self.reset_shown();
         self.request_decodes();
     }

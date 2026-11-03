@@ -25,7 +25,7 @@ when" says otherwise. `▸` marks a submenu.
 ## Edit
 | Item | Shortcut | Enabled when | Does |
 |---|---|---|---|
-| Undo | Ctrl+Z | there's something to undo | Edits on the current image first, then the last image deleted this session. |
+| Undo | Ctrl+Z | there's something to undo | Edits on the current image first, then the last image deleted or Group Duplicates move this session. |
 | Redo | Ctrl+Shift+Z | there's something to redo | |
 | — | | | |
 | Cut | Ctrl+X | there's a selection | Copy, then Delete Selection. |
@@ -117,6 +117,7 @@ when" says otherwise. `▸` marks a submenu.
 | Measure | | | Drag a line; distance, ΔX, ΔY in image pixels (ticked while active). |
 | Copy Color | | | Click a pixel to copy its colour as `#RRGGBB` (`#RRGGBBAA` if it isn't opaque), as it's seen with the edits (ticked while active). |
 | Read QR Code | | not already reading | Reads the QR codes in the selection's bounds, or the whole image, and shows what they say with Copy. Links are never opened. |
+| Group Duplicates in Folder… | | 2+ images in the folder | Compares the folder's images, suggests a threshold, and moves each group of look-alikes into a folder named after its first image. Ctrl+Z moves them back. |
 | — | | | |
 | Sketch | | | Freehand. |
 | Shapes ▸ | | | Rectangle, Rounded Rectangle, Ellipse, Line, Arrow. |

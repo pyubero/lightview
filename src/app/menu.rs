@@ -73,6 +73,7 @@ pub(super) enum Action {
     Inpaint,
     /// Recognize Text, or Read QR Code when true: the selection, or the whole image.
     ReadText(bool),
+    GroupDuplicates,
     DownloadRuntime,
     AiModels,
 }
@@ -199,6 +200,7 @@ pub(super) fn bindable_menus() -> [(&'static str, Vec<(Action, &'static str)>); 
         (Action::Measure, tr_key("Measure")),
         (Action::CopyColor, tr_key("Copy Color")),
         (Action::ReadText(true), tr_key("Read QR Code")),
+        (Action::GroupDuplicates, tr_key("Group Duplicates in Folder…")),
         (Action::Pick(Pick::Draw(Shape::Sketch)), tr_key("Sketch")),
     ];
     tools.extend(markup::SHAPES.map(|(shape, name)| (Action::Pick(Pick::Draw(shape)), name)));
@@ -269,6 +271,7 @@ impl App {
             Action::Inpaint => ready(Task::Inpaint) && selected,
             Action::ReadText(false) => ready(Task::Ocr) && !self.reading,
             Action::ReadText(true) => has_image && !self.reading,
+            Action::GroupDuplicates => self.files.len() > 1 && self.grouping.is_none(),
             Action::Copy | Action::Paste | Action::SelectAll | Action::Info | Action::ZoomIn | Action::ZoomOut | Action::Fit | Action::ActualSize => has_image,
             Action::Crop | Action::Resize | Action::RotateLeft | Action::RotateRight | Action::FlipHorizontal | Action::FlipVertical => has_image,
             Action::AdjustColor | Action::AdjustCurves | Action::AutoLevels | Action::ResetAdjust => has_image,
@@ -447,6 +450,7 @@ impl App {
                 selectable(ui, Action::Measure, matches!(self.shown.tool, Tool::Measure { .. }), actions);
                 selectable(ui, Action::CopyColor, self.shown.tool == Tool::CopyColor, actions);
                 hinted(ui, Action::ReadText(true), tr("Reads the selection, or the whole image. Shows what the code says; links are never opened."), actions);
+                hinted(ui, Action::GroupDuplicates, tr("Compares the images in this folder (not its subfolders) and moves each group of look-alikes into a folder of its own. Nothing is deleted, and Ctrl+Z moves them back. Rotated copies and heavy crops aren't found."), actions);
                 ui.separator();
                 item(ui, Action::Pick(Pick::Draw(Shape::Sketch)), actions);
                 ui.add_enabled_ui(self.current().is_some_and(|p| self.cache.contains_key(p)), |ui| {

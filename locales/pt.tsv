@@ -391,3 +391,26 @@ line	linha
 Your own themes go in the themes folder next to the AI models. Choosing a theme again reloads its file.	Os seus temas vão na pasta themes, junto aos modelos de IA. Escolher um tema de novo volta a ler o ficheiro.
 Couldn't load the theme, so the base theme is used: {e}	Não foi possível carregar o tema, por isso é usado o tema base: {e}
 Open themes folder	Abrir pasta de temas
+Group Duplicates in Folder…	Agrupar duplicados na pasta…
+Group Duplicates in Folder	Agrupar duplicados na pasta
+Compares the images in this folder (not its subfolders) and moves each group of look-alikes into a folder of its own. Nothing is deleted, and Ctrl+Z moves them back. Rotated copies and heavy crops aren't found.	Compara as imagens desta pasta (não as subpastas) e move cada grupo de imagens parecidas para uma pasta própria. Nada é apagado e Ctrl+Z repõe-nas. Cópias rodadas e recortes grandes não são encontrados.
+Comparing images: {done} of {total}	A comparar imagens: {done} de {total}
+How different each image is from its closest look-alike:	Quanto cada imagem difere da mais parecida:
+Largest difference	Diferença máxima
+{meaning} · suggested: {n}	{meaning} · sugerido: {n}
+Identical pixels only	Apenas píxeis idênticos
+Resized or recompressed copies	Cópias redimensionadas ou recomprimidas
+Small edits, crops and bursts	Pequenas edições, recortes e rajadas
+Merely similar scenes too	Também cenas apenas parecidas
+Groups: {groups} · Images to move: {moving} · Staying: {staying}	Grupos: {groups} · Imagens a mover: {moving} · Ficam: {staying}
+Not compared: {n}	Não comparadas: {n}
+Not compared	Não comparadas
+{name} · difference: {d}	{name} · diferença: {d}
+Move	Mover
+Images moved: {n} · Folders: {f}	Imagens movidas: {n} · Pastas: {f}
+Stopped: {e}	Parado: {e}
+Images moved back: {n}	Imagens repostas: {n}
+{name}: changed since it was compared	{name}: alterado desde a comparação
+{name}: already in the folder	{name}: já está na pasta
+{name}: its old name is taken	{name}: o nome antigo está ocupado
+the file is gone	o ficheiro já não existe

@@ -5,6 +5,7 @@ mod ai;
 mod app;
 mod color;
 mod curves;
+mod dedupe;
 mod edit;
 mod exif_edit;
 mod files;

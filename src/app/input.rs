@@ -362,6 +362,7 @@ impl App {
                 Action::BlurBackground => self.cutout(super::ai_tools::Cut::Blur),
                 Action::ReplaceBackground => self.cutout(super::ai_tools::Cut::Replace),
                 Action::ReadText(qr) => self.read_text(*qr),
+                Action::GroupDuplicates => self.confirm(Pending::Group),
                 Action::Restore(task) if *task == crate::ai::Task::Enhance && let Some(file) = self.unseen_notice() => self.enhance_notice = Some(file),
                 Action::Restore(task) => self.preview_restore(*task),
                 Action::Inpaint => self.inpaint(),
