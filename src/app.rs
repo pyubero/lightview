@@ -3,6 +3,7 @@ use crate::i18n::{tr, trf};
 use crate::edit::{self, Doc, ResizeDialog};
 use crate::exif_edit;
 use crate::inspector::{self, Inspector};
+use crate::files;
 use crate::load::{self, Frame, Loaded, Loader, Msg, Notify};
 use crate::markup::{self, Element, Selection, Shape, Style};
 use crate::save;
@@ -117,7 +118,7 @@ pub struct App {
     /// The file the watcher thread keeps an eye on.
     watched: Arc<Mutex<Option<PathBuf>>>,
     /// The state lightview itself last left the current file in, which isn't a change to react to.
-    own_stamp: Option<load::Stamp>,
+    own_stamp: Option<files::Stamp>,
     /// Asking what to do: the file changed on disk, and there are unsaved edits.
     changed_prompt: bool,
     /// The navigator's thumbnail, and what it holds.
@@ -218,7 +219,7 @@ impl App {
             settings.default_asked = settings::is_default();
             default_prompt = (!settings.default_asked).then_some(true);
         }
-        let watched = load::watch(notify.clone(), std::time::Duration::from_secs(1));
+        let watched = files::watch(notify.clone(), std::time::Duration::from_secs(1));
         App {
             t0, timings, bench, rx, loader, notify, recent, settings, show_info: false, show_settings: false, default_prompt, default_result: None, inspector: None,
             files: start.into_iter().collect(), index: 0,
@@ -409,7 +410,7 @@ impl App {
                 let (Ok(()), Ok(path), Some(current)) = (result, std::fs::canonicalize(&path), self.current().cloned()) else { return };
                 if path == current {
                     // Overwrote the image on screen: show the saved version.
-                    self.own_stamp = load::stamp(&path);
+                    self.own_stamp = files::stamp(&path);
                     self.cache.remove(&path);
                     self.reset_shown();
                     self.request_decodes();
@@ -476,7 +477,7 @@ impl App {
 
     fn undo_redo(&mut self, undo: bool) {
         if undo && self.undo.is_empty() && let Some(path) = self.deleted.pop() {
-            match load::restore_trashed(&path) {
+            match files::restore_trashed(&path) {
                 Ok(()) => self.open(path),
                 Err(e) => self.set_status(trf("Couldn't restore the image: {e}", &[("e", &e)])),
             }
@@ -534,11 +535,11 @@ impl App {
         let name = path.file_name().unwrap_or_default().to_string_lossy().into_owned();
         if path.is_dir() {
             let (sort, notify) = (self.settings.sort, self.notify.clone());
-            std::thread::spawn(move || notify.send(match load::first_image(&path, sort) {
+            std::thread::spawn(move || notify.send(match files::first_image(&path, sort) {
                 Some(image) => Msg::Open(image),
                 None => Msg::Status(trf("No images in {name}", &[("name", &name)])),
             }));
-        } else if load::is_image(&path) {
+        } else if files::is_image(&path) {
             self.confirm(Pending::Open(path));
         } else {
             self.set_status(trf("Can't open {name}: not a supported image", &[("name", &name)]));
@@ -750,7 +751,7 @@ impl App {
     /// Renames the current image's file. It stays open, with its edits.
     fn rename_current(&mut self, name: &str) -> Result<(), String> {
         let Some(old) = self.current().cloned() else { return Ok(()) };
-        let new = load::rename(&old, name)?;
+        let new = files::rename(&old, name)?;
         self.files[self.index] = new.clone();
         if let Some(l) = self.cache.remove(&old) {
             self.cache.insert(new.clone(), l);

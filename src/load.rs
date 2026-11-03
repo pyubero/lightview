@@ -1,19 +1,20 @@
 use crate::edit::Doc;
-use crate::i18n::{tr, trf};
+use crate::files::{Stamp, list_folder};
+use crate::i18n::tr;
 use crate::settings::SortOrder;
+use crate::tiff::{MAX_TIFF_IFDS, exif_thumbnail, tiff_readers};
 use crate::{color, heif, jpegxl, raw, svg, turbo};
 use eframe::egui;
 use image::codecs::{gif::GifDecoder, png::PngDecoder, webp::WebPDecoder};
 use image::metadata::Orientation;
 use image::{AnimationDecoder, DynamicImage, Frames, ImageDecoder, ImageFormat, ImageReader, Limits};
-use std::cmp::Ordering;
 use std::collections::HashSet;
 use std::io::Cursor;
 use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering as AtomicOrdering};
 use std::sync::{Arc, Condvar, Mutex, OnceLock, mpsc};
-use std::time::{Duration, SystemTime};
+use std::time::Duration;
 
 pub const EXTENSIONS: [&str; 33] = [
     "jpg", "jpeg", "png", "gif", "webp", "bmp", "tif", "tiff", "svg", "ico", "qoi", "tga", "pnm", "pbm", "pgm", "ppm", "pam", "dds", "hdr", "exr", "jxl", "heic", "heif", "hif", "avif", "cr2", "cr3", "nef", "arw", "dng", "raf", "orf", "rw2",
@@ -27,9 +28,6 @@ const MAX_FILE_BYTES: u64 = 1 << 30;
 pub const MAX_ANIMATION_BYTES: usize = 1 << 30;
 /// The `image` crate's default allocation limit, which many of its decoders don't apply themselves.
 pub const MAX_CANVAS_BYTES: u64 = 512 << 20;
-/// A TIFF's pages, including the thumbnails that are skipped.
-const MAX_TIFF_IFDS: usize = 4096;
-
 #[derive(Clone)]
 pub struct Frame {
     pub w: u32,
@@ -167,44 +165,6 @@ impl Loader {
 /// would lose the thread and leave its path marked busy for good.
 pub fn catching<T>(f: impl FnOnce() -> Result<T, String>) -> Result<T, String> {
     catch_unwind(AssertUnwindSafe(f)).unwrap_or_else(|_| Err(tr("this file crashed its decoder").into()))
-}
-
-/// What tells two versions of a file apart: when it was modified, and its length.
-pub type Stamp = (SystemTime, u64);
-
-pub fn stamp(path: &Path) -> Option<Stamp> {
-    let meta = std::fs::metadata(path).ok()?;
-    Some((meta.modified().ok()?, meta.len()))
-}
-
-/// Checks the path put in the returned slot every `interval`, on a thread of its own so that it
-/// takes no repaints and a slow network folder can't hold up the UI. A change is sent once it has
-/// held for a whole interval, not to load a half-written file. A file that's gone sends nothing.
-pub fn watch(notify: Notify, interval: Duration) -> Arc<Mutex<Option<PathBuf>>> {
-    let slot = Arc::new(Mutex::new(None));
-    let shared = Arc::clone(&slot);
-    std::thread::spawn(move || {
-        let (mut path, mut known, mut last) = (None, None, None);
-        while Arc::strong_count(&shared) > 1 {
-            std::thread::sleep(interval);
-            let now: Option<PathBuf> = shared.lock().ok().and_then(|p| p.clone());
-            let current = now.as_deref().and_then(stamp);
-            if now != path {
-                (path, known, last) = (now, current, current);
-                continue;
-            }
-            if let (Some(p), Some(new)) = (&path, current) {
-                if known.is_none() {
-                    known = current;
-                } else if current != known && current == last {
-                    known = current;
-                    notify.send(Msg::Changed(p.clone(), new));
-                }
-            }
-            last = current;
-        }
-    });
-    slot
 }
 
 /// Starts decoding `path` and listing its folder.
@@ -501,231 +461,6 @@ fn to_frame(img: DynamicImage, delay: Duration) -> Frame {
     Frame { w, h, pixels, alpha, delay }
 }
 
-/// The JPEG thumbnail in IFD1 of an EXIF (TIFF) block, if any. The file is untrusted:
-/// every read is bounds-checked and anything malformed returns `None`.
-fn exif_thumbnail(tiff: &[u8]) -> Option<&[u8]> {
-    tiff.get(thumbnail_range(tiff)?)
-}
-
-/// Where `exif_thumbnail` is, if that's inside the block.
-fn thumbnail_range(tiff: &[u8]) -> Option<std::ops::Range<usize>> {
-    let (u16_at, u32_at) = tiff_readers(tiff)?;
-    let ifd1 = u32_at(next_ifd_ptr(tiff)?)?;
-    if ifd1 == 0 {
-        return None;
-    }
-    let (mut offset, mut len) = (None, None);
-    for i in 0..u16_at(ifd1)? {
-        let entry = ifd1 + 2 + i * 12;
-        match u16_at(entry)? {
-            0x0201 => offset = u32_at(entry + 8),
-            0x0202 => len = u32_at(entry + 8),
-            _ => {}
-        }
-    }
-    let offset = offset?;
-    let range = offset..offset.checked_add(len?)?;
-    tiff.get(range.clone()).map(|_| range)
-}
-
-pub type Reader<'a> = Box<dyn Fn(usize) -> Option<usize> + 'a>;
-
-/// Bounds-checked u16 and u32 readers in the TIFF block's byte order.
-/// Readers for a TIFF structure's integers. Olympus (`IIRO`, `MMOR`) and Panasonic (`IIU\0`)
-/// RAW files change only the magic number.
-pub fn tiff_readers(tiff: &[u8]) -> Option<(Reader<'_>, Reader<'_>)> {
-    let le = match tiff.get(0..4)? {
-        [b'I', b'I', 42, 0] | [b'I', b'I', b'R', b'O'] | [b'I', b'I', b'U', 0] => true,
-        [b'M', b'M', 0, 42] | [b'M', b'M', b'O', b'R'] => false,
-        _ => return None,
-    };
-    let u16_at = move |o: usize| {
-        let b = tiff.get(o..o.checked_add(2)?)?;
-        Some(if le { u16::from_le_bytes([b[0], b[1]]) } else { u16::from_be_bytes([b[0], b[1]]) } as usize)
-    };
-    let u32_at = move |o: usize| {
-        let b: [u8; 4] = tiff.get(o..o.checked_add(4)?)?.try_into().ok()?;
-        Some(if le { u32::from_le_bytes(b) } else { u32::from_be_bytes(b) } as usize)
-    };
-    Some((Box::new(u16_at), Box::new(u32_at)))
-}
-
-/// Offset of IFD0's "next IFD" pointer, which points at IFD1 (the thumbnail), if it's in bounds.
-fn next_ifd_ptr(tiff: &[u8]) -> Option<usize> {
-    let (u16_at, u32_at) = tiff_readers(tiff)?;
-    let ifd0 = u32_at(4)?;
-    let ptr = ifd0 + 2 + u16_at(ifd0)? * 12;
-    u32_at(ptr).map(|_| ptr)
-}
-
-/// Whether the chain of IFDs in this TIFF block ends: a parser that follows every link never
-/// stops on one that loops. Whatever can't be read counts as the end.
-pub fn ifd_chain_ends(tiff: &[u8]) -> bool {
-    let Some((u16_at, u32_at)) = tiff_readers(tiff) else { return true };
-    // A multi-page TIFF has an IFD per page, so this goes by repeats, not length.
-    let (mut ifd, mut seen) = (u32_at(4), HashSet::new());
-    while seen.len() < MAX_TIFF_IFDS {
-        match ifd {
-            None | Some(0) => return true,
-            Some(at) if !seen.insert(at) => return false,
-            Some(at) => ifd = u16_at(at).and_then(|entries| u32_at(at + 2 + entries * 12)),
-        }
-    }
-    false
-}
-
-/// Erases the EXIF thumbnail, for when the pixels no longer match it (e.g. after rotating), and
-/// unlinks it. Only unlinking would leave the old picture in the file, cropped-out parts included.
-// shortcut: a preview in the MakerNote survives; clear that too if Save As should drop all of them.
-pub fn drop_exif_thumbnail(tiff: &mut [u8]) {
-    let ptr = next_ifd_ptr(tiff);
-    if let Some(range) = thumbnail_range(tiff) {
-        tiff[range].fill(0);
-    }
-    if let Some(ptr) = ptr {
-        tiff[ptr..ptr + 4].fill(0);
-    }
-}
-
-/// Sets IFD0's XResolution and YResolution to `dpi` and ResolutionUnit to inches, so the
-/// copied EXIF agrees with the DPI written into the saved file. Tags that aren't there are
-/// left out (the file's own header still has the DPI); malformed input is left alone.
-pub fn set_exif_dpi(tiff: &mut [u8], dpi: u16) {
-    let mut writes: Vec<(usize, [u32; 2], bool)> = Vec::new();
-    {
-        let Some((u16_at, u32_at)) = tiff_readers(tiff) else { return };
-        let Some(ifd0) = u32_at(4) else { return };
-        for i in 0..u16_at(ifd0).unwrap_or(0) {
-            let entry = ifd0 + 2 + i * 12;
-            match (u16_at(entry), u16_at(entry + 2)) {
-                // RATIONAL: the value is 8 bytes elsewhere.
-                (Some(0x011A | 0x011B), Some(5)) => {
-                    if let Some(at) = u32_at(entry + 8).filter(|&at| u32_at(at + 4).is_some()) {
-                        writes.push((at, [dpi as u32, 1], true));
-                    }
-                }
-                // SHORT: the value sits in the entry.
-                (Some(0x0128), Some(3)) if u16_at(entry + 8).is_some() => writes.push((entry + 8, [2, 0], false)),
-                (Some(_), Some(_)) => {}
-                _ => return,
-            }
-        }
-    }
-    let le = tiff[0] == b'I';
-    for (at, [a, b], rational) in writes {
-        if rational {
-            tiff[at..at + 4].copy_from_slice(&if le { a.to_le_bytes() } else { a.to_be_bytes() });
-            tiff[at + 4..at + 8].copy_from_slice(&if le { b.to_le_bytes() } else { b.to_be_bytes() });
-        } else {
-            tiff[at..at + 2].copy_from_slice(&if le { (a as u16).to_le_bytes() } else { (a as u16).to_be_bytes() });
-        }
-    }
-}
-
-/// Whether a Trash item is `path`. When Windows hides known extensions, `item.name` has none,
-/// but `item.id` (like `$RAB12CD.jpg`) keeps it.
-fn is_trashed_copy(item: &trash::TrashItem, path: &Path) -> bool {
-    let same_name = Some(item.name.as_os_str()) == path.file_name() || (Some(item.name.as_os_str()) == path.file_stem() && Path::new(&item.id).extension() == path.extension());
-    // Compared canonically: on Windows `path` starts with `\\?\`, the Trash's paths don't.
-    same_name && item.original_parent.canonicalize().is_ok_and(|p| Some(p.as_path()) == path.parent())
-}
-
-/// Puts a file back from the Trash, to the place it was deleted from.
-pub fn restore_trashed(path: &Path) -> Result<(), String> {
-    let items = trash::os_limited::list().map_err(|e| e.to_string())?;
-    let newest = items.into_iter().filter(|i| is_trashed_copy(i, path)).max_by_key(|i| i.time_deleted);
-    let item = newest.ok_or_else(|| tr("It's no longer in the Trash").to_string())?;
-    // The full name, or the file would come back without its extension.
-    let name = path.file_name().unwrap_or_default().to_owned();
-    trash::os_limited::restore_all([trash::TrashItem { name, ..item }]).map_err(|e| e.to_string())
-}
-
-/// Renames the file `path` to `name` in the same folder. Never replaces another file.
-// shortcut: changing only the case on a case-insensitive file system counts as "already exists"; handle it if it's reported.
-pub fn rename(path: &Path, name: &str) -> Result<PathBuf, String> {
-    if name.is_empty() || name == "." || name == ".." || name.contains(['/', '\\']) {
-        return Err(tr("That isn't a valid file name").into());
-    }
-    let new = path.with_file_name(name);
-    // `fs::rename` would silently replace it. This also sees a link to nowhere.
-    if new.symlink_metadata().is_ok() {
-        return Err(trf("{name} already exists", &[("name", &name)]));
-    }
-    std::fs::rename(path, &new).map_err(|e| e.to_string())?;
-    Ok(new)
-}
-
-/// Whether `path` has the extension of a format lightview opens.
-pub fn is_image(path: &Path) -> bool {
-    path.extension().and_then(|e| e.to_str()).is_some_and(|e| EXTENSIONS.contains(&e.to_ascii_lowercase().as_str()))
-}
-
-/// The first image in folder `dir`, in `sort` order.
-pub fn first_image(dir: &Path, sort: SortOrder) -> Option<PathBuf> {
-    // `list_folder` lists a file's siblings, and gives the file back when it can't read the folder.
-    let child = dir.join("-");
-    list_folder(&child, sort).into_iter().find(|p| *p != child)
-}
-
-/// The supported images in `path`'s folder: by name in file-manager order, or oldest first.
-fn list_folder(path: &Path, sort: SortOrder) -> Vec<PathBuf> {
-    let dir = path.parent().unwrap_or(Path::new("."));
-    let Ok(entries) = std::fs::read_dir(dir) else { return vec![path.to_path_buf()] };
-    let mut files: Vec<PathBuf> = entries
-        .filter_map(|e| Some(e.ok()?.path()))
-        .filter(|p| is_image(p))
-        .collect();
-    let name = |p: &PathBuf| p.file_name().unwrap_or_default().to_string_lossy().into_owned();
-    let by_name = |a: &PathBuf, b: &PathBuf| {
-        let (a, b) = (name(a), name(b));
-        natural_cmp(&a, &b).then_with(|| a.cmp(&b))
-    };
-    match sort {
-        SortOrder::Name => files.sort_by(by_name),
-        SortOrder::DateModified => {
-            let modified = |p: &PathBuf| std::fs::metadata(p).and_then(|m| m.modified()).ok();
-            let mut dated: Vec<_> = files.into_iter().map(|p| (modified(&p), p)).collect();
-            dated.sort_by(|(ta, a), (tb, b)| ta.cmp(tb).then_with(|| by_name(a, b)));
-            files = dated.into_iter().map(|(_, p)| p).collect();
-        }
-    }
-    files
-}
-
-/// Case-insensitive comparison where runs of digits compare as numbers ("img2" < "img10").
-fn natural_cmp(a: &str, b: &str) -> Ordering {
-    let (mut a, mut b) = (a.chars().peekable(), b.chars().peekable());
-    loop {
-        match (a.peek().copied(), b.peek().copied()) {
-            (None, None) => return Ordering::Equal,
-            (None, _) => return Ordering::Less,
-            (_, None) => return Ordering::Greater,
-            (Some(x), Some(y)) if x.is_ascii_digit() && y.is_ascii_digit() => {
-                let digits = |it: &mut std::iter::Peekable<std::str::Chars>| {
-                    let mut s = String::new();
-                    while let Some(c) = it.next_if(|c| c.is_ascii_digit()) {
-                        s.push(c);
-                    }
-                    s.trim_start_matches('0').to_string()
-                };
-                let (x, y) = (digits(&mut a), digits(&mut b));
-                let ord = x.len().cmp(&y.len()).then_with(|| x.cmp(&y));
-                if ord != Ordering::Equal {
-                    return ord;
-                }
-            }
-            (Some(x), Some(y)) => {
-                let ord = x.to_lowercase().cmp(y.to_lowercase());
-                if ord != Ordering::Equal {
-                    return ord;
-                }
-                a.next();
-                b.next();
-            }
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -824,85 +559,6 @@ mod tests {
         DynamicImage::ImageRgb8(image::RgbImage::from_pixel(2, 2, image::Rgb([200, 100, 50]))).write_with_encoder(enc).unwrap();
         assert_eq!(load(&path, [100, 100], true, |_| {}).unwrap().frames[0].pixels[..3], [200, 100, 50]);
         std::fs::remove_dir_all(dir).unwrap();
-    }
-
-    #[test]
-    fn the_watcher_reports_a_settled_change_once() {
-        let dir = std::env::temp_dir().join(format!("lightview-watch-{}", std::process::id()));
-        std::fs::create_dir_all(&dir).unwrap();
-        let path = dir.join("a.png");
-        std::fs::write(&path, b"1").unwrap();
-        let (tx, rx) = mpsc::channel();
-        let every = Duration::from_millis(20);
-        let slot = watch(Notify { tx, ctx: Arc::default() }, every);
-        *slot.lock().unwrap() = Some(path.clone());
-        let wait = Duration::from_millis(150);
-        std::thread::sleep(wait);
-        assert!(rx.try_recv().is_err(), "just watching isn't a change");
-        std::fs::write(&path, b"22").unwrap();
-        let Ok(Msg::Changed(changed, stamp_seen)) = rx.recv_timeout(Duration::from_secs(5)) else { panic!("no change seen") };
-        assert_eq!((changed, Some(stamp_seen)), (path.clone(), stamp(&path)));
-        std::thread::sleep(wait);
-        assert!(rx.try_recv().is_err(), "one message per change");
-        std::fs::remove_file(&path).unwrap();
-        std::thread::sleep(wait);
-        assert!(rx.try_recv().is_err(), "gone isn't a change");
-        // Replaced, as an editor saving through a temporary file does.
-        std::fs::write(&path, b"333").unwrap();
-        assert!(matches!(rx.recv_timeout(Duration::from_secs(5)), Ok(Msg::Changed(..))));
-        // Another file starts clean, and so does none.
-        let other = dir.join("b.png");
-        std::fs::write(&other, b"4").unwrap();
-        *slot.lock().unwrap() = Some(other);
-        std::thread::sleep(wait);
-        assert!(rx.try_recv().is_err());
-        *slot.lock().unwrap() = None;
-        std::fs::remove_dir_all(dir).unwrap();
-    }
-
-    #[test]
-    fn rename_never_replaces_a_file() {
-        let dir = std::env::temp_dir().join(format!("lightview-rename-{}", std::process::id()));
-        std::fs::create_dir_all(&dir).unwrap();
-        let (a, b) = (dir.join("a.png"), dir.join("b.png"));
-        std::fs::write(&a, b"a").unwrap();
-        std::fs::write(&b, b"b").unwrap();
-        assert!(rename(&a, "b.png").is_err());
-        assert_eq!((std::fs::read(&a).unwrap(), std::fs::read(&b).unwrap()), (b"a".to_vec(), b"b".to_vec()));
-        for bad in ["", ".", "..", "../c.png", "sub/c.png", "sub\\c.png"] {
-            assert!(rename(&a, bad).is_err(), "{bad}");
-        }
-        assert!(a.exists());
-        assert_eq!(rename(&a, "c d.png").unwrap(), dir.join("c d.png"));
-        assert!(!a.exists() && dir.join("c d.png").exists());
-        std::fs::remove_dir_all(dir).unwrap();
-    }
-
-    #[test]
-    fn finds_trashed_file_with_hidden_extension() {
-        let dir = std::fs::canonicalize(std::env::temp_dir()).unwrap();
-        let path = dir.join("photo.jpg");
-        let item = |name: &str, id: &str| trash::TrashItem { id: id.into(), name: name.into(), original_parent: dir.clone(), time_deleted: 0 };
-        assert!(is_trashed_copy(&item("photo.jpg", "/trash/info/photo.jpg.trashinfo"), &path));
-        assert!(is_trashed_copy(&item("photo", r"C:\$Recycle.Bin\S-1\$RAB12CD.jpg"), &path));
-        assert!(!is_trashed_copy(&item("photo", r"C:\$Recycle.Bin\S-1\$RAB12CD.png"), &path));
-        assert!(!is_trashed_copy(&item("other.jpg", "/trash/info/other.jpg.trashinfo"), &path));
-        assert!(!is_trashed_copy(&trash::TrashItem { original_parent: dir.join("elsewhere"), ..item("photo.jpg", "x") }, &path));
-    }
-
-    // Uses the real Trash: `cargo test trash_round_trip -- --ignored`.
-    #[test]
-    #[ignore]
-    fn trash_round_trip() {
-        let path = std::env::temp_dir().join(format!("lightview-trash-{}.txt", std::process::id()));
-        std::fs::write(&path, "image").unwrap();
-        let path = std::fs::canonicalize(&path).unwrap();
-        trash::delete(&path).unwrap();
-        assert!(!path.exists());
-        restore_trashed(&path).unwrap();
-        assert_eq!(std::fs::read_to_string(&path).unwrap(), "image");
-        std::fs::remove_file(&path).unwrap();
-        assert!(restore_trashed(&path).is_err());
     }
 
     #[test]
@@ -1137,14 +793,6 @@ mod tests {
     }
 
     #[test]
-    fn natural_order() {
-        assert_eq!(natural_cmp("img2.jpg", "img10.jpg"), Ordering::Less);
-        assert_eq!(natural_cmp("IMG_b.jpg", "img_A.jpg"), Ordering::Greater);
-        assert_eq!(natural_cmp("a007", "a7"), Ordering::Equal);
-        assert_eq!(natural_cmp("photo", "photo1"), Ordering::Less);
-    }
-
-    #[test]
     fn scale_down_covers_the_fitted_size() {
         assert_eq!(scale_denominator((4000, 2252), [1280, 720]), Some(2));
         assert_eq!(scale_denominator((4000, 2252), [500, 282]), Some(8));
@@ -1153,78 +801,6 @@ mod tests {
         assert_eq!(scale_denominator((4000, 2252), [3840, 2160]), None);
         // A portrait photo (already swapped to upright) in a landscape window is limited by height.
         assert_eq!(scale_denominator((2252, 4000), [1280, 720]), Some(4));
-    }
-
-    /// A TIFF block with an empty IFD0 and an IFD1 pointing at `thumb`.
-    fn tiff(le: bool, thumb: &[u8]) -> Vec<u8> {
-        let u16b = |v: u16| if le { v.to_le_bytes() } else { v.to_be_bytes() };
-        let u32b = |v: u32| if le { v.to_le_bytes() } else { v.to_be_bytes() };
-        let mut t = Vec::new();
-        t.extend(if le { *b"II\x2a\0" } else { *b"MM\0\x2a" });
-        t.extend(u32b(8)); // IFD0 at 8
-        t.extend(u16b(0)); // IFD0: no entries
-        t.extend(u32b(14)); // IFD1 at 14
-        t.extend(u16b(2)); // IFD1: two entries
-        let thumb_at = 14 + 2 + 2 * 12 + 4;
-        for (tag, value) in [(0x0201, thumb_at), (0x0202, thumb.len() as u32)] {
-            t.extend(u16b(tag));
-            t.extend(u16b(4)); // LONG
-            t.extend(u32b(1));
-            t.extend(u32b(value));
-        }
-        t.extend(u32b(0)); // no IFD2
-        t.extend(thumb);
-        t
-    }
-
-    #[test]
-    fn exif_thumbnail_found() {
-        assert_eq!(exif_thumbnail(&tiff(true, b"JPEGDATA")), Some(&b"JPEGDATA"[..]));
-        assert_eq!(exif_thumbnail(&tiff(false, b"JPEGDATA")), Some(&b"JPEGDATA"[..]));
-    }
-
-    #[test]
-    fn drop_thumbnail() {
-        for le in [true, false] {
-            let mut t = tiff(le, b"JPEGDATA");
-            drop_exif_thumbnail(&mut t);
-            assert_eq!(exif_thumbnail(&t), None);
-        }
-        // Malformed input is left alone without panicking.
-        let mut junk = b"II\x2a\0\xff\xff\xff\xff".to_vec();
-        drop_exif_thumbnail(&mut junk);
-        assert_eq!(junk, b"II\x2a\0\xff\xff\xff\xff");
-    }
-
-    #[test]
-    fn exif_dpi_malformed() {
-        // IFD0 with XResolution (RATIONAL at 26) and ResolutionUnit, then 72/1.
-        let mut good = b"II\x2a\0\x08\0\0\0\x02\0".to_vec();
-        good.extend([0x1A, 0x01, 5, 0, 1, 0, 0, 0, 34, 0, 0, 0]);
-        good.extend([0x28, 0x01, 3, 0, 1, 0, 0, 0, 3, 0, 0, 0]);
-        good.extend([0, 0, 0, 0, 72, 0, 0, 0, 1, 0, 0, 0]);
-        let mut t = good.clone();
-        set_exif_dpi(&mut t, 300);
-        assert_eq!(&t[34..42], &[44, 1, 0, 0, 1, 0, 0, 0]);
-        assert_eq!(&t[30..32], &[2, 0]);
-        // Truncated anywhere: no panic.
-        for len in 0..good.len() {
-            set_exif_dpi(&mut good[..len].to_vec(), 300);
-        }
-    }
-
-    #[test]
-    fn exif_thumbnail_malformed() {
-        let good = tiff(true, b"JPEGDATA");
-        // Every truncation of a valid block fails cleanly.
-        for len in 0..good.len() {
-            assert_eq!(exif_thumbnail(&good[..len]), None);
-        }
-        assert_eq!(exif_thumbnail(b"garbage garbage garbage"), None);
-        // Offsets pointing far out of bounds.
-        let mut bad = good.clone();
-        bad[4..8].copy_from_slice(&u32::MAX.to_le_bytes());
-        assert_eq!(exif_thumbnail(&bad), None);
     }
 
     #[test]
@@ -1324,52 +900,6 @@ mod tests {
     fn panics_become_errors() {
         let result: Result<(), String> = catching(|| panic!("a decoder bug"));
         assert!(result.is_err());
-    }
-
-    #[test]
-    fn dropped_thumbnail_leaves_no_trace() {
-        for le in [true, false] {
-            let mut t = tiff(le, b"JPEGDATA");
-            drop_exif_thumbnail(&mut t);
-            assert!(!t.windows(8).any(|w| w == b"JPEGDATA"), "the old picture is still in the file");
-        }
-    }
-
-    #[test]
-    fn ifd_chains() {
-        let ifd = |at: usize, next: u32| {
-            let mut t = b"II\x2a\0".to_vec();
-            t.extend((at as u32).to_le_bytes());
-            t.resize(at, 0);
-            t.extend([0, 0]);
-            t.extend(next.to_le_bytes());
-            t
-        };
-        assert!(ifd_chain_ends(&ifd(8, 0)));
-        assert!(ifd_chain_ends(&ifd(8, 0xFFFF_FFFF)), "a link out of bounds is the end");
-        assert!(!ifd_chain_ends(&ifd(8, 8)), "links to itself");
-        assert!(ifd_chain_ends(b"II"));
-    }
-
-    #[test]
-    fn folder_filter_and_order() {
-        let dir = std::env::temp_dir().join(format!("lightview-test-{}", std::process::id()));
-        std::fs::create_dir_all(&dir).unwrap();
-        for f in ["b10.JPG", "b2.png", "a.webp", "notes.txt", "clip.mp4", "layers.psd"] {
-            std::fs::write(dir.join(f), b"").unwrap();
-        }
-        // Oldest: b2.png, then a.webp, then b10.JPG.
-        let base = std::time::SystemTime::UNIX_EPOCH + Duration::from_secs(1_700_000_000);
-        for (f, secs) in [("b2.png", 0), ("a.webp", 10), ("b10.JPG", 20)] {
-            std::fs::File::options().write(true).open(dir.join(f)).unwrap().set_modified(base + Duration::from_secs(secs)).unwrap();
-        }
-        let names = |sort| -> Vec<String> {
-            list_folder(&dir.join("a.webp"), sort).iter().map(|p| p.file_name().unwrap().to_string_lossy().into_owned()).collect()
-        };
-        let (by_name, by_date) = (names(SortOrder::Name), names(SortOrder::DateModified));
-        std::fs::remove_dir_all(&dir).unwrap();
-        assert_eq!(by_name, ["a.webp", "b2.png", "b10.JPG"]);
-        assert_eq!(by_date, ["b2.png", "a.webp", "b10.JPG"]);
     }
 }
 

@@ -1,5 +1,5 @@
 use crate::i18n::{tr, tr_key, trf};
-use crate::load::ifd_chain_ends;
+use crate::tiff::ifd_chain_ends;
 use crate::save::write_atomic;
 use eframe::egui;
 use image::{ImageDecoder, ImageReader};
@@ -161,7 +161,7 @@ fn cr3_metadata(all: &[u8]) -> Result<Metadata, String> {
 /// `tiff` with a new IFD0 whose only entry points at the old one as the Exif IFD: CMT2 holds Exif
 /// tags at the top level, where a reader doesn't know them. Nothing moves, so offsets stay valid.
 fn as_exif_ifd(tiff: &[u8]) -> Option<Vec<u8>> {
-    let (_, u32_at) = crate::load::tiff_readers(tiff)?;
+    let (_, u32_at) = crate::tiff::tiff_readers(tiff)?;
     let (exif_ifd, le) = (u32::try_from(u32_at(4)?).ok()?, tiff[0] == b'I');
     let u16_bytes = |v: u16| if le { v.to_le_bytes() } else { v.to_be_bytes() };
     let u32_bytes = |v: u32| if le { v.to_le_bytes() } else { v.to_be_bytes() };
@@ -831,7 +831,7 @@ mod tests {
                 enc.write_image::<tiff::encoder::colortype::RGB8>(2, 2, page.as_raw()).unwrap();
             }
         }
-        assert!(crate::load::ifd_chain_ends(&pages));
+        assert!(crate::tiff::ifd_chain_ends(&pages));
         let apng = seeded(std::fs::read("tests/data/anim.apng").unwrap(), FileExtension::PNG { as_zTXt_chunk: false });
         let (_, written) = edit_copy(&dir, "anim.png", &apng, true);
         std::fs::remove_dir_all(dir).unwrap();

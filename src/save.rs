@@ -1,6 +1,7 @@
 use crate::i18n::trf;
 use crate::edit::{self, Doc};
-use crate::load::{Frame, drop_exif_thumbnail, set_exif_dpi};
+use crate::load::Frame;
+use crate::tiff::{drop_exif_thumbnail, set_exif_dpi};
 use image::codecs::{bmp::BmpEncoder, gif::GifEncoder, jpeg::{JpegEncoder, PixelDensity}, png::PngEncoder, tiff::TiffEncoder, webp::WebPEncoder};
 use image::metadata::Orientation;
 use image::{DynamicImage, ImageDecoder, ImageEncoder, ImageReader};

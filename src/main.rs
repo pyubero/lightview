@@ -7,6 +7,7 @@ mod color;
 mod curves;
 mod edit;
 mod exif_edit;
+mod files;
 mod heif;
 mod i18n;
 mod inspector;
@@ -18,6 +19,7 @@ mod raw;
 mod save;
 mod settings;
 mod svg;
+mod tiff;
 mod turbo;
 mod view;
 

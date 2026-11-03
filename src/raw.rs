@@ -1,7 +1,7 @@
 //! Camera RAW files, shown by the JPEG preview the camera stores in them: instant, and no
 //! demosaicing, which is a viewer's job. Every file here is untrusted, and neighbours are read
 //! unopened, so each read is bounds-checked and each search is capped.
-use crate::load::tiff_readers;
+use crate::tiff::tiff_readers;
 use image::metadata::Orientation;
 use std::path::Path;
 
