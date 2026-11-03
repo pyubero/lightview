@@ -179,6 +179,8 @@ pub(super) fn bindable_menus() -> [(&'static str, Vec<(Action, &'static str)>); 
         (Action::Restore(Task::Enhance), tr_key("Enhance Image")),
         (Action::Inpaint, tr_key("Remove Object")),
         (Action::ReadText(false), tr_key("Recognize Text")),
+        (Action::AiModels, tr_key("AI Models…")),
+        (Action::DownloadRuntime, tr_key("Download AI Runtime…")),
     ];
     let mut tools = vec![
         (Action::ShowToolbar, tr_key("Show Drawing Toolbar")),
@@ -195,8 +197,6 @@ pub(super) fn bindable_menus() -> [(&'static str, Vec<(Action, &'static str)>); 
         (Action::Pick(Pick::Draw(Shape::Text)), tr_key("Text")),
         (Action::Pick(Pick::Draw(Shape::Highlight)), tr_key("Highlight")),
         (Action::Pick(Pick::Draw(Shape::Magnifier)), tr_key("Magnifier")),
-        (Action::AiModels, tr_key("AI Models…")),
-        (Action::DownloadRuntime, tr_key("Download AI Runtime…")),
     ]);
     [(tr_key("File"), file), (tr_key("Edit"), edit), (tr_key("View"), view), (tr_key("Image"), image), (tr_key("Tools"), tools)]
 }
@@ -409,6 +409,11 @@ impl App {
                 item(ui, Action::Inpaint, actions);
                 let hint = tr("Reads the selection, or the whole image. Straighten tilted text first, and select small text in a large image so it's read at full size.");
                 hinted(ui, Action::ReadText(false), hint, actions);
+                ui.separator();
+                item(ui, Action::AiModels, actions);
+                if !crate::ai::runtime_installed() {
+                    item(ui, Action::DownloadRuntime, actions);
+                }
             });
             ui.menu_button(tr("Tools"), |ui| {
                 let label = if self.show_toolbar { tr("Hide Drawing Toolbar") } else { tr("Show Drawing Toolbar") };
@@ -432,11 +437,6 @@ impl App {
                 item(ui, Action::Pick(Pick::Draw(Shape::Text)), actions);
                 item(ui, Action::Pick(Pick::Draw(Shape::Highlight)), actions);
                 item(ui, Action::Pick(Pick::Draw(Shape::Magnifier)), actions);
-                ui.separator();
-                item(ui, Action::AiModels, actions);
-                if !crate::ai::runtime_installed() {
-                    item(ui, Action::DownloadRuntime, actions);
-                }
             });
         });
     }

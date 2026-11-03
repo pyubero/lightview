@@ -108,17 +108,17 @@ Everything runs on your own computer, on the CPU or an NVIDIA GPU. Your images a
 lightview only goes online to download the runtime and models you ask for, and after that the AI
 tools work offline.
 
-The AI tools are in the Image menu. They need ONNX Runtime, installed with Tools → Download AI
+The AI tools are in the Image menu. They need ONNX Runtime, installed with Image → Download AI
 Runtime…, and at least one model for the task. Models live in `~/.local/share/lightview/models`.
 
-Support for NVIDIA GPUs is optional: Tools → AI Models… offers a download of about 1.5 GB. If the GPU
+Support for NVIDIA GPUs is optional: Image → AI Models… offers a download of about 1.5 GB. If the GPU
 can't be used, lightview falls back to the CPU and shows why.
 
 There are two kinds of model.
 
 ### Models you download from the app
 
-Tools → AI Models… offers these models. Each download is pinned by SHA-256 and starts only after you
+Image → AI Models… offers these models. Each download is pinned by SHA-256 and starts only after you
 accept its licence.
 
 | Task | Models |
@@ -153,8 +153,8 @@ links are only shown, never opened.
 1. Follow the instructions in
    [lightview-models](https://github.com/pyubero/lightview-models) to convert the models you want.
    The files are written to its `dist/` folder.
-2. Copy them into `~/.local/share/lightview/models`, or use Tools → AI Models… → Add model file….
-3. They then appear under Enhance Image in Tools → AI Models….
+2. Copy them into `~/.local/share/lightview/models`, or use Image → AI Models… → Add model file….
+3. They then appear under Enhance Image in Image → AI Models….
 
 Keep the file names below, because lightview recognises these models by name:
 
@@ -175,7 +175,7 @@ share the converted file.
 
 ### Your own models
 
-Any other `.onnx` file in the models folder is listed too. Tools → AI Models… lets you adjust the
+Any other `.onnx` file in the models folder is listed too. Image → AI Models… lets you adjust the
 input size and normalisation of background removal models.
 
 ## Development

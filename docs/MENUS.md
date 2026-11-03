@@ -94,6 +94,9 @@ when" says otherwise. `▸` marks a submenu.
 | Enhance Image | | AI runtime and an Enhance model installed, no AI job running | Same flow; with an upscaler the image becomes 4× bigger. Shows a one-time notice per model. |
 | Remove Object | | AI runtime and a Remove Object model installed, a selection, no AI job running | Fills in the selection, with no preview; Ctrl+Z undoes it. |
 | Recognize Text | | AI runtime and a Recognize Text model installed, not already reading | Reads the text in the selection's bounds, or the whole image, and shows it in a window with Copy. Upright text only; a large image is searched at up to 1920 px, so select small text to read it at full size. |
+| — | | | |
+| AI Models… | | always | Choose, download (after accepting licences) or add models per task; GPU support. Real-ESRGAN and DarkIR are never downloaded: users convert them and copy them in (see `README.md`). |
+| Download AI Runtime… | | always; only shown while the runtime is missing | Downloads ONNX Runtime (after accepting its licence). |
 
 ## Tools
 | Item | Shortcut | Enabled when | Does |
@@ -112,9 +115,6 @@ when" says otherwise. `▸` marks a submenu.
 | Text | | | Click to place, type; double-click (Select tool) to edit. |
 | Highlight | | | Translucent rectangle. |
 | Magnifier | | | A live lens follows the pointer; click to place it. |
-| — | | | |
-| AI Models… | | always | Choose, download (after accepting licences) or add models per task; GPU support. Real-ESRGAN and DarkIR are never downloaded: users convert them and copy them in (see `README.md`). |
-| Download AI Runtime… | | always; only shown while the runtime is missing | Downloads ONNX Runtime (after accepting its licence). |
 
 ## Drawing toolbar (Tools → Show Drawing Toolbar)
 Select · Sketch · Shapes ⏷ (Rectangle, Rounded Rectangle, Ellipse, Line, Arrow) · Text · Highlight ·

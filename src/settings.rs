@@ -59,7 +59,7 @@ pub enum SortOrder {
     DateModified,
 }
 
-/// The model each AI task uses, and per-file preprocessing the user set (Tools → AI Models…).
+/// The model each AI task uses, and per-file preprocessing the user set (Image → AI Models…).
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct AiSettings {
