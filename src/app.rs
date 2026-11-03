@@ -372,12 +372,8 @@ impl App {
                     let [r, g, b] = self.settings.background;
                     // Blur: the blurred backdrop and the cut-out are a preview until the panel's Done.
                     if let crate::ai::Backdrop::Blur(small) = backdrop {
-                        let mut d = doc.clone();
-                        let at = d.elements.len();
-                        d.elements.push(Element::pasted(Arc::new(small.clone()), Pos2::ZERO, bounds.size(), style));
-                        d.elements.push(Element::pasted(Arc::new(img), Pos2::ZERO, bounds.size(), style));
-                        self.replace_doc(d.clone());
-                        self.shown.blurring = Some(ai_tools::Blurring { before: doc, small, at, last: d });
+                        let subject = Element::pasted(Arc::new(img), Pos2::ZERO, bounds.size(), style);
+                        self.shown.blurring = Some(ai_tools::Blurring { last: doc.clone(), before: doc, small, subject });
                         self.set_blur(self.blur_strength);
                         self.status = None;
                         return;

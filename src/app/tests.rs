@@ -476,6 +476,10 @@ fn blur_background_previews_until_done_or_cancel() {
     let at_three = backdrop(&app);
     app.set_blur(8.0);
     assert_ne!(backdrop(&app), at_three, "the slider re-blurs");
+    // 0 % is the image as it was.
+    app.set_blur(0.0);
+    assert!(app.doc().unwrap().elements.is_empty());
+    app.set_blur(8.0);
     app.finish_blur(true);
     assert!(app.shown.blurring.is_none() && app.shown.undo.len() == 1);
     app.run_actions(&[Action::Undo], &ctx, false);

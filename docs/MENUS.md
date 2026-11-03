@@ -90,7 +90,7 @@ when" says otherwise. `▸` marks a submenu.
 | *AI Image Processing* | | | (a heading, not an item) |
 | Remove Background | | AI runtime and a background model installed, no AI job running | |
 | Remove Background and Crop | | same | Also crops to the subject. |
-| Blur Background… | | same | Finds the subject, then shows it over a blurred copy with a Strength slider (1–10 % of the long side; the preview updates when the slider is let go). Done keeps it as one undo step; Cancel or Esc puts the image back. |
+| Blur Background… | | same | Finds the subject, then shows it over a blurred copy with a Strength slider (0–10 % of the long side, 0 being no blur; the preview updates when the slider is let go). Done keeps it as one undo step; Cancel or Esc puts the image back. |
 | Replace Background | | same | Puts the subject over the background colour from Settings. One undo step. |
 | Denoise | | AI runtime and a Denoise model installed, no AI job running | Preview of the visible area first, then Apply to Whole Image / Selection. |
 | Enhance Image | | AI runtime and an Enhance model installed, no AI job running | Same flow; with an upscaler the image becomes 4× bigger. Shows a one-time notice per model. |

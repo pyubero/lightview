@@ -26,8 +26,8 @@ pub(super) struct Blurring {
     pub(super) before: Doc,
     /// The image to blur, at most `ai::BLUR_SIDE` px; drawn stretched to the image's size.
     pub(super) small: image::RgbaImage,
-    /// Where the blurred backdrop is in `last.elements`.
-    pub(super) at: usize,
+    /// The cut-out, put back over the blurred copy.
+    pub(super) subject: crate::markup::Element,
     /// The edits as the panel last set them.
     pub(super) last: Doc,
 }
@@ -263,7 +263,7 @@ impl App {
         }
         let (mut strength, mut open) = (self.blur_strength, true);
         let choice = egui::Window::new(tr("Blur Background")).open(&mut open).resizable(false).collapsible(false).show(ctx, |ui| {
-            let slider = ui.add(egui::Slider::new(&mut strength, 1.0..=10.0).fixed_decimals(1).suffix(" %").text(tr("Strength")));
+            let slider = ui.add(egui::Slider::new(&mut strength, 0.0..=10.0).fixed_decimals(1).suffix(" %").text(tr("Strength")));
             self.blur_strength = strength;
             // A re-blur takes ~0.2 s, so not on every frame of a drag: once it's let go.
             if slider.drag_stopped() || slider.changed() && !slider.dragged() {
@@ -283,11 +283,12 @@ impl App {
     pub(super) fn set_blur(&mut self, pct: f32) {
         self.blur_strength = pct;
         let Some(b) = &self.shown.blurring else { return };
-        let sigma = pct / 100.0 * b.small.width().max(b.small.height()) as f32;
-        let mut d = b.last.clone();
-        let size = d.bounds().size();
-        if let Some(e) = d.elements.get_mut(b.at) {
-            *e = crate::markup::Element::pasted(Arc::new(image::imageops::fast_blur(&b.small, sigma)), Pos2::ZERO, size, e.style);
+        let mut d = b.before.clone();
+        // 0 % shows the image as it was, not the smaller copy unblurred.
+        if pct > 0.0 {
+            let sigma = pct / 100.0 * b.small.width().max(b.small.height()) as f32;
+            d.elements.push(crate::markup::Element::pasted(Arc::new(image::imageops::fast_blur(&b.small, sigma)), Pos2::ZERO, d.bounds().size(), b.subject.style));
+            d.elements.push(b.subject.clone());
         }
         self.replace_doc(d.clone());
         if let Some(b) = &mut self.shown.blurring {
