@@ -177,6 +177,13 @@ None of these should change without the user's approval.
 | `.deb` and `.msi` only, no tarball (2026-10-31) | Milestone 34 |
 | No thumbnail grid or gallery (v1) | Filmstrip, if kept |
 
+## Discarded ideas (2026-11-03)
+Raised after milestone 34 and set aside by the user, not planned:
+
+- DONT IMPLEMENT: An app-level log that keeps the latest messages, up to 5 MB.
+- DONT IMPLEMENT: Hover hints (tooltips) on every tool.
+- DONT IMPLEMENT: A Ctrl+P quick search for tools.
+
 ## Open questions
 Recommendations first; the answer is the user's in each case.
 
