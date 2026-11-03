@@ -204,11 +204,9 @@ lightview --bench photo.jpg     # the same, quitting after the first full image
 |---|---|
 | [`FEATURES.md`](docs/FEATURES.md) | Every feature, and the supported formats |
 | [`PROJECT_BRIEF.md`](docs/PROJECT_BRIEF.md) | Goals, scope, performance targets and early milestones |
-| [`ROADMAP-v2.md`](docs/ROADMAP-v2.md) | The roadmap for editing and AI features |
-| [`ROADMAP-v3.md`](docs/ROADMAP-v3.md) | Proposed features for competing with other viewers |
-| [`ROADMAP-v4.md`](docs/ROADMAP-v4.md) | More local AI |
-| [`DEDUPLICATE.md`](docs/DEDUPLICATE.md) | How Group Duplicates in Folder works |
-| [`REWORK.md`](docs/REWORK.md) | The maintainability rework of the code |
+| [`ROADMAP-v2.md`](docs/ROADMAP-v2.md) | Editing, markup, the AI tools and the Windows port |
+| [`ROADMAP-v3.md`](docs/ROADMAP-v3.md) | Closing the gaps with other viewers: formats, colour, basics, reach |
+| [`ROADMAP-v4.md`](docs/ROADMAP-v4.md) | More local AI, Group Duplicates in Folder, and the code rework |
 | [`MENUS.md`](docs/MENUS.md) | Every menu item and shortcut |
 | [`TRANSLATING.md`](docs/TRANSLATING.md) | How to correct a translation or add a language |
 

@@ -1,5 +1,5 @@
 //! Group Duplicates in Folder: perceptual hashes, grouping, and moving each group into a folder.
-//! Nothing here is kept on disk: hashes live only as long as the dialog (`docs/DEDUPLICATE.md`).
+//! Nothing here is kept on disk: hashes live only as long as the dialog (`docs/ROADMAP-v4.md`, milestone 35).
 
 use crate::edit;
 use crate::files::{self, Stamp};
