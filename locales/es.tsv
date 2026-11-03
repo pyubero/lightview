@@ -416,3 +416,5 @@ Images moved back: {n}	Imágenes devueltas: {n}
 the file is gone	el archivo ya no existe
 About {s} s left	Quedan unos {s} s
 About {m} min left	Quedan unos {m} min
+Smallest group	Grupo más pequeño
+Groups with fewer images stay where they are.	Los grupos con menos imágenes se quedan donde están.

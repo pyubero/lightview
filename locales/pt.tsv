@@ -416,3 +416,5 @@ Images moved back: {n}	Imagens repostas: {n}
 the file is gone	o ficheiro já não existe
 About {s} s left	Faltam cerca de {s} s
 About {m} min left	Faltam cerca de {m} min
+Smallest group	Grupo mais pequeno
+Groups with fewer images stay where they are.	Os grupos com menos imagens ficam onde estão.

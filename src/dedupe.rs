@@ -101,8 +101,8 @@ pub fn suggest(nearest: &[Option<u32>]) -> u32 {
 }
 
 /// The groups at threshold `t`: images linked through any chain of neighbours within `t`
-/// (a burst stays together), at least two each, members in folder order, biggest groups first.
-pub fn group(hashes: &[Option<u64>], t: u32) -> Vec<Vec<usize>> {
+/// (a burst stays together), at least `min` (and 2) each, members in folder order, biggest first.
+pub fn group(hashes: &[Option<u64>], t: u32, min: usize) -> Vec<Vec<usize>> {
     let mut parent: Vec<usize> = (0..hashes.len()).collect();
     fn root(parent: &mut [usize], mut i: usize) -> usize {
         while parent[i] != i {
@@ -127,7 +127,7 @@ pub fn group(hashes: &[Option<u64>], t: u32) -> Vec<Vec<usize>> {
             groups[r].push(i);
         }
     }
-    let mut groups: Vec<Vec<usize>> = groups.into_iter().filter(|g| g.len() > 1).collect();
+    let mut groups: Vec<Vec<usize>> = groups.into_iter().filter(|g| g.len() >= min.max(2)).collect();
     groups.sort_by_key(|g| std::cmp::Reverse(g.len()));
     groups
 }
@@ -271,9 +271,14 @@ mod tests {
     fn groups_chain_through_neighbours() {
         // a–b and b–c are 4 bits apart, a–c 8: one group at 4; d is far from all.
         let (a, b, c, d) = (0u64, 0xF, 0xFF, u64::MAX);
-        assert_eq!(group(&[Some(c), Some(a), None, Some(d), Some(b)], 4), vec![vec![0, 1, 4]]);
-        assert_eq!(group(&[Some(a), Some(c), Some(b)], 3), Vec::<Vec<usize>>::new());
-        assert_eq!(group(&[Some(a), Some(a), Some(d), Some(d), Some(d)], 0), vec![vec![2, 3, 4], vec![0, 1]]);
+        assert_eq!(group(&[Some(c), Some(a), None, Some(d), Some(b)], 4, 2), vec![vec![0, 1, 4]]);
+        assert_eq!(group(&[Some(a), Some(c), Some(b)], 3, 2), Vec::<Vec<usize>>::new());
+        let pair_and_three = [Some(a), Some(a), Some(d), Some(d), Some(d)];
+        assert_eq!(group(&pair_and_three, 0, 2), vec![vec![2, 3, 4], vec![0, 1]]);
+        // A smaller minimum still never makes groups of one.
+        assert_eq!(group(&pair_and_three, 0, 0), group(&pair_and_three, 0, 2));
+        assert_eq!(group(&pair_and_three, 0, 3), vec![vec![2, 3, 4]], "the pair stays where it is");
+        assert_eq!(group(&pair_and_three, 0, 4), Vec::<Vec<usize>>::new());
     }
 
     #[test]
@@ -338,7 +343,7 @@ fn dedupe_folder() {
     let took = t0.elapsed();
     let nearest = nearest(&hashes);
     let t = suggest(&nearest);
-    let groups = group(&hashes, t);
+    let groups = group(&hashes, t, 2);
     println!("{} images, {} hashed in {took:.1?} ({:.1} ms each); suggested {t}: {} groups", files.len(), hashes.iter().flatten().count(), took.as_secs_f64() * 1000.0 / files.len().max(1) as f64, groups.len());
     for g in groups.iter().take(10) {
         println!("  {:?}", g.iter().map(|&i| files[i].file_name().unwrap().to_string_lossy()).collect::<Vec<_>>());

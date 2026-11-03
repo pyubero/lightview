@@ -1283,6 +1283,13 @@ fn group_duplicates_moves_look_alikes_and_undoes() {
     frame(&mut app, &ctx, egui::RawInput::default());
     let groups = app.grouping.as_ref().and_then(|g| g.review.as_ref()).map(|r| r.groups.1.clone());
     assert_eq!(groups, Some(vec![vec![0, 1]]), "a and its smaller copy form one group");
+    let groups_at = |app: &mut App, ctx: &egui::Context, min| {
+        app.grouping.as_mut().and_then(|g| g.review.as_mut()).unwrap().min_size = min;
+        frame(app, ctx, egui::RawInput::default());
+        app.grouping.as_ref().and_then(|g| g.review.as_ref()).unwrap().groups.1.clone()
+    };
+    assert!(groups_at(&mut app, &ctx, 3).is_empty(), "a pair is under a smallest group of 3");
+    assert_eq!(groups_at(&mut app, &ctx, 2), [vec![0, 1]]);
 
     app.move_groups();
     let listed = |p: &str| dir.join(p).is_file();

@@ -36,8 +36,10 @@ pub(super) struct Review {
     nearest: Vec<Option<u32>>,
     suggested: u32,
     threshold: u32,
-    /// The groups, and the threshold they were made at.
-    pub(super) groups: (u32, Vec<Vec<usize>>),
+    /// Smaller groups stay where they are.
+    pub(super) min_size: usize,
+    /// The groups, and the threshold and smallest size they were made with.
+    pub(super) groups: ((u32, usize), Vec<Vec<usize>>),
 }
 
 impl Grouping {
@@ -52,7 +54,7 @@ impl Grouping {
             let nearest = dedupe::nearest(&hashes);
             let suggested = dedupe::suggest(&nearest);
             self.failed.sort_by_key(|(i, _)| *i);
-            self.review = Some(Review { groups: (suggested, dedupe::group(&hashes, suggested)), nearest, suggested, threshold: suggested });
+            self.review = Some(Review { groups: ((suggested, 2), dedupe::group(&hashes, suggested, 2)), nearest, suggested, threshold: suggested, min_size: 2 });
         }
     }
 
@@ -148,8 +150,9 @@ impl App {
             });
             ui.add(egui::Slider::new(&mut r.threshold, 0..=20).text(tr("Largest difference")));
             ui.label(trf("{meaning} · suggested: {n}", &[("meaning", &meaning(r.threshold)), ("n", &r.suggested.to_string())]));
-            if r.groups.0 != r.threshold {
-                r.groups = (r.threshold, dedupe::group(&g.hashed.iter().map(|h| h.map(|(h, _)| h)).collect::<Vec<_>>(), r.threshold));
+            ui.add(egui::Slider::new(&mut r.min_size, 2..=50).text(tr("Smallest group"))).on_hover_text(tr("Groups with fewer images stay where they are."));
+            if r.groups.0 != (r.threshold, r.min_size) {
+                r.groups = ((r.threshold, r.min_size), dedupe::group(&g.hashed.iter().map(|h| h.map(|(h, _)| h)).collect::<Vec<_>>(), r.threshold, r.min_size));
             }
             // A copy, so the thumbnails below can borrow the rest of `g`.
             let groups = r.groups.1.clone();

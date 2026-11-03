@@ -92,7 +92,8 @@ Circle, point out or note something without a second app. Open the drawing toolb
 - Before leaving an image with unsaved edits, lightview asks.
 - **Group Duplicates in Folder** (Tools) compares every image in the folder and moves each group of
   look-alikes, the first one included, into a new folder named after the group's first image. A
-  histogram shows how close the images are, with a suggested threshold; moving the slider shows the
+  histogram shows how close the images are, with a suggested threshold, and a Smallest group slider
+  leaves groups under that size (a pair of copies, say) where they are; moving the sliders shows the
   groups before anything moves. Images that only change little by little, like a burst, stay in one
   group. Nothing is deleted or stored on disk, the viewer stays in the folder, and Ctrl+Z moves
   everything back. Limits: subfolders aren't looked at; rotated or mirrored copies and heavy crops

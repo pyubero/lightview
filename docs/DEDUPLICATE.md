@@ -28,7 +28,7 @@ Connected components (single linkage), user's choice:
 
 1. Two images are **linked** when their distance is within the threshold.
 2. A group is every image reachable through links: if A is close to B and B to C, A, B and C are one group, even when A and C are far apart.
-3. Groups of one are not groups: those images stay where they are.
+3. Groups smaller than **Smallest group** (2 by default, so never groups of one) aren't groups: those images stay where they are.
 4. The group's **first image** is its first member in folder order (the current sort order); the group's folder is named after it.
 
 Why: a 30-shot burst drifts a little from shot to shot, so the first and last frames can differ a lot, yet they're one moment and belong in one folder. Chaining through neighbours keeps the whole burst together.
@@ -46,7 +46,9 @@ After hashing, the dialog shows:
 - **A live summary:** "47 groups · 133 images will move · 1 071 stay · 3 not compared".
 - **The groups**, scrollable: the folder name each will get, then its members in folder order as small thumbnails (96 px, kept from the hashing decode) with file names and each one's distance to its closest other member. The largest groups come first, since that's where chaining shows. Clicking a thumbnail shows that image in the viewer behind the dialog. This is what catches a bad threshold (screenshots of the same app, two sunsets).
 
-The slider only regroups (instant); it never re-hashes.
+- **Smallest group**, a second slider (2–50, starts at 2): groups with fewer images aren't shown or moved. A pair of copies may not be worth a folder when a 30-shot burst is; this moves only the big groups. The summary, the list and Move follow it; the histogram doesn't (it shows distances, not groups).
+
+The sliders only regroup (instant); they never re-hash. Both last only while the dialog is open.
 
 ## Moving
 On **Move**:

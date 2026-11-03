@@ -416,3 +416,5 @@ Images moved back: {n}	Teruggezette afbeeldingen: {n}
 the file is gone	het bestand is weg
 About {s} s left	Nog ongeveer {s} s
 About {m} min left	Nog ongeveer {m} min
+Smallest group	Kleinste groep
+Groups with fewer images stay where they are.	Groepen met minder afbeeldingen blijven waar ze zijn.

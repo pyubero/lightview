@@ -416,3 +416,5 @@ Images moved back: {n}	Возвращено изображений: {n}
 the file is gone	файла больше нет
 About {s} s left	Осталось около {s} с
 About {m} min left	Осталось около {m} мин
+Smallest group	Наименьшая группа
+Groups with fewer images stay where they are.	Группы с меньшим числом изображений остаются на месте.

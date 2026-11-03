@@ -416,3 +416,5 @@ Images moved back: {n}	Przywrócone obrazy: {n}
 the file is gone	pliku już nie ma
 About {s} s left	Pozostało około {s} s
 About {m} min left	Pozostało około {m} min
+Smallest group	Najmniejsza grupa
+Groups with fewer images stay where they are.	Grupy z mniejszą liczbą obrazów zostają na miejscu.
