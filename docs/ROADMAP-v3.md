@@ -77,13 +77,13 @@ All view only at first, with the same zoom, edit and Save As path as other forma
 - **Done when** sample files from each maker open at preview size, with EXIF orientation applied.
 
 ### 27. Better saving (M)
-- **Lossless JPEG rotate, flip and crop** when those are the only edits, using `tjTransform` from the libjpeg-turbo already loaded at run time (Oculante, FastStone). Saves to a copy, like everything else.
+- DONT IMPLEMENT: **Lossless JPEG rotate, flip and crop** when those are the only edits, using `tjTransform` from the libjpeg-turbo already loaded at run time (Oculante, FastStone). Saves to a copy, like everything else.
 - DONT IMPLEMENT: **JPEG quality** slider with an estimated file size, plus "Reduce to a target size" for email and web forms (PicView, Lumia). **[setting]** Reopens M6's fixed quality of 90.
 - DONT IMPLEMENT: **Remove all metadata** option in Save As. This supports the privacy promise. Reopens M6, which keeps GPS when saving.
 - **EXIF editing beyond JPEG:** PNG, WebP and TIFF.
-- **Save animations:** crop, resize, rotate and colour apply to every frame, then write GIF or WebP (BetterViewer). Lifts the "animated images can't be saved" limit.
+- DONT IMPLEMENT: **Save animations:** crop, resize, rotate and colour apply to every frame, then write GIF or WebP (BetterViewer). Lifts the "animated images can't be saved" limit.
 - **Copy File** to the clipboard, as a file for pasting into chats and file managers, not as pixels.
-- **Save as AVIF:** the `image` crate's `avif` feature (rav1e) is pure Rust. Check its binary size and speed first. Lossy WebP is left out: the pure-Rust encoder is lossless only, so it would need libwebp.
+- DONT IMPLEMENT: **Save as AVIF:** the `image` crate's `avif` feature (rav1e) is pure Rust. Check its binary size and speed first. Lossy WebP is left out: the pure-Rust encoder is lossless only, so it would need libwebp.
 - **Done when** a lossless rotate leaves JPEG pixel data bit-identical to a reference, and each option has a save-and-reopen test.
 
 ### DONT IMPLEMENT: 28. Print and wallpaper (M)
@@ -113,15 +113,18 @@ All view only at first, with the same zoom, edit and Save As path as other forma
 - DONT IMPLEMENT: **Done when** a flattened PNG matches the screen in tests, and redacted pixels can't be recovered from the saved file, including its EXIF thumbnail.
 - Add a tool to "Pixelate selection" (for example for faces), use a non obvious randomizer algorithm so that they cannot be recovered.
 
+
+
+
+
+
+
+
+
 ### 31. Read what's in the image (L)
 - **Text recognition:** new AI tool: select and copy text from an image, offline (BetterViewer, Preview). Use PaddleOCR's PP-OCRv5 as ONNX on the existing AI runtime, with the same licence prompt and SHA-256 pin. The upstream model licence needs checking: only a third-party repack listing Apache-2.0 was found. It needs a detection model plus one recognition model per script.
 - **QR codes:** detect and offer to copy the contents, never to open them automatically (BetterViewer). `rqrr` is pure Rust; check its licence and maintenance. No model download.
 - **Done when** printed text in the six UI languages is recognised on test images, and a QR code decodes offline.
-
-
-
-
-
 
 
 ### 32. More local AI — postponed to `ROADMAP-v4.md` (2026-11-02)
