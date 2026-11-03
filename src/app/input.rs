@@ -311,8 +311,8 @@ impl App {
                 Action::ResetAdjust => self.edit(|d| d.adjust = Adjust::default()),
                 Action::Greyscale => self.edit(|d| d.adjust.saturation = if d.adjust.saturation == -1.0 { 0.0 } else { -1.0 }),
                 Action::Invert => self.edit(|d| d.adjust.invert = !d.adjust.invert),
-                Action::RedEye => self.patch_selection(edit::remove_red_eye, tr("Red eye removed")),
-                Action::Pixelate => self.patch_selection(edit::pixelate, tr("Pixelated")),
+                Action::RedEye => self.patch_selection(crate::retouch::remove_red_eye, tr("Red eye removed")),
+                Action::Pixelate => self.patch_selection(crate::retouch::pixelate, tr("Pixelated")),
                 Action::Straighten => {
                     if self.doc().is_some() {
                         self.finish_text();

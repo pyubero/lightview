@@ -542,3 +542,10 @@ fn read_text_languages() {
         assert_eq!(got.get(i), Some(line), "line {i}");
     }
 }
+
+#[test]
+fn qr_codes_are_read() {
+    let img = image::open(concat!(env!("CARGO_MANIFEST_DIR"), "/tests/data/qr.png")).unwrap().into_rgba8();
+    assert_eq!(read_qr(&img), ["https://example.org/lightview?q=1 — señal"]);
+    assert!(read_qr(&image::RgbaImage::from_pixel(64, 64, image::Rgba([255; 4]))).is_empty());
+}

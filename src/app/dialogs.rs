@@ -185,7 +185,7 @@ impl App {
     /// Auto Levels for the visible part of the current image.
     pub(super) fn auto_levels(&self) -> Option<[f32; 2]> {
         let doc = self.doc()?;
-        Some(edit::auto_levels(doc.source(&self.cache.get(self.current()?)?.frames[0]), doc.crop))
+        Some(crate::retouch::auto_levels(doc.source(&self.cache.get(self.current()?)?.frames[0]), doc.crop))
     }
 
     /// The Adjust Color or Adjust Curves panel: it changes the edits live, and Done makes them one undo step.

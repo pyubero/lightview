@@ -148,3 +148,14 @@ pub(super) fn join_lines(mut boxes: Vec<(Rect, String)>) -> String {
         .collect::<Vec<_>>()
         .join("\n")
 }
+
+/// What the QR codes in `img` say, as text: shown to the user, never acted on.
+pub fn read_qr(img: &image::RgbaImage) -> Vec<String> {
+    let luma = DynamicImage::ImageRgba8(img.clone()).into_luma8();
+    // A decoder of untrusted data on another thread: a panic mustn't lose the reply.
+    std::panic::catch_unwind(|| {
+        let mut prepared = rqrr::PreparedImage::prepare_from_greyscale(luma.width() as usize, luma.height() as usize, |x, y| luma.get_pixel(x as u32, y as u32)[0]);
+        prepared.detect_grids().into_iter().filter_map(|g| g.decode().ok().map(|(_, text)| text)).collect()
+    })
+    .unwrap_or_default()
+}

@@ -16,6 +16,7 @@ mod load;
 mod markup;
 mod platform;
 mod raw;
+mod retouch;
 mod save;
 mod settings;
 mod svg;

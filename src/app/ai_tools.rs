@@ -79,7 +79,7 @@ impl App {
                 }
                 match file.flatten() {
                     Some(file) => crate::ai::read_text(&file, &img),
-                    None => Ok(edit::read_qr(&img).join("\n")),
+                    None => Ok(crate::ai::read_qr(&img).join("\n")),
                 }
             });
             notify.send(Msg::TextFound(qr, result));
