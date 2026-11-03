@@ -1,4 +1,3 @@
-AI	KI
 AI Models	KI-Modelle
 AI Models…	KI-Modelle…
 AI runtime (ONNX Runtime)	KI-Laufzeit (ONNX Runtime)
@@ -142,6 +141,7 @@ Licence ({step} of {count}) — {title}	Lizenz ({step} von {count}) — {title}
 Licence — {title}	Lizenz — {title}
 Lightness: from black, through color, to white	Helligkeit: von Schwarz über Farbe bis Weiß
 Line	Linie
+Local AI	Lokale KI
 Location	Standort
 Magnifier	Lupe
 Make lightview my default image viewer	lightview als Standard-Bildbetrachter verwenden
@@ -243,7 +243,7 @@ Stroke	Kontur
 SwinIR σ25 — moderate noise, very slow	SwinIR σ25 — mittleres Rauschen, sehr langsam
 Text	Text
 Text colour	Textfarbe
-The AI runtime isn't installed yet: AI > Download AI Runtime…	Die KI-Laufzeit ist noch nicht installiert: KI > KI-Laufzeit herunterladen…
+The AI runtime isn't installed yet: Local AI > Download AI Runtime…	Die KI-Laufzeit ist noch nicht installiert: Lokale KI > KI-Laufzeit herunterladen…
 The GPU couldn't be used, so the CPU is: {e}	Die GPU konnte nicht verwendet werden, daher wird die CPU genutzt: {e}
 The corners must form a shape with no crossing sides	Die Ecken müssen eine Form ohne sich kreuzende Seiten bilden
 the model's mask decoder is missing	der Maskendecoder des Modells fehlt

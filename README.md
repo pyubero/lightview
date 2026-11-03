@@ -108,10 +108,10 @@ Everything runs on your own computer, on the CPU or a GPU. Your images are never
 lightview only goes online to download the runtime and models you ask for, and after that the AI
 tools work offline.
 
-The AI tools are in the AI menu. They need ONNX Runtime, installed with AI → Download AI
+The AI tools are in the Local AI menu. They need ONNX Runtime, installed with Local AI → Download AI
 Runtime…, and at least one model for the task. Models live in `~/.local/share/lightview/models`.
 
-GPU support is optional, and AI → AI Models… offers two downloads:
+GPU support is optional, and Local AI → AI Models… offers two downloads:
 
 - **NVIDIA** (CUDA, about 1.5 GB): the fastest choice, around 10× faster than the CPU on a GTX 1050.
 - **AMD, Intel and others** (WebGPU, about 6 MB on Linux and 13 MB on Windows; experimental): any
@@ -126,7 +126,7 @@ There are two kinds of model.
 
 ### Models you download from the app
 
-AI → AI Models… offers these models. Each download is pinned by SHA-256 and starts only after you
+Local AI → AI Models… offers these models. Each download is pinned by SHA-256 and starts only after you
 accept its licence.
 
 | Task | Models |
@@ -140,7 +140,7 @@ accept its licence.
 
 ### Recognize Text and QR codes
 
-AI → Recognize Text reads the selection, or the whole image if nothing is selected, and shows the
+Local AI → Recognize Text reads the selection, or the whole image if nothing is selected, and shows the
 text in a window where you can copy all of it or just a part. A few things help it:
 
 - **Level text.** It looks for horizontal lines, so straighten tilted text first (Image →
@@ -162,8 +162,8 @@ links are only shown, never opened.
 1. Follow the instructions in
    [lightview-models](https://github.com/pyubero/lightview-models) to convert the models you want.
    The files are written to its `dist/` folder.
-2. Copy them into `~/.local/share/lightview/models`, or use AI → AI Models… → Add model file….
-3. They then appear under Enhance Image in AI → AI Models….
+2. Copy them into `~/.local/share/lightview/models`, or use Local AI → AI Models… → Add model file….
+3. They then appear under Enhance Image in Local AI → AI Models….
 
 Keep the file names below, because lightview recognises these models by name:
 
@@ -184,7 +184,7 @@ share the converted file.
 
 ### Your own models
 
-Any other `.onnx` file in the models folder is listed too. AI → AI Models… lets you adjust the
+Any other `.onnx` file in the models folder is listed too. Local AI → AI Models… lets you adjust the
 input size and normalisation of background removal models.
 
 ## Development

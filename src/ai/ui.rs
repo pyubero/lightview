@@ -95,7 +95,7 @@ pub fn models_ui(ui: &mut egui::Ui, s: &mut AiSettings, installed: &[String], bu
     let mut out = ModelsOut::default();
     ui.heading(tr("AI Models"));
     if !runtime {
-        ui.colored_label(ui.visuals().warn_fg_color, tr("The AI runtime isn't installed yet: AI > Download AI Runtime…"));
+        ui.colored_label(ui.visuals().warn_fg_color, tr("The AI runtime isn't installed yet: Local AI > Download AI Runtime…"));
     }
     gpu_ui(ui, &mut s.use_gpu, busy, runtime, &mut out);
     let name = |f: &str| {

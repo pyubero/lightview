@@ -1,5 +1,5 @@
 //! AI background removal (optionally cropped to the subject). ONNX Runtime and the models aren't
-//! shipped: AI → Download AI Runtime… / Download … Model… install them on request.
+//! shipped: Local AI → Download AI Runtime… / Download … Model… install them on request.
 use crate::i18n::{tr, tr_key, trf};
 use crate::settings::AiSettings;
 use eframe::egui::{self, Pos2, Rect};

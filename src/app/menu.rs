@@ -207,7 +207,7 @@ pub(super) fn bindable_menus() -> [(&'static str, Vec<(Action, &'static str)>); 
         (Action::Pick(Pick::Draw(Shape::Highlight)), tr_key("Highlight")),
         (Action::Pick(Pick::Draw(Shape::Magnifier)), tr_key("Magnifier")),
     ]);
-    [(tr_key("File"), file), (tr_key("Edit"), edit), (tr_key("View"), view), (tr_key("Image"), image), (tr_key("AI"), ai), (tr_key("Tools"), tools)]
+    [(tr_key("File"), file), (tr_key("Edit"), edit), (tr_key("View"), view), (tr_key("Image"), image), (tr_key("Local AI"), ai), (tr_key("Tools"), tools)]
 }
 
 /// Keys with a fixed meaning (clipboard, confirm, cancel, delete), never offered as shortcuts.
@@ -416,7 +416,7 @@ impl App {
                 hinted(ui, Action::RedEye, tr("Select the eyes first, then choose this."), actions);
                 hinted(ui, Action::Pixelate, tr("Hides faces. For text, a solid shape is safer: pixelation can sometimes be undone."), actions);
             });
-            ui.menu_button(tr("AI"), |ui| {
+            ui.menu_button(tr("Local AI"), |ui| {
                 use crate::ai::Task;
                 item(ui, Action::Cutout(false), actions);
                 item(ui, Action::Cutout(true), actions);

@@ -87,7 +87,7 @@ when" says otherwise. `▸` marks a submenu.
 | Remove Red Eye | | a selection, no AI job running | Removes the red from very red pixels in the selection. One undo step. |
 | Pixelate Selection | | a selection, no AI job running | Pixelates the selection on a randomly placed grid, with random noise in each block. One undo step. Its hint says a solid shape is safer for text. |
 
-## AI
+## Local AI
 | Item | Shortcut | Enabled when | Does |
 |---|---|---|---|
 | Remove Background | | AI runtime and a background model installed, no AI job running | |

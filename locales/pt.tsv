@@ -1,4 +1,3 @@
-AI	IA
 AI Models	Modelos de IA
 AI Models…	Modelos de IA…
 AI runtime (ONNX Runtime)	Motor de IA (ONNX Runtime)
@@ -142,6 +141,7 @@ Licence ({step} of {count}) — {title}	Licença ({step} de {count}) — {title}
 Licence — {title}	Licença — {title}
 Lightness: from black, through color, to white	Luminosidade: de preto, passando pela cor, a branco
 Line	Linha
+Local AI	IA local
 Location	Localização
 Magnifier	Lupa
 Make lightview my default image viewer	Tornar o lightview o meu visualizador de imagens predefinido
@@ -243,7 +243,7 @@ Stroke	Traço
 SwinIR σ25 — moderate noise, very slow	SwinIR σ25 — ruído moderado, muito lento
 Text	Texto
 Text colour	Cor do texto
-The AI runtime isn't installed yet: AI > Download AI Runtime…	O motor de IA ainda não está instalado: IA > Transferir motor de IA…
+The AI runtime isn't installed yet: Local AI > Download AI Runtime…	O motor de IA ainda não está instalado: IA local > Transferir motor de IA…
 The GPU couldn't be used, so the CPU is: {e}	Não foi possível usar a GPU, por isso é usada a CPU: {e}
 The corners must form a shape with no crossing sides	Os cantos têm de formar uma figura sem lados cruzados
 the model's mask decoder is missing	falta o descodificador de máscaras do modelo
