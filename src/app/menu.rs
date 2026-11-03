@@ -123,7 +123,7 @@ pub(super) fn bindable() -> Vec<(Action, &'static str)> {
 
 /// `bindable`, under the menus they're in. Cut, Copy and Paste are left out: they arrive as
 /// clipboard events, always Ctrl+X/C/V.
-pub(super) fn bindable_menus() -> [(&'static str, Vec<(Action, &'static str)>); 5] {
+pub(super) fn bindable_menus() -> [(&'static str, Vec<(Action, &'static str)>); 6] {
     use crate::ai::Task;
     let file = vec![
         (Action::Open, tr_key("Open…")),
@@ -177,12 +177,15 @@ pub(super) fn bindable_menus() -> [(&'static str, Vec<(Action, &'static str)>); 
         (Action::Invert, tr_key("Invert Colors")),
         (Action::RedEye, tr_key("Remove Red Eye")),
         (Action::Pixelate, tr_key("Pixelate Selection")),
+    ];
+    let ai = vec![
         (Action::Cutout(false), tr_key("Remove Background")),
         (Action::Cutout(true), tr_key("Remove Background and Crop")),
         (Action::BlurBackground, tr_key("Blur Background…")),
         (Action::ReplaceBackground, tr_key("Replace Background")),
         (Action::Restore(Task::Denoise), tr_key("Denoise")),
         (Action::Restore(Task::Enhance), tr_key("Enhance Image")),
+        (Action::SelectTool(SelKind::Object), tr_key("Select Object (AI)")),
         (Action::Inpaint, tr_key("Remove Object")),
         (Action::ReadText(false), tr_key("Recognize Text")),
         (Action::AiModels, tr_key("AI Models…")),
@@ -193,7 +196,6 @@ pub(super) fn bindable_menus() -> [(&'static str, Vec<(Action, &'static str)>); 
         (Action::SelectTool(SelKind::Rect), tr_key("Rectangular Selection")),
         (Action::SelectTool(SelKind::Ellipse), tr_key("Elliptical Selection")),
         (Action::SelectTool(SelKind::Lasso), tr_key("Lasso")),
-        (Action::SelectTool(SelKind::Object), tr_key("Select Object (AI)")),
         (Action::Measure, tr_key("Measure")),
         (Action::CopyColor, tr_key("Copy Color")),
         (Action::ReadText(true), tr_key("Read QR Code")),
@@ -205,7 +207,7 @@ pub(super) fn bindable_menus() -> [(&'static str, Vec<(Action, &'static str)>); 
         (Action::Pick(Pick::Draw(Shape::Highlight)), tr_key("Highlight")),
         (Action::Pick(Pick::Draw(Shape::Magnifier)), tr_key("Magnifier")),
     ]);
-    [(tr_key("File"), file), (tr_key("Edit"), edit), (tr_key("View"), view), (tr_key("Image"), image), (tr_key("Tools"), tools)]
+    [(tr_key("File"), file), (tr_key("Edit"), edit), (tr_key("View"), view), (tr_key("Image"), image), (tr_key("AI"), ai), (tr_key("Tools"), tools)]
 }
 
 /// Keys with a fixed meaning (clipboard, confirm, cancel, delete), never offered as shortcuts.
@@ -413,16 +415,20 @@ impl App {
                 ui.separator();
                 hinted(ui, Action::RedEye, tr("Select the eyes first, then choose this."), actions);
                 hinted(ui, Action::Pixelate, tr("Hides faces. For text, a solid shape is safer: pixelation can sometimes be undone."), actions);
-                ui.separator();
-                ui.weak(tr("AI Image Processing"));
+            });
+            ui.menu_button(tr("AI"), |ui| {
                 use crate::ai::Task;
                 item(ui, Action::Cutout(false), actions);
                 item(ui, Action::Cutout(true), actions);
                 item(ui, Action::BlurBackground, actions);
                 hinted(ui, Action::ReplaceBackground, tr("Fills the background with the background colour from Settings."), actions);
+                ui.separator();
                 item(ui, Action::Restore(Task::Denoise), actions);
                 item(ui, Action::Restore(Task::Enhance), actions);
+                ui.separator();
+                selectable(ui, Action::SelectTool(SelKind::Object), self.shown.tool == Tool::Selection(SelKind::Object), actions);
                 item(ui, Action::Inpaint, actions);
+                ui.separator();
                 let hint = tr("Reads the selection, or the whole image. Straighten tilted text first, and select small text in a large image so it's read at full size.");
                 hinted(ui, Action::ReadText(false), hint, actions);
                 ui.separator();
@@ -435,7 +441,7 @@ impl App {
                 let label = if self.show_toolbar { tr("Hide Drawing Toolbar") } else { tr("Show Drawing Toolbar") };
                 labelled(ui, label, Action::ShowToolbar, actions);
                 ui.separator();
-                for kind in [SelKind::Rect, SelKind::Ellipse, SelKind::Lasso, SelKind::Object] {
+                for kind in [SelKind::Rect, SelKind::Ellipse, SelKind::Lasso] {
                     selectable(ui, Action::SelectTool(kind), self.shown.tool == Tool::Selection(kind), actions);
                 }
                 selectable(ui, Action::Measure, matches!(self.shown.tool, Tool::Measure { .. }), actions);

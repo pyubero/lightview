@@ -86,15 +86,21 @@ when" says otherwise. `▸` marks a submenu.
 | — | | | |
 | Remove Red Eye | | a selection, no AI job running | Removes the red from very red pixels in the selection. One undo step. |
 | Pixelate Selection | | a selection, no AI job running | Pixelates the selection on a randomly placed grid, with random noise in each block. One undo step. Its hint says a solid shape is safer for text. |
-| — | | | |
-| *AI Image Processing* | | | (a heading, not an item) |
+
+## AI
+| Item | Shortcut | Enabled when | Does |
+|---|---|---|---|
 | Remove Background | | AI runtime and a background model installed, no AI job running | |
 | Remove Background and Crop | | same | Also crops to the subject. |
 | Blur Background… | | same | Finds the subject, then shows it over a blurred copy with a Strength slider (0–10 % of the long side, 0 being no blur; the preview updates when the slider is let go). Done keeps it as one undo step; Cancel or Esc puts the image back. |
 | Replace Background | | same | Puts the subject over the background colour from Settings. One undo step. |
+| — | | | |
 | Denoise | | AI runtime and a Denoise model installed, no AI job running | Preview of the visible area first, then Apply to Whole Image / Selection. |
 | Enhance Image | | AI runtime and an Enhance model installed, no AI job running | Same flow; with an upscaler the image becomes 4× bigger. Shows a one-time notice per model. |
+| — | | | |
+| Select Object (AI) | | AI runtime and the MobileSAM model installed, no AI job running | Drag a box around one object; after a second or two the box turns into the object's outline. Esc or a new box drops a pending result. Holes inside the object stay selected. |
 | Remove Object | | AI runtime and a Remove Object model installed, a selection, no AI job running | Fills in the selection, with no preview; Ctrl+Z undoes it. |
+| — | | | |
 | Recognize Text | | AI runtime and a Recognize Text model installed, not already reading | Reads the text in the selection's bounds, or the whole image, and shows it in a window with Copy. Upright text only; a large image is searched at up to 1920 px, so select small text to read it at full size. |
 | — | | | |
 | AI Models… | | always | Choose, download (after accepting licences) or add models per task; GPU support (NVIDIA via CUDA, or any Vulkan / Direct3D 12 card via WebGPU). Real-ESRGAN and DarkIR are never downloaded: users convert them and copy them in (see `README.md`). |
@@ -108,7 +114,6 @@ when" says otherwise. `▸` marks a submenu.
 | Rectangular Selection | | | Selection tool (shown ticked while active). |
 | Elliptical Selection | | | |
 | Lasso | | | |
-| Select Object (AI) | | AI runtime and the MobileSAM model installed, no AI job running | Drag a box around one object; after a second or two the box turns into the object's outline. Esc or a new box drops a pending result. Holes inside the object stay selected. |
 | Measure | | | Drag a line; distance, ΔX, ΔY in image pixels (ticked while active). |
 | Copy Color | | | Click a pixel to copy its colour as `#RRGGBB` (`#RRGGBBAA` if it isn't opaque), as it's seen with the edits (ticked while active). |
 | Read QR Code | | not already reading | Reads the QR codes in the selection's bounds, or the whole image, and shows what they say with Copy. Links are never opened. |

@@ -1,4 +1,4 @@
-AI Image Processing	Procesado de imagen con IA
+AI	IA
 AI Models	Modelos de IA
 AI Models…	Modelos de IA…
 AI runtime (ONNX Runtime)	Motor de IA (ONNX Runtime)
@@ -243,7 +243,7 @@ Stroke	Trazo
 SwinIR σ25 — moderate noise, very slow	SwinIR σ25 — ruido moderado, muy lento
 Text	Texto
 Text colour	Color del texto
-The AI runtime isn't installed yet: Tools > Download AI Runtime…	El motor de IA aún no está instalado: Herramientas > Descargar motor de IA…
+The AI runtime isn't installed yet: AI > Download AI Runtime…	El motor de IA aún no está instalado: IA > Descargar motor de IA…
 The GPU couldn't be used, so the CPU is: {e}	No se ha podido usar la GPU, así que se usa la CPU: {e}
 The corners must form a shape with no crossing sides	Las esquinas deben formar una figura sin lados cruzados
 the model's mask decoder is missing	falta el decodificador de máscaras del modelo

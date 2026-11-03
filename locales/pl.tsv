@@ -1,4 +1,4 @@
-AI Image Processing	Przetwarzanie obrazu przez AI
+AI	AI
 AI Models	Modele AI
 AI Models…	Modele AI…
 AI runtime (ONNX Runtime)	Środowisko AI (ONNX Runtime)
@@ -243,7 +243,7 @@ Stroke	Obrys
 SwinIR σ25 — moderate noise, very slow	SwinIR σ25 — umiarkowany szum, bardzo wolny
 Text	Tekst
 Text colour	Kolor tekstu
-The AI runtime isn't installed yet: Tools > Download AI Runtime…	Środowisko AI nie jest jeszcze zainstalowane: Narzędzia > Pobierz środowisko AI…
+The AI runtime isn't installed yet: AI > Download AI Runtime…	Środowisko AI nie jest jeszcze zainstalowane: AI > Pobierz środowisko AI…
 The GPU couldn't be used, so the CPU is: {e}	Nie udało się użyć GPU, więc używany jest procesor: {e}
 The corners must form a shape with no crossing sides	Narożniki muszą tworzyć kształt bez przecinających się boków
 the model's mask decoder is missing	brakuje dekodera masek modelu

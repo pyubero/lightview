@@ -1,4 +1,4 @@
-AI Image Processing	Обработка изображений ИИ
+AI	ИИ
 AI Models	Модели ИИ
 AI Models…	Модели ИИ…
 AI runtime (ONNX Runtime)	Среда ИИ (ONNX Runtime)
@@ -243,7 +243,7 @@ Stroke	Обводка
 SwinIR σ25 — moderate noise, very slow	SwinIR σ25 — умеренный шум, очень медленно
 Text	Текст
 Text colour	Цвет текста
-The AI runtime isn't installed yet: Tools > Download AI Runtime…	Среда ИИ ещё не установлена: Инструменты > Скачать среду ИИ…
+The AI runtime isn't installed yet: AI > Download AI Runtime…	Среда ИИ ещё не установлена: ИИ > Скачать среду ИИ…
 The GPU couldn't be used, so the CPU is: {e}	GPU использовать не удалось, поэтому используется процессор: {e}
 The corners must form a shape with no crossing sides	Углы должны образовывать фигуру без пересекающихся сторон
 the model's mask decoder is missing	отсутствует декодер масок модели

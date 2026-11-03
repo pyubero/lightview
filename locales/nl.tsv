@@ -1,4 +1,4 @@
-AI Image Processing	Beeldbewerking met AI
+AI	AI
 AI Models	AI-modellen
 AI Models…	AI-modellen…
 AI runtime (ONNX Runtime)	AI-runtime (ONNX Runtime)
@@ -243,7 +243,7 @@ Stroke	Lijn
 SwinIR σ25 — moderate noise, very slow	SwinIR σ25 — matige ruis, erg traag
 Text	Tekst
 Text colour	Tekstkleur
-The AI runtime isn't installed yet: Tools > Download AI Runtime…	De AI-runtime is nog niet geïnstalleerd: Hulpmiddelen > AI-runtime downloaden…
+The AI runtime isn't installed yet: AI > Download AI Runtime…	De AI-runtime is nog niet geïnstalleerd: AI > AI-runtime downloaden…
 The GPU couldn't be used, so the CPU is: {e}	De GPU kon niet gebruikt worden, dus de CPU wordt gebruikt: {e}
 The corners must form a shape with no crossing sides	De hoeken moeten een vorm zonder kruisende zijden vormen
 the model's mask decoder is missing	de maskerdecoder van het model ontbreekt
