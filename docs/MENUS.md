@@ -36,7 +36,7 @@ when" says otherwise. `▸` marks a submenu.
 | Select All | Ctrl+A | | Selects the whole image. |
 | Deselect | Ctrl+Shift+A | there's a selection | |
 | — | | | |
-| Settings… | Ctrl+, | always | GPU image scaling, interpolation, background colour, pixel grid (lines between pixels from 8× up), colour management (on: images with an ICC profile are converted to sRGB as they're decoded; off: shown as stored, and Save As keeps their profile), default window size, sort order, and a Change Keyboard Shortcuts… button, which opens the list of menu items by menu (Change records the next key combination, refused if another item or a fixed key has it; Remove; Reset All Shortcuts). |
+| Settings… | Ctrl+, | always | Language, font size, theme (Follow system or any file in the themes folder, with an Open themes folder button), GPU image scaling, interpolation, background colour, pixel grid (lines between pixels from 8× up), colour management (on: images with an ICC profile are converted to sRGB as they're decoded; off: shown as stored, and Save As keeps their profile), default window size, sort order, and a Change Keyboard Shortcuts… button, which opens the list of menu items by menu (Change records the next key combination, refused if another item or a fixed key has it; Remove; Reset All Shortcuts), a Make lightview the default image viewer button (Linux, while it isn't), and at the bottom the version and Check for updates (opens the Releases page). |
 
 ## View
 | Item | Shortcut | Enabled when | Does |

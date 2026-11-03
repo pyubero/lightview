@@ -18,7 +18,7 @@ Tools → **Group Duplicates in Folder…** hashes every image in the current fo
 
 ## Hashing
 - **Input:** a small decode, not the full image. JPEGs use libjpeg-turbo's 1/8 decode (12 MP → 500×375); other formats decode normally and are resized. EXIF orientation is applied first, so the hash matches what the user sees. The EXIF thumbnail is *not* used: it can be stale after editing elsewhere, and some cameras pad it with black bars.
-- **pHash:** greyscale → 32×32 (RGB-as-grey, `fast_image_resize`) → 2-D DCT → the 8×8 lowest frequencies → each bit = coefficient above their median (as the common `imagehash` pHash). 64 bits per image. About 40 lines; no new crate.
+- **pHash:** 32×32 (box filter, `fast_image_resize`) → greyscale → 2-D DCT → the 8×8 lowest frequencies → each bit = coefficient above their median (as the common `imagehash` pHash). 64 bits per image. About 40 lines; no new crate.
 - **Distance:** Hamming distance between two hashes (`(a ^ b).count_ones()`), 0–64. Unrelated photos land around 28–36; a resized or recompressed copy is usually ≤ 4.
 - **Threads:** its own small pool (the decode pool's 3 workers), separate from `Loader`, so viewing stays responsive. Images are hashed in folder order; each result goes back over the existing message channel.
 - **Time:** dominated by reading and decoding. Measured 10.9 ms per image (wall time, 3 threads) on 30 generated 12 MP JPEGs with libjpeg-turbo, so 1 000 photos ≈ 11 s; real photos (more detail, bigger files, a cold disk) will be slower; PNGs and HEICs are slower (full decode). Pairwise distances are cheap: 10 000 images = 50 M popcounts ≈ 50 ms.
@@ -84,19 +84,17 @@ The hashing screen shows "Comparing images: 312 of 1 204" with a progress bar, t
 - Sidecar files (`.xmp`, `.aae`) stay behind; a RAW and its JPEG of the same shot will usually land in the same group, which is fine.
 - Undo lasts only for the session.
 
-## Where the code goes
-- `src/dedupe.rs`: `phash`, `group(hashes, threshold)`, `suggest(nearest)`, `move_groups` and `undo`. Unit tests: a resized + recompressed copy is within 4; two different test images are over 20; grouping on hand-made hashes (a chain A–B–C with A and C far apart forms one group; the group's first image follows the sort order); `suggest` on a bimodal and a flat histogram; moving with a name collision and an existing target; undo restoring names and removing only empty folders.
-- `src/app/dialogs.rs`: the hashing, review and result screens.
-- `src/app/menu.rs`: the Tools item, a `menu::bindable()` line, `App::enabled` arm.
-- `locales/*.tsv`: every new string, in all locales.
-- `docs/FEATURES.md`, `docs/MENUS.md`: the feature and its limits.
+## Where the code is
+- `src/dedupe.rs`: `phash`, `thumb`, `nearest`, `suggest`, `group(hashes, threshold, min)`, `hash_all`, `move_groups` and `undo`, with unit tests (a resized + recompressed copy within 4 and a different image over 20; a chain A–B–C with A and C far apart forming one group; the smallest-group filter; `suggest` on bimodal and flat data; moving with a taken folder name and a file changed since it was compared; undo restoring names and removing only empty folders), plus the ignored `dedupe_folder` timing test.
+- `src/load.rs`: `small`, the reduced decode (`load` with `preview_only`).
+- `src/app/group.rs`: the dialog (progress, time left, histogram, sliders, groups), Move, and its undo; `app/tests.rs` runs it end to end on a temporary folder.
+- `src/app/menu.rs`: the Tools item, its `menu::bindable()` line and `App::enabled` arm; `src/app.rs`: the `Removed` undo stack shared with Trash.
+- `locales/*.tsv`, `docs/FEATURES.md`, `docs/MENUS.md`.
 
-## Done when
-- A test folder (originals, resized copies, recompressed copies, a burst, unrelated photos, a HEIC copy of a JPEG) groups as expected at the suggested threshold, with the whole burst in one folder.
-- 1 000 12 MP JPEGs hash in under 10 s on this machine (turbo off counts as pessimistic already).
-- Cancel, Move, and Ctrl+Z each leave the folder exactly as described above, checked with a test that lists the folder before and after.
-- After Move with the shown image in a group, the viewer shows the next image left in the original folder.
-- Running it twice in a row gives the same groups, and the dialog holds no memory once closed.
+## Checked, and not yet
+- Checked by tests: grouping of copies vs. different images, the burst chain, Move into named folders, the viewer staying in the folder on the next image left, Ctrl+Z restoring the listing, the smallest-group slider, the time-left wording.
+- Speed: 10.9 ms per image on 30 generated 12 MP JPEGs, about 11 s per 1 000, just over the 10 s aim; not yet timed on real photos.
+- Not yet: a HEIC copy of a JPEG in the test folder, and the dialog checked by hand.
 
 ## Settled (user's choices, 2026-11-03)
 1. The v3 non-goal "duplicate finding" may be reopened; this document describes the behaviour.
@@ -105,3 +103,4 @@ The hashing screen shows "Comparing images: 312 of 1 204" with a progress bar, t
 4. When the shown image moves, the viewer stays in the original folder.
 5. Grouping chains through neighbours, so a burst stays in one folder.
 6. Menu name: Tools → Group Duplicates in Folder….
+7. A Smallest group slider (2–50, starts at 2), so a pair of copies can be left where it is while big bursts move.

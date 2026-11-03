@@ -229,4 +229,4 @@ computer.
 | HDR, EXR | Yes (tone-mapped to 8 bits) | No |
 | Camera RAW: CR2, CR3, NEF, ARW, DNG, RAF, ORF, RW2 | The embedded JPEG preview, rotated as shot | No |
 
-Animated images and multi-page TIFFs can be viewed, but not saved yet. HEIC and AVIF files open only when they are shown, without being decoded ahead, because their decoders are native code.
+Animated images and multi-page TIFFs can be viewed, but not saved yet. HEIC and AVIF files open only when they are shown, without being decoded ahead, because their decoders are native code. Group Duplicates in Folder is the one exception: when you start it, it decodes every image in the folder, HEIC and AVIF included.

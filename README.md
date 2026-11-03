@@ -34,8 +34,8 @@ and it never goes online on its own.
 - **Private by design.** No telemetry, no account, and it never goes online on its own.
 - **Multilingual.** It starts in your system's language, and currently supports nine languages.
 - **Accessibility features.** Menus, dialogs and settings can be read by a screen reader such as
-  Orca or Narrator. All actions can be assigned their own keyboard shortcut. UI font size 
-  adaptable, and cusotmizable high contrast theme.
+  Orca or Narrator. All actions can be assigned their own keyboard shortcut. Adjustable UI font size,
+  and a customizable high contrast theme.
 
 Every feature, and the supported formats, are described in [`FEATURES.md`](docs/FEATURES.md).
 
@@ -206,6 +206,9 @@ lightview --bench photo.jpg     # the same, quitting after the first full image
 | [`PROJECT_BRIEF.md`](docs/PROJECT_BRIEF.md) | Goals, scope, performance targets and early milestones |
 | [`ROADMAP-v2.md`](docs/ROADMAP-v2.md) | The roadmap for editing and AI features |
 | [`ROADMAP-v3.md`](docs/ROADMAP-v3.md) | Proposed features for competing with other viewers |
+| [`ROADMAP-v4.md`](docs/ROADMAP-v4.md) | More local AI |
+| [`DEDUPLICATE.md`](docs/DEDUPLICATE.md) | How Group Duplicates in Folder works |
+| [`REWORK.md`](docs/REWORK.md) | The maintainability rework of the code |
 | [`MENUS.md`](docs/MENUS.md) | Every menu item and shortcut |
 | [`TRANSLATING.md`](docs/TRANSLATING.md) | How to correct a translation or add a language |
 

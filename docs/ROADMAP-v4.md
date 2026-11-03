@@ -22,6 +22,7 @@ None of these should change without the user's approval.
 | Decision | Reopened by |
 |---|---|
 | No smart lasso (v2) | Milestone 32, Select Object: reopened with the user's approval, 2026-11-03 |
+| No duplicate finding (v3 non-goal) | Group Duplicates in Folder (`DEDUPLICATE.md`), outside this roadmap: reopened with the user's approval, 2026-11-03 |
 
 ## Open questions
 1. **Licences to verify before adding:** DDColor weights. Settled: MobileSAM and SAM's decoder are Apache-2.0 (used); GFPGAN's bundled parts are non-commercial (not used).

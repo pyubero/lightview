@@ -1,6 +1,6 @@
 # lightview — Roadmap v3
 
-*Status: proposal, 2026-11-01. Nothing here is decided or built. v1 is in `PROJECT_BRIEF.md`, v2 in `ROADMAP-v2.md`.*
+*Status: proposal, 2026-11-01. Much of it was built for 0.3.0 (see `CHANGELOG.md`); items marked DONT IMPLEMENT were dropped. v1 is in `PROJECT_BRIEF.md`, v2 in `ROADMAP-v2.md`.*
 
 ## The aim
 Close the gaps that make people pick another viewer, without becoming a different kind of program.
@@ -155,7 +155,8 @@ Competitors have these, but they lean towards gallery management. Each is listed
 - DONT IMPLEMENT: **Open images inside ZIP and CBZ** (nomacs, PicView): read-only and browsed like a folder. This drifts towards being a comic reader, so it's the first one to drop.
 
 ## Non-goals (v3)
-- Catalogues, libraries, databases, albums, tags, ratings, face grouping, search, duplicate finding, batch renaming
+- Catalogues, libraries, databases, albums, tags, ratings, face grouping, search, batch renaming
+- Duplicate finding: reopened with the user's approval on 2026-11-03 as Tools → Group Duplicates in Folder (`DEDUPLICATE.md`)
 - Thumbnail grids
 - Layers beyond markup elements, brushes, cloning and masks
 - RAW development
