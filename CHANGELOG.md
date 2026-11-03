@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.0 (2026-11-03)
+
+- Tools → Group Duplicates in Folder… compares every image in the folder and moves each group of look-alikes, the first one included, into a new folder named after the group's first image. A histogram shows how close the images are and suggests a threshold; a Smallest group slider leaves groups under that size where they are, so you can move only the big bursts; the groups update as you move the sliders, before anything moves. A burst of shots stays in one group. Nothing is deleted or stored on disk, the viewer stays in the folder, and Ctrl+Z moves everything back. Subfolders aren't looked at, and rotated copies and heavy crops aren't found.
+- A new Local AI menu holds every AI tool, AI Models… and Download AI Runtime…. Select Object moved there from Tools; Read QR Code stays in Tools, since it needs no download.
+- Local AI → Blur Background and Replace Background reuse the Remove Background model: the subject stays sharp over a blurred copy of the photo, with a strength slider that starts at 0 % while you watch, or over the background colour from Settings.
+- Local AI → Select Object (MobileSAM) turns a box you drag around an object into a selection of its outline, ready for Crop, Remove Object, Delete or Pixelate.
+- AMD, Intel and other GPUs (experimental): an optional 6 MB WebGPU download in AI Models… runs the AI tools on any graphics card with Vulkan (Linux) or Direct3D 12 (Windows), falling back to the CPU when it can't.
+- Themes: Edit → Settings → Theme picks Dark, Light, High contrast, or follows the system's dark/light setting. Each theme is an XML file you can copy and edit in the themes folder.
+
 ## 0.3.0 (2026-11-02)
 
 - Image → Recognize Text reads the text in the selection, or the whole image, offline, and shows it in a dialog where you can edit and copy it. It needs the AI runtime and a text model (PP-OCRv5, Latin or Chinese/Japanese/English), downloaded from Tools → AI Models….

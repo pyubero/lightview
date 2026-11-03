@@ -1,6 +1,6 @@
 # lightview — Group Duplicates (design)
 
-*Status: built on branch `group-duplicates`, 2026-11-03. Describes how the tool behaves. `ROADMAP-v3.md` lists "duplicate finding" as a non-goal; the user is open to reopening it (2026-11-03).*
+*Status: built 2026-11-03, released in 0.4.0. Describes how the tool behaves. It reopens `ROADMAP-v3.md`'s "duplicate finding" non-goal, with the user's approval.*
 
 ## In one paragraph
 Tools → **Group Duplicates in Folder…** hashes every image in the current folder with a perceptual hash (pHash), shows how close the images are to each other and suggests a threshold, lets the user move a slider while watching the groups change, and then moves each group of look-alikes into a subfolder named after the group's first image. Nothing is deleted, nothing is written except those folders, nothing is cached, and one Ctrl+Z puts every file back.
