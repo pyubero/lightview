@@ -15,7 +15,6 @@ Adjust Curves…	Кривые…
 All channels together: overall brightness	Все каналы вместе: общая яркость
 Animation	Анимация
 Applies the next time lightview starts	Вступит в силу при следующем запуске lightview
-Apply	Применить
 Apply sigmoid (the model outputs logits)	Применить сигмоиду (модель выдаёт логиты)
 Apply to Selection	Применить к выделению
 Apply to Whole Image{size} (about {estimate})	Применить ко всему изображению{size} (около {estimate})

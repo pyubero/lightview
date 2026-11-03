@@ -15,7 +15,6 @@ Adjust Curves…	Curven aanpassen…
 All channels together: overall brightness	Alle kanalen samen: algemene helderheid
 Animation	Animatie
 Applies the next time lightview starts	Geldt vanaf de volgende keer dat lightview start
-Apply	Toepassen
 Apply sigmoid (the model outputs logits)	Sigmoïde toepassen (het model geeft logits)
 Apply to Selection	Toepassen op selectie
 Apply to Whole Image{size} (about {estimate})	Toepassen op hele afbeelding{size} (ongeveer {estimate})

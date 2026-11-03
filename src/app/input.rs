@@ -359,7 +359,7 @@ impl App {
                 Action::DeleteSelection => self.delete_selection(),
                 Action::DeleteImage => self.delete_prompt = true,
                 Action::Cutout(crop) => self.cutout(super::ai_tools::Cut::Remove(*crop)),
-                Action::BlurBackground => self.blur_strength = Some(3.0),
+                Action::BlurBackground => self.cutout(super::ai_tools::Cut::Blur),
                 Action::ReplaceBackground => self.cutout(super::ai_tools::Cut::Replace),
                 Action::ReadText(qr) => self.read_text(*qr),
                 Action::Restore(task) if *task == crate::ai::Task::Enhance && let Some(file) = self.unseen_notice() => self.enhance_notice = Some(file),
@@ -393,7 +393,9 @@ impl App {
         let enter = !typing && ctx.input(|i| i.key_pressed(Key::Enter));
         let delete_key = !typing && ctx.input(|i| i.key_pressed(Key::Delete));
         let delete = delete_key || !typing && ctx.input(|i| i.key_pressed(Key::Backspace));
-        if esc && !typing && let Some(before) = self.shown.change_base.take() {
+        if esc && self.shown.blurring.is_some() {
+            self.finish_blur(false);
+        } else if esc && !typing && let Some(before) = self.shown.change_base.take() {
             // Cancel the drawing in progress.
             (self.shown.doc, self.shown.grab) = (Some(before), Grab::None);
         } else if esc && !typing && self.shown.tool != Tool::Pan && !self.shown.perspective_prompt {

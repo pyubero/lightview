@@ -45,7 +45,7 @@ impl App {
         self.ai_models_dialog(ctx);
         self.license_dialog(ctx);
         self.enhance_notice_dialog(ctx);
-        self.blur_dialog(ctx);
+        self.blur_panel(ctx);
         self.text_dialog(ctx);
         self.restore_progress(ctx, viewport);
         self.compare_bar(ctx, viewport);

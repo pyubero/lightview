@@ -1,5 +1,5 @@
 use super::App;
-use crate::edit;
+use crate::edit::{self, Doc};
 use crate::i18n::{tr, trf};
 use crate::load::Msg;
 use crate::markup::Selection;
@@ -20,6 +20,18 @@ pub(super) struct Restoring {
     pub(super) selection: Option<Selection>,
 }
 
+/// Blur Background's open panel.
+pub(super) struct Blurring {
+    /// The edits from before it, for Cancel and for the undo step.
+    pub(super) before: Doc,
+    /// The image to blur, at most `ai::BLUR_SIDE` px; drawn stretched to the image's size.
+    pub(super) small: image::RgbaImage,
+    /// Where the blurred backdrop is in `last.elements`.
+    pub(super) at: usize,
+    /// The edits as the panel last set them.
+    pub(super) last: Doc,
+}
+
 /// The before/after preview of Denoise / Enhance on part of the image.
 pub(super) struct Compare {
     pub(super) task: crate::ai::Task,
@@ -37,8 +49,8 @@ pub(super) struct Compare {
 pub(super) enum Cut {
     /// Removes it, and crops to the subject when true.
     Remove(bool),
-    /// Blurs it, by this % of the image's long side.
-    Blur(f32),
+    /// Blurs it, by a strength chosen afterwards while watching.
+    Blur,
     /// Fills it with the background colour.
     Replace,
 }
@@ -65,7 +77,11 @@ impl App {
                 let backdrop = match cut {
                     Cut::Remove(_) => crate::ai::Backdrop::Clear,
                     Cut::Replace => crate::ai::Backdrop::Colour,
-                    Cut::Blur(pct) => crate::ai::Backdrop::Blurred(image::imageops::fast_blur(&img, pct / 100.0 * img.width().max(img.height()) as f32)),
+                    Cut::Blur => {
+                        let s = (crate::ai::BLUR_SIDE as f32 / img.width().max(img.height()) as f32).min(1.0);
+                        let (w, h) = (((img.width() as f32 * s).round() as u32).max(1), ((img.height() as f32 * s).round() as u32).max(1));
+                        crate::ai::Backdrop::Blur(image::imageops::resize(&img, w, h, image::imageops::FilterType::Triangle))
+                    }
                 };
                 Ok((crate::ai::cutout(&img, &mask), object, backdrop))
             });
@@ -236,22 +252,56 @@ impl App {
         }
     }
 
-    /// Blur Background's strength, asked before it runs.
-    pub(super) fn blur_dialog(&mut self, ctx: &egui::Context) {
-        let Some(mut strength) = self.blur_strength else { return };
-        let modal = egui::Modal::new(egui::Id::unique("blur-background")).show(ctx, |ui| {
-            ui.heading(tr("Blur Background"));
-            ui.add(egui::Slider::new(&mut strength, 1.0..=10.0).text(tr("Strength")));
+    /// Blur Background's panel: the strength, previewed on the image, then Done or Cancel. Not
+    /// modal, so the edges can be checked zoomed in.
+    pub(super) fn blur_panel(&mut self, ctx: &egui::Context) {
+        let Some(b) = &self.shown.blurring else { return };
+        // Something else changed the image (Undo, a drawing): keep what's there and close.
+        if self.shown.doc.as_ref() != Some(&b.last) {
+            self.shown.blurring = None;
+            return;
+        }
+        let (mut strength, mut open) = (self.blur_strength, true);
+        let choice = egui::Window::new(tr("Blur Background")).open(&mut open).resizable(false).collapsible(false).show(ctx, |ui| {
+            let slider = ui.add(egui::Slider::new(&mut strength, 1.0..=10.0).fixed_decimals(1).suffix(" %").text(tr("Strength")));
+            self.blur_strength = strength;
+            // A re-blur takes ~0.2 s, so not on every frame of a drag: once it's let go.
+            if slider.drag_stopped() || slider.changed() && !slider.dragged() {
+                self.set_blur(strength);
+            }
             ui.add_space(6.0);
-            ui.horizontal(|ui| (ui.button(tr("Apply")).clicked(), ui.button(tr("Cancel")).clicked())).inner
-        });
-        let (apply, cancel) = modal.inner;
-        self.blur_strength = Some(strength);
-        if apply {
-            self.blur_strength = None;
-            self.cutout(Cut::Blur(strength));
-        } else if cancel || modal.should_close() {
-            self.blur_strength = None;
+            edit::done_cancel(ui)
+        }).and_then(|r| r.inner).flatten();
+        match choice {
+            Some(done) => self.finish_blur(done),
+            None if !open => self.finish_blur(false),
+            None => {}
+        }
+    }
+
+    /// Re-blurs Blur Background's preview at `pct` % of the long side.
+    pub(super) fn set_blur(&mut self, pct: f32) {
+        self.blur_strength = pct;
+        let Some(b) = &self.shown.blurring else { return };
+        let sigma = pct / 100.0 * b.small.width().max(b.small.height()) as f32;
+        let mut d = b.last.clone();
+        let size = d.bounds().size();
+        if let Some(e) = d.elements.get_mut(b.at) {
+            *e = crate::markup::Element::pasted(Arc::new(image::imageops::fast_blur(&b.small, sigma)), Pos2::ZERO, size, e.style);
+        }
+        self.replace_doc(d.clone());
+        if let Some(b) = &mut self.shown.blurring {
+            b.last = d;
+        }
+    }
+
+    /// Closes Blur Background's panel: keeps the blur as one undo step, or puts the image back.
+    pub(super) fn finish_blur(&mut self, done: bool) {
+        let Some(b) = self.shown.blurring.take() else { return };
+        if done {
+            self.commit(b.before);
+        } else {
+            self.replace_doc(b.before);
         }
     }
 

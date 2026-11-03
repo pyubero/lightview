@@ -459,9 +459,37 @@ fn background_results_cover_then_paste_the_subject_in_one_step() {
     assert!(doc.elements[1].image.is_some(), "the subject on top");
     app.run_actions(&[Action::Undo], &ctx, false);
     assert!(app.doc().unwrap().elements.is_empty(), "one undo step");
-    app.handle(Msg::Cutout(path, Ok((subject(), None, Backdrop::Blurred(image::RgbaImage::new(2, 1))))));
-    let doc = app.doc().unwrap();
-    assert!(doc.elements.len() == 2 && doc.elements.iter().all(|e| e.image.is_some()), "the blurred image, then the subject");
+}
+
+#[test]
+fn blur_background_previews_until_done_or_cancel() {
+    use crate::ai::Backdrop;
+    let (mut app, path) = app_with_image();
+    let ctx = egui::Context::default();
+    // A sharp edge, so blurring changes pixels.
+    let small = image::RgbaImage::from_fn(200, 4, |x, _| image::Rgba(if x < 100 { [0, 0, 0, 255] } else { [255; 4] }));
+    let blur = |app: &mut App| app.handle(Msg::Cutout(path.clone(), Ok((image::RgbaImage::new(2, 1), None, Backdrop::Blur(small.clone())))));
+    let backdrop = |app: &App| app.doc().unwrap().elements[0].image.as_ref().unwrap().0.as_raw().clone();
+    blur(&mut app);
+    assert!(app.shown.blurring.is_some() && app.shown.undo.is_empty(), "a preview, not an edit yet");
+    assert!(app.doc().unwrap().elements.len() == 2 && app.doc().unwrap().elements.iter().all(|e| e.image.is_some()), "the blurred image, then the subject");
+    let at_three = backdrop(&app);
+    app.set_blur(8.0);
+    assert_ne!(backdrop(&app), at_three, "the slider re-blurs");
+    app.finish_blur(true);
+    assert!(app.shown.blurring.is_none() && app.shown.undo.len() == 1);
+    app.run_actions(&[Action::Undo], &ctx, false);
+    assert!(app.doc().unwrap().elements.is_empty(), "one undo step");
+    // Cancel puts the image back and leaves nothing to undo.
+    app.shown.undo.clear();
+    blur(&mut app);
+    app.finish_blur(false);
+    assert!(app.doc().unwrap().elements.is_empty() && app.shown.undo.is_empty());
+    // Another change while it's open closes the panel and keeps what's there.
+    blur(&mut app);
+    app.run_actions(&[Action::Greyscale], &ctx, false);
+    app.blur_panel(&ctx);
+    assert!(app.shown.blurring.is_none() && app.doc().unwrap().elements.len() == 2);
 }
 
 #[test]

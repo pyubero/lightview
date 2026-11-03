@@ -308,9 +308,13 @@ pub enum Backdrop {
     Clear,
     /// The background colour setting: Replace Background.
     Colour,
-    /// The whole image, blurred: Blur Background.
-    Blurred(RgbaImage),
+    /// The whole image, at most `BLUR_SIDE` px, to blur behind it: Blur Background.
+    Blur(RgbaImage),
 }
+
+/// The long side Blur Background blurs at. A background blurred by at least 1% of the long side
+/// loses nothing at this size, and re-blurring takes ~0.2 s, so the slider can do it on the UI thread.
+pub const BLUR_SIDE: u32 = 1600;
 
 /// `img` with the mask applied to its alpha.
 pub fn cutout(img: &RgbaImage, mask: &GrayImage) -> RgbaImage {

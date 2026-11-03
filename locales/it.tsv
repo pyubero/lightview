@@ -15,7 +15,6 @@ Adjust Curves…	Regola curve…
 All channels together: overall brightness	Tutti i canali insieme: luminosità generale
 Animation	Animazione
 Applies the next time lightview starts	Si applica al prossimo avvio di lightview
-Apply	Applica
 Apply sigmoid (the model outputs logits)	Applica sigmoide (il modello restituisce logit)
 Apply to Selection	Applica alla selezione
 Apply to Whole Image{size} (about {estimate})	Applica a tutta l'immagine{size} (circa {estimate})

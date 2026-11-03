@@ -110,6 +110,8 @@ struct Shown {
     /// Some while the open panel is Adjust Curves rather than Adjust Color.
     curve_panel: Option<CurvePanel>,
     compare: Option<Compare>,
+    /// Blur Background's panel is open, previewing the blur.
+    blurring: Option<ai_tools::Blurring>,
 }
 
 pub struct App {
@@ -177,8 +179,8 @@ pub struct App {
     restore_runs: u64,
     /// Enhance Image waiting for the user to read its model's notice: the model file.
     enhance_notice: Option<String>,
-    /// Blur Background's dialog is open, with this strength (% of the long side).
-    blur_strength: Option<f32>,
+    /// Blur Background's strength (% of the long side), kept for the session.
+    blur_strength: f32,
     /// Recognize Text or Read QR Code is running.
     reading: bool,
     /// What they read, and the dialog's title.
@@ -241,7 +243,7 @@ impl App {
             texture: None, tex_key: None, resized: None, baked: None, sharp: None, sharp_wanted: 1, flat: None, generation: 0,
             deleted: Vec::new(), delete_prompt: false, renaming: None, watched, own_stamp: None, navigator: None, drag_start: None, right_pan: false,
             show_toolbar, focus_text: false,
-            resize_dialog: None, pending: None, show_ai_models: false, license_prompt: None, restoring: None, restore_runs: 0, enhance_notice: None, blur_strength: None, reading: false, found_text: None, show_shortcuts: false, recording: None, shortcut_error: None, visible: None, downloading: HashSet::new(),
+            resize_dialog: None, pending: None, show_ai_models: false, license_prompt: None, restoring: None, restore_runs: 0, enhance_notice: None, blur_strength: 3.0, reading: false, found_text: None, show_shortcuts: false, recording: None, shortcut_error: None, visible: None, downloading: HashSet::new(),
             title: String::new(),
             window_reported: false, preview_reported: None, full_reported: false, nav_start: None, close_next: false, status: None, file_clipboard: None, canvas, theme_error,
         }
@@ -368,12 +370,24 @@ impl App {
                     let bounds = doc.bounds();
                     let style = *self.shown.style.get_or_insert_with(|| Style::for_image(doc.size_vec()));
                     let [r, g, b] = self.settings.background;
+                    // Blur: the blurred backdrop and the cut-out are a preview until the panel's Done.
+                    if let crate::ai::Backdrop::Blur(small) = backdrop {
+                        let mut d = doc.clone();
+                        let at = d.elements.len();
+                        d.elements.push(Element::pasted(Arc::new(small.clone()), Pos2::ZERO, bounds.size(), style));
+                        d.elements.push(Element::pasted(Arc::new(img), Pos2::ZERO, bounds.size(), style));
+                        self.replace_doc(d.clone());
+                        self.shown.blurring = Some(ai_tools::Blurring { before: doc, small, at, last: d });
+                        self.set_blur(self.blur_strength);
+                        self.status = None;
+                        return;
+                    }
                     // Cover everything, then put the cut-out back on top: one undo step.
                     self.edit(|d| {
                         match backdrop {
                             crate::ai::Backdrop::Clear => d.elements.push(Element::erase(&Selection::Rect(bounds), false, bounds, Color32::TRANSPARENT)),
                             crate::ai::Backdrop::Colour => d.elements.push(Element::erase(&Selection::Rect(bounds), false, bounds, Color32::from_rgb(r, g, b))),
-                            crate::ai::Backdrop::Blurred(blurred) => d.elements.push(Element::pasted(Arc::new(blurred), Pos2::ZERO, bounds.size(), style)),
+                            crate::ai::Backdrop::Blur(_) => {}
                         }
                         d.elements.push(Element::pasted(Arc::new(img), Pos2::ZERO, bounds.size(), style));
                         if let Some(r) = object {

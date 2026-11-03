@@ -54,7 +54,7 @@ impl App {
     /// resolution, because rendering every frame lags even at 1600×900.
     // shortcut: above the limit, and on animated images, markup stays at screen resolution; render on a thread if that's missed.
     pub(super) fn flattened(&mut self, full: Option<&Loaded>, doc: &Doc) -> Option<Arc<Frame>> {
-        let live = self.shown.change_base.is_some() || self.shown.adjusting.is_some() || self.shown.editing_text.is_some();
+        let live = self.shown.change_base.is_some() || self.shown.adjusting.is_some() || self.shown.editing_text.is_some() || self.shown.blurring.is_some();
         let fits = doc.size[0] as u64 * doc.size[1] as u64 <= FLAT_MAX_PIXELS;
         let Some(l) = full.filter(|l| l.frames.len() == 1 && fits && !live && !doc.elements.is_empty()) else {
             self.flat = None;
