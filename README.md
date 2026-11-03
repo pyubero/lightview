@@ -30,8 +30,10 @@ and it never goes online on its own.
 - **Opens what others don't.** Camera RAW files at once, HEIC and AVIF, JPEG XL, SVGs that stay
   sharp as you zoom, HDR and EXR, and animations you can step through frame by frame.
 - **Private by design.** No telemetry, no account, and it never goes online on its own.
-- **Nine languages.** It starts in your system's language, any menu item can get your own
-  shortcut, and screen readers can read the menus and dialogs.
+- **Nine languages.** It starts in your system's language, and any menu item can get your own
+  shortcut.
+- **Works with screen readers.** Menus, dialogs and settings can be read by a screen reader such as
+  Orca or Narrator.
 
 Every feature, and the supported formats, are described in [`FEATURES.md`](docs/FEATURES.md).
 
