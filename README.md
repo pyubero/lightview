@@ -127,6 +127,7 @@ accept its licence.
 | Denoise | SCUNet, SwinIR |
 | Enhance Image | BSRGAN 4× |
 | Remove Object | LaMa (best quality), MI-GAN (fast) |
+| Select Object | MobileSAM |
 | Recognize Text | PP-OCRv5 Latin (European languages), PP-OCRv5 (Chinese, Japanese and English) |
 
 ### Recognize Text and QR codes

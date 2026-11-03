@@ -61,7 +61,8 @@ edit can be undone and redone.
 
 ## Selections and clipboard
 
-- Rectangle, ellipse and lasso selections, Select All and Deselect.
+- Rectangle, ellipse and lasso selections, Select All and Deselect. With the AI tools, Select Object
+  (AI) turns a box dragged around an object into its outline.
 - Cut, copy and paste images. Copy takes the selection, or the whole edited image. A pasted image
   becomes an element you can move and resize.
 - Delete Selection erases it: it becomes transparent where the format allows, otherwise the
@@ -106,7 +107,10 @@ recognition, all running on your own computer, on the CPU or an NVIDIA GPU. Noth
 until you ask for it. Denoise and Enhance show a before-and-after preview of the visible area
 first, with a divider you can drag. Blur Background and Replace Background use the Remove
 Background model: the subject stays sharp over a blurred copy of the photo, or over the background
-colour from Settings; a little of the subject's colour can show around its edges in the blur. Read QR Code needs no download, and links are only shown,
+colour from Settings; a little of the subject's colour can show around its edges in the blur.
+Select Object (AI) selects one object at a time from a box you drag around it (about 2 s on the
+CPU); only its outer outline is kept, so holes in it, like the space between an arm and the body,
+stay selected. Crop, Remove Object, Delete and Pixelate then work on it like on any selection. Read QR Code needs no download, and links are only shown,
 never opened.
 
 The models, how to install them and the tips for text recognition are in the README's

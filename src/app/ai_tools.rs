@@ -102,6 +102,21 @@ impl App {
         });
     }
 
+    /// Select Object: looks for the object inside `rect` (output px) on another thread; the box
+    /// stays the selection until the outline arrives.
+    // shortcut: the encoder re-runs for every box (≈ 2 s on the CPU); keep its output per image if people redo boxes often.
+    pub(super) fn select_object(&mut self, rect: Rect) {
+        let task = crate::ai::Task::Segment;
+        let Some((l, doc, path)) = self.current().and_then(|p| Some((self.cache.get(p)?.clone(), self.doc()?, p.clone()))) else { return };
+        let Some(file) = crate::ai::choose(self.settings.ai.choice(task), task, &crate::ai::installed()) else { return };
+        self.set_status(tr("Selecting the object…"));
+        let notify = self.notify.clone();
+        std::thread::spawn(move || {
+            let result = edit::render(&l.frames[0], &doc).and_then(|img| crate::ai::select(&file, &img.into_rgba8(), rect));
+            notify.send(Msg::Selected(path, rect, result));
+        });
+    }
+
     /// Denoise / Enhance on the part of the image on screen (at most 256 px square, so it takes
     /// seconds), for the before/after preview.
     pub(super) fn preview_restore(&mut self, task: crate::ai::Task) {

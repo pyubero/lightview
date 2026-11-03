@@ -56,6 +56,7 @@ Couldn't process the image: {e}	No se ha podido procesar la imagen: {e}
 Couldn't read {file}: {e}	No se ha podido leer {file}: {e}
 Couldn't restore the image: {e}	No se pudo restaurar la imagen: {e}
 Couldn't save {name}: {e}	No se ha podido guardar {name}: {e}
+Couldn't select the object: {e}	No se pudo seleccionar el objeto: {e}
 Crop	Recortar
 Cut	Cortar
 DarkIR brightens dark and night photos and removes their noise and blur. On a well-lit photo it overexposes.	DarkIR aclara las fotos oscuras y nocturnas y elimina su ruido y desenfoque. En una foto bien iluminada, la sobreexpone.
@@ -85,6 +86,7 @@ Downloaded {file}	Descargado: {file}
 Downloading GPU support ({mb} MB)…	Descargando el soporte para GPU ({mb} MB)…
 Downloading the AI runtime…	Descargando el motor de IA…
 Downloading…	Descargando…
+Drag a box around one object; its outline becomes the selection. Holes inside it stay selected.	Arrastra un recuadro alrededor de un objeto; su contorno se convierte en la selección. Los huecos interiores quedan seleccionados.
 Drag to measure in image pixels · Esc to stop	Arrastra para medir en píxeles de la imagen · Esc para salir
 Drag to select · Enter to crop · Esc to cancel	Arrastra para seleccionar · Intro para recortar · Esc para cancelar
 Drag the corners onto a rectangle · Enter to apply · Esc to cancel	Arrastra las esquinas sobre un rectángulo · Intro para aplicar · Esc para cancelar
@@ -146,6 +148,7 @@ Make lightview the default image viewer	Hacer de lightview el visor de imágenes
 Mean (R, G, B)	Media (R, G, B)
 Measure	Medir
 Merge drawings into the image?	¿Fusionar los dibujos con la imagen?
+MobileSAM — finds the object in a box	MobileSAM — encuentra el objeto en un recuadro
 Model	Modelo
 Name	Nombre
 Nearest	Vecino más cercano
@@ -153,11 +156,13 @@ Next Frame	Fotograma siguiente
 Next Image	Imagen siguiente
 No location in this file	Este archivo no tiene ubicación
 No model installed yet.	Aún no hay ningún modelo instalado.
+No object found in the box	No se encontró ningún objeto en el recuadro
 No recent files	No hay archivos recientes
 None (sRGB assumed)	Ninguno (se asume sRGB)
 Nothing to paste: {e}	Nada que pegar: {e}
 OK	Aceptar
 ONNX export (half precision) by FuryTMP on Hugging Face; its origin isn't verified.	Exportación ONNX (media precisión) de FuryTMP en Hugging Face; su origen no está verificado.
+ONNX export by Acly on Hugging Face, from the authors' weights; downloaded from Heliosoph LLC's copy.	Exportación a ONNX de Acly en Hugging Face, a partir de los pesos de los autores; se descarga de la copia de Heliosoph LLC.
 ONNX model	Modelo ONNX
 Only add models from sources you trust: they run with your permissions.	Añade solo modelos de fuentes de confianza: se ejecutan con tus permisos.
 Open Recent	Abrir reciente
@@ -216,6 +221,9 @@ Saved {name}	Guardado: {name}
 Saves a copy of the file with this metadata (without other edits). Camera maker notes are removed.	Guarda una copia del archivo con estos metadatos (sin otras ediciones). Se eliminan las notas del fabricante de la cámara.
 Select	Seleccionar
 Select All	Seleccionar todo
+Select Object	Seleccionar objeto
+Select Object (AI)	Seleccionar objeto (IA)
+Selecting the object…	Seleccionando el objeto…
 Settings	Ajustes
 Settings…	Ajustes…
 Shapes	Formas
@@ -235,6 +243,7 @@ Text colour	Color del texto
 The AI runtime isn't installed yet: Tools > Download AI Runtime…	El motor de IA aún no está instalado: Herramientas > Descargar motor de IA…
 The GPU couldn't be used, so the CPU is: {e}	No se ha podido usar la GPU, así que se usa la CPU: {e}
 The corners must form a shape with no crossing sides	Las esquinas deben formar una figura sin lados cruzados
+the model's mask decoder is missing	falta el decodificador de máscaras del modelo
 Thickness	Grosor
 Tint	Matiz
 Tools	Herramientas

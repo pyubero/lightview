@@ -56,6 +56,7 @@ Couldn't process the image: {e}	Nie udało się przetworzyć obrazu: {e}
 Couldn't read {file}: {e}	Nie udało się odczytać {file}: {e}
 Couldn't restore the image: {e}	Nie udało się przywrócić obrazu: {e}
 Couldn't save {name}: {e}	Nie udało się zapisać {name}: {e}
+Couldn't select the object: {e}	Nie udało się zaznaczyć obiektu: {e}
 Crop	Przytnij
 Cut	Wytnij
 DarkIR brightens dark and night photos and removes their noise and blur. On a well-lit photo it overexposes.	DarkIR rozjaśnia ciemne i nocne zdjęcia oraz usuwa z nich szum i rozmycie. Dobrze oświetlone zdjęcie prześwietla.
@@ -85,6 +86,7 @@ Downloaded {file}	Pobrano {file}
 Downloading GPU support ({mb} MB)…	Pobieranie obsługi GPU ({mb} MB)…
 Downloading the AI runtime…	Pobieranie środowiska AI…
 Downloading…	Pobieranie…
+Drag a box around one object; its outline becomes the selection. Holes inside it stay selected.	Przeciągnij ramkę wokół jednego obiektu; jego obrys staje się zaznaczeniem. Dziury w środku pozostają zaznaczone.
 Drag to measure in image pixels · Esc to stop	Przeciągnij, aby zmierzyć w pikselach obrazu · Esc, aby zakończyć
 Drag to select · Enter to crop · Esc to cancel	Przeciągnij, aby zaznaczyć · Enter, aby przyciąć · Esc, aby anulować
 Drag the corners onto a rectangle · Enter to apply · Esc to cancel	Przeciągnij narożniki na prostokąt · Enter, aby zastosować · Esc, aby anulować
@@ -146,6 +148,7 @@ Make lightview the default image viewer	Ustaw lightview jako domyślną przeglą
 Mean (R, G, B)	Średnia (R, G, B)
 Measure	Miarka
 Merge drawings into the image?	Scalić rysunki z obrazem?
+MobileSAM — finds the object in a box	MobileSAM — znajduje obiekt w ramce
 Model	Model
 Name	Nazwa
 Nearest	Najbliższy sąsiad
@@ -153,11 +156,13 @@ Next Frame	Następna klatka
 Next Image	Następny obraz
 No location in this file	Brak lokalizacji w tym pliku
 No model installed yet.	Nie zainstalowano jeszcze żadnego modelu.
+No object found in the box	Nie znaleziono obiektu w ramce
 No recent files	Brak ostatnich plików
 None (sRGB assumed)	Brak (przyjęto sRGB)
 Nothing to paste: {e}	Nie ma czego wkleić: {e}
 OK	OK
 ONNX export (half precision) by FuryTMP on Hugging Face; its origin isn't verified.	Eksport ONNX (połowiczna precyzja) autorstwa FuryTMP na Hugging Face; jego pochodzenie nie jest zweryfikowane.
+ONNX export by Acly on Hugging Face, from the authors' weights; downloaded from Heliosoph LLC's copy.	Eksport ONNX autorstwa Acly na Hugging Face, z wag autorów; pobierany z kopii Heliosoph LLC.
 ONNX model	Model ONNX
 Only add models from sources you trust: they run with your permissions.	Dodawaj tylko modele z zaufanych źródeł: działają z twoimi uprawnieniami.
 Open Recent	Otwórz ostatnie
@@ -216,6 +221,9 @@ Saved {name}	Zapisano {name}
 Saves a copy of the file with this metadata (without other edits). Camera maker notes are removed.	Zapisuje kopię pliku z tymi metadanymi (bez innych zmian). Notatki producenta aparatu są usuwane.
 Select	Zaznacz
 Select All	Zaznacz wszystko
+Select Object	Zaznacz obiekt
+Select Object (AI)	Zaznacz obiekt (AI)
+Selecting the object…	Zaznaczanie obiektu…
 Settings	Ustawienia
 Settings…	Ustawienia…
 Shapes	Kształty
@@ -235,6 +243,7 @@ Text colour	Kolor tekstu
 The AI runtime isn't installed yet: Tools > Download AI Runtime…	Środowisko AI nie jest jeszcze zainstalowane: Narzędzia > Pobierz środowisko AI…
 The GPU couldn't be used, so the CPU is: {e}	Nie udało się użyć GPU, więc używany jest procesor: {e}
 The corners must form a shape with no crossing sides	Narożniki muszą tworzyć kształt bez przecinających się boków
+the model's mask decoder is missing	brakuje dekodera masek modelu
 Thickness	Grubość
 Tint	Odcień
 Tools	Narzędzia

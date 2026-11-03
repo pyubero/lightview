@@ -14,12 +14,14 @@ mod catalog;
 mod infer;
 mod ocr;
 mod runtime;
+mod segment;
 mod ui;
 
 pub use catalog::*;
 pub use infer::*;
 pub use ocr::*;
 pub use runtime::*;
+pub use segment::*;
 pub use ui::*;
 
 fn data_dir() -> Result<PathBuf, String> {
@@ -39,10 +41,12 @@ pub enum Task {
     Inpaint,
     /// Finds and reads text: a recogniser, with the detector and character list as its `data`.
     Ocr,
+    /// Select Object: an image encoder, with its mask decoder as `data`.
+    Segment,
 }
 
 impl Task {
-    pub const ALL: [Task; 5] = [Task::Background, Task::Denoise, Task::Enhance, Task::Inpaint, Task::Ocr];
+    pub const ALL: [Task; 6] = [Task::Background, Task::Denoise, Task::Enhance, Task::Inpaint, Task::Ocr, Task::Segment];
 
     pub fn title(self) -> &'static str {
         match self {
@@ -51,6 +55,7 @@ impl Task {
             Task::Enhance => tr("Enhance Image"),
             Task::Inpaint => tr("Remove Object"),
             Task::Ocr => tr("Recognize Text"),
+            Task::Segment => tr("Select Object"),
         }
     }
 }

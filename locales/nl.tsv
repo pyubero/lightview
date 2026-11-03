@@ -56,6 +56,7 @@ Couldn't process the image: {e}	Kon de afbeelding niet verwerken: {e}
 Couldn't read {file}: {e}	Kon {file} niet lezen: {e}
 Couldn't restore the image: {e}	Kon de afbeelding niet terugzetten: {e}
 Couldn't save {name}: {e}	Kon {name} niet opslaan: {e}
+Couldn't select the object: {e}	Kon het object niet selecteren: {e}
 Crop	Bijsnijden
 Cut	Knippen
 DarkIR brightens dark and night photos and removes their noise and blur. On a well-lit photo it overexposes.	DarkIR maakt donkere en nachtfoto's lichter en verwijdert ruis en onscherpte. Een goed belichte foto wordt overbelicht.
@@ -85,6 +86,7 @@ Downloaded {file}	{file} gedownload
 Downloading GPU support ({mb} MB)…	GPU-ondersteuning downloaden ({mb} MB)…
 Downloading the AI runtime…	AI-runtime downloaden…
 Downloading…	Downloaden…
+Drag a box around one object; its outline becomes the selection. Holes inside it stay selected.	Sleep een kader rond één object; de omtrek wordt de selectie. Gaten erin blijven geselecteerd.
 Drag to measure in image pixels · Esc to stop	Sleep om te meten in beeldpixels · Esc om te stoppen
 Drag to select · Enter to crop · Esc to cancel	Sleep om te selecteren · Enter om bij te snijden · Esc om te annuleren
 Drag the corners onto a rectangle · Enter to apply · Esc to cancel	Sleep de hoeken op een rechthoek · Enter om toe te passen · Esc om te annuleren
@@ -146,6 +148,7 @@ Make lightview the default image viewer	lightview de standaard afbeeldingsviewer
 Mean (R, G, B)	Gemiddelde (R, G, B)
 Measure	Meten
 Merge drawings into the image?	Tekeningen in de afbeelding samenvoegen?
+MobileSAM — finds the object in a box	MobileSAM — vindt het object in een kader
 Model	Model
 Name	Naam
 Nearest	Dichtstbijzijnde
@@ -153,11 +156,13 @@ Next Frame	Volgend frame
 Next Image	Volgende afbeelding
 No location in this file	Geen locatie in dit bestand
 No model installed yet.	Nog geen model geïnstalleerd.
+No object found in the box	Geen object gevonden in het kader
 No recent files	Geen recente bestanden
 None (sRGB assumed)	Geen (sRGB aangenomen)
 Nothing to paste: {e}	Niets om te plakken: {e}
 OK	OK
 ONNX export (half precision) by FuryTMP on Hugging Face; its origin isn't verified.	ONNX-export (halve precisie) door FuryTMP op Hugging Face; de herkomst is niet geverifieerd.
+ONNX export by Acly on Hugging Face, from the authors' weights; downloaded from Heliosoph LLC's copy.	ONNX-export door Acly op Hugging Face, uit de gewichten van de auteurs; gedownload van de kopie van Heliosoph LLC.
 ONNX model	ONNX-model
 Only add models from sources you trust: they run with your permissions.	Voeg alleen modellen toe uit bronnen die je vertrouwt: ze draaien met jouw rechten.
 Open Recent	Recent geopend
@@ -216,6 +221,9 @@ Saved {name}	{name} opgeslagen
 Saves a copy of the file with this metadata (without other edits). Camera maker notes are removed.	Slaat een kopie van het bestand op met deze metadata (zonder andere bewerkingen). Notities van de camerafabrikant worden verwijderd.
 Select	Selecteren
 Select All	Alles selecteren
+Select Object	Object selecteren
+Select Object (AI)	Object selecteren (AI)
+Selecting the object…	Object wordt geselecteerd…
 Settings	Instellingen
 Settings…	Instellingen…
 Shapes	Vormen
@@ -235,6 +243,7 @@ Text colour	Tekstkleur
 The AI runtime isn't installed yet: Tools > Download AI Runtime…	De AI-runtime is nog niet geïnstalleerd: Hulpmiddelen > AI-runtime downloaden…
 The GPU couldn't be used, so the CPU is: {e}	De GPU kon niet gebruikt worden, dus de CPU wordt gebruikt: {e}
 The corners must form a shape with no crossing sides	De hoeken moeten een vorm zonder kruisende zijden vormen
+the model's mask decoder is missing	de maskerdecoder van het model ontbreekt
 Thickness	Dikte
 Tint	Tint
 Tools	Hulpmiddelen

@@ -193,6 +193,7 @@ pub(super) fn bindable_menus() -> [(&'static str, Vec<(Action, &'static str)>); 
         (Action::SelectTool(SelKind::Rect), tr_key("Rectangular Selection")),
         (Action::SelectTool(SelKind::Ellipse), tr_key("Elliptical Selection")),
         (Action::SelectTool(SelKind::Lasso), tr_key("Lasso")),
+        (Action::SelectTool(SelKind::Object), tr_key("Select Object (AI)")),
         (Action::Measure, tr_key("Measure")),
         (Action::CopyColor, tr_key("Copy Color")),
         (Action::ReadText(true), tr_key("Read QR Code")),
@@ -269,6 +270,7 @@ impl App {
             Action::Copy | Action::Paste | Action::SelectAll | Action::Info | Action::ZoomIn | Action::ZoomOut | Action::Fit | Action::ActualSize => has_image,
             Action::Crop | Action::Resize | Action::RotateLeft | Action::RotateRight | Action::FlipHorizontal | Action::FlipVertical => has_image,
             Action::AdjustColor | Action::AdjustCurves | Action::AutoLevels | Action::ResetAdjust => has_image,
+            Action::SelectTool(SelKind::Object) => ready(Task::Segment),
             Action::ShowToolbar | Action::SelectTool(_) | Action::Measure | Action::CopyColor | Action::Pick(_) => has_image,
         }
     }
@@ -287,7 +289,13 @@ impl App {
         };
         // `Button::selectable` with the shortcut.
         let selectable = |ui: &mut egui::Ui, action: Action, on: bool, actions: &mut Vec<Action>| {
-            if ui.add_enabled(self.enabled(&action), button(ui, name(&action), &action).selected(on).frame_when_inactive(on).frame(true)).clicked() {
+            let hint = (action == Action::SelectTool(SelKind::Object)).then(|| tr("Drag a box around one object; its outline becomes the selection. Holes inside it stay selected."));
+            let response = ui.add_enabled(self.enabled(&action), button(ui, name(&action), &action).selected(on).frame_when_inactive(on).frame(true));
+            let response = match hint {
+                Some(h) => response.on_hover_text(h).on_disabled_hover_text(h),
+                None => response,
+            };
+            if response.clicked() {
                 actions.push(action);
             }
         };
@@ -427,7 +435,7 @@ impl App {
                 let label = if self.show_toolbar { tr("Hide Drawing Toolbar") } else { tr("Show Drawing Toolbar") };
                 labelled(ui, label, Action::ShowToolbar, actions);
                 ui.separator();
-                for kind in [SelKind::Rect, SelKind::Ellipse, SelKind::Lasso] {
+                for kind in [SelKind::Rect, SelKind::Ellipse, SelKind::Lasso, SelKind::Object] {
                     selectable(ui, Action::SelectTool(kind), self.shown.tool == Tool::Selection(kind), actions);
                 }
                 selectable(ui, Action::Measure, matches!(self.shown.tool, Tool::Measure { .. }), actions);

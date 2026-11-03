@@ -107,7 +107,7 @@ fn catalog_entries() {
         assert_eq!(k.sha256.len(), 64, "{}", k.file);
         for (data, sha) in k.data {
             assert_eq!(sha.len(), 64, "{data}");
-            assert!(k.task == Task::Ocr || *data == format!("{}.data", k.file), "{data}");
+            assert!(matches!(k.task, Task::Ocr | Task::Segment) || *data == format!("{}.data", k.file), "{data}");
         }
     }
     // Each task's first entry is its default.
@@ -548,4 +548,56 @@ fn qr_codes_are_read() {
     let img = image::open(concat!(env!("CARGO_MANIFEST_DIR"), "/tests/data/qr.png")).unwrap().into_rgba8();
     assert_eq!(read_qr(&img), ["https://example.org/lightview?q=1 — señal"]);
     assert!(read_qr(&image::RgbaImage::from_pixel(64, 64, image::Rgba([255; 4]))).is_empty());
+}
+
+
+#[test]
+fn outlines_follow_the_shape() {
+    // A 3×2 block: just its four corners, clockwise.
+    let (w, h) = (6, 5);
+    let block: Vec<bool> = (0..w * h).map(|i| (1..4).contains(&(i % w)) && (2..4).contains(&(i / w))).collect();
+    assert_eq!(segment::outline(&block, w, h), [Pos2::new(1.0, 2.0), Pos2::new(4.0, 2.0), Pos2::new(4.0, 4.0), Pos2::new(1.0, 4.0)]);
+    assert!(segment::outline(&vec![false; 4], 2, 2).is_empty());
+    // A disc, filled back from its outline, covers the same pixels.
+    let (w, h) = (40u32, 30u32);
+    let disc: Vec<bool> = (0..w * h).map(|i| ((i % w) as f32 - 20.0).hypot((i / w) as f32 - 15.0) < 11.0).collect();
+    let poly = segment::outline(&disc, w, h);
+    let filled = crate::markup::polygon_mask(&poly, None, Pos2::ZERO, 1.0, w, h).unwrap();
+    let same = filled.data().iter().zip(&disc).filter(|&(&f, &d)| (f >= 128) == d).count();
+    assert!(same as u32 >= w * h - 2, "{same} of {}", w * h);
+}
+
+#[test]
+fn only_the_biggest_part_is_kept() {
+    // Two blobs; the bigger one (right) wins, and its outline doesn't include the small one.
+    let (w, h) = (10u32, 4u32);
+    let mask: Vec<bool> = (0..w * h).map(|i| matches!(i % w, 1 | 4..=8) && i / w >= 1 && i / w <= 2).collect();
+    let poly = segment::outline(&segment::largest_part(&mask, w, h), w, h);
+    assert!(poly.iter().all(|p| p.x >= 4.0), "{poly:?}");
+}
+
+/// `LIGHTVIEW_AI=photo.jpg LIGHTVIEW_AI_BOX=x,y,w,h cargo test --release select_object_photo -- --ignored --nocapture`
+/// (needs the runtime and MobileSAM): selects the object in the box and writes
+/// `photo-selected.png`, with everything outside the outline darkened, to the temp folder.
+#[test]
+#[ignore]
+fn select_object_photo() {
+    let path = PathBuf::from(std::env::var("LIGHTVIEW_AI").unwrap());
+    let mut img = image::open(&path).unwrap().into_rgba8();
+    let b: Vec<f32> = std::env::var("LIGHTVIEW_AI_BOX").unwrap().split(',').map(|v| v.parse().unwrap()).collect();
+    let rect = Rect::from_min_size(Pos2::new(b[0], b[1]), egui::vec2(b[2], b[3]));
+    let t = std::time::Instant::now();
+    let poly = select("mobile_sam_image_encoder.onnx", &img, rect).unwrap();
+    eprintln!("{} points in {:.0} ms, GPU {} ({:?})", poly.len(), t.elapsed().as_secs_f64() * 1000.0, on_gpu(), gpu_error());
+    assert!(poly.len() > 4 && poly.iter().all(|p| rect.expand(1.0).contains(*p)));
+    let (w, h) = img.dimensions();
+    let inside = crate::markup::polygon_mask(&poly, None, Pos2::ZERO, 1.0, w, h).unwrap();
+    for (px, m) in img.pixels_mut().zip(inside.data()) {
+        if *m < 128 {
+            px.0[..3].iter_mut().for_each(|c| *c /= 4);
+        }
+    }
+    let out = std::env::temp_dir().join(format!("{}-selected.png", path.file_stem().unwrap().to_string_lossy()));
+    img.save(&out).unwrap();
+    eprintln!("wrote {}", out.display());
 }

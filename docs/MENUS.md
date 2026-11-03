@@ -108,6 +108,7 @@ when" says otherwise. `▸` marks a submenu.
 | Rectangular Selection | | | Selection tool (shown ticked while active). |
 | Elliptical Selection | | | |
 | Lasso | | | |
+| Select Object (AI) | | AI runtime and the MobileSAM model installed, no AI job running | Drag a box around one object; after a second or two the box turns into the object's outline. Esc or a new box drops a pending result. Holes inside the object stay selected. |
 | Measure | | | Drag a line; distance, ΔX, ΔY in image pixels (ticked while active). |
 | Copy Color | | | Click a pixel to copy its colour as `#RRGGBB` (`#RRGGBBAA` if it isn't opaque), as it's seen with the edits (ticked while active). |
 | Read QR Code | | not already reading | Reads the QR codes in the selection's bounds, or the whole image, and shows what they say with Copy. Links are never opened. |

@@ -56,6 +56,7 @@ Couldn't process the image: {e}	Das Bild konnte nicht verarbeitet werden: {e}
 Couldn't read {file}: {e}	{file} konnte nicht gelesen werden: {e}
 Couldn't restore the image: {e}	Bild konnte nicht wiederhergestellt werden: {e}
 Couldn't save {name}: {e}	{name} konnte nicht gespeichert werden: {e}
+Couldn't select the object: {e}	Das Objekt konnte nicht ausgewählt werden: {e}
 Crop	Zuschneiden
 Cut	Ausschneiden
 DarkIR brightens dark and night photos and removes their noise and blur. On a well-lit photo it overexposes.	DarkIR hellt dunkle Fotos und Nachtaufnahmen auf und entfernt Rauschen und Unschärfe. Gut beleuchtete Fotos werden überbelichtet.
@@ -85,6 +86,7 @@ Downloaded {file}	Heruntergeladen: {file}
 Downloading GPU support ({mb} MB)…	GPU-Unterstützung wird heruntergeladen ({mb} MB)…
 Downloading the AI runtime…	KI-Laufzeit wird heruntergeladen…
 Downloading…	Wird heruntergeladen…
+Drag a box around one object; its outline becomes the selection. Holes inside it stay selected.	Ziehen Sie einen Rahmen um ein Objekt; sein Umriss wird zur Auswahl. Löcher darin bleiben ausgewählt.
 Drag to measure in image pixels · Esc to stop	Ziehen zum Messen in Bildpixeln · Esc zum Beenden
 Drag to select · Enter to crop · Esc to cancel	Ziehen zum Auswählen · Eingabe zum Zuschneiden · Esc zum Abbrechen
 Drag the corners onto a rectangle · Enter to apply · Esc to cancel	Ecken auf ein Rechteck ziehen · Eingabe zum Anwenden · Esc zum Abbrechen
@@ -146,6 +148,7 @@ Make lightview the default image viewer	lightview als Standard-Bildbetrachter fe
 Mean (R, G, B)	Mittelwert (R, G, B)
 Measure	Messen
 Merge drawings into the image?	Zeichnungen mit dem Bild zusammenführen?
+MobileSAM — finds the object in a box	MobileSAM — findet das Objekt im Rahmen
 Model	Modell
 Name	Name
 Nearest	Nächster Nachbar
@@ -153,11 +156,13 @@ Next Frame	Nächstes Einzelbild
 Next Image	Nächstes Bild
 No location in this file	Diese Datei enthält keinen Standort
 No model installed yet.	Noch kein Modell installiert.
+No object found in the box	Kein Objekt im Rahmen gefunden
 No recent files	Keine zuletzt geöffneten Dateien
 None (sRGB assumed)	Keines (sRGB angenommen)
 Nothing to paste: {e}	Nichts zum Einfügen: {e}
 OK	OK
 ONNX export (half precision) by FuryTMP on Hugging Face; its origin isn't verified.	ONNX-Export (halbe Genauigkeit) von FuryTMP auf Hugging Face; die Herkunft ist nicht überprüft.
+ONNX export by Acly on Hugging Face, from the authors' weights; downloaded from Heliosoph LLC's copy.	ONNX-Export von Acly auf Hugging Face aus den Gewichten der Autoren; heruntergeladen von der Kopie der Heliosoph LLC.
 ONNX model	ONNX-Modell
 Only add models from sources you trust: they run with your permissions.	Fügen Sie nur Modelle aus vertrauenswürdigen Quellen hinzu: Sie laufen mit Ihren Berechtigungen.
 Open Recent	Zuletzt geöffnet
@@ -216,6 +221,9 @@ Saved {name}	Gespeichert: {name}
 Saves a copy of the file with this metadata (without other edits). Camera maker notes are removed.	Speichert eine Kopie der Datei mit diesen Metadaten (ohne andere Änderungen). Herstellerhinweise der Kamera werden entfernt.
 Select	Auswählen
 Select All	Alles auswählen
+Select Object	Objekt auswählen
+Select Object (AI)	Objekt auswählen (KI)
+Selecting the object…	Objekt wird ausgewählt…
 Settings	Einstellungen
 Settings…	Einstellungen…
 Shapes	Formen
@@ -235,6 +243,7 @@ Text colour	Textfarbe
 The AI runtime isn't installed yet: Tools > Download AI Runtime…	Die KI-Laufzeit ist noch nicht installiert: Werkzeuge > KI-Laufzeit herunterladen…
 The GPU couldn't be used, so the CPU is: {e}	Die GPU konnte nicht verwendet werden, daher wird die CPU genutzt: {e}
 The corners must form a shape with no crossing sides	Die Ecken müssen eine Form ohne sich kreuzende Seiten bilden
+the model's mask decoder is missing	der Maskendecoder des Modells fehlt
 Thickness	Stärke
 Tint	Farbton
 Tools	Werkzeuge

@@ -34,6 +34,8 @@ enum SelKind {
     Rect,
     Ellipse,
     Lasso,
+    /// Drag a box; Select Object (AI) turns it into the outline of the object inside.
+    Object,
 }
 
 /// What dragging on the image does.
@@ -339,6 +341,16 @@ impl App {
                 }
                 Err(e) => self.set_status(trf("Couldn't read {file}: {e}", &[("file", &file), ("e", &e)])),
             },
+            // Only while that box is still the selection: Esc, a new box or another image drop it.
+            Msg::Selected(path, rect, result) if self.current() == Some(&path) && self.shown.selection == Some(Selection::Rect(rect)) => match result {
+                Ok(points) if points.len() >= 3 => {
+                    self.shown.selection = Some(Selection::Lasso(points));
+                    self.status = None;
+                }
+                Ok(_) => self.set_status(tr("No object found in the box")),
+                Err(e) => self.set_status(trf("Couldn't select the object: {e}", &[("e", &e)])),
+            },
+            Msg::Selected(..) => {}
             Msg::TextFound(qr, result) => {
                 self.reading = false;
                 match result {

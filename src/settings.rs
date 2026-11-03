@@ -69,6 +69,7 @@ pub struct AiSettings {
     pub enhance: Option<String>,
     pub inpaint: Option<String>,
     pub ocr: Option<String>,
+    pub segment: Option<String>,
     pub overrides: HashMap<String, Preprocess>,
     /// The Enhance models whose notice has been shown (once each).
     pub notices_seen: Vec<String>,
@@ -83,7 +84,7 @@ fn yes() -> bool {
 
 impl Default for AiSettings {
     fn default() -> Self {
-        AiSettings { model: None, denoise: None, enhance: None, inpaint: None, ocr: None, overrides: HashMap::new(), notices_seen: Vec::new(), use_gpu: true }
+        AiSettings { model: None, denoise: None, enhance: None, inpaint: None, ocr: None, segment: None, overrides: HashMap::new(), notices_seen: Vec::new(), use_gpu: true }
     }
 }
 
@@ -95,6 +96,7 @@ impl AiSettings {
             Task::Enhance => self.enhance.as_ref(),
             Task::Inpaint => self.inpaint.as_ref(),
             Task::Ocr => self.ocr.as_ref(),
+            Task::Segment => self.segment.as_ref(),
         }
     }
 
@@ -105,6 +107,7 @@ impl AiSettings {
             Task::Enhance => &mut self.enhance,
             Task::Inpaint => &mut self.inpaint,
             Task::Ocr => &mut self.ocr,
+            Task::Segment => &mut self.segment,
         }
     }
 }

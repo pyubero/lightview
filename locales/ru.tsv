@@ -56,6 +56,7 @@ Couldn't process the image: {e}	Не удалось обработать изо�
 Couldn't read {file}: {e}	Не удалось прочитать {file}: {e}
 Couldn't restore the image: {e}	Не удалось восстановить изображение: {e}
 Couldn't save {name}: {e}	Не удалось сохранить {name}: {e}
+Couldn't select the object: {e}	Не удалось выделить объект: {e}
 Crop	Обрезать
 Cut	Вырезать
 DarkIR brightens dark and night photos and removes their noise and blur. On a well-lit photo it overexposes.	DarkIR осветляет тёмные и ночные снимки и убирает с них шум и размытие. Хорошо освещённый снимок он пересвечивает.
@@ -85,6 +86,7 @@ Downloaded {file}	Скачано: {file}
 Downloading GPU support ({mb} MB)…	Скачивание поддержки GPU ({mb} МБ)…
 Downloading the AI runtime…	Скачивание среды ИИ…
 Downloading…	Скачивание…
+Drag a box around one object; its outline becomes the selection. Holes inside it stay selected.	Обведите рамкой один объект: его контур станет выделением. Отверстия внутри остаются выделенными.
 Drag to measure in image pixels · Esc to stop	Перетащите, чтобы измерить в пикселях изображения · Esc — закончить
 Drag to select · Enter to crop · Esc to cancel	Перетащите, чтобы выделить · Enter — обрезать · Esc — отмена
 Drag the corners onto a rectangle · Enter to apply · Esc to cancel	Перетащите углы на прямоугольник · Enter — применить · Esc — отмена
@@ -146,6 +148,7 @@ Make lightview the default image viewer	Сделать lightview просмот�
 Mean (R, G, B)	Среднее (R, G, B)
 Measure	Линейка
 Merge drawings into the image?	Объединить рисунки с изображением?
+MobileSAM — finds the object in a box	MobileSAM — находит объект в рамке
 Model	Модель
 Name	Имя
 Nearest	Ближайший сосед
@@ -153,11 +156,13 @@ Next Frame	Следующий кадр
 Next Image	Следующее изображение
 No location in this file	В этом файле нет местоположения
 No model installed yet.	Ни одна модель пока не установлена.
+No object found in the box	В рамке не найден объект
 No recent files	Нет недавних файлов
 None (sRGB assumed)	Нет (предполагается sRGB)
 Nothing to paste: {e}	Нечего вставить: {e}
 OK	ОК
 ONNX export (half precision) by FuryTMP on Hugging Face; its origin isn't verified.	Экспорт в ONNX (половинная точность) от FuryTMP на Hugging Face; его происхождение не проверено.
+ONNX export by Acly on Hugging Face, from the authors' weights; downloaded from Heliosoph LLC's copy.	Экспорт в ONNX от Acly на Hugging Face из весов авторов; загружается из копии Heliosoph LLC.
 ONNX model	Модель ONNX
 Only add models from sources you trust: they run with your permissions.	Добавляйте модели только из источников, которым доверяете: они работают с вашими правами.
 Open Recent	Недавние
@@ -216,6 +221,9 @@ Saved {name}	Сохранено: {name}
 Saves a copy of the file with this metadata (without other edits). Camera maker notes are removed.	Сохраняет копию файла с этими метаданными (без других изменений). Заметки производителя камеры удаляются.
 Select	Выделить
 Select All	Выделить всё
+Select Object	Выделить объект
+Select Object (AI)	Выделить объект (ИИ)
+Selecting the object…	Выделение объекта…
 Settings	Настройки
 Settings…	Настройки…
 Shapes	Фигуры
@@ -235,6 +243,7 @@ Text colour	Цвет текста
 The AI runtime isn't installed yet: Tools > Download AI Runtime…	Среда ИИ ещё не установлена: Инструменты > Скачать среду ИИ…
 The GPU couldn't be used, so the CPU is: {e}	GPU использовать не удалось, поэтому используется процессор: {e}
 The corners must form a shape with no crossing sides	Углы должны образовывать фигуру без пересекающихся сторон
+the model's mask decoder is missing	отсутствует декодер масок модели
 Thickness	Толщина
 Tint	Оттенок
 Tools	Инструменты

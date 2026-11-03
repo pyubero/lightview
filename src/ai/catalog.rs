@@ -74,6 +74,8 @@ const BSRGAN_LICENSE: License = License { project: "BSRGAN", spdx: "Apache-2.0",
 const LAMA_LICENSE: License = License { project: "LaMa", spdx: "Apache-2.0", url: "https://github.com/advimman/lama", text: include_str!("../../licenses/lama.txt") };
 const MIGAN_LICENSE: License = License { project: "MI-GAN", spdx: "MIT", url: "https://github.com/Picsart-AI-Research/MI-GAN", text: include_str!("../../licenses/migan.txt") };
 const PADDLEOCR_LICENSE: License = License { project: "PaddleOCR (PP-OCRv5)", spdx: "Apache-2.0", url: "https://github.com/PaddlePaddle/PaddleOCR", text: include_str!("../../licenses/paddleocr.txt") };
+const MOBILESAM_LICENSE: License = License { project: "MobileSAM", spdx: "Apache-2.0", url: "https://github.com/ChaoningZhang/MobileSAM", text: include_str!("../../licenses/mobilesam.txt") };
+const SAM_LICENSE: License = License { project: "Segment Anything (SAM)", spdx: "Apache-2.0", url: "https://github.com/facebookresearch/segment-anything", text: include_str!("../../licenses/segment-anything.txt") };
 const SWINIR_LICENSE: License = License { project: "SwinIR", spdx: "Apache-2.0", url: "https://github.com/JingyunLiang/SwinIR", text: include_str!("../../licenses/swinir.txt") };
 /// The licence files that come with the ONNX conversions (SCUNet's is KAIR's MIT licence).
 const HELIOSOPH_SCUNET_LICENSE: License = License { project: "Heliosoph/scunet-onnx (the ONNX conversion)", spdx: "MIT", url: "https://huggingface.co/Heliosoph/scunet-onnx", text: include_str!("../../licenses/heliosoph-scunet.txt") };
@@ -87,6 +89,7 @@ const SWINIR: &str = "https://huggingface.co/Heliosoph/swinir-onnx/resolve/a4a77
 const BSRGAN: &str = "https://huggingface.co/FuryTMP/BSRGANx4_fp16/resolve/9359c20a3c91f930cdba220a31129ff9f8997791";
 const LAMA: &str = "https://huggingface.co/Carve/LaMa-ONNX/resolve/c3c0c9e468934d62e79c329e35d82dd09ff8c444";
 const MIGAN: &str = "https://huggingface.co/andraniksargsyan/migan/resolve/406830d0fa60666da0071c342ad2fbc8f30c5c64";
+const SAM: &str = "https://huggingface.co/Heliosoph/sam-onnx/resolve/465be8e75889fea5afd37924f678ad6559ed5439";
 const PPOCR: &str = "https://huggingface.co/nakamura196/ppocrv5-mobile-web-onnx/resolve/dc7e2271c00d961a4c0a38dcebe23beb735ba33e";
 pub(super) const LAMA_FILE: &str = "lama_fp32.onnx";
 /// Recognize Text's detector, shared by its recognisers.
@@ -96,7 +99,7 @@ const HELIOSOPH: Option<&str> = Some(tr_key("Converted to ONNX by Heliosoph LLC 
 const SCUNET_LICENSES: &[License] = &[SCUNET_LICENSE, HELIOSOPH_SCUNET_LICENSE];
 
 /// In order of preference within each task: the first one installed is that task's default.
-pub const CATALOG: [Known; 17] = [
+pub const CATALOG: [Known; 18] = [
     Known { file: "silueta.onnx", label: tr_key("Silueta — small and fast"), task: Task::Background, mb: 44, sha256: "75da6c8d2f8096ec743d071951be73b4a8bc7b3e51d9a6625d63644f90ffeedb", base: RELEASES, data: &[], pre: Some(U2NET), converted_by: None, scale: 1, max_tile: 512, notice: None, licenses: &[U2NET_LICENSE, REMBG_LICENSE] },
     Known { file: "u2netp.onnx", label: tr_key("U²-Net small — fastest"), task: Task::Background, mb: 5, sha256: "309c8469258dda742793dce0ebea8e6dd393174f89934733ecc8b14c76f4ddd8", base: RELEASES, data: &[], pre: Some(U2NET), converted_by: None, scale: 1, max_tile: 512, notice: None, licenses: &[U2NET_LICENSE] },
     Known { file: "u2net.onnx", label: tr_key("U²-Net — general"), task: Task::Background, mb: 176, sha256: "8d10d2f3bb75ae3b6d527c77944fc5e7dcd94b29809d47a739a7a728a912b491", base: RELEASES, data: &[], pre: Some(U2NET), converted_by: None, scale: 1, max_tile: 512, notice: None, licenses: &[U2NET_LICENSE] },
@@ -113,6 +116,7 @@ pub const CATALOG: [Known; 17] = [
     Known { file: LAMA_FILE, label: tr_key("LaMa — best quality, slower"), task: Task::Inpaint, mb: 208, sha256: "1faef5301d78db7dda502fe59966957ec4b79dd64e16f03ed96913c7a4eb68d6", base: LAMA, data: &[], pre: None, converted_by: Some(tr_key("ONNX export by Carve on Hugging Face; its origin isn't verified.")), scale: 1, max_tile: 512, notice: None, licenses: &[LAMA_LICENSE] },
     Known { file: "migan_pipeline_v2.onnx", label: tr_key("MI-GAN — fast"), task: Task::Inpaint, mb: 28, sha256: "6f1f3530a1a2324b19752018ce756088b07973cda8d7d890034ace5c8a48c40b", base: MIGAN, data: &[], pre: None, converted_by: None, scale: 1, max_tile: 512, notice: None, licenses: &[MIGAN_LICENSE] },
     Known { file: "latin_PP-OCRv5_mobile_rec.onnx", label: tr_key("PP-OCRv5 Latin — European languages"), task: Task::Ocr, mb: 13, sha256: "46449fd0606cd07d856744703211ea6826e4642d4c803d91167c53cde01d3b94", base: PPOCR, data: &[OCR_DETECTOR, ("latin_PP-OCRv5_mobile_rec.dict.json", "705592cc40b955ac82cdfdb049ec75f0a9041824d524eeb946a913a34d285409")], pre: None, converted_by: NAKAMURA, scale: 1, max_tile: 512, notice: None, licenses: &[PADDLEOCR_LICENSE] },
+    Known { file: "mobile_sam_image_encoder.onnx", label: tr_key("MobileSAM — finds the object in a box"), task: Task::Segment, mb: 44, sha256: "580f5fb648ea1062c0aabc26217aed56921985f03f0cbbd852bba81d760cc749", base: SAM, data: &[("sam_mask_decoder_single.onnx", "93915fc7c993ab9d59ab8c9ccd3bce37f7509c81ab4150a74abd4d2abbd8570d")], pre: None, converted_by: Some(tr_key("ONNX export by Acly on Hugging Face, from the authors' weights; downloaded from Heliosoph LLC's copy.")), scale: 1, max_tile: 512, notice: None, licenses: &[MOBILESAM_LICENSE, SAM_LICENSE] },
     Known { file: "PP-OCRv5_mobile_rec.onnx", label: tr_key("PP-OCRv5 — Chinese, Japanese and English"), task: Task::Ocr, mb: 22, sha256: "1205c2e14cc3ecaf7a57fe14736521ded32489603c40d98e36fe4212a70d8be5", base: PPOCR, data: &[OCR_DETECTOR, ("PP-OCRv5_mobile_rec.dict.json", "02c0a0121c577dfa211f11de21084e3abd23478a77ea4fbdf71ee7a3e990a717")], pre: None, converted_by: NAKAMURA, scale: 1, max_tile: 512, notice: None, licenses: &[PADDLEOCR_LICENSE] },
 ];
 
@@ -165,9 +169,9 @@ pub(super) fn list_models(dir: &Path) -> Vec<String> {
 }
 
 /// The installed models that can do `task`: those it knows for `task`, and any model it doesn't
-/// know, except for Inpaint and Recognize Text, whose inputs differ per model.
+/// know, except for Inpaint, Recognize Text and Select Object, whose inputs differ per model.
 pub fn for_task(task: Task, installed: &[String]) -> Vec<String> {
-    installed.iter().filter(|f| known(f).map_or(!matches!(task, Task::Inpaint | Task::Ocr), |k| k.task == task)).cloned().collect()
+    installed.iter().filter(|f| known(f).map_or(!matches!(task, Task::Inpaint | Task::Ocr | Task::Segment), |k| k.task == task)).cloned().collect()
 }
 
 /// The model `task` uses: the user's choice if it's installed, else the first installed model

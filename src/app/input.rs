@@ -494,6 +494,9 @@ impl App {
         if drag.drag_stopped() && self.shown.selection.as_ref().is_some_and(Selection::is_empty) {
             self.shown.selection = None;
         }
+        if drag.drag_stopped() && kind == SelKind::Object && let Some(Selection::Rect(r)) = self.shown.selection {
+            self.select_object(r);
+        }
     }
 
     /// Crop and Measure tools: dragging out the crop rect or a measuring line.

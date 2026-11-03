@@ -465,6 +465,25 @@ fn background_results_cover_then_paste_the_subject_in_one_step() {
 }
 
 #[test]
+fn object_outline_replaces_only_its_own_box() {
+    use crate::markup::Selection;
+    let (mut app, path) = app_with_image();
+    let a = Rect::from_min_size(Pos2::ZERO, Vec2::new(2.0, 1.0));
+    let outline = vec![Pos2::ZERO, Pos2::new(1.0, 0.0), Pos2::new(1.0, 1.0)];
+    app.shown.selection = Some(Selection::Rect(a));
+    app.handle(Msg::Selected(path.clone(), a, Ok(outline.clone())));
+    assert_eq!(app.shown.selection, Some(Selection::Lasso(outline.clone())));
+    // A result for a box that's no longer the selection (Esc, or a newer box) is dropped.
+    app.shown.selection = None;
+    app.handle(Msg::Selected(path.clone(), a, Ok(outline.clone())));
+    assert_eq!(app.shown.selection, None);
+    // Nothing found: the box stays.
+    app.shown.selection = Some(Selection::Rect(a));
+    app.handle(Msg::Selected(path, a, Ok(Vec::new())));
+    assert_eq!(app.shown.selection, Some(Selection::Rect(a)));
+}
+
+#[test]
 fn greyscale_and_invert_are_one_undo_step_each() {
     let (mut app, _) = app_with_image();
     let ctx = egui::Context::default();
