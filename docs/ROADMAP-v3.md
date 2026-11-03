@@ -141,7 +141,7 @@ Each item stands alone and can be done at any time.
 - DONT IMPLEMENT: **More packages:** rpm, AppImage and AUR. Reopens "`.deb` and `.msi` only".
 - **More languages:** Polish, Dutch and Russian are the easy ones. Chinese, Japanese and Korean need fonts Roboto lacks, and eframe's `system_fonts` feature could supply them. A translation guide so that volunteers can add `locales/*.tsv` files.
 - **Screen readers:** eframe's `accesskit` feature. Measure its startup cost first.
-- DONT IMPLEMENT: **Light theme,** following the system **[setting]** (BetterViewer).
+- **Themes:** Dark, Light, High contrast and follow the system, plus user XML themes **[setting]** (BetterViewer).
 - **Custom shortcuts** **[setting]** (PicView, ImageGlass).
 - **macOS:** every leading cross-platform rival has it, but it needs a Mac, plus signing and notarisation. A separate decision.
 - **Done when** each listed item installs and passes a by-hand check on a clean system.

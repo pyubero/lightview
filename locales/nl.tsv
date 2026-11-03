@@ -362,3 +362,14 @@ Reset All Shortcuts	Alle sneltoetsen herstellen
 {keys} is already used by {action}	{keys} wordt al gebruikt door: {action}
 Copy, Cut, Paste, Enter, Esc and Delete	Kopiëren, Knippen, Plakken, Enter, Esc en Delete
 Change Keyboard Shortcuts…	Sneltoetsen wijzigen…
+Theme	Thema
+Follow system	Systeem volgen
+Dark	Donker
+Light	Licht
+High contrast	Hoog contrast
+bigger than 64 KiB	groter dan 64 KiB
+invalid value	ongeldige waarde
+line	regel
+Your own themes go in the themes folder next to the AI models. Choosing a theme again reloads its file.	Eigen thema's horen in de map themes naast de AI-modellen. Een thema opnieuw kiezen laadt het bestand opnieuw.
+Couldn't load the theme, so the base theme is used: {e}	Het thema kon niet worden geladen, dus het basisthema wordt gebruikt: {e}
+Open themes folder	Themamap openen

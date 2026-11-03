@@ -362,3 +362,14 @@ Reset All Shortcuts	Restablecer todos los atajos
 {keys} is already used by {action}	{keys} ya lo usa: {action}
 Copy, Cut, Paste, Enter, Esc and Delete	Copiar, Cortar, Pegar, Intro, Esc y Supr
 Change Keyboard Shortcuts…	Cambiar atajos de teclado…
+Theme	Tema
+Follow system	Según el sistema
+Dark	Oscuro
+Light	Claro
+High contrast	Alto contraste
+bigger than 64 KiB	mayor de 64 KiB
+invalid value	valor no válido
+line	línea
+Your own themes go in the themes folder next to the AI models. Choosing a theme again reloads its file.	Tus propios temas van en la carpeta themes, junto a los modelos de IA. Elegir un tema de nuevo vuelve a leer su archivo.
+Couldn't load the theme, so the base theme is used: {e}	No se pudo cargar el tema, así que se usa el tema base: {e}
+Open themes folder	Abrir carpeta de temas

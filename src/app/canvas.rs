@@ -118,8 +118,8 @@ impl App {
         self.shown.element_textures.retain(|key, _| used.contains(key));
         if self.shown.tool == Tool::Select && let Some(e) = self.shown.selected.and_then(|i| doc.elements.get(i)) {
             let r = Rect::from_two_pos(to_screen(e.bbox().min), to_screen(e.bbox().max)).expand(3.0);
-            painter.rect_stroke(r, 0.0, egui::Stroke::new(1.0, Color32::from_rgb(66, 165, 245)), egui::StrokeKind::Outside);
-            painter.rect_filled(Rect::from_center_size(r.max, Vec2::splat(9.0)), 1.0, Color32::from_rgb(66, 165, 245));
+            painter.rect_stroke(r, 0.0, egui::Stroke::new(1.0, self.canvas.handle), egui::StrokeKind::Outside);
+            painter.rect_filled(Rect::from_center_size(r.max, Vec2::splat(9.0)), 1.0, self.canvas.handle);
         }
         let Some(i) = self.shown.editing_text else { return };
         let Some(e) = doc.elements.get(i) else { return };
@@ -281,7 +281,7 @@ impl App {
         let k = rect.size() / img;
         let shown = Rect::from_min_max(rect.min + crop.min.to_vec2() * k, rect.min + crop.max.to_vec2() * k);
         painter.rect_stroke(shown, 0.0, egui::Stroke::new(3.0, Color32::from_black_alpha(160)), egui::StrokeKind::Middle);
-        painter.rect_stroke(shown, 0.0, egui::Stroke::new(1.0, Color32::WHITE), egui::StrokeKind::Middle);
+        painter.rect_stroke(shown, 0.0, egui::Stroke::new(1.0, self.canvas.outline), egui::StrokeKind::Middle);
         if response.is_pointer_button_down_on() && let Some(p) = response.interact_pointer_pos() {
             self.view = View::Manual { scale, center: ((p - rect.min) / k).to_pos2() };
         }
@@ -335,8 +335,8 @@ impl App {
         ui.painter().with_clip_rect(after.intersect(dest)).image(c.texture.id(), r, Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)), Color32::WHITE);
         let painter = ui.painter().with_clip_rect(dest);
         painter.rect_stroke(r, 0.0, egui::Stroke::new(1.0, Color32::from_white_alpha(160)), egui::StrokeKind::Outside);
-        painter.line_segment([Pos2::new(x, r.top()), Pos2::new(x, r.bottom())], egui::Stroke::new(2.0, Color32::WHITE));
-        painter.circle_filled(Pos2::new(x, r.center().y), 6.0, Color32::WHITE);
+        painter.line_segment([Pos2::new(x, r.top()), Pos2::new(x, r.bottom())], egui::Stroke::new(2.0, self.canvas.outline));
+        painter.circle_filled(Pos2::new(x, r.center().y), 6.0, self.canvas.outline);
     }
 
     fn paint_selection(&self, ui: &egui::Ui, dest: Rect, crop: Rect) {
@@ -346,7 +346,7 @@ impl App {
         // Marching-ants style: white dashes over a dark line, visible on any image.
         let painter = ui.painter().with_clip_rect(dest.expand(1.0));
         painter.add(egui::Shape::line(outline.clone(), egui::Stroke::new(1.0, Color32::from_black_alpha(200))));
-        painter.extend(egui::Shape::dashed_line(&outline, egui::Stroke::new(1.0, Color32::WHITE), 5.0, 4.0));
+        painter.extend(egui::Shape::dashed_line(&outline, egui::Stroke::new(1.0, self.canvas.outline), 5.0, 4.0));
     }
 
     fn paint_crop(&self, ui: &egui::Ui, rect: Option<Rect>, dest: Rect, crop: Rect, viewport: Rect) {
@@ -363,7 +363,7 @@ impl App {
                 ] {
                     painter.rect_filled(side, 0.0, shade);
                 }
-                painter.rect_stroke(r, 0.0, egui::Stroke::new(1.0, Color32::WHITE), egui::StrokeKind::Middle);
+                painter.rect_stroke(r, 0.0, egui::Stroke::new(1.0, self.canvas.outline), egui::StrokeKind::Middle);
                 if let Some(name) = rect.and_then(view::ratio_name) {
                     bubble(&painter, Pos2::new(r.center().x, r.top() + 20.0), name);
                 }
@@ -398,7 +398,7 @@ impl App {
             painter.line_segment([a, b], egui::Stroke::new(3.0, Color32::from_black_alpha(90)));
             painter.line_segment([a, b], egui::Stroke::new(1.0, Color32::from_white_alpha(140)));
         }
-        painter.rect_stroke(kept, 0.0, egui::Stroke::new(1.5, Color32::WHITE), egui::StrokeKind::Middle);
+        painter.rect_stroke(kept, 0.0, egui::Stroke::new(1.5, self.canvas.outline), egui::StrokeKind::Middle);
         bubble(ui.painter(), Pos2::new(viewport.center().x, viewport.top() + 24.0), tr("Turn until the lines run straight · Enter to apply · Esc to cancel"));
     }
 
@@ -406,7 +406,7 @@ impl App {
         let q = corners.map(|p| view::to_screen(dest, crop, p));
         let painter = ui.painter().with_clip_rect(viewport);
         let convex = edit::is_convex(q);
-        let color = if convex { Color32::YELLOW } else { Color32::RED };
+        let color = if convex { self.canvas.guide } else { Color32::RED };
         let mut lines = vec![[q[0], q[1]], [q[1], q[2]], [q[2], q[3]], [q[3], q[0]]];
         if convex {
             // The guide lines of a square grid on the rectangle, to line up with the subject.
@@ -433,9 +433,9 @@ impl App {
                 let painter = ui.painter().with_clip_rect(viewport);
                 // A dark halo keeps the guide line visible on light and dark images.
                 painter.line_segment([a, b], egui::Stroke::new(3.0, Color32::from_black_alpha(160)));
-                painter.line_segment([a, b], egui::Stroke::new(1.5, Color32::YELLOW));
+                painter.line_segment([a, b], egui::Stroke::new(1.5, self.canvas.guide));
                 for p in [a, b] {
-                    painter.circle(p, 5.0, Color32::from_black_alpha(120), egui::Stroke::new(1.5, Color32::YELLOW));
+                    painter.circle(p, 5.0, Color32::from_black_alpha(120), egui::Stroke::new(1.5, self.canvas.guide));
                 }
                 let [dx, dy, d] = doc.measure(m[0], m[1]);
                 trf("Distance: {d} px · ΔX: {dx} px · ΔY: {dy} px", &[("d", &format!("{d:.0}")), ("dx", &format!("{dx:.0}")), ("dy", &format!("{dy:.0}"))])

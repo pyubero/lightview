@@ -362,3 +362,14 @@ Reset All Shortcuts	Réinitialiser tous les raccourcis
 {keys} is already used by {action}	{keys} est déjà utilisé par : {action}
 Copy, Cut, Paste, Enter, Esc and Delete	Copier, Couper, Coller, Entrée, Échap et Suppr
 Change Keyboard Shortcuts…	Modifier les raccourcis clavier…
+Theme	Thème
+Follow system	Selon le système
+Dark	Sombre
+Light	Clair
+High contrast	Contraste élevé
+bigger than 64 KiB	plus de 64 Kio
+invalid value	valeur non valide
+line	ligne
+Your own themes go in the themes folder next to the AI models. Choosing a theme again reloads its file.	Vos propres thèmes vont dans le dossier themes, à côté des modèles d'IA. Choisir à nouveau un thème relit son fichier.
+Couldn't load the theme, so the base theme is used: {e}	Impossible de charger le thème, le thème de base est donc utilisé : {e}
+Open themes folder	Ouvrir le dossier des thèmes

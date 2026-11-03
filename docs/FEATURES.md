@@ -120,14 +120,72 @@ The models, how to install them and the tips for text recognition are in the REA
 - **Screen readers.** Menus, dialogs and settings can be read by a screen reader such as Orca or
   Narrator. The image itself isn't described yet.
 - **Font size** for the interface, from 10 to 20.
+- **Themes:** Dark, Light, High contrast, or follow the system's dark/light setting
+  ([Themes](#themes)).
 
 ## Settings
 
-In Edit → Settings: language, font size, GPU image scaling (smoother zooming, more GPU memory),
+In Edit → Settings: language, theme, font size, GPU image scaling (smoother zooming, more GPU memory),
 interpolation (Nearest, Bilinear, Bicubic or Lanczos3), background colour, pixel grid, colour
 management, default window size, sort order, keyboard shortcuts, and whether lightview is your
 default image viewer. The version and a link to check for updates are at the bottom; lightview
 never checks on its own.
+
+## Themes
+
+Edit → Settings → Theme changes the colours and shapes of menus, panels, dialogs and buttons, and of
+the outlines and guides drawn over the image. It can't move, add or hide anything, and it doesn't
+change fonts, the font size or the background colour behind the image, which are separate settings.
+
+- **Theme files:** each theme is an `.xml` file in `~/.local/share/lightview/themes` (Windows:
+  `%APPDATA%\lightview\data\themes`), which the Open themes folder button under the list opens.
+  The first time lightview starts, it writes `dark.xml`, `light.xml` and `high-contrast.xml` there.
+  Edit them, or copy one under a new name to make your own; a file's name is its name in the list.
+  lightview never overwrites or recreates these files, so edits and deletions stay.
+- **Choosing a theme again** reloads its file, so you can edit it and look at the result without
+  restarting.
+- **Follow system** (the default) uses `dark.xml` or `light.xml`, depending on the desktop's
+  dark/light setting. On Linux it's read when lightview starts, so after changing the desktop's
+  setting, restart lightview. On Windows it follows changes as they happen. When the desktop gives
+  no preference, `dark.xml` is used.
+- **The base theme:** built into lightview and identical to the original Light theme. Any key a
+  file leaves out takes the base theme's value. A file that's missing or can't be read (bad XML, a
+  wrong value, bigger than 64 KiB) is replaced by the whole base theme, and Settings says what's
+  wrong and on which line.
+
+The three files set every key, so they work as templates; `dark.xml` explains the format at the
+top. `mode` is `dark` or `light`: it decides which half of Follow system the theme can stand in for,
+and the shades of things themes don't set, such as shadows. Colours are `#rrggbb` or `#rrggbbaa`.
+
+```xml
+<theme mode="dark">  <!-- or "light" -->
+  <colors panel="#1b1b1b" window="#1b1b1b" border="#3c3c3c" field="#0a0a0a" text="#8c8c8c"
+          accent="#005c80" selected-text="#c0deff" hyperlink="#5aaaff" warn="#ff8f00" error="#ff0000"/>
+  <widget state="hovered" fill="#404040" text="#f5f5f5" border="#969696"/>
+  <!-- … one widget element for each of the five states … -->
+  <canvas outline="#ffffff" handle="#42a5f5" guide="#ffff00"/>
+  <shape rounding="6" stroke="1" spacing="8,3" padding="4,1"/>
+</theme>
+```
+
+| Element | Attribute | Changes |
+|---|---|---|
+| `colors` | `panel`, `window` | Background of the menu bar and side panels; of dialogs and menus |
+| | `border` | Border of dialogs and menus |
+| | `field` | Background of text fields |
+| | `text` | Labels and other text |
+| | `accent`, `selected-text` | Selected items and text: background and text colour |
+| | `hyperlink`, `warn`, `error` | Links, warnings and errors |
+| `widget` | `state` | Which state: `noninteractive` (separators, frames), `inactive`, `hovered`, `active` (pressed) or `open` (an open menu or list). One element per state |
+| | `fill`, `text`, `border` | That state's background, text and border |
+| `canvas` | `outline` | Selection, crop and straighten outlines, and the before/after divider |
+| | `handle` | The selected markup element's frame and handle |
+| | `guide` | Perspective and measuring guides |
+| `shape` | `rounding` | Corner radius of buttons, menus and dialogs, 0–16 |
+| | `stroke` | Border width, 0.5–4; set a `border` colour for `inactive` too, or its border stays invisible |
+| | `spacing`, `padding` | Space between items and inside buttons, `x,y`, each 0–24 |
+
+Unknown elements and attributes are ignored.
 
 ## Privacy
 

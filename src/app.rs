@@ -201,6 +201,10 @@ pub struct App {
     status: Option<(String, Instant)>,
     /// Holds what Copy File put on the clipboard: on Linux it's gone once this is dropped.
     file_clipboard: Option<arboard::Clipboard>,
+    /// The theme's colours for outlines and guides drawn over the image.
+    canvas: crate::theme::Canvas,
+    /// Why the chosen theme didn't load, shown in Settings.
+    theme_error: Option<String>,
 }
 
 impl App {
@@ -211,6 +215,8 @@ impl App {
         cc.egui_ctx.options_mut(|o| o.zoom_with_keyboard = false);
         cc.egui_ctx.set_fonts(markup::font_definitions());
         settings::apply_font_size(&cc.egui_ctx, settings.font_size);
+        crate::theme::seed_folder();
+        let (canvas, theme_error) = crate::theme::apply(&cc.egui_ctx, &settings.theme);
         let mut recent: Vec<PathBuf> = cc.storage.and_then(|s| s.get_string("recent")).unwrap_or_default().lines().map(PathBuf::from).collect();
         let show_toolbar = cc.storage.and_then(|s| s.get_string("toolbar")).is_some_and(|v| v == "shown");
         if let Some(path) = &start {
@@ -233,8 +239,12 @@ impl App {
             show_toolbar, focus_text: false,
             resize_dialog: None, pending: None, show_ai_models: false, license_prompt: None, restoring: None, restore_runs: 0, enhance_notice: None, reading: false, found_text: None, show_shortcuts: false, recording: None, shortcut_error: None, visible: None, downloading: HashSet::new(),
             title: String::new(),
-            window_reported: false, preview_reported: None, full_reported: false, nav_start: None, close_next: false, status: None, file_clipboard: None,
+            window_reported: false, preview_reported: None, full_reported: false, nav_start: None, close_next: false, status: None, file_clipboard: None, canvas, theme_error,
         }
+    }
+
+    fn apply_theme(&mut self, ctx: &egui::Context) {
+        (self.canvas, self.theme_error) = crate::theme::apply(ctx, &self.settings.theme);
     }
 
     /// Shows a short message at the bottom.

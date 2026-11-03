@@ -1,0 +1,12 @@
+<!-- lightview's Light theme. The built-in base theme is the original of this file. See dark.xml. -->
+<theme mode="light">
+  <colors panel="#f8f8f8" window="#f8f8f8" border="#bebebe" field="#ffffff" text="#505050"
+          accent="#90d1ff" selected-text="#00537d" hyperlink="#009bff" warn="#ff6400" error="#ff0000"/>
+  <widget state="noninteractive" fill="#f8f8f8" text="#505050" border="#bebebe"/>
+  <widget state="inactive" fill="#e6e6e6" text="#3c3c3c" border="#e6e6e6"/>
+  <widget state="hovered" fill="#dcdcdc" text="#000000" border="#696969"/>
+  <widget state="active" fill="#a5a5a5" text="#000000" border="#000000"/>
+  <widget state="open" fill="#dcdcdc" text="#000000" border="#a0a0a0"/>
+  <canvas outline="#ffffff" handle="#42a5f5" guide="#ffff00"/>
+  <shape rounding="6" stroke="1" spacing="8,3" padding="4,1"/>
+</theme>

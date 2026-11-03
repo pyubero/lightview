@@ -1,0 +1,12 @@
+<!-- lightview's High contrast theme: white on black, yellow for focus and selection. See dark.xml. -->
+<theme mode="dark">
+  <colors panel="#000000" window="#000000" border="#ffffff" field="#000000" text="#ffffff"
+          accent="#ffff00" selected-text="#000000" hyperlink="#00ffff" warn="#ffff00" error="#ff6060"/>
+  <widget state="noninteractive" fill="#000000" text="#ffffff" border="#ffffff"/>
+  <widget state="inactive" fill="#000000" text="#ffffff" border="#ffffff"/>
+  <widget state="hovered" fill="#ffff00" text="#000000" border="#ffff00"/>
+  <widget state="active" fill="#ffffff" text="#000000" border="#ffff00"/>
+  <widget state="open" fill="#ffff00" text="#000000" border="#ffff00"/>
+  <canvas outline="#ffffff" handle="#ffff00" guide="#ffff00"/>
+  <shape rounding="6" stroke="2" spacing="8,3" padding="4,1"/>
+</theme>

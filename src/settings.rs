@@ -131,11 +131,13 @@ pub struct Settings {
     /// The user's changes to the keyboard shortcuts, by action (its `Debug` name, such as
     /// "Cutout(true)"); None removes that action's shortcut.
     pub shortcuts: Vec<(String, Option<eframe::egui::KeyboardShortcut>)>,
+    /// A built-in theme id, `theme::SYSTEM`, or the file name (without `.xml`) of a user theme.
+    pub theme: String,
 }
 
 impl Default for Settings {
     fn default() -> Self {
-        Settings { gpu_scaling: false, interpolation: Interpolation::Bilinear, background: [0, 0, 0], window_size: [1280.0, 720.0], sort: SortOrder::Name, ai: AiSettings::default(), language: None, default_asked: false, font_size: DEFAULT_FONT_SIZE, pixel_grid: false, color_managed: true, shortcuts: Vec::new() }
+        Settings { gpu_scaling: false, interpolation: Interpolation::Bilinear, background: [0, 0, 0], window_size: [1280.0, 720.0], sort: SortOrder::Name, ai: AiSettings::default(), language: None, default_asked: false, font_size: DEFAULT_FONT_SIZE, pixel_grid: false, color_managed: true, shortcuts: Vec::new(), theme: crate::theme::SYSTEM.into() }
     }
 }
 
@@ -186,7 +188,9 @@ pub fn make_default() -> Result<(), String> {
 }
 
 /// The Settings dialog body.
-pub fn ui(ui: &mut egui::Ui, s: &mut Settings) {
+/// Returns whether a theme was chosen (even the current one, which reloads its file).
+pub fn ui(ui: &mut egui::Ui, s: &mut Settings) -> bool {
+    let mut theme_chosen = false;
     egui::Grid::new("settings-grid").num_columns(2).spacing([16.0, 10.0]).show(ui, |ui| {
         ui.label(tr("Language"));
         let current = s.language.unwrap_or(Language::English);
@@ -206,6 +210,25 @@ pub fn ui(ui: &mut egui::Ui, s: &mut Settings) {
                 if ui.selectable_value(&mut s.font_size, size, size.to_string()).clicked() {
                     apply_font_size(ui.ctx(), size);
                 }
+            }
+        });
+        ui.end_row();
+
+        ui.label(tr("Theme"));
+        ui.vertical(|ui| {
+            egui::ComboBox::from_id_salt("theme").selected_text(crate::theme::name(&s.theme)).show_ui(ui, |ui| {
+                // Read only while the list is open, so a theme just copied in shows up.
+                let ids = [crate::theme::SYSTEM.to_string()].into_iter().chain(crate::theme::user_themes());
+                for id in ids {
+                    let name = crate::theme::name(&id);
+                    if ui.selectable_label(s.theme == id, name).clicked() {
+                        s.theme = id;
+                        theme_chosen = true;
+                    }
+                }
+            }).response.on_hover_text(tr("Your own themes go in the themes folder next to the AI models. Choosing a theme again reloads its file."));
+            if ui.button(tr("Open themes folder")).clicked() {
+                crate::theme::open_folder();
             }
         });
         ui.end_row();
@@ -260,6 +283,7 @@ pub fn ui(ui: &mut egui::Ui, s: &mut Settings) {
         });
         ui.end_row();
     });
+    theme_chosen
 }
 
 #[cfg(test)]
@@ -270,7 +294,7 @@ mod tests {
     fn storage_round_trip() {
         let mut ai = AiSettings { model: Some("mine.onnx".into()), ..AiSettings::default() };
         ai.overrides.insert("mine.onnx".into(), Preprocess::auto(512));
-        let s = Settings { gpu_scaling: true, interpolation: Interpolation::Lanczos3, background: [1, 2, 3], window_size: [800.0, 600.0], sort: SortOrder::DateModified, ai, language: Some(Language::German), default_asked: true, font_size: 18.0, pixel_grid: true, color_managed: false, shortcuts: vec![("Crop".into(), Some(eframe::egui::KeyboardShortcut::new(eframe::egui::Modifiers::ALT, eframe::egui::Key::C))), ("Undo".into(), None)] };
+        let s = Settings { gpu_scaling: true, interpolation: Interpolation::Lanczos3, background: [1, 2, 3], window_size: [800.0, 600.0], sort: SortOrder::DateModified, ai, language: Some(Language::German), default_asked: true, font_size: 18.0, pixel_grid: true, color_managed: false, shortcuts: vec![("Crop".into(), Some(eframe::egui::KeyboardShortcut::new(eframe::egui::Modifiers::ALT, eframe::egui::Key::C))), ("Undo".into(), None)], theme: "high-contrast".into() };
         // eframe stores each value as a RON string inside a RON map.
         let kv = HashMap::from([(KEY.to_string(), ron::to_string(&s).unwrap()), ("recent".to_string(), "/a".to_string())]);
         assert_eq!(parse(&ron::to_string(&kv).unwrap()), s);

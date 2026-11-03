@@ -362,3 +362,14 @@ Reset All Shortcuts	Сбросить все сочетания
 {keys} is already used by {action}	{keys} уже используется: {action}
 Copy, Cut, Paste, Enter, Esc and Delete	Копировать, Вырезать, Вставить, Enter, Esc и Delete
 Change Keyboard Shortcuts…	Изменить сочетания клавиш…
+Theme	Тема
+Follow system	Как в системе
+Dark	Тёмная
+Light	Светлая
+High contrast	Высокая контрастность
+bigger than 64 KiB	больше 64 КиБ
+invalid value	недопустимое значение
+line	строка
+Your own themes go in the themes folder next to the AI models. Choosing a theme again reloads its file.	Свои темы кладите в папку themes рядом с моделями ИИ. Повторный выбор темы перечитывает её файл.
+Couldn't load the theme, so the base theme is used: {e}	Не удалось загрузить тему, поэтому используется базовая тема: {e}
+Open themes folder	Открыть папку тем

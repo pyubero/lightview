@@ -20,6 +20,7 @@ mod retouch;
 mod save;
 mod settings;
 mod svg;
+mod theme;
 mod tiff;
 mod turbo;
 mod view;
@@ -51,6 +52,16 @@ fn main() -> eframe::Result {
     // Decoding starts before the window exists so it overlaps OpenGL/eframe setup.
     let (tx, rx) = mpsc::channel();
     let notify = Notify { tx, ctx: Arc::new(OnceLock::new()) };
+    // winit reports the system theme on Windows only, so egui's fallback comes from the desktop portal,
+    // read while the window opens. shortcut: read once per start; watch the portal's SettingChanged to follow live.
+    #[cfg(target_os = "linux")]
+    {
+        let ctx = notify.ctx.clone();
+        std::thread::spawn(move || if let Some(theme) = platform::system_theme() {
+            ctx.wait().options_mut(|o| o.fallback_theme = theme);
+            ctx.wait().request_repaint();
+        });
+    }
     // The first decode starts before the window exists, so it targets the configured window size.
     let loader = Loader::new(notify.clone(), 3, settings.window_size.map(|v| v as u32), settings.color_managed);
     if let Some(path) = &path {

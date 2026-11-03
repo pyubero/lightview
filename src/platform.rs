@@ -114,6 +114,25 @@ pub fn locale() -> Option<String> {
     None
 }
 
+/// The desktop's dark/light preference from the XDG desktop portal, which winit 0.30 doesn't read on
+/// Linux. Takes ~35 ms, so call it off the UI thread.
+#[cfg(target_os = "linux")]
+pub fn system_theme() -> Option<eframe::egui::Theme> {
+    let out = command("gdbus").args(["call", "--session", "--dest", "org.freedesktop.portal.Desktop", "--object-path", "/org/freedesktop/portal/desktop",
+        "--method", "org.freedesktop.portal.Settings.ReadOne", "org.freedesktop.appearance", "color-scheme"]).output().ok()?;
+    parse_color_scheme(&String::from_utf8_lossy(&out.stdout))
+}
+
+/// gdbus prints `(<uint32 1>,)`: 1 prefers dark, 2 prefers light, 0 has no preference.
+#[cfg(target_os = "linux")]
+fn parse_color_scheme(reply: &str) -> Option<eframe::egui::Theme> {
+    match reply.trim().trim_start_matches("(<").trim_start_matches('<').split(['>', ',']).next()?.trim() {
+        "uint32 1" => Some(eframe::egui::Theme::Dark),
+        "uint32 2" => Some(eframe::egui::Theme::Light),
+        _ => None,
+    }
+}
+
 #[cfg(all(test, target_os = "linux"))]
 mod tests {
     use super::*;
@@ -121,5 +140,14 @@ mod tests {
     #[test]
     fn file_uris_are_escaped() {
         assert_eq!(file_uri(Path::new("/a b/c,d/café-1_2.jpg")), "file:///a%20b/c%2Cd/caf%C3%A9-1_2.jpg");
+    }
+
+    #[test]
+    fn color_scheme_replies() {
+        use eframe::egui::Theme;
+        assert_eq!(parse_color_scheme("(<uint32 1>,)\n"), Some(Theme::Dark));
+        assert_eq!(parse_color_scheme("(<<uint32 2>>,)"), Some(Theme::Light));
+        assert_eq!(parse_color_scheme("(<uint32 0>,)"), None);
+        assert_eq!(parse_color_scheme(""), None);
     }
 }

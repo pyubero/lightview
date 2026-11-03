@@ -362,3 +362,14 @@ Reset All Shortcuts	Przywróć wszystkie skróty
 {keys} is already used by {action}	{keys} jest już używany przez: {action}
 Copy, Cut, Paste, Enter, Esc and Delete	Kopiuj, Wytnij, Wklej, Enter, Esc i Delete
 Change Keyboard Shortcuts…	Zmień skróty klawiszowe…
+Theme	Motyw
+Follow system	Jak w systemie
+Dark	Ciemny
+Light	Jasny
+High contrast	Wysoki kontrast
+bigger than 64 KiB	większy niż 64 KiB
+invalid value	nieprawidłowa wartość
+line	wiersz
+Your own themes go in the themes folder next to the AI models. Choosing a theme again reloads its file.	Własne motywy umieść w folderze themes obok modeli AI. Ponowny wybór motywu wczytuje jego plik od nowa.
+Couldn't load the theme, so the base theme is used: {e}	Nie udało się wczytać motywu, więc używany jest motyw podstawowy: {e}
+Open themes folder	Otwórz folder motywów

@@ -62,7 +62,12 @@ impl App {
         let (sort, color_managed) = (self.settings.sort, self.settings.color_managed);
         let modal = egui::Modal::new(egui::Id::unique("settings")).show(ctx, |ui| {
             ui.heading(tr("Settings"));
-            settings::ui(ui, &mut self.settings);
+            if settings::ui(ui, &mut self.settings) {
+                self.apply_theme(ui.ctx());
+            }
+            if let Some(e) = &self.theme_error {
+                ui.colored_label(ui.visuals().error_fg_color, trf("Couldn't load the theme, so the base theme is used: {e}", &[("e", e)]));
+            }
             ui.add_space(8.0);
             if ui.button(tr("Change Keyboard Shortcuts…")).clicked() {
                 self.show_shortcuts = true;

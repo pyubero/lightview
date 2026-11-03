@@ -362,3 +362,14 @@ Reset All Shortcuts	Ripristina tutte le scorciatoie
 {keys} is already used by {action}	{keys} è già usato da: {action}
 Copy, Cut, Paste, Enter, Esc and Delete	Copia, Taglia, Incolla, Invio, Esc e Canc
 Change Keyboard Shortcuts…	Cambia scorciatoie da tastiera…
+Theme	Tema
+Follow system	Come il sistema
+Dark	Scuro
+Light	Chiaro
+High contrast	Contrasto elevato
+bigger than 64 KiB	più grande di 64 KiB
+invalid value	valore non valido
+line	riga
+Your own themes go in the themes folder next to the AI models. Choosing a theme again reloads its file.	I tuoi temi vanno nella cartella themes, accanto ai modelli di IA. Scegliere di nuovo un tema ricarica il suo file.
+Couldn't load the theme, so the base theme is used: {e}	Impossibile caricare il tema, quindi si usa il tema di base: {e}
+Open themes folder	Apri cartella dei temi

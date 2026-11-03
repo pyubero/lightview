@@ -1850,6 +1850,7 @@ dependencies = [
  "resvg",
  "rfd",
  "ron",
+ "roxmltree 0.21.2",
  "rqrr",
  "serde",
  "sha2",

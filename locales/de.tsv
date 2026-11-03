@@ -362,3 +362,14 @@ Reset All Shortcuts	Alle Tastenkürzel zurücksetzen
 {keys} is already used by {action}	{keys} wird schon verwendet von: {action}
 Copy, Cut, Paste, Enter, Esc and Delete	Kopieren, Ausschneiden, Einfügen, Eingabe, Esc und Entf
 Change Keyboard Shortcuts…	Tastenkürzel ändern…
+Theme	Design
+Follow system	Wie das System
+Dark	Dunkel
+Light	Hell
+High contrast	Hoher Kontrast
+bigger than 64 KiB	größer als 64 KiB
+invalid value	ungültiger Wert
+line	Zeile
+Your own themes go in the themes folder next to the AI models. Choosing a theme again reloads its file.	Eigene Designs gehören in den Ordner themes neben den KI-Modellen. Ein Design erneut zu wählen lädt seine Datei neu.
+Couldn't load the theme, so the base theme is used: {e}	Das Design konnte nicht geladen werden, daher wird das Grunddesign verwendet: {e}
+Open themes folder	Design-Ordner öffnen
