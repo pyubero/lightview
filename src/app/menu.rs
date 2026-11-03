@@ -63,6 +63,10 @@ pub(super) enum Action {
     DeleteImage,
     /// Remove Background, and crop to the subject when true.
     Cutout(bool),
+    /// Blur Background: asks for the strength first.
+    BlurBackground,
+    /// Replace Background: with the background colour setting.
+    ReplaceBackground,
     /// Denoise or Enhance Image: shows a before/after preview first.
     Restore(crate::ai::Task),
     /// Remove Object: fills in the selection.
@@ -175,6 +179,8 @@ pub(super) fn bindable_menus() -> [(&'static str, Vec<(Action, &'static str)>); 
         (Action::Pixelate, tr_key("Pixelate Selection")),
         (Action::Cutout(false), tr_key("Remove Background")),
         (Action::Cutout(true), tr_key("Remove Background and Crop")),
+        (Action::BlurBackground, tr_key("Blur Background…")),
+        (Action::ReplaceBackground, tr_key("Replace Background")),
         (Action::Restore(Task::Denoise), tr_key("Denoise")),
         (Action::Restore(Task::Enhance), tr_key("Enhance Image")),
         (Action::Inpaint, tr_key("Remove Object")),
@@ -255,7 +261,7 @@ impl App {
             Action::Perspective | Action::Straighten => can_save && self.shown.adjusting.is_none(),
             Action::Greyscale | Action::Invert => has_image && self.shown.adjusting.is_none(),
             Action::RedEye | Action::Pixelate => has_image && selected && idle,
-            Action::Cutout(_) => ready(Task::Background),
+            Action::Cutout(_) | Action::BlurBackground | Action::ReplaceBackground => ready(Task::Background),
             Action::Restore(task) => ready(*task),
             Action::Inpaint => ready(Task::Inpaint) && selected,
             Action::ReadText(false) => ready(Task::Ocr) && !self.reading,
@@ -404,6 +410,8 @@ impl App {
                 use crate::ai::Task;
                 item(ui, Action::Cutout(false), actions);
                 item(ui, Action::Cutout(true), actions);
+                item(ui, Action::BlurBackground, actions);
+                hinted(ui, Action::ReplaceBackground, tr("Fills the background with the background colour from Settings."), actions);
                 item(ui, Action::Restore(Task::Denoise), actions);
                 item(ui, Action::Restore(Task::Enhance), actions);
                 item(ui, Action::Inpaint, actions);

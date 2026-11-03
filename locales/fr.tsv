@@ -15,12 +15,15 @@ Adjust Curves…	Ajuster les courbes…
 All channels together: overall brightness	Tous les canaux ensemble : luminosité globale
 Animation	Animation
 Applies the next time lightview starts	S'applique au prochain démarrage de lightview
+Apply	Appliquer
 Apply sigmoid (the model outputs logits)	Appliquer une sigmoïde (le modèle produit des logits)
 Apply to Selection	Appliquer à la sélection
 Apply to Whole Image{size} (about {estimate})	Appliquer à toute l'image{size} (environ {estimate})
 Arrow	Flèche
 Artist	Auteur
 Auto Levels	Niveaux automatiques
+Blur Background	Flouter l'arrière-plan
+Blur Background…	Flouter l'arrière-plan…
 BSRGAN 4× — upscales and sharpens, may invent detail	BSRGAN 4× — agrandit et accentue, peut inventer des détails
 Background colour	Couleur d'arrière-plan
 BiRefNet lite — best quality, slow	BiRefNet lite — meilleure qualité, lent
@@ -99,6 +102,7 @@ File	Fichier
 File name	Nom de fichier
 File size	Taille du fichier
 Fill	Remplissage
+Fills the background with the background colour from Settings.	Remplit l'arrière-plan avec la couleur de fond des Paramètres.
 Fit to Window	Ajuster à la fenêtre
 Flip Horizontally	Retourner horizontalement
 Flip Vertically	Retourner verticalement
@@ -185,6 +189,7 @@ Redo	Rétablir
 Remove Background	Supprimer l'arrière-plan
 Remove Background and Crop	Supprimer l'arrière-plan et recadrer
 Remove location from the copy	Retirer l'emplacement de la copie
+Replace Background	Remplacer l'arrière-plan
 Reset	Réinitialiser
 Reset Color Adjustments	Réinitialiser les réglages de couleur
 Reset to default	Rétablir les valeurs par défaut
@@ -222,6 +227,7 @@ Sketch	Croquis
 Smoother zooming and panning. Uses more GPU memory and makes switching images a little slower.	Zoom et défilement plus fluides. Utilise plus de mémoire GPU et ralentit un peu le changement d'image.
 Sort order	Ordre de tri
 Std (R, G, B)	Écart-type (R, V, B)
+Strength	Intensité
 Stroke	Contour
 SwinIR σ25 — moderate noise, very slow	SwinIR σ25 — bruit modéré, très lent
 Text	Texte

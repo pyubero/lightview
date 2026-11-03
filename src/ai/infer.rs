@@ -291,6 +291,16 @@ pub(super) fn to_mask(pred: &[f32], size: u32, sigmoid: bool, w: u32, h: u32) ->
     DynamicImage::ImageLuma8(small).resize_exact(w, h, FilterType::Triangle).into_luma8()
 }
 
+/// What goes behind a cut-out subject.
+pub enum Backdrop {
+    /// Nothing: Remove Background.
+    Clear,
+    /// The background colour setting: Replace Background.
+    Colour,
+    /// The whole image, blurred: Blur Background.
+    Blurred(RgbaImage),
+}
+
 /// `img` with the mask applied to its alpha.
 pub fn cutout(img: &RgbaImage, mask: &GrayImage) -> RgbaImage {
     let mut out = img.clone();

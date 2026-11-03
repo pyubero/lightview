@@ -15,12 +15,15 @@ Adjust Curves…	Кривые…
 All channels together: overall brightness	Все каналы вместе: общая яркость
 Animation	Анимация
 Applies the next time lightview starts	Вступит в силу при следующем запуске lightview
+Apply	Применить
 Apply sigmoid (the model outputs logits)	Применить сигмоиду (модель выдаёт логиты)
 Apply to Selection	Применить к выделению
 Apply to Whole Image{size} (about {estimate})	Применить ко всему изображению{size} (около {estimate})
 Arrow	Стрелка
 Artist	Автор
 Auto Levels	Автоуровни
+Blur Background	Размыть фон
+Blur Background…	Размыть фон…
 BSRGAN 4× — upscales and sharpens, may invent detail	BSRGAN 4× — увеличивает и повышает резкость, может придумывать детали
 Background colour	Цвет фона
 BiRefNet lite — best quality, slow	BiRefNet lite — лучшее качество, медленно
@@ -99,6 +102,7 @@ File	Файл
 File name	Имя файла
 File size	Размер файла
 Fill	Заливка
+Fills the background with the background colour from Settings.	Заливает фон цветом фона из настроек.
 Fit to Window	По размеру окна
 Flip Horizontally	Отразить по горизонтали
 Flip Vertically	Отразить по вертикали
@@ -185,6 +189,7 @@ Redo	Повторить
 Remove Background	Удалить фон
 Remove Background and Crop	Удалить фон и обрезать
 Remove location from the copy	Удалить местоположение из копии
+Replace Background	Заменить фон
 Reset	Сбросить
 Reset Color Adjustments	Сбросить настройки цвета
 Reset to default	По умолчанию
@@ -222,6 +227,7 @@ Sketch	Набросок
 Smoother zooming and panning. Uses more GPU memory and makes switching images a little slower.	Более плавное масштабирование и прокрутка. Использует больше памяти GPU и немного замедляет переключение изображений.
 Sort order	Порядок сортировки
 Std (R, G, B)	Ст. откл. (R, G, B)
+Strength	Сила
 Stroke	Обводка
 SwinIR σ25 — moderate noise, very slow	SwinIR σ25 — умеренный шум, очень медленно
 Text	Текст

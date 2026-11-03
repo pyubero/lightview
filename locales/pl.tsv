@@ -15,12 +15,15 @@ Adjust Curves…	Dostosuj krzywe…
 All channels together: overall brightness	Wszystkie kanały razem: ogólna jasność
 Animation	Animacja
 Applies the next time lightview starts	Zadziała przy następnym uruchomieniu lightview
+Apply	Zastosuj
 Apply sigmoid (the model outputs logits)	Zastosuj sigmoidę (model zwraca logity)
 Apply to Selection	Zastosuj do zaznaczenia
 Apply to Whole Image{size} (about {estimate})	Zastosuj do całego obrazu{size} (około {estimate})
 Arrow	Strzałka
 Artist	Autor
 Auto Levels	Automatyczne poziomy
+Blur Background	Rozmyj tło
+Blur Background…	Rozmyj tło…
 BSRGAN 4× — upscales and sharpens, may invent detail	BSRGAN 4× — powiększa i wyostrza, może wymyślać szczegóły
 Background colour	Kolor tła
 BiRefNet lite — best quality, slow	BiRefNet lite — najlepsza jakość, wolny
@@ -99,6 +102,7 @@ File	Plik
 File name	Nazwa pliku
 File size	Rozmiar pliku
 Fill	Wypełnienie
+Fills the background with the background colour from Settings.	Wypełnia tło kolorem tła z Ustawień.
 Fit to Window	Dopasuj do okna
 Flip Horizontally	Odbij w poziomie
 Flip Vertically	Odbij w pionie
@@ -185,6 +189,7 @@ Redo	Ponów
 Remove Background	Usuń tło
 Remove Background and Crop	Usuń tło i przytnij
 Remove location from the copy	Usuń lokalizację z kopii
+Replace Background	Zastąp tło
 Reset	Resetuj
 Reset Color Adjustments	Resetuj korekty kolorów
 Reset to default	Przywróć domyślne
@@ -222,6 +227,7 @@ Sketch	Szkic
 Smoother zooming and panning. Uses more GPU memory and makes switching images a little slower.	Płynniejsze powiększanie i przesuwanie. Zużywa więcej pamięci GPU i nieco spowalnia przełączanie obrazów.
 Sort order	Kolejność sortowania
 Std (R, G, B)	Odch. std. (R, G, B)
+Strength	Siła
 Stroke	Obrys
 SwinIR σ25 — moderate noise, very slow	SwinIR σ25 — umiarkowany szum, bardzo wolny
 Text	Tekst

@@ -69,7 +69,7 @@ pub enum Msg {
     Saved(PathBuf, Result<(), String>, Option<(PathBuf, Doc)>),
     /// Background removal finished for this image: the cut-out, and the subject's bounds
     /// when cropping to it.
-    Cutout(PathBuf, Result<(image::RgbaImage, Option<egui::Rect>), String>),
+    Cutout(PathBuf, Result<(image::RgbaImage, Option<egui::Rect>, crate::ai::Backdrop), String>),
     Status(String),
     /// Denoise / Enhance run `id`: how far it is (0–1).
     Progress(u64, f32),

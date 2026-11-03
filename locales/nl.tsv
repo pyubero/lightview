@@ -15,12 +15,15 @@ Adjust Curves…	Curven aanpassen…
 All channels together: overall brightness	Alle kanalen samen: algemene helderheid
 Animation	Animatie
 Applies the next time lightview starts	Geldt vanaf de volgende keer dat lightview start
+Apply	Toepassen
 Apply sigmoid (the model outputs logits)	Sigmoïde toepassen (het model geeft logits)
 Apply to Selection	Toepassen op selectie
 Apply to Whole Image{size} (about {estimate})	Toepassen op hele afbeelding{size} (ongeveer {estimate})
 Arrow	Pijl
 Artist	Maker
 Auto Levels	Automatische niveaus
+Blur Background	Achtergrond vervagen
+Blur Background…	Achtergrond vervagen…
 BSRGAN 4× — upscales and sharpens, may invent detail	BSRGAN 4× — vergroot en verscherpt, kan details verzinnen
 Background colour	Achtergrondkleur
 BiRefNet lite — best quality, slow	BiRefNet lite — beste kwaliteit, traag
@@ -99,6 +102,7 @@ File	Bestand
 File name	Bestandsnaam
 File size	Bestandsgrootte
 Fill	Vulling
+Fills the background with the background colour from Settings.	Vult de achtergrond met de achtergrondkleur uit Instellingen.
 Fit to Window	Passend in venster
 Flip Horizontally	Horizontaal spiegelen
 Flip Vertically	Verticaal spiegelen
@@ -185,6 +189,7 @@ Redo	Opnieuw
 Remove Background	Achtergrond verwijderen
 Remove Background and Crop	Achtergrond verwijderen en bijsnijden
 Remove location from the copy	Locatie uit de kopie verwijderen
+Replace Background	Achtergrond vervangen
 Reset	Herstellen
 Reset Color Adjustments	Kleuraanpassingen herstellen
 Reset to default	Standaard herstellen
@@ -222,6 +227,7 @@ Sketch	Schets
 Smoother zooming and panning. Uses more GPU memory and makes switching images a little slower.	Vloeiender zoomen en verschuiven. Gebruikt meer GPU-geheugen en maakt wisselen van afbeelding iets trager.
 Sort order	Sorteervolgorde
 Std (R, G, B)	Std.afw. (R, G, B)
+Strength	Sterkte
 Stroke	Lijn
 SwinIR σ25 — moderate noise, very slow	SwinIR σ25 — matige ruis, erg traag
 Text	Tekst

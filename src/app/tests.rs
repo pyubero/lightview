@@ -446,6 +446,25 @@ fn pixelate_and_red_eye_patch_the_selection_and_undo() {
 }
 
 #[test]
+fn background_results_cover_then_paste_the_subject_in_one_step() {
+    use crate::ai::Backdrop;
+    let (mut app, path) = app_with_image();
+    app.settings.background = [10, 20, 30];
+    let ctx = egui::Context::default();
+    let subject = || image::RgbaImage::new(2, 1);
+    app.handle(Msg::Cutout(path.clone(), Ok((subject(), None, Backdrop::Colour))));
+    let doc = app.doc().unwrap();
+    assert_eq!(doc.elements.len(), 2);
+    assert_eq!(doc.elements[0].style.color, Color32::from_rgb(10, 20, 30), "an opaque fill in the background colour");
+    assert!(doc.elements[1].image.is_some(), "the subject on top");
+    app.run_actions(&[Action::Undo], &ctx, false);
+    assert!(app.doc().unwrap().elements.is_empty(), "one undo step");
+    app.handle(Msg::Cutout(path, Ok((subject(), None, Backdrop::Blurred(image::RgbaImage::new(2, 1))))));
+    let doc = app.doc().unwrap();
+    assert!(doc.elements.len() == 2 && doc.elements.iter().all(|e| e.image.is_some()), "the blurred image, then the subject");
+}
+
+#[test]
 fn greyscale_and_invert_are_one_undo_step_each() {
     let (mut app, _) = app_with_image();
     let ctx = egui::Context::default();

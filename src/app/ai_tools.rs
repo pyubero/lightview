@@ -33,9 +33,19 @@ pub(super) struct Compare {
     pub(super) scale: u32,
 }
 
+/// What a background-removal run does with the background.
+pub(super) enum Cut {
+    /// Removes it, and crops to the subject when true.
+    Remove(bool),
+    /// Blurs it, by this % of the image's long side.
+    Blur(f32),
+    /// Fills it with the background colour.
+    Replace,
+}
+
 impl App {
-    /// Runs background removal on the edited image on another thread, cropping to the subject when `crop`.
-    pub(super) fn cutout(&mut self, crop: bool) {
+    /// Runs background removal on the edited image on another thread, then does `cut` with the background.
+    pub(super) fn cutout(&mut self, cut: Cut) {
         let Some((l, doc, path)) = self.current().and_then(|p| Some((self.cache.get(p)?.clone(), self.doc()?, p.clone()))) else { return };
         let task = crate::ai::Task::Background;
         let Some(file) = crate::ai::choose(self.settings.ai.choice(task), task, &crate::ai::installed()) else { return };
@@ -50,8 +60,14 @@ impl App {
                     None => crate::ai::Preprocess::auto(crate::ai::input_size(&file)?),
                 };
                 let mask = crate::ai::mask(&file, &pre, &img)?;
-                let object = if crop { Some(crate::ai::bbox(&mask).ok_or(tr("no subject found"))?) } else { None };
-                Ok((crate::ai::cutout(&img, &mask), object))
+                let object = if matches!(cut, Cut::Remove(true)) { Some(crate::ai::bbox(&mask).ok_or(tr("no subject found"))?) } else { None };
+                // shortcut: the subject's colours bleed into the blurred background at its edges; blur with the subject masked out if halos show.
+                let backdrop = match cut {
+                    Cut::Remove(_) => crate::ai::Backdrop::Clear,
+                    Cut::Replace => crate::ai::Backdrop::Colour,
+                    Cut::Blur(pct) => crate::ai::Backdrop::Blurred(image::imageops::fast_blur(&img, pct / 100.0 * img.width().max(img.height()) as f32)),
+                };
+                Ok((crate::ai::cutout(&img, &mask), object, backdrop))
             });
             notify.send(Msg::Cutout(path, result));
         });
@@ -202,6 +218,25 @@ impl App {
         } else if sel && let Some(s) = selection {
             let b = Rect::from_min_max(s.bbox().min.floor(), s.bbox().max.ceil()).intersect(doc.bounds());
             self.run_restore(task, b, true, Some(s));
+        }
+    }
+
+    /// Blur Background's strength, asked before it runs.
+    pub(super) fn blur_dialog(&mut self, ctx: &egui::Context) {
+        let Some(mut strength) = self.blur_strength else { return };
+        let modal = egui::Modal::new(egui::Id::unique("blur-background")).show(ctx, |ui| {
+            ui.heading(tr("Blur Background"));
+            ui.add(egui::Slider::new(&mut strength, 1.0..=10.0).text(tr("Strength")));
+            ui.add_space(6.0);
+            ui.horizontal(|ui| (ui.button(tr("Apply")).clicked(), ui.button(tr("Cancel")).clicked())).inner
+        });
+        let (apply, cancel) = modal.inner;
+        self.blur_strength = Some(strength);
+        if apply {
+            self.blur_strength = None;
+            self.cutout(Cut::Blur(strength));
+        } else if cancel || modal.should_close() {
+            self.blur_strength = None;
         }
     }
 

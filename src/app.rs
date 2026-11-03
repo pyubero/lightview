@@ -175,6 +175,8 @@ pub struct App {
     restore_runs: u64,
     /// Enhance Image waiting for the user to read its model's notice: the model file.
     enhance_notice: Option<String>,
+    /// Blur Background's dialog is open, with this strength (% of the long side).
+    blur_strength: Option<f32>,
     /// Recognize Text or Read QR Code is running.
     reading: bool,
     /// What they read, and the dialog's title.
@@ -237,7 +239,7 @@ impl App {
             texture: None, tex_key: None, resized: None, baked: None, sharp: None, sharp_wanted: 1, flat: None, generation: 0,
             deleted: Vec::new(), delete_prompt: false, renaming: None, watched, own_stamp: None, navigator: None, drag_start: None, right_pan: false,
             show_toolbar, focus_text: false,
-            resize_dialog: None, pending: None, show_ai_models: false, license_prompt: None, restoring: None, restore_runs: 0, enhance_notice: None, reading: false, found_text: None, show_shortcuts: false, recording: None, shortcut_error: None, visible: None, downloading: HashSet::new(),
+            resize_dialog: None, pending: None, show_ai_models: false, license_prompt: None, restoring: None, restore_runs: 0, enhance_notice: None, blur_strength: None, reading: false, found_text: None, show_shortcuts: false, recording: None, shortcut_error: None, visible: None, downloading: HashSet::new(),
             title: String::new(),
             window_reported: false, preview_reported: None, full_reported: false, nav_start: None, close_next: false, status: None, file_clipboard: None, canvas, theme_error,
         }
@@ -349,13 +351,18 @@ impl App {
                 }
             }
             Msg::Cutout(path, result) => match result {
-                Ok((img, object)) if self.current() == Some(&path) => {
+                Ok((img, object, backdrop)) if self.current() == Some(&path) => {
                     let Some(doc) = self.doc() else { return };
                     let bounds = doc.bounds();
                     let style = *self.shown.style.get_or_insert_with(|| Style::for_image(doc.size_vec()));
-                    // Erase everything, then put the cut-out back on top: one undo step.
+                    let [r, g, b] = self.settings.background;
+                    // Cover everything, then put the cut-out back on top: one undo step.
                     self.edit(|d| {
-                        d.elements.push(Element::erase(&Selection::Rect(bounds), false, bounds, Color32::TRANSPARENT));
+                        match backdrop {
+                            crate::ai::Backdrop::Clear => d.elements.push(Element::erase(&Selection::Rect(bounds), false, bounds, Color32::TRANSPARENT)),
+                            crate::ai::Backdrop::Colour => d.elements.push(Element::erase(&Selection::Rect(bounds), false, bounds, Color32::from_rgb(r, g, b))),
+                            crate::ai::Backdrop::Blurred(blurred) => d.elements.push(Element::pasted(Arc::new(blurred), Pos2::ZERO, bounds.size(), style)),
+                        }
                         d.elements.push(Element::pasted(Arc::new(img), Pos2::ZERO, bounds.size(), style));
                         if let Some(r) = object {
                             d.crop_to(r);

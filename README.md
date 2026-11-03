@@ -123,7 +123,7 @@ accept its licence.
 
 | Task | Models |
 |---|---|
-| Remove Background | Silueta, U²-Net, IS-Net, BiRefNet |
+| Remove, Blur or Replace Background | Silueta, U²-Net, IS-Net, BiRefNet |
 | Denoise | SCUNet, SwinIR |
 | Enhance Image | BSRGAN 4× |
 | Remove Object | LaMa (best quality), MI-GAN (fast) |

@@ -101,10 +101,12 @@ Animated images and multi-page TIFFs can be viewed, but not saved yet.
 
 ## AI tools
 
-Background removal, object removal, denoising, upscaling, low-light enhancement and text
+Background removal, blur or replacement, object removal, denoising, upscaling, low-light enhancement and text
 recognition, all running on your own computer, on the CPU or an NVIDIA GPU. Nothing is installed
 until you ask for it. Denoise and Enhance show a before-and-after preview of the visible area
-first, with a divider you can drag. Read QR Code needs no download, and links are only shown,
+first, with a divider you can drag. Blur Background and Replace Background use the Remove
+Background model: the subject stays sharp over a blurred copy of the photo, or over the background
+colour from Settings; a little of the subject's colour can show around its edges in the blur. Read QR Code needs no download, and links are only shown,
 never opened.
 
 The models, how to install them and the tips for text recognition are in the README's
