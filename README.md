@@ -16,65 +16,24 @@ and it never goes online on its own.
 
 ![lightview showing a photo of snowy mountains](screenshots/screenshot-general.jpg)
 
-## Features
+## Main features
 
-- **Instant browsing.** Images are decoded on background threads and the neighbouring images are
-  decoded ahead, so the window never freezes and moving to the next image feels smoother.
-- **Private by design.** No telemetry, no data collection, no account and no background update
-  checks. lightview only connects to the internet when you ask it to, and your images stay on your
-  computer.
-- **Local AI tools.** Background removal, object removal, denoising, upscaling or low-light
-  enhancement, and text recognition (OCR), all running on your own machine, so your photos are never sent to a server. The
-  tools are optional, and nothing is installed until you ask for it.
-- **Viewing.** Fit to window, actual size, zoom at the pointer, pan, full screen, EXIF orientation,
-  colour management (photos with a colour profile, such as Display P3 or Adobe RGB, are shown in sRGB),
-  camera RAW files shown instantly from the preview the camera stores in them,
-  animated GIF and WebP playback with frame stepping, and SVGs that stay sharp as you zoom in. Drag
-  a file or folder onto the window to open it (X11 and Windows; not supported on Wayland yet). While zoomed in, a navigator thumbnail shows where
-  you are, and a pixel grid and a Copy Color tool help with detail work. Read QR Code shows what a
-  QR code says, without opening it. The image reloads when its
-  file changes on disk.
-- **Editing.** Crop (snapping to common ratios), perspective correction, straighten, resize,
-  rotate, flip, colour adjustments, auto levels, curves in RGB, HSL or HSV, greyscale, invert,
-  red-eye removal and pixelating a selection, with full undo and redo.
-- **File actions.** Save a quick copy with Ctrl+S, copy the path, show the file in your file manager
-  and rename it with F2. Neither Save Copy nor Rename ever replaces another file.
-- **Safe deleting.** Deleting asks first and moves the image to the system Trash, and Ctrl+Z brings
-  it back.
-- **Selection and clipboard.** Rectangle, ellipse and lasso selections, plus cut, copy and paste of
-  images.
-- **Markup.** Freehand sketching, shapes, arrows, text, highlights, a magnifier and a measuring tool.
-- **Metadata.** An inspector sidebar for image information, and EXIF editing for JPEG, PNG and
-  TIFF files, which always saves to a copy. WebP and RAW metadata is shown, not edited.
-- **Nine languages.** English, Spanish, French, German, Italian, Portuguese, Polish, Dutch and
-  Russian. lightview starts in your system's language and you can change it in Edit → Settings.
-  The Polish, Dutch and Russian texts are machine translations: corrections, and new languages, are
-  welcome ([`TRANSLATING.md`](docs/TRANSLATING.md)).
-- **Your own shortcuts.** Any menu item can get a keyboard shortcut, and the default ones can be
-  changed, in Edit → Settings → Change Keyboard Shortcuts….
-- **Screen readers.** Menus, dialogs and settings can be read by a screen reader such as Orca or
-  Narrator. The image itself isn't described yet.
+- **Opens instantly, browses without waiting.** A preview is on screen while the full image is
+  still decoding, and the neighbouring images are decoded ahead, so the next one is already there.
+- **Your originals stay safe.** Edits are only written to a copy, and only when you save one, with
+  full undo and redo. Deleting moves the image to the Trash, and Ctrl+Z brings it back.
+- **Mark up without a second app.** Arrows, shapes, freehand, text, highlights and a magnifier,
+  right on the image.
+- **Local AI tools.** Remove a background or an object, denoise, upscale, brighten night photos
+  and copy text out of an image, all on your own computer and offline. Nothing is installed until
+  you ask for it ([AI tools](#ai-tools)).
+- **Opens what others don't.** Camera RAW files at once, HEIC and AVIF, JPEG XL, SVGs that stay
+  sharp as you zoom, HDR and EXR, and animations you can step through frame by frame.
+- **Private by design.** No telemetry, no account, and it never goes online on its own.
+- **Nine languages.** It starts in your system's language, any menu item can get your own
+  shortcut, and screen readers can read the menus and dialogs.
 
-### Supported formats
-
-| Format | Open | Save |
-|---|---|---|
-| JPEG | Yes | Yes |
-| PNG | Yes | Yes |
-| WebP | Yes | Yes (lossless) |
-| GIF | Yes | Yes |
-| BMP | Yes | Yes |
-| TIFF | Yes (every page) | Yes (single-page files) |
-| SVG | Yes | No |
-| ICO | Yes (largest size) | No |
-| JPEG XL | Yes | No |
-| HEIC, AVIF | Yes, with the system's codecs: libheif and its plugins on Linux, Microsoft's HEIF and HEVC or AV1 Video Extensions on Windows | No |
-| APNG | Yes (animated) | No |
-| QOI, TGA, PNM, DDS | Yes | No |
-| HDR, EXR | Yes (tone-mapped to 8 bits) | No |
-| Camera RAW: CR2, CR3, NEF, ARW, DNG, RAF, ORF, RW2 | The embedded JPEG preview, rotated as shot | No |
-
-Animated images and multi-page TIFFs can be viewed, but not saved yet. HEIC and AVIF files open only when they are shown, without being decoded ahead, because their decoders are native code.
+Every feature, and the supported formats, are described in [`FEATURES.md`](docs/FEATURES.md).
 
 ## Screenshots
 
@@ -230,6 +189,7 @@ lightview --bench photo.jpg     # the same, quitting after the first full image
 
 | Document | Contents |
 |---|---|
+| [`FEATURES.md`](docs/FEATURES.md) | Every feature, and the supported formats |
 | [`PROJECT_BRIEF.md`](docs/PROJECT_BRIEF.md) | Goals, scope, performance targets and early milestones |
 | [`ROADMAP-v2.md`](docs/ROADMAP-v2.md) | The roadmap for editing and AI features |
 | [`ROADMAP-v3.md`](docs/ROADMAP-v3.md) | Proposed features for competing with other viewers |

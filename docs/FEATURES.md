@@ -1,0 +1,157 @@
+# lightview features
+
+Everything lightview can do, by area. [`MENUS.md`](MENUS.md) lists every menu item and its
+keyboard shortcut.
+
+## Viewing
+
+- **Opens quickly.** A small preview appears first (the photo's embedded thumbnail, then a
+  reduced-size decode) while the full image is decoded in the background, so the window never
+  freezes.
+- **Zoom and pan.** Fit to window, actual size (1:1 pixels), zoom at the pointer with the mouse
+  wheel or a pinch, and pan by dragging. Right-drag pans with any tool selected.
+- **Navigator.** While zoomed in, a thumbnail in the corner shows which part of the image is on
+  screen; click or drag on it to move there.
+- **Full screen** with F11; the menus are hidden there, and Esc leaves it.
+- **Rotated as shot.** Phone and camera photos are turned the way the camera held them (EXIF
+  orientation).
+- **Colour management.** Photos with a colour profile, such as Display P3 or Adobe RGB, are shown
+  in sRGB, so wide-gamut colours look right. It can be turned off in Settings.
+- **Camera RAW files** open at once from the preview the camera stores in them.
+- **Animations.** Animated GIF, WebP and APNG play, and can be paused and stepped frame by frame.
+  Multi-page TIFFs show every page.
+- **Sharp SVGs.** Vector images are redrawn at the zoom level, so they stay sharp as you zoom in.
+- **Detail work.** A pixel grid shows the edges of the pixels when zoomed far in, and the Copy
+  Color tool copies a pixel's colour as `#RRGGBB`.
+- **Live reload.** When the open file changes on disk, it reloads at the same zoom. If you have
+  unsaved edits, lightview asks whether to reload or keep them.
+
+## Browsing a folder
+
+- **Next and previous without waiting.** The neighbouring images are decoded ahead, so moving
+  through a folder feels instant.
+- Move with the arrow keys, Home and End, or the mouse's back and forward buttons.
+- Sort the folder by file name (natural order, so `2` comes before `10`) or by date modified.
+- Drag a file or folder onto the window to open it. This works on X11 and Windows; **it isn't
+  supported on Wayland yet.**
+- Open Recent lists the last 10 files you opened.
+
+## Editing
+
+Edits never change the original file: they are kept in lightview until you save a copy. Every
+edit can be undone and redone.
+
+- **Crop** by dragging a rectangle, or to the current selection. It snaps to 1:1, 4:3, 3:2 or 16:9
+  when you're close, and shows the ratio.
+- **Correct Perspective.** Drag four corners onto something rectangular, such as a document or a
+  painting, and press Enter to straighten it.
+- **Straighten.** Turn the image by any angle from −180° to 180°, live under a grid. The canvas
+  grows to fit the turned image, and the new corners get the background colour (or stay
+  transparent), so you can crop afterwards.
+- **Resize** by width and height, or by percentage, with the aspect ratio kept or not, and set the
+  resolution (DPI).
+- **Rotate and flip.**
+- **Adjust Color:** exposure, contrast, saturation and tint, with **Auto Levels** to stretch the
+  image to its full range.
+- **Adjust Curves:** a curve per channel in RGB, HSL or HSV, over a histogram.
+- **Greyscale** and **Invert Colors.**
+- **Remove Red Eye** from the selected eyes.
+- **Pixelate Selection** to hide faces. Each run uses a randomly placed grid and noise, so it's
+  harder to undo. For text, covering it with a solid shape is safer.
+
+## Selections and clipboard
+
+- Rectangle, ellipse and lasso selections, Select All and Deselect.
+- Cut, copy and paste images. Copy takes the selection, or the whole edited image. A pasted image
+  becomes an element you can move and resize.
+- Delete Selection erases it: it becomes transparent where the format allows, otherwise the
+  background colour.
+- Copy File puts the file itself on the clipboard, for pasting into a chat or a file manager.
+
+## Markup
+
+Circle, point out or note something without a second app. Open the drawing toolbar from Tools.
+
+- Freehand sketching, rectangles, rounded rectangles, ellipses, lines and arrows.
+- Text you can click to place and double-click to edit again.
+- Highlights (a translucent rectangle).
+- A magnifier lens that enlarges part of the image.
+- A measuring tool showing distance, ΔX and ΔY in image pixels.
+- Colour, thickness, fill and font size for each element. Elements stay editable until you save,
+  and what you see is what gets saved, at the image's own resolution.
+
+## Files and safe deleting
+
+- **Save Copy** (Ctrl+S) writes `name-edited.ext` next to the original, with no dialog.
+- **Save As** saves a copy in the format given by the extension: JPEG (with EXIF kept), PNG, WebP
+  (lossless), BMP, TIFF or GIF.
+- **Rename** with F2. Neither Save Copy nor Rename ever replaces another file.
+- Copy the file's path, or show it in your file manager.
+- **Deleting** always asks first, then moves the image to the system Trash. Ctrl+Z brings it back.
+- Before leaving an image with unsaved edits, lightview asks.
+
+Animated images and multi-page TIFFs can be viewed, but not saved yet.
+
+## Metadata
+
+- **Inspector sidebar** (Ctrl+I) with the file's details, camera and lens, exposure, date taken,
+  location and the image description.
+- **EXIF editing** for JPEG, PNG and TIFF, which always saves to a copy. You can also remove the
+  location. WebP and RAW metadata is shown, but not edited.
+
+## AI tools
+
+Background removal, object removal, denoising, upscaling, low-light enhancement and text
+recognition, all running on your own computer, on the CPU or an NVIDIA GPU. Nothing is installed
+until you ask for it. Denoise and Enhance show a before-and-after preview of the visible area
+first, with a divider you can drag. Read QR Code needs no download, and links are only shown,
+never opened.
+
+The models, how to install them and the tips for text recognition are in the README's
+[AI tools](../README.md#ai-tools) section.
+
+## Languages, shortcuts and accessibility
+
+- **Nine languages:** English, Spanish, French, German, Italian, Portuguese, Polish, Dutch and
+  Russian. lightview starts in your system's language. The Polish, Dutch and Russian texts are
+  machine translations: corrections are welcome ([`TRANSLATING.md`](TRANSLATING.md)).
+- **Your own shortcuts.** Any menu item can get a keyboard shortcut, and the default ones can be
+  changed, in Edit → Settings → Change Keyboard Shortcuts….
+- **Screen readers.** Menus, dialogs and settings can be read by a screen reader such as Orca or
+  Narrator. The image itself isn't described yet.
+- **Font size** for the interface, from 10 to 20.
+
+## Settings
+
+In Edit → Settings: language, font size, GPU image scaling (smoother zooming, more GPU memory),
+interpolation (Nearest, Bilinear, Bicubic or Lanczos3), background colour, pixel grid, colour
+management, default window size, sort order, keyboard shortcuts, and whether lightview is your
+default image viewer. The version and a link to check for updates are at the bottom; lightview
+never checks on its own.
+
+## Privacy
+
+No telemetry, no data collection, no account and no background update checks. lightview only
+connects to the internet when you ask it to download something, and your images stay on your
+computer.
+
+## Supported formats
+
+| Format | Open | Save |
+|---|---|---|
+| JPEG | Yes | Yes |
+| PNG | Yes | Yes |
+| WebP | Yes | Yes (lossless) |
+| GIF | Yes | Yes |
+| BMP | Yes | Yes |
+| TIFF | Yes (every page) | Yes (single-page files) |
+| SVG | Yes | No |
+| ICO | Yes (largest size) | No |
+| JPEG XL | Yes | No |
+| HEIC, AVIF | Yes, with the system's codecs: libheif and its plugins on Linux, Microsoft's HEIF and HEVC or AV1 Video Extensions on Windows | No |
+| APNG | Yes (animated) | No |
+| QOI, TGA, PNM, DDS | Yes | No |
+| HDR, EXR | Yes (tone-mapped to 8 bits) | No |
+| Camera RAW: CR2, CR3, NEF, ARW, DNG, RAF, ORF, RW2 | The embedded JPEG preview, rotated as shot | No |
+
+Animated images and multi-page TIFFs can be viewed, but not saved yet. HEIC and AVIF files open only when they are shown, without being decoded ahead, because their decoders are native code.
