@@ -1,0 +1,424 @@
+AI Models	AI モデル
+AI Models…	AI モデル…
+AI runtime (ONNX Runtime)	AI ランタイム (ONNX Runtime)
+Accept and Continue	同意して続行
+Accept and Download	同意してダウンロード
+Accessibility	アクセシビリティ
+Actual Size	実際のサイズ
+Add model file…	モデルファイルを追加…
+Added {name}	{name} を追加しました
+Adjust Color	色の調整
+Adjust Color…	色の調整…
+Adjust Curves	トーンカーブ
+Adjust Curves…	トーンカーブ…
+All channels together: overall brightness	全チャンネル共通: 全体の明るさ
+Animation	アニメーション
+Applies the next time lightview starts	lightview の次回起動時に適用されます
+Apply sigmoid (the model outputs logits)	シグモイドを適用 (モデルがロジットを出力する場合)
+Apply to Selection	選択範囲に適用
+Apply to Whole Image{size} (about {estimate})	画像全体に適用{size} (約 {estimate})
+Arrow	矢印
+Artist	作成者
+Auto Levels	自動レベル補正
+Blur Background	背景をぼかす
+Blur Background…	背景をぼかす…
+BSRGAN 4× — upscales and sharpens, may invent detail	BSRGAN 4× — 拡大して鮮明化、細部を創作することがあります
+Background colour	背景色
+BiRefNet lite — best quality, slow	BiRefNet lite — 最高品質、低速
+Bicubic	バイキュービック
+Bilinear	バイリニア
+Blue: how much blue each pixel has	青: 各ピクセルの青の量
+Camera	カメラ
+Camera make	カメラのメーカー
+Camera model	カメラのモデル
+Can't open this image:\n{e}	この画像を開けません:\n{e}
+Cancel	キャンセル
+Cancelled	キャンセルしました
+Check for updates	アップデートを確認
+Close	閉じる
+Click to add a point, drag to move it, right-click to remove it	クリックで点を追加、ドラッグで移動、右クリックで削除
+Color space	色空間
+Colour	色
+Colour profile	カラープロファイル
+Continue	続行
+Contrast	コントラスト
+Converted to ONNX by Heliosoph LLC from the authors' published weights.	Heliosoph LLC が作者の公開した重みから ONNX に変換しました。
+Copied {w} × {h} px	{w} × {h} px をコピーしました
+Copy	コピー
+Copyright	著作権
+Couldn't add the model: {e}	モデルを追加できませんでした: {e}
+Couldn't delete the image: {e}	画像を削除できませんでした: {e}
+Couldn't download {file}: {e}	{file} をダウンロードできませんでした: {e}
+Couldn't install the AI runtime: {e}	AI ランタイムをインストールできませんでした: {e}
+Couldn't process the image: {e}	画像を処理できませんでした: {e}
+Couldn't read {file}: {e}	{file} を読み込めませんでした: {e}
+Couldn't restore the image: {e}	画像を復元できませんでした: {e}
+Couldn't save {name}: {e}	{name} を保存できませんでした: {e}
+Couldn't select the object: {e}	オブジェクトを選択できませんでした: {e}
+Crop	切り抜き
+Cut	切り取り
+DarkIR brightens dark and night photos and removes their noise and blur. On a well-lit photo it overexposes.	DarkIR は暗い写真や夜の写真を明るくし、ノイズとぼけを取り除きます。明るい写真では露出オーバーになります。
+DarkIR — dark and night photos, same size	DarkIR — 暗い写真・夜の写真、サイズはそのまま
+Date modified	更新日時
+Date taken	撮影日時
+Default window size	既定のウィンドウサイズ
+Delete image?	画像を削除しますか?
+Delete Image…	画像を削除…
+Delete Selection	選択範囲を削除
+Denoise	ノイズ除去
+Denoise and Enhance run about 10× faster on a GTX 1050	ノイズ除去と画質向上は GTX 1050 で約 10 倍速く動作します
+Describe the image for people who can't see it	目の見えない人のために画像を説明します
+Description	説明
+Deselect	選択解除
+Detect size	サイズを検出
+Dimensions	寸法
+Discard	破棄
+Discard edits?	編集内容を破棄しますか?
+Distance: {d} px · ΔX: {dx} px · ΔY: {dy} px	距離: {d} px · ΔX: {dx} px · ΔY: {dy} px
+Done	完了
+Download	ダウンロード
+Download AI Runtime…	AI ランタイムをダウンロード…
+Download GPU Support	GPU サポートをダウンロード
+Downloaded from Microsoft (ONNX Runtime) and NVIDIA (CUDA libraries, via their official PyPI packages).	Microsoft (ONNX Runtime) と NVIDIA (CUDA ライブラリ、公式 PyPI パッケージ経由) からダウンロードされます。
+Downloaded from Microsoft's official PyPI package (onnxruntime-ep-webgpu).	Microsoft の公式 PyPI パッケージ (onnxruntime-ep-webgpu) からダウンロードされます。
+Downloaded {file}	{file} をダウンロードしました
+Downloading GPU support ({mb} MB)…	GPU サポートをダウンロード中 ({mb} MB)…
+Downloading the AI runtime…	AI ランタイムをダウンロード中…
+Downloading…	ダウンロード中…
+Drag a box around one object; its outline becomes the selection. Holes inside it stay selected.	1 つのオブジェクトを囲むようにドラッグすると、その輪郭が選択範囲になります。内側の穴も選択されたままです。
+Drag to measure in image pixels · Esc to stop	ドラッグして画像のピクセル単位で測定 · Esc で終了
+Drag to select · Enter to crop · Esc to cancel	ドラッグで選択 · Enter で切り抜き · Esc でキャンセル
+Drag the corners onto a rectangle · Enter to apply · Esc to cancel	角を長方形の頂点へドラッグ · Enter で適用 · Esc でキャンセル
+Drawings, text and pasted images will be merged into the image and can't be edited afterwards. Ctrl+Z undoes it.	描画、テキスト、貼り付けた画像は画像に統合され、後から編集できなくなります。Ctrl+Z で元に戻せます。
+Edit	編集
+Edit the image description	画像の説明を編集
+Ellipse	楕円
+Elliptical Selection	楕円選択
+Embedded (unnamed)	埋め込み (名前なし)
+Enhance Image	画質向上
+Enhance Image uses generative AI. To make the image look better it may invent or alter fine details, such as textures, text or faces, that weren't in the original.	画質向上は生成 AI を使用します。画像をよりよく見せるため、テクスチャ、文字、顔など、元になかった細部を創作したり変えたりすることがあります。
+Enter Full Screen	全画面表示
+Exposure	露出
+File	ファイル
+File name	ファイル名
+File size	ファイルサイズ
+Fill	塗りつぶし
+Fills the background with the background colour from Settings.	背景を設定の背景色で塗りつぶします。
+Fit to Window	ウィンドウに合わせる
+Flip Horizontally	左右反転
+Flip Vertically	上下反転
+Folder	フォルダー
+Font size	フォントサイズ
+For a faithful clean-up, use Denoise instead.	忠実に補正したい場合は、代わりにノイズ除去を使ってください。
+Format	形式
+GPU (AMD, Intel and others, experimental)	GPU (AMD、Intel など、実験的)
+GPU (NVIDIA)	GPU (NVIDIA)
+GPU image scaling	GPU による画像の拡大縮小
+GPU support	GPU サポート
+GPU support installed: restart lightview to use it	GPU サポートをインストールしました: 使うには lightview を再起動してください
+General	一般
+Green: how much green each pixel has	緑: 各ピクセルの緑の量
+Height	高さ
+Hide Drawing Toolbar	描画ツールバーを隠す
+Hide Image Information	画像情報を隠す
+Highlight	ハイライト
+Hue: the color itself, such as red or blue	色相: 赤や青などの色そのもの
+IS-Net anime — illustrations	IS-Net anime — イラスト
+IS-Net — general, clean edges	IS-Net — 汎用、きれいな輪郭
+Image	画像
+Image description	画像の説明
+Images	画像
+Input size	入力サイズ
+Installed the AI runtime	AI ランタイムをインストールしました
+Interpolation	補間
+It also makes the image {k}× bigger ({pixels}× the pixels), which takes a while for a big photo.	画像も {k} 倍 (ピクセル数は {pixels} 倍) に大きくなるため、大きな写真では時間がかかります。
+It's no longer in the Trash	すでにゴミ箱にありません
+Keep aspect ratio	縦横比を保持
+Language	言語
+Lasso	なげなわ
+Lens	レンズ
+Licence ({step} of {count}) — {title}	ライセンス ({step} / {count}) — {title}
+Licence — {title}	ライセンス — {title}
+Lightness: from black, through color, to white	明度: 黒から色を経て白まで
+Line	直線
+Local AI	ローカル AI
+Location	位置情報
+Magnifier	ルーペ
+Make lightview my default image viewer	lightview を既定の画像ビューアーにする
+Make lightview the default image viewer	lightview を既定の画像ビューアーにする
+Mean (R, G, B)	平均 (R, G, B)
+Measure	計測
+Merge drawings into the image?	描画を画像に統合しますか?
+MobileSAM — finds the object in a box	MobileSAM — 枠内のオブジェクトを検出
+Model	モデル
+Name	名前
+Nearest	ニアレストネイバー
+Next Frame	次のフレーム
+Next Image	次の画像
+no graphics card with Vulkan or Direct3D 12 was found	Vulkan または Direct3D 12 に対応したグラフィックカードが見つかりませんでした
+No location in this file	このファイルに位置情報はありません
+No model installed yet.	まだモデルがインストールされていません。
+No object found in the box	枠内にオブジェクトが見つかりません
+No recent files	最近使ったファイルはありません
+None (sRGB assumed)	なし (sRGB と見なします)
+Nothing to paste: {e}	貼り付けるものがありません: {e}
+OK	OK
+ONNX export (half precision) by FuryTMP on Hugging Face; its origin isn't verified.	Hugging Face の FuryTMP による ONNX エクスポート (半精度)。出所は検証されていません。
+ONNX export by Acly on Hugging Face, from the authors' weights; downloaded from Heliosoph LLC's copy.	Hugging Face の Acly が作者の重みから作成した ONNX エクスポート。Heliosoph LLC のコピーからダウンロードされます。
+ONNX model	ONNX モデル
+Only add models from sources you trust: they run with your permissions.	信頼できる提供元のモデルだけを追加してください: あなたの権限で実行されます。
+Open Recent	最近使ったファイル
+Open in Google Maps	Google マップで開く
+Open models folder	モデルフォルダーを開く
+Open project page	プロジェクトページを開く
+Open…	開く…
+Other tags ({count})	その他のタグ ({count})
+Output	出力
+Paste	貼り付け
+Pause Animation	アニメーションを一時停止
+Percentage	パーセント
+Correct Perspective	遠近補正
+Play Animation	アニメーションを再生
+Please read and accept the licence before downloading.	ダウンロードする前にライセンスを読んで同意してください。
+Preprocessing: {file}	前処理: {file}
+Previous Frame	前のフレーム
+Previous Image	前の画像
+Read the input size from the model	モデルから入力サイズを読み取る
+Real-ESRGAN 4× half precision	Real-ESRGAN 4× 半精度
+Real-ESRGAN 4× — upscales, smooth, may invent detail	Real-ESRGAN 4× — 拡大、滑らか、細部を創作することがあります
+Real-ESRGAN and DarkIR can't be downloaded here. Convert them yourself with lightview-models, then copy the .onnx files into the models folder:	Real-ESRGAN と DarkIR はここからダウンロードできません。lightview-models で自分で変換し、.onnx ファイルをモデルフォルダーにコピーしてください:
+Real-ESRGAN general 4× half precision	Real-ESRGAN general 4× 半精度
+Real-ESRGAN general 4× — fast, softer	Real-ESRGAN general 4× — 高速、やや柔らかい
+Rectangle	長方形
+Rectangular Selection	矩形選択
+Red: how much red each pixel has	赤: 各ピクセルの赤の量
+Redo	やり直し
+Remove Background	背景を削除
+Remove Background and Crop	背景を削除して切り抜き
+Remove location from the copy	コピーから位置情報を削除
+Replace Background	背景を置き換える
+Reset	リセット
+Reset Color Adjustments	色の調整をリセット
+Reset to default	既定に戻す
+Resize	サイズ変更
+Resize…	サイズ変更…
+Resolution	解像度
+Restart lightview to start using the GPU.	GPU を使い始めるには lightview を再起動してください。
+Revert	変更を取り消す
+Rotate Left	左に回転
+Rotate Right	右に回転
+Rounded Rectangle	角丸長方形
+Run the AI tools on any graphics card with Vulkan or Direct3D 12 ({mb} MB download, WebGPU). A weak built-in graphics chip can be slower than the CPU.	Vulkan または Direct3D 12 に対応した任意のグラフィックカードで AI ツールを実行します ({mb} MB のダウンロード、WebGPU)。性能の低い内蔵グラフィックは CPU より遅いことがあります。
+Run the AI tools on the graphics card ({mb} MB download, NVIDIA's CUDA libraries).	グラフィックカードで AI ツールを実行します ({mb} MB のダウンロード、NVIDIA の CUDA ライブラリ)。
+Running {file}…	{file} を実行中…
+SCUNet σ15 — light noise	SCUNet σ15 — 軽いノイズ
+SCUNet σ25 — moderate noise	SCUNet σ25 — 中程度のノイズ
+SCUNet σ50 — heavy noise	SCUNet σ50 — 強いノイズ
+SCUNet — noise and JPEG artifacts (recommended)	SCUNet — ノイズと JPEG のアーティファクト (推奨)
+Saturation	彩度
+Saturation: from grey to vivid color	彩度: 灰色から鮮やかな色まで
+Save As…	名前を付けて保存…
+Save copy…	コピーを保存…
+Saved in JPEG files	JPEG ファイルに保存されます
+Saved {name}	{name} を保存しました
+Saves a copy of the file with this metadata (without other edits). Camera maker notes are removed.	このメタデータでファイルのコピーを保存します (他の編集は含みません)。カメラのメーカーノートは削除されます。
+Select	選択
+Select All	すべて選択
+Select Object	オブジェクトを選択
+Select Object (AI)	オブジェクトを選択 (AI)
+Selecting the object…	オブジェクトを選択中…
+Settings	設定
+Settings…	設定…
+Shapes	図形
+Show Drawing Toolbar	描画ツールバーを表示
+Show Image Information	画像情報を表示
+Silueta — small and fast	Silueta — 小さく高速
+Size read from the model when it runs; the usual normalisation.	サイズは実行時にモデルから読み取ります。標準的な正規化です。
+Sketch	スケッチ
+Smoother zooming and panning. Uses more GPU memory and makes switching images a little slower.	ズームとパンが滑らかになります。GPU メモリを多く使い、画像の切り替えが少し遅くなります。
+Sort order	並べ替え
+Std (R, G, B)	標準偏差 (R, G, B)
+Strength	強さ
+Stroke	線
+SwinIR σ25 — moderate noise, very slow	SwinIR σ25 — 中程度のノイズ、非常に低速
+Text	テキスト
+Text colour	文字色
+The AI runtime isn't installed yet: Local AI > Download AI Runtime…	AI ランタイムはまだインストールされていません: ローカル AI > AI ランタイムをダウンロード…
+The GPU couldn't be used, so the CPU is: {e}	GPU を使えなかったため CPU を使います: {e}
+The corners must form a shape with no crossing sides	角は辺が交差しない形にしてください
+the model's mask decoder is missing	モデルのマスクデコーダーがありません
+Thickness	太さ
+Tint	色合い
+Tools	ツール
+Undo	元に戻す
+Use YYYY:MM:DD HH:MM:SS	YYYY:MM:DD HH:MM:SS の形式で入力してください
+Use the GPU	GPU を使用
+Used by Remove Background and Remove Background and Crop.	背景を削除と背景を削除して切り抜きで使われます。
+Uses Bilinear while GPU scaling is on	GPU による拡大縮小がオンの間はバイリニアを使います
+U²-Net people — portraits	U²-Net people — 人物写真
+U²-Net small — fastest	U²-Net small — 最速
+U²-Net — general	U²-Net — 汎用
+Value: from black to full color	明度: 黒から最も鮮やかな色まで
+View	表示
+Welcome to lightview	lightview へようこそ
+Width	幅
+Your edits to {name} haven't been saved.	{name} の編集内容は保存されていません。
+Zoom	ズーム
+Zoom In	拡大
+Zoom Out	縮小
+a GPU library was missing from the download	ダウンロードに GPU ライブラリが含まれていませんでした
+about {time} left	残り約 {time}
+can't save as .{ext}: use .jpg, .png, .webp, .bmp, .tif or .gif	.{ext} として保存できません: .jpg、.png、.webp、.bmp、.tif、.gif を使ってください
+choose a new name: the original is never modified	新しい名前を選んでください: 元のファイルは変更されません
+compressed SVG files aren't supported	圧縮された SVG ファイルには対応していません
+couldn't read this file's EXIF safely	このファイルの EXIF を安全に読み取れませんでした
+edited: {w} × {h}	編集後: {w} × {h}
+lightview is now the default image viewer	lightview が既定の画像ビューアーになりました
+no data folder	データフォルダーがありません
+no frames	フレームがありません
+no subject found	被写体が見つかりません
+pick an .onnx file	.onnx ファイルを選んでください
+the download didn't match its checksum	ダウンロードがチェックサムと一致しませんでした
+the model has no image input	モデルに画像入力がありません
+the model's output changed size between tiles	モデルの出力サイズがタイルごとに変わりました
+the model's output doesn't match its input size	モデルの出力が入力サイズと一致しません
+the model's output isn't a whole multiple of its input	モデルの出力が入力の整数倍ではありません
+the written file didn't check out: the location wasn't removed	書き込んだファイルの検証に失敗しました: 位置情報は削除されていません
+the written file didn't check out: {e}	書き込んだファイルの検証に失敗しました: {e}
+the written file didn't check out: {label} wasn't saved	書き込んだファイルの検証に失敗しました: {label} は保存されていません
+this file crashed its decoder	このファイルでデコーダーがクラッシュしました
+this file's EXIF couldn't be processed	このファイルの EXIF を処理できませんでした
+this image is too large to open	この画像は大きすぎて開けません
+this isn't a regular file	これは通常のファイルではありません
+{format}, {count} frames	{format}、フレーム数: {count}
+{name} is already installed	{name} はすでにインストールされています
+{name} will be moved to the Trash.	{name} をゴミ箱に移動します。
+{task} done	{task} 完了
+{task} failed: {e}	{task} に失敗しました: {e}
+{task} on the GPU	GPU で {task}
+{task} preview of the visible area · drag to compare · Before | After	表示範囲の{task}プレビュー · ドラッグで比較 · 前 | 後
+Remove Object	オブジェクトを消去
+LaMa — best quality, slower	LaMa — 最高品質、やや低速
+MI-GAN — fast	MI-GAN — 高速
+ONNX export by Carve on Hugging Face; its origin isn't verified.	Hugging Face の Carve による ONNX エクスポート。出所は検証されていません。
+the selection is empty	選択範囲が空です
+No images in {name}	{name} に画像がありません
+Can't open {name}: not a supported image	{name} を開けません: 対応していない画像です
+Save Copy	コピーを保存
+Copy Path	パスをコピー
+Show in File Manager	ファイルマネージャーで表示
+Rename…	名前を変更…
+First Image	最初の画像
+Last Image	最後の画像
+Copied the path	パスをコピーしました
+Rename Image	画像の名前を変更
+Rename	名前を変更
+That isn't a valid file name	有効なファイル名ではありません
+{name} already exists	{name} はすでに存在します
+File changed on disk	ディスク上のファイルが変更されました
+{name} changed on disk. Reloading it discards your edits.	{name} がディスク上で変更されました。再読み込みすると編集内容は破棄されます。
+Reload	再読み込み
+Keep Edits	編集を保持
+Pixel grid	ピクセルグリッド
+Shows the edges of the pixels when zoomed far in.	大きく拡大したときにピクセルの境界を表示します。
+Click a pixel to copy its colour · Esc to stop	ピクセルをクリックして色をコピー · Esc で終了
+Copied {color}	{color} をコピーしました
+Copy Color	色をコピー
+this file is damaged or cut short	このファイルは破損しているか途中で切れています
+HEIC and AVIF files need libheif, which isn't installed	HEIC と AVIF ファイルには libheif が必要ですが、インストールされていません
+this file needs a libheif decoder plugin, which isn't installed	このファイルには libheif のデコーダープラグインが必要ですが、インストールされていません
+this file needs Microsoft's HEIF Image Extensions and HEVC or AV1 Video Extensions	このファイルには Microsoft の HEIF 画像拡張機能と、HEVC または AV1 ビデオ拡張機能が必要です
+Pages	ページ
+Next Page	次のページ
+Previous Page	前のページ
+{format}, {count} pages	{format}、ページ数: {count}
+page {n} of {count}	{n} / {count} ページ
+Colour management	カラーマネジメント
+Converts images with a colour profile to sRGB, so wide-gamut photos look right on an sRGB monitor. Turn it off for a wide-gamut monitor.	カラープロファイル付きの画像を sRGB に変換し、広色域の写真を sRGB モニターで正しく表示します。広色域モニターではオフにしてください。
+this RAW file has no embedded preview	この RAW ファイルには埋め込みプレビューがありません
+{format} (embedded preview)	{format} (埋め込みプレビュー)
+EXIF isn't read from this kind of RAW file yet	この種類の RAW ファイルの EXIF はまだ読み取れません
+A RAW file's metadata is shown, not edited.	RAW ファイルのメタデータは表示のみで、編集はできません。
+A WebP file's metadata is shown, not edited.	WebP ファイルのメタデータは表示のみで、編集はできません。
+EXIF is shown for JPEG, PNG, WebP, TIFF and RAW files	EXIF は JPEG、PNG、WebP、TIFF、RAW ファイルで表示されます
+the copy must be a .{ext} file	コピーは .{ext} ファイルにしてください
+the written file didn't check out: the image changed	書き込んだファイルの検証に失敗しました: 画像が変わってしまいました
+Copy File	ファイルをコピー
+Copied the file	ファイルをコピーしました
+Couldn't copy the file: {e}	ファイルをコピーできませんでした: {e}
+Straighten…	傾き補正…
+Straighten	傾き補正
+Greyscale	グレースケール
+Invert Colors	色を反転
+Remove Red Eye	赤目を除去
+Pixelate Selection	選択範囲をモザイク
+Select the eyes first, then choose this.	先に目を選択してから、これを選んでください。
+Hides faces. For text, a solid shape is safer: pixelation can sometimes be undone.	顔を隠します。文字には塗りつぶした図形のほうが安全です: モザイクは元に戻せることがあります。
+Red eye removed	赤目を除去しました
+Pixelated	モザイクをかけました
+Turn until the lines run straight · Enter to apply · Esc to cancel	線がまっすぐになるまで回転 · Enter で適用 · Esc でキャンセル
+Recognize Text	文字認識
+PP-OCRv5 Latin — European languages	PP-OCRv5 Latin — ヨーロッパの言語
+PP-OCRv5 — Chinese, Japanese and English	PP-OCRv5 — 中国語、日本語、英語
+Converted to ONNX by Satoru Nakamura (University of Tokyo) from PaddlePaddle's published models.	中村覚 (東京大学) が PaddlePaddle の公開モデルから ONNX に変換しました。
+the model's output doesn't match its character list	モデルの出力が文字リストと一致しません
+Read QR Code	QR コードを読み取る
+No QR code found	QR コードが見つかりません
+No text found	文字が見つかりません
+QR Code	QR コード
+Text in Image	画像内の文字
+Couldn't read the text: {e}	文字を読み取れませんでした: {e}
+Reading QR codes…	QR コードを読み取り中…
+Recognizing text…	文字を認識中…
+Reads the selection, or the whole image. Straighten tilted text first, and select small text in a large image so it's read at full size.	選択範囲、または画像全体を読み取ります。傾いた文字は先に傾き補正し、大きな画像の小さな文字は選択して原寸で読み取らせてください。
+Reads the selection, or the whole image. Shows what the code says; links are never opened.	選択範囲、または画像全体を読み取ります。コードの内容を表示し、リンクは開きません。
+Keyboard Shortcuts	キーボードショートカット
+Press keys… (Esc to cancel)	キーを押してください… (Esc でキャンセル)
+Change	変更
+Remove	削除
+Reset All Shortcuts	すべてのショートカットをリセット
+{keys} is already used by {action}	{keys} はすでに {action} に使われています
+Copy, Cut, Paste, Enter, Esc and Delete	コピー、切り取り、貼り付け、Enter、Esc、Delete
+Change Keyboard Shortcuts…	キーボードショートカットを変更…
+Theme	テーマ
+Follow system	システムに従う
+Dark	ダーク
+Light	ライト
+High contrast	ハイコントラスト
+bigger than 64 KiB	64 KiB を超えています
+invalid value	無効な値
+line	行
+Your own themes go in the themes folder next to the AI models. Choosing a theme again reloads its file.	独自のテーマは AI モデルの隣にある themes フォルダーに置きます。テーマを選び直すとファイルを再読み込みします。
+Couldn't load the theme, so the base theme is used: {e}	テーマを読み込めなかったため、基本テーマを使います: {e}
+Open themes folder	テーマフォルダーを開く
+Group Duplicates in Folder…	フォルダー内の重複をまとめる…
+Group Duplicates in Folder	フォルダー内の重複をまとめる
+Compares the images in this folder (not its subfolders) and moves each group of look-alikes into a folder of its own. Nothing is deleted, and Ctrl+Z moves them back. Rotated copies and heavy crops aren't found.	このフォルダー (サブフォルダーは除く) の画像を比較し、似た画像のグループをそれぞれ専用のフォルダーに移動します。何も削除されず、Ctrl+Z で元に戻せます。回転したコピーや大きく切り抜いたものは見つかりません。
+Comparing images: {done} of {total}	画像を比較中: {done} / {total}
+How different each image is from its closest look-alike:	各画像と最も似た画像との違い:
+Largest difference	最大の違い
+{meaning} · suggested: {n}	{meaning} · 推奨: {n}
+Identical pixels only	ピクセルが同一のもののみ
+Resized or recompressed copies	サイズ変更や再圧縮したコピー
+Small edits, crops and bursts	小さな編集、切り抜き、連写
+Merely similar scenes too	単に似ている場面も
+Groups: {groups} · Images to move: {moving} · Staying: {staying}	グループ: {groups} · 移動する画像: {moving} · 残る画像: {staying}
+Not compared: {n}	比較できなかった画像: {n}
+Not compared	比較できませんでした
+{name} · difference: {d}	{name} · 違い: {d}
+Move	移動
+Images moved: {n} · Folders: {f}	移動した画像: {n} · フォルダー: {f}
+Stopped: {e}	中止しました: {e}
+Images moved back: {n}	元に戻した画像: {n}
+{name}: changed since it was compared	{name}: 比較した後に変更されました
+{name}: already in the folder	{name}: すでにフォルダー内にあります
+{name}: its old name is taken	{name}: 元の名前はすでに使われています
+the file is gone	ファイルがありません
+About {s} s left	残り約 {s} 秒
+About {m} min left	残り約 {m} 分
+Smallest group	最小グループ
+Groups with fewer images stay where they are.	これより画像の少ないグループはそのままです。
+Resize Optimally	最適なサイズに縮小
+Shrinks the image to the size its detail needs, measured on its sharpest part. Never enlarges; Ctrl+Z undoes it.	細部に必要なサイズまで画像を縮小します。最も鮮明な部分で測定し、拡大はしません。Ctrl+Z で元に戻せます。
+Already at its optimal size	すでに最適なサイズです
+Resized to {w} × {h} px	{w} × {h} px にサイズ変更しました

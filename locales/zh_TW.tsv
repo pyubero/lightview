@@ -1,0 +1,424 @@
+AI Models	AI 模型
+AI Models…	AI 模型…
+AI runtime (ONNX Runtime)	AI 執行環境 (ONNX Runtime)
+Accept and Continue	接受並繼續
+Accept and Download	接受並下載
+Accessibility	協助工具
+Actual Size	實際大小
+Add model file…	新增模型檔案…
+Added {name}	已新增 {name}
+Adjust Color	調整色彩
+Adjust Color…	調整色彩…
+Adjust Curves	調整曲線
+Adjust Curves…	調整曲線…
+All channels together: overall brightness	所有色版一起: 整體亮度
+Animation	動畫
+Applies the next time lightview starts	下次啟動 lightview 時生效
+Apply sigmoid (the model outputs logits)	套用 sigmoid (模型輸出 logits)
+Apply to Selection	套用到選取範圍
+Apply to Whole Image{size} (about {estimate})	套用到整張影像{size} (約 {estimate})
+Arrow	箭頭
+Artist	作者
+Auto Levels	自動色階
+Blur Background	模糊背景
+Blur Background…	模糊背景…
+BSRGAN 4× — upscales and sharpens, may invent detail	BSRGAN 4× — 放大並銳利化,可能憑空產生細節
+Background colour	背景色彩
+BiRefNet lite — best quality, slow	BiRefNet lite — 品質最佳,較慢
+Bicubic	雙立方
+Bilinear	雙線性
+Blue: how much blue each pixel has	藍: 每個像素含多少藍色
+Camera	相機
+Camera make	相機廠牌
+Camera model	相機型號
+Can't open this image:\n{e}	無法開啟此影像:\n{e}
+Cancel	取消
+Cancelled	已取消
+Check for updates	檢查更新
+Close	關閉
+Click to add a point, drag to move it, right-click to remove it	按一下新增點,拖曳移動點,按右鍵移除點
+Color space	色彩空間
+Colour	色彩
+Colour profile	色彩描述檔
+Continue	繼續
+Contrast	對比
+Converted to ONNX by Heliosoph LLC from the authors' published weights.	由 Heliosoph LLC 根據作者發布的權重轉換為 ONNX。
+Copied {w} × {h} px	已複製 {w} × {h} px
+Copy	複製
+Copyright	著作權
+Couldn't add the model: {e}	無法新增模型: {e}
+Couldn't delete the image: {e}	無法刪除影像: {e}
+Couldn't download {file}: {e}	無法下載 {file}: {e}
+Couldn't install the AI runtime: {e}	無法安裝 AI 執行環境: {e}
+Couldn't process the image: {e}	無法處理影像: {e}
+Couldn't read {file}: {e}	無法讀取 {file}: {e}
+Couldn't restore the image: {e}	無法還原影像: {e}
+Couldn't save {name}: {e}	無法儲存 {name}: {e}
+Couldn't select the object: {e}	無法選取物件: {e}
+Crop	裁切
+Cut	剪下
+DarkIR brightens dark and night photos and removes their noise and blur. On a well-lit photo it overexposes.	DarkIR 可提亮暗光和夜間照片,並去除雜訊和模糊。用於光線充足的照片會過度曝光。
+DarkIR — dark and night photos, same size	DarkIR — 暗光和夜間照片,尺寸不變
+Date modified	修改日期
+Date taken	拍攝日期
+Default window size	預設視窗大小
+Delete image?	要刪除影像嗎?
+Delete Image…	刪除影像…
+Delete Selection	刪除選取範圍
+Denoise	降噪
+Denoise and Enhance run about 10× faster on a GTX 1050	降噪和增強在 GTX 1050 上約快 10 倍
+Describe the image for people who can't see it	為看不見影像的人描述它
+Description	描述
+Deselect	取消選取
+Detect size	偵測尺寸
+Dimensions	尺寸
+Discard	捨棄
+Discard edits?	要捨棄編輯嗎?
+Distance: {d} px · ΔX: {dx} px · ΔY: {dy} px	距離: {d} px · ΔX: {dx} px · ΔY: {dy} px
+Done	完成
+Download	下載
+Download AI Runtime…	下載 AI 執行環境…
+Download GPU Support	下載 GPU 支援
+Downloaded from Microsoft (ONNX Runtime) and NVIDIA (CUDA libraries, via their official PyPI packages).	從 Microsoft (ONNX Runtime) 和 NVIDIA (CUDA 程式庫,透過其官方 PyPI 套件) 下載。
+Downloaded from Microsoft's official PyPI package (onnxruntime-ep-webgpu).	從 Microsoft 的官方 PyPI 套件 (onnxruntime-ep-webgpu) 下載。
+Downloaded {file}	已下載 {file}
+Downloading GPU support ({mb} MB)…	正在下載 GPU 支援 ({mb} MB)…
+Downloading the AI runtime…	正在下載 AI 執行環境…
+Downloading…	正在下載…
+Drag a box around one object; its outline becomes the selection. Holes inside it stay selected.	圍繞一個物件拖曳出方框,其輪廓即成為選取範圍。物件內部的孔洞仍保持選取。
+Drag to measure in image pixels · Esc to stop	拖曳以影像像素測量 · Esc 停止
+Drag to select · Enter to crop · Esc to cancel	拖曳選取 · Enter 裁切 · Esc 取消
+Drag the corners onto a rectangle · Enter to apply · Esc to cancel	將各角拖曳到矩形的頂點上 · Enter 套用 · Esc 取消
+Drawings, text and pasted images will be merged into the image and can't be edited afterwards. Ctrl+Z undoes it.	繪圖、文字和貼上的影像將合併到影像中,之後無法再編輯。按 Ctrl+Z 可復原。
+Edit	編輯
+Edit the image description	編輯影像描述
+Ellipse	橢圓
+Elliptical Selection	橢圓選取
+Embedded (unnamed)	內嵌 (未命名)
+Enhance Image	增強影像
+Enhance Image uses generative AI. To make the image look better it may invent or alter fine details, such as textures, text or faces, that weren't in the original.	增強影像使用生成式 AI。為使影像更好看,它可能憑空產生或改變原圖中沒有的細節,例如紋理、文字或人臉。
+Enter Full Screen	進入全螢幕
+Exposure	曝光
+File	檔案
+File name	檔案名稱
+File size	檔案大小
+Fill	填滿
+Fills the background with the background colour from Settings.	用設定中的背景色彩填滿背景。
+Fit to Window	符合視窗
+Flip Horizontally	水平翻轉
+Flip Vertically	垂直翻轉
+Folder	資料夾
+Font size	字型大小
+For a faithful clean-up, use Denoise instead.	如需忠實的清理效果,請改用降噪。
+Format	格式
+GPU (AMD, Intel and others, experimental)	GPU (AMD、Intel 等,實驗性)
+GPU (NVIDIA)	GPU (NVIDIA)
+GPU image scaling	GPU 影像縮放
+GPU support	GPU 支援
+GPU support installed: restart lightview to use it	已安裝 GPU 支援: 重新啟動 lightview 後即可使用
+General	一般
+Green: how much green each pixel has	綠: 每個像素含多少綠色
+Height	高度
+Hide Drawing Toolbar	隱藏繪圖工具列
+Hide Image Information	隱藏影像資訊
+Highlight	螢光筆
+Hue: the color itself, such as red or blue	色相: 顏色本身,例如紅色或藍色
+IS-Net anime — illustrations	IS-Net anime — 插畫
+IS-Net — general, clean edges	IS-Net — 通用,邊緣乾淨
+Image	影像
+Image description	影像描述
+Images	影像
+Input size	輸入尺寸
+Installed the AI runtime	已安裝 AI 執行環境
+Interpolation	內插
+It also makes the image {k}× bigger ({pixels}× the pixels), which takes a while for a big photo.	它還會讓影像變大 {k} 倍 (像素為 {pixels} 倍),大照片需要一段時間。
+It's no longer in the Trash	它已不在資源回收筒中
+Keep aspect ratio	保持長寬比
+Language	語言
+Lasso	套索
+Lens	鏡頭
+Licence ({step} of {count}) — {title}	授權 ({step} / {count}) — {title}
+Licence — {title}	授權 — {title}
+Lightness: from black, through color, to white	亮度: 從黑色經過顏色到白色
+Line	直線
+Local AI	本機 AI
+Location	位置
+Magnifier	放大鏡
+Make lightview my default image viewer	將 lightview 設為我的預設影像檢視器
+Make lightview the default image viewer	將 lightview 設為預設影像檢視器
+Mean (R, G, B)	平均值 (R, G, B)
+Measure	測量
+Merge drawings into the image?	要將繪圖合併到影像中嗎?
+MobileSAM — finds the object in a box	MobileSAM — 找出方框中的物件
+Model	模型
+Name	名稱
+Nearest	最鄰近
+Next Frame	下一格
+Next Image	下一張影像
+no graphics card with Vulkan or Direct3D 12 was found	找不到支援 Vulkan 或 Direct3D 12 的顯示卡
+No location in this file	此檔案中沒有位置資訊
+No model installed yet.	尚未安裝模型。
+No object found in the box	方框中找不到物件
+No recent files	沒有最近的檔案
+None (sRGB assumed)	無 (假定為 sRGB)
+Nothing to paste: {e}	沒有可貼上的內容: {e}
+OK	確定
+ONNX export (half precision) by FuryTMP on Hugging Face; its origin isn't verified.	由 Hugging Face 上的 FuryTMP 匯出的 ONNX (半精度);來源未經驗證。
+ONNX export by Acly on Hugging Face, from the authors' weights; downloaded from Heliosoph LLC's copy.	由 Hugging Face 上的 Acly 根據作者的權重匯出的 ONNX;從 Heliosoph LLC 的副本下載。
+ONNX model	ONNX 模型
+Only add models from sources you trust: they run with your permissions.	只新增來自可信來源的模型: 它們以你的權限執行。
+Open Recent	最近開啟
+Open in Google Maps	在 Google 地圖中開啟
+Open models folder	開啟模型資料夾
+Open project page	開啟專案頁面
+Open…	開啟…
+Other tags ({count})	其他標籤 ({count})
+Output	輸出
+Paste	貼上
+Pause Animation	暫停動畫
+Percentage	百分比
+Correct Perspective	校正透視
+Play Animation	播放動畫
+Please read and accept the licence before downloading.	下載前請閱讀並接受授權。
+Preprocessing: {file}	前處理: {file}
+Previous Frame	上一格
+Previous Image	上一張影像
+Read the input size from the model	從模型讀取輸入尺寸
+Real-ESRGAN 4× half precision	Real-ESRGAN 4× 半精度
+Real-ESRGAN 4× — upscales, smooth, may invent detail	Real-ESRGAN 4× — 放大,平滑,可能憑空產生細節
+Real-ESRGAN and DarkIR can't be downloaded here. Convert them yourself with lightview-models, then copy the .onnx files into the models folder:	Real-ESRGAN 和 DarkIR 無法在此下載。請用 lightview-models 自行轉換,然後將 .onnx 檔案複製到模型資料夾:
+Real-ESRGAN general 4× half precision	Real-ESRGAN general 4× 半精度
+Real-ESRGAN general 4× — fast, softer	Real-ESRGAN general 4× — 快速,較柔和
+Rectangle	矩形
+Rectangular Selection	矩形選取
+Red: how much red each pixel has	紅: 每個像素含多少紅色
+Redo	取消復原
+Remove Background	移除背景
+Remove Background and Crop	移除背景並裁切
+Remove location from the copy	從副本中移除位置資訊
+Replace Background	取代背景
+Reset	重設
+Reset Color Adjustments	重設色彩調整
+Reset to default	還原為預設值
+Resize	調整大小
+Resize…	調整大小…
+Resolution	解析度
+Restart lightview to start using the GPU.	重新啟動 lightview 以開始使用 GPU。
+Revert	還原
+Rotate Left	向左旋轉
+Rotate Right	向右旋轉
+Rounded Rectangle	圓角矩形
+Run the AI tools on any graphics card with Vulkan or Direct3D 12 ({mb} MB download, WebGPU). A weak built-in graphics chip can be slower than the CPU.	在任何支援 Vulkan 或 Direct3D 12 的顯示卡上執行 AI 工具 (下載 {mb} MB,WebGPU)。效能較弱的內建顯示晶片可能比 CPU 還慢。
+Run the AI tools on the graphics card ({mb} MB download, NVIDIA's CUDA libraries).	在顯示卡上執行 AI 工具 (下載 {mb} MB,NVIDIA 的 CUDA 程式庫)。
+Running {file}…	正在執行 {file}…
+SCUNet σ15 — light noise	SCUNet σ15 — 輕度雜訊
+SCUNet σ25 — moderate noise	SCUNet σ25 — 中度雜訊
+SCUNet σ50 — heavy noise	SCUNet σ50 — 重度雜訊
+SCUNet — noise and JPEG artifacts (recommended)	SCUNet — 雜訊和 JPEG 壓縮瑕疵 (建議)
+Saturation	飽和度
+Saturation: from grey to vivid color	飽和度: 從灰色到鮮豔的顏色
+Save As…	另存新檔…
+Save copy…	儲存副本…
+Saved in JPEG files	儲存在 JPEG 檔案中
+Saved {name}	已儲存 {name}
+Saves a copy of the file with this metadata (without other edits). Camera maker notes are removed.	用這些中繼資料儲存檔案的副本 (不含其他編輯)。相機廠商註記會被移除。
+Select	選取
+Select All	全選
+Select Object	選取物件
+Select Object (AI)	選取物件 (AI)
+Selecting the object…	正在選取物件…
+Settings	設定
+Settings…	設定…
+Shapes	形狀
+Show Drawing Toolbar	顯示繪圖工具列
+Show Image Information	顯示影像資訊
+Silueta — small and fast	Silueta — 小巧快速
+Size read from the model when it runs; the usual normalisation.	執行時從模型讀取尺寸;使用一般的正規化。
+Sketch	素描
+Smoother zooming and panning. Uses more GPU memory and makes switching images a little slower.	縮放和平移更平順。會佔用更多顯示記憶體,切換影像也會稍慢。
+Sort order	排序方式
+Std (R, G, B)	標準差 (R, G, B)
+Strength	強度
+Stroke	筆畫
+SwinIR σ25 — moderate noise, very slow	SwinIR σ25 — 中度雜訊,非常慢
+Text	文字
+Text colour	文字色彩
+The AI runtime isn't installed yet: Local AI > Download AI Runtime…	尚未安裝 AI 執行環境: 本機 AI > 下載 AI 執行環境…
+The GPU couldn't be used, so the CPU is: {e}	無法使用 GPU,因此改用 CPU: {e}
+The corners must form a shape with no crossing sides	各角必須構成邊不交叉的形狀
+the model's mask decoder is missing	缺少模型的遮罩解碼器
+Thickness	粗細
+Tint	色調
+Tools	工具
+Undo	復原
+Use YYYY:MM:DD HH:MM:SS	請使用 YYYY:MM:DD HH:MM:SS 格式
+Use the GPU	使用 GPU
+Used by Remove Background and Remove Background and Crop.	用於移除背景以及移除背景並裁切。
+Uses Bilinear while GPU scaling is on	GPU 縮放開啟時使用雙線性
+U²-Net people — portraits	U²-Net people — 人像
+U²-Net small — fastest	U²-Net small — 最快
+U²-Net — general	U²-Net — 通用
+Value: from black to full color	明度: 從黑色到最飽滿的顏色
+View	檢視
+Welcome to lightview	歡迎使用 lightview
+Width	寬度
+Your edits to {name} haven't been saved.	你對 {name} 的編輯尚未儲存。
+Zoom	縮放
+Zoom In	放大
+Zoom Out	縮小
+a GPU library was missing from the download	下載內容缺少一個 GPU 程式庫
+about {time} left	剩餘約 {time}
+can't save as .{ext}: use .jpg, .png, .webp, .bmp, .tif or .gif	無法儲存為 .{ext}: 請使用 .jpg、.png、.webp、.bmp、.tif 或 .gif
+choose a new name: the original is never modified	請選擇新名稱: 原始檔案永遠不會被修改
+compressed SVG files aren't supported	不支援壓縮的 SVG 檔案
+couldn't read this file's EXIF safely	無法安全地讀取此檔案的 EXIF
+edited: {w} × {h}	編輯後: {w} × {h}
+lightview is now the default image viewer	lightview 現在是預設影像檢視器
+no data folder	沒有資料資料夾
+no frames	沒有影格
+no subject found	找不到主體
+pick an .onnx file	請選擇 .onnx 檔案
+the download didn't match its checksum	下載內容與總和檢查碼不符
+the model has no image input	模型沒有影像輸入
+the model's output changed size between tiles	模型的輸出尺寸在圖塊之間改變了
+the model's output doesn't match its input size	模型的輸出與其輸入尺寸不符
+the model's output isn't a whole multiple of its input	模型的輸出不是其輸入的整數倍
+the written file didn't check out: the location wasn't removed	寫入的檔案未通過檢查: 位置資訊未被移除
+the written file didn't check out: {e}	寫入的檔案未通過檢查: {e}
+the written file didn't check out: {label} wasn't saved	寫入的檔案未通過檢查: {label} 未被儲存
+this file crashed its decoder	此檔案導致其解碼器當機
+this file's EXIF couldn't be processed	無法處理此檔案的 EXIF
+this image is too large to open	此影像太大,無法開啟
+this isn't a regular file	這不是一般檔案
+{format}, {count} frames	{format},影格數: {count}
+{name} is already installed	{name} 已安裝
+{name} will be moved to the Trash.	{name} 將被移到資源回收筒。
+{task} done	{task} 完成
+{task} failed: {e}	{task} 失敗: {e}
+{task} on the GPU	在 GPU 上{task}
+{task} preview of the visible area · drag to compare · Before | After	可見區域的{task}預覽 · 拖曳比較 · 之前 | 之後
+Remove Object	移除物件
+LaMa — best quality, slower	LaMa — 品質最佳,較慢
+MI-GAN — fast	MI-GAN — 快速
+ONNX export by Carve on Hugging Face; its origin isn't verified.	由 Hugging Face 上的 Carve 匯出的 ONNX;來源未經驗證。
+the selection is empty	選取範圍是空的
+No images in {name}	{name} 中沒有影像
+Can't open {name}: not a supported image	無法開啟 {name}: 不是支援的影像
+Save Copy	儲存副本
+Copy Path	複製路徑
+Show in File Manager	在檔案管理員中顯示
+Rename…	重新命名…
+First Image	第一張影像
+Last Image	最後一張影像
+Copied the path	已複製路徑
+Rename Image	重新命名影像
+Rename	重新命名
+That isn't a valid file name	這不是有效的檔案名稱
+{name} already exists	{name} 已存在
+File changed on disk	磁碟上的檔案已變更
+{name} changed on disk. Reloading it discards your edits.	{name} 在磁碟上已變更。重新載入會捨棄你的編輯。
+Reload	重新載入
+Keep Edits	保留編輯
+Pixel grid	像素格線
+Shows the edges of the pixels when zoomed far in.	放大很多時顯示像素的邊緣。
+Click a pixel to copy its colour · Esc to stop	按一下像素以複製其色彩 · Esc 停止
+Copied {color}	已複製 {color}
+Copy Color	複製色彩
+this file is damaged or cut short	此檔案已損毀或不完整
+HEIC and AVIF files need libheif, which isn't installed	HEIC 和 AVIF 檔案需要 libheif,但尚未安裝
+this file needs a libheif decoder plugin, which isn't installed	此檔案需要 libheif 解碼器外掛程式,但尚未安裝
+this file needs Microsoft's HEIF Image Extensions and HEVC or AV1 Video Extensions	此檔案需要 Microsoft 的 HEIF 影像延伸模組,以及 HEVC 或 AV1 視訊延伸模組
+Pages	頁面
+Next Page	下一頁
+Previous Page	上一頁
+{format}, {count} pages	{format},頁數: {count}
+page {n} of {count}	第 {n} 頁,共 {count} 頁
+Colour management	色彩管理
+Converts images with a colour profile to sRGB, so wide-gamut photos look right on an sRGB monitor. Turn it off for a wide-gamut monitor.	將帶有色彩描述檔的影像轉換為 sRGB,讓廣色域照片在 sRGB 螢幕上顯示正確。使用廣色域螢幕時請將其關閉。
+this RAW file has no embedded preview	此 RAW 檔案沒有內嵌預覽
+{format} (embedded preview)	{format} (內嵌預覽)
+EXIF isn't read from this kind of RAW file yet	尚無法讀取此類 RAW 檔案的 EXIF
+A RAW file's metadata is shown, not edited.	RAW 檔案的中繼資料僅供顯示,無法編輯。
+A WebP file's metadata is shown, not edited.	WebP 檔案的中繼資料僅供顯示,無法編輯。
+EXIF is shown for JPEG, PNG, WebP, TIFF and RAW files	JPEG、PNG、WebP、TIFF 和 RAW 檔案會顯示 EXIF
+the copy must be a .{ext} file	副本必須是 .{ext} 檔案
+the written file didn't check out: the image changed	寫入的檔案未通過檢查: 影像改變了
+Copy File	複製檔案
+Copied the file	已複製檔案
+Couldn't copy the file: {e}	無法複製檔案: {e}
+Straighten…	拉直…
+Straighten	拉直
+Greyscale	灰階
+Invert Colors	反轉色彩
+Remove Red Eye	消除紅眼
+Pixelate Selection	像素化選取範圍
+Select the eyes first, then choose this.	請先選取眼睛,再選擇此項。
+Hides faces. For text, a solid shape is safer: pixelation can sometimes be undone.	用於遮住人臉。對於文字,用實心形狀更安全: 像素化有時可以被還原。
+Red eye removed	已消除紅眼
+Pixelated	已像素化
+Turn until the lines run straight · Enter to apply · Esc to cancel	旋轉到線條變直 · Enter 套用 · Esc 取消
+Recognize Text	辨識文字
+PP-OCRv5 Latin — European languages	PP-OCRv5 Latin — 歐洲語言
+PP-OCRv5 — Chinese, Japanese and English	PP-OCRv5 — 中文、日文和英文
+Converted to ONNX by Satoru Nakamura (University of Tokyo) from PaddlePaddle's published models.	由中村覺 (東京大學) 根據 PaddlePaddle 發布的模型轉換為 ONNX。
+the model's output doesn't match its character list	模型的輸出與其字元清單不符
+Read QR Code	讀取 QR 碼
+No QR code found	找不到 QR 碼
+No text found	找不到文字
+QR Code	QR 碼
+Text in Image	影像中的文字
+Couldn't read the text: {e}	無法讀取文字: {e}
+Reading QR codes…	正在讀取 QR 碼…
+Recognizing text…	正在辨識文字…
+Reads the selection, or the whole image. Straighten tilted text first, and select small text in a large image so it's read at full size.	讀取選取範圍或整張影像。請先拉直傾斜的文字;大圖中的小字請先選取,以便按原尺寸讀取。
+Reads the selection, or the whole image. Shows what the code says; links are never opened.	讀取選取範圍或整張影像。顯示 QR 碼的內容;連結永遠不會被開啟。
+Keyboard Shortcuts	鍵盤快速鍵
+Press keys… (Esc to cancel)	請按鍵… (Esc 取消)
+Change	變更
+Remove	移除
+Reset All Shortcuts	重設所有快速鍵
+{keys} is already used by {action}	{keys} 已被 {action} 使用
+Copy, Cut, Paste, Enter, Esc and Delete	複製、剪下、貼上、Enter、Esc 和 Delete
+Change Keyboard Shortcuts…	變更鍵盤快速鍵…
+Theme	佈景主題
+Follow system	跟隨系統
+Dark	深色
+Light	淺色
+High contrast	高對比
+bigger than 64 KiB	大於 64 KiB
+invalid value	無效的值
+line	行
+Your own themes go in the themes folder next to the AI models. Choosing a theme again reloads its file.	自訂佈景主題放在 AI 模型旁邊的 themes 資料夾中。再次選擇某個佈景主題會重新載入其檔案。
+Couldn't load the theme, so the base theme is used: {e}	無法載入佈景主題,因此使用基礎佈景主題: {e}
+Open themes folder	開啟佈景主題資料夾
+Group Duplicates in Folder…	將資料夾中的重複影像分組…
+Group Duplicates in Folder	將資料夾中的重複影像分組
+Compares the images in this folder (not its subfolders) and moves each group of look-alikes into a folder of its own. Nothing is deleted, and Ctrl+Z moves them back. Rotated copies and heavy crops aren't found.	比較此資料夾中的影像 (不含子資料夾),並將每組相似影像移到各自的資料夾中。不會刪除任何內容,按 Ctrl+Z 可移回。旋轉過的副本和大幅裁切的影像無法找到。
+Comparing images: {done} of {total}	正在比較影像: {done} / {total}
+How different each image is from its closest look-alike:	每張影像與其最相似影像的差異:
+Largest difference	最大差異
+{meaning} · suggested: {n}	{meaning} · 建議: {n}
+Identical pixels only	僅限像素完全相同
+Resized or recompressed copies	縮放或重新壓縮的副本
+Small edits, crops and bursts	小修改、裁切和連拍
+Merely similar scenes too	連僅僅相似的場景也包括
+Groups: {groups} · Images to move: {moving} · Staying: {staying}	分組: {groups} · 要移動的影像: {moving} · 保留: {staying}
+Not compared: {n}	未比較: {n}
+Not compared	未比較
+{name} · difference: {d}	{name} · 差異: {d}
+Move	移動
+Images moved: {n} · Folders: {f}	已移動影像: {n} · 資料夾: {f}
+Stopped: {e}	已停止: {e}
+Images moved back: {n}	已移回影像: {n}
+{name}: changed since it was compared	{name}: 比較後已變更
+{name}: already in the folder	{name}: 已在該資料夾中
+{name}: its old name is taken	{name}: 原名稱已被佔用
+the file is gone	檔案已不存在
+About {s} s left	剩餘約 {s} 秒
+About {m} min left	剩餘約 {m} 分鐘
+Smallest group	最小分組
+Groups with fewer images stay where they are.	影像數量少於此值的分組保持原位。
+Resize Optimally	最佳化尺寸
+Shrinks the image to the size its detail needs, measured on its sharpest part. Never enlarges; Ctrl+Z undoes it.	將影像縮小到其細節所需的尺寸,依最清晰的部分測量。永不放大;按 Ctrl+Z 可復原。
+Already at its optimal size	已是最佳尺寸
+Resized to {w} × {h} px	已調整為 {w} × {h} px

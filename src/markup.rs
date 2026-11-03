@@ -1,7 +1,7 @@
 use crate::i18n::{tr, tr_key};
 use eframe::egui::{self, Color32, Pos2, Rect, Stroke, Vec2};
 use image::RgbaImage;
-use std::sync::Arc;
+use std::sync::{Arc, OnceLock};
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Shape {
@@ -398,7 +398,42 @@ pub fn font_definitions() -> egui::FontDefinitions {
     let family = |names: &[&str]| names.iter().map(|n| n.to_string()).collect::<Vec<_>>();
     fonts.families.insert(FontFamily::Proportional, family(&["Roboto", "emoji-icon-font"]));
     fonts.families.insert(FontFamily::Monospace, family(&["Droid Sans Mono", "Roboto", "emoji-icon-font"]));
+    if let Some(cjk) = CJK.get().cloned().flatten() {
+        fonts.font_data.insert("cjk".into(), cjk);
+        fonts.families.values_mut().for_each(|f| f.insert(f.len() - 1, "cjk".into()));
+    }
     fonts
+}
+
+/// The system's CJK font, once `load_cjk_font` has run.
+static CJK: OnceLock<Option<Arc<egui::FontData>>> = OnceLock::new();
+
+/// The system font for `tag` (see `platform::cjk_font`), if it really draws CJK.
+pub fn read_cjk_font(tag: &str) -> Option<egui::FontData> {
+    use ab_glyph::Font;
+    let (path, index) = crate::platform::cjk_font(tag)?;
+    let bytes = std::fs::read(path).ok()?;
+    ab_glyph::FontRef::try_from_slice_and_index(&bytes, index).ok().filter(|f| f.glyph_id('日').0 != 0)?;
+    let mut font = egui::FontData::from_owned(bytes);
+    font.index = index;
+    Some(font)
+}
+
+/// Adds the system's CJK font to the UI, in the regional style of a CJK `language` (Chinese
+/// otherwise, so language names and file names still show). Reads ~20 MB: off the UI thread
+/// unless the UI itself needs it. shortcut: loaded once per start, so switching between CJK
+/// languages keeps the first one's glyph style until restart; reload here if users notice.
+pub fn load_cjk_font(ctx: &egui::Context, language: crate::i18n::Language) {
+    let ctx = ctx.clone();
+    let load = move || {
+        CJK.get_or_init(|| read_cjk_font(language.cjk_tag().unwrap_or("zh-cn")).map(Arc::new));
+        ctx.set_fonts(font_definitions());
+    };
+    if language.cjk_tag().is_some() {
+        load();
+    } else {
+        std::thread::spawn(load);
+    }
 }
 
 /// The UI's proportional font, so saved text matches what's on screen.
@@ -577,10 +612,13 @@ fn rounded_rect(r: Rect, radius: f32) -> Option<tiny_skia::Path> {
 /// Rasterizes a text element with egui's font, blending into the premultiplied pixmap.
 fn draw_text(pixmap: &mut tiny_skia::Pixmap, e: &Element) {
     use ab_glyph::{Font, ScaleFont};
-    let Some(font) = font() else { return };
+    let Some(roboto) = font() else { return };
+    let cjk_data = CJK.get().cloned().flatten();
+    let cjk = cjk_data.as_ref().and_then(|f| ab_glyph::FontRef::try_from_slice_and_index((*f.font).as_ref(), f.index).ok());
     // egui's font size is the em size; ab_glyph's PxScale is ascent − descent.
-    let scale = font.pt_to_px_scale(e.style.font_size).unwrap_or(ab_glyph::PxScale::from(e.style.font_size));
-    let scaled = font.as_scaled(scale);
+    let px_scale = |f: &ab_glyph::FontRef| f.pt_to_px_scale(e.style.font_size).unwrap_or(ab_glyph::PxScale::from(e.style.font_size));
+    let scale = px_scale(&roboto);
+    let scaled = roboto.as_scaled(scale);
     let [r, g, b, a] = e.style.color.to_srgba_unmultiplied();
     let (w, h) = (pixmap.width(), pixmap.height());
     let data = pixmap.data_mut();
@@ -589,13 +627,18 @@ fn draw_text(pixmap: &mut tiny_skia::Pixmap, e: &Element) {
         let mut x = e.points[0].x;
         let mut prev = None;
         for ch in line.chars() {
-            let id = font.glyph_id(ch);
-            if let Some(p) = prev {
+            // Like egui: Roboto first, then the CJK font for what Roboto lacks.
+            let (font, id) = match (roboto.glyph_id(ch), &cjk) {
+                (id, Some(cjk)) if id.0 == 0 && cjk.glyph_id(ch).0 != 0 => (cjk, cjk.glyph_id(ch)),
+                (id, _) => (&roboto, id),
+            };
+            let (scale, is_roboto) = if std::ptr::eq(font, &roboto) { (scale, true) } else { (px_scale(font), false) };
+            if let Some(p) = prev.filter(|_| is_roboto) {
                 x += scaled.kern(p, id);
             }
-            prev = Some(id);
+            prev = is_roboto.then_some(id);
             let glyph = id.with_scale_and_position(scale, ab_glyph::point(x, y));
-            x += scaled.h_advance(id);
+            x += font.as_scaled(scale).h_advance(id);
             let Some(outlined) = font.outline_glyph(glyph) else { continue };
             let bounds = outlined.px_bounds();
             outlined.draw(|gx, gy, coverage| {
@@ -792,6 +835,24 @@ mod tests {
         // Every inked pixel is near the text's box.
         let near = text.bbox().expand(6.0);
         assert!(img.enumerate_pixels().filter(|(_, _, p)| p[1] < 128).all(|(x, y, _)| near.contains(Pos2::new(x as f32, y as f32))));
+    }
+
+    #[test]
+    fn cjk_text_falls_back_to_the_system_font() {
+        let installed = CJK.get_or_init(|| read_cjk_font("ja").map(Arc::new)).is_some();
+        if !installed {
+            return eprintln!("not checked: no CJK font installed");
+        }
+        // Roboto's missing-glyph box looks the same for every character.
+        let draw = |s: &str| {
+            let mut img = white(60, 60);
+            let mut text = element(Shape::Text, (10.0, 10.0), (10.0, 10.0));
+            text.text = s.into();
+            flatten(&mut img, &[text]);
+            img
+        };
+        assert!(draw("日").pixels().any(|p| p[1] < 128));
+        assert_ne!(draw("日"), draw("本"));
     }
 
     #[test]

@@ -232,6 +232,7 @@ impl App {
         // Otherwise egui's own Ctrl +/− scales the whole UI.
         cc.egui_ctx.options_mut(|o| o.zoom_with_keyboard = false);
         cc.egui_ctx.set_fonts(markup::font_definitions());
+        markup::load_cjk_font(&cc.egui_ctx, settings.language.unwrap_or(crate::i18n::Language::English));
         settings::apply_font_size(&cc.egui_ctx, settings.font_size);
         crate::theme::seed_folder();
         let (canvas, theme_error) = crate::theme::apply(&cc.egui_ctx, &settings.theme);

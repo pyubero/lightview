@@ -1,0 +1,424 @@
+AI Models	AI 模型
+AI Models…	AI 模型…
+AI runtime (ONNX Runtime)	AI 运行时 (ONNX Runtime)
+Accept and Continue	接受并继续
+Accept and Download	接受并下载
+Accessibility	无障碍
+Actual Size	实际大小
+Add model file…	添加模型文件…
+Added {name}	已添加 {name}
+Adjust Color	调整颜色
+Adjust Color…	调整颜色…
+Adjust Curves	调整曲线
+Adjust Curves…	调整曲线…
+All channels together: overall brightness	所有通道一起: 整体亮度
+Animation	动画
+Applies the next time lightview starts	下次启动 lightview 时生效
+Apply sigmoid (the model outputs logits)	应用 sigmoid (模型输出 logits)
+Apply to Selection	应用到选区
+Apply to Whole Image{size} (about {estimate})	应用到整张图像{size} (约 {estimate})
+Arrow	箭头
+Artist	作者
+Auto Levels	自动色阶
+Blur Background	模糊背景
+Blur Background…	模糊背景…
+BSRGAN 4× — upscales and sharpens, may invent detail	BSRGAN 4× — 放大并锐化,可能凭空生成细节
+Background colour	背景颜色
+BiRefNet lite — best quality, slow	BiRefNet lite — 质量最好,较慢
+Bicubic	双三次
+Bilinear	双线性
+Blue: how much blue each pixel has	蓝: 每个像素含多少蓝色
+Camera	相机
+Camera make	相机品牌
+Camera model	相机型号
+Can't open this image:\n{e}	无法打开此图像:\n{e}
+Cancel	取消
+Cancelled	已取消
+Check for updates	检查更新
+Close	关闭
+Click to add a point, drag to move it, right-click to remove it	单击添加点,拖动移动点,右键单击删除点
+Color space	色彩空间
+Colour	颜色
+Colour profile	颜色配置文件
+Continue	继续
+Contrast	对比度
+Converted to ONNX by Heliosoph LLC from the authors' published weights.	由 Heliosoph LLC 根据作者发布的权重转换为 ONNX。
+Copied {w} × {h} px	已复制 {w} × {h} px
+Copy	复制
+Copyright	版权
+Couldn't add the model: {e}	无法添加模型: {e}
+Couldn't delete the image: {e}	无法删除图像: {e}
+Couldn't download {file}: {e}	无法下载 {file}: {e}
+Couldn't install the AI runtime: {e}	无法安装 AI 运行时: {e}
+Couldn't process the image: {e}	无法处理图像: {e}
+Couldn't read {file}: {e}	无法读取 {file}: {e}
+Couldn't restore the image: {e}	无法恢复图像: {e}
+Couldn't save {name}: {e}	无法保存 {name}: {e}
+Couldn't select the object: {e}	无法选择对象: {e}
+Crop	裁剪
+Cut	剪切
+DarkIR brightens dark and night photos and removes their noise and blur. On a well-lit photo it overexposes.	DarkIR 可提亮暗光和夜间照片,并去除噪点和模糊。用于光线充足的照片会过曝。
+DarkIR — dark and night photos, same size	DarkIR — 暗光和夜间照片,尺寸不变
+Date modified	修改日期
+Date taken	拍摄日期
+Default window size	默认窗口大小
+Delete image?	删除图像?
+Delete Image…	删除图像…
+Delete Selection	删除选区
+Denoise	降噪
+Denoise and Enhance run about 10× faster on a GTX 1050	降噪和增强在 GTX 1050 上约快 10 倍
+Describe the image for people who can't see it	为看不见图像的人描述它
+Description	描述
+Deselect	取消选择
+Detect size	检测尺寸
+Dimensions	尺寸
+Discard	放弃
+Discard edits?	放弃编辑?
+Distance: {d} px · ΔX: {dx} px · ΔY: {dy} px	距离: {d} px · ΔX: {dx} px · ΔY: {dy} px
+Done	完成
+Download	下载
+Download AI Runtime…	下载 AI 运行时…
+Download GPU Support	下载 GPU 支持
+Downloaded from Microsoft (ONNX Runtime) and NVIDIA (CUDA libraries, via their official PyPI packages).	从 Microsoft (ONNX Runtime) 和 NVIDIA (CUDA 库,通过其官方 PyPI 包) 下载。
+Downloaded from Microsoft's official PyPI package (onnxruntime-ep-webgpu).	从 Microsoft 的官方 PyPI 包 (onnxruntime-ep-webgpu) 下载。
+Downloaded {file}	已下载 {file}
+Downloading GPU support ({mb} MB)…	正在下载 GPU 支持 ({mb} MB)…
+Downloading the AI runtime…	正在下载 AI 运行时…
+Downloading…	正在下载…
+Drag a box around one object; its outline becomes the selection. Holes inside it stay selected.	围绕一个对象拖出方框,其轮廓即成为选区。对象内部的孔洞仍保持选中。
+Drag to measure in image pixels · Esc to stop	拖动以图像像素测量 · Esc 停止
+Drag to select · Enter to crop · Esc to cancel	拖动选择 · Enter 裁剪 · Esc 取消
+Drag the corners onto a rectangle · Enter to apply · Esc to cancel	将各角拖到矩形的顶点上 · Enter 应用 · Esc 取消
+Drawings, text and pasted images will be merged into the image and can't be edited afterwards. Ctrl+Z undoes it.	绘图、文字和粘贴的图像将合并到图像中,之后无法再编辑。按 Ctrl+Z 可撤销。
+Edit	编辑
+Edit the image description	编辑图像描述
+Ellipse	椭圆
+Elliptical Selection	椭圆选区
+Embedded (unnamed)	内嵌 (未命名)
+Enhance Image	增强图像
+Enhance Image uses generative AI. To make the image look better it may invent or alter fine details, such as textures, text or faces, that weren't in the original.	增强图像使用生成式 AI。为使图像更好看,它可能凭空生成或改变原图中没有的细节,例如纹理、文字或人脸。
+Enter Full Screen	进入全屏
+Exposure	曝光
+File	文件
+File name	文件名
+File size	文件大小
+Fill	填充
+Fills the background with the background colour from Settings.	用设置中的背景颜色填充背景。
+Fit to Window	适应窗口
+Flip Horizontally	水平翻转
+Flip Vertically	垂直翻转
+Folder	文件夹
+Font size	字体大小
+For a faithful clean-up, use Denoise instead.	如需忠实的清理效果,请改用降噪。
+Format	格式
+GPU (AMD, Intel and others, experimental)	GPU (AMD、Intel 等,实验性)
+GPU (NVIDIA)	GPU (NVIDIA)
+GPU image scaling	GPU 图像缩放
+GPU support	GPU 支持
+GPU support installed: restart lightview to use it	已安装 GPU 支持: 重启 lightview 后即可使用
+General	常规
+Green: how much green each pixel has	绿: 每个像素含多少绿色
+Height	高度
+Hide Drawing Toolbar	隐藏绘图工具栏
+Hide Image Information	隐藏图像信息
+Highlight	荧光笔
+Hue: the color itself, such as red or blue	色相: 颜色本身,例如红色或蓝色
+IS-Net anime — illustrations	IS-Net anime — 插画
+IS-Net — general, clean edges	IS-Net — 通用,边缘干净
+Image	图像
+Image description	图像描述
+Images	图像
+Input size	输入尺寸
+Installed the AI runtime	已安装 AI 运行时
+Interpolation	插值
+It also makes the image {k}× bigger ({pixels}× the pixels), which takes a while for a big photo.	它还会让图像变大 {k} 倍 (像素为 {pixels} 倍),大照片需要一段时间。
+It's no longer in the Trash	它已不在回收站中
+Keep aspect ratio	保持纵横比
+Language	语言
+Lasso	套索
+Lens	镜头
+Licence ({step} of {count}) — {title}	许可证 ({step} / {count}) — {title}
+Licence — {title}	许可证 — {title}
+Lightness: from black, through color, to white	亮度: 从黑色经过颜色到白色
+Line	直线
+Local AI	本地 AI
+Location	位置
+Magnifier	放大镜
+Make lightview my default image viewer	将 lightview 设为我的默认图像查看器
+Make lightview the default image viewer	将 lightview 设为默认图像查看器
+Mean (R, G, B)	平均值 (R, G, B)
+Measure	测量
+Merge drawings into the image?	将绘图合并到图像中?
+MobileSAM — finds the object in a box	MobileSAM — 找出方框中的对象
+Model	模型
+Name	名称
+Nearest	最近邻
+Next Frame	下一帧
+Next Image	下一张图像
+no graphics card with Vulkan or Direct3D 12 was found	未找到支持 Vulkan 或 Direct3D 12 的显卡
+No location in this file	此文件中没有位置信息
+No model installed yet.	尚未安装模型。
+No object found in the box	方框中未找到对象
+No recent files	没有最近的文件
+None (sRGB assumed)	无 (假定为 sRGB)
+Nothing to paste: {e}	没有可粘贴的内容: {e}
+OK	确定
+ONNX export (half precision) by FuryTMP on Hugging Face; its origin isn't verified.	由 Hugging Face 上的 FuryTMP 导出的 ONNX (半精度);来源未经验证。
+ONNX export by Acly on Hugging Face, from the authors' weights; downloaded from Heliosoph LLC's copy.	由 Hugging Face 上的 Acly 根据作者的权重导出的 ONNX;从 Heliosoph LLC 的副本下载。
+ONNX model	ONNX 模型
+Only add models from sources you trust: they run with your permissions.	只添加来自可信来源的模型: 它们以你的权限运行。
+Open Recent	最近打开
+Open in Google Maps	在 Google 地图中打开
+Open models folder	打开模型文件夹
+Open project page	打开项目页面
+Open…	打开…
+Other tags ({count})	其他标签 ({count})
+Output	输出
+Paste	粘贴
+Pause Animation	暂停动画
+Percentage	百分比
+Correct Perspective	校正透视
+Play Animation	播放动画
+Please read and accept the licence before downloading.	下载前请阅读并接受许可证。
+Preprocessing: {file}	预处理: {file}
+Previous Frame	上一帧
+Previous Image	上一张图像
+Read the input size from the model	从模型读取输入尺寸
+Real-ESRGAN 4× half precision	Real-ESRGAN 4× 半精度
+Real-ESRGAN 4× — upscales, smooth, may invent detail	Real-ESRGAN 4× — 放大,平滑,可能凭空生成细节
+Real-ESRGAN and DarkIR can't be downloaded here. Convert them yourself with lightview-models, then copy the .onnx files into the models folder:	Real-ESRGAN 和 DarkIR 无法在此下载。请用 lightview-models 自行转换,然后将 .onnx 文件复制到模型文件夹:
+Real-ESRGAN general 4× half precision	Real-ESRGAN general 4× 半精度
+Real-ESRGAN general 4× — fast, softer	Real-ESRGAN general 4× — 快速,较柔和
+Rectangle	矩形
+Rectangular Selection	矩形选区
+Red: how much red each pixel has	红: 每个像素含多少红色
+Redo	重做
+Remove Background	移除背景
+Remove Background and Crop	移除背景并裁剪
+Remove location from the copy	从副本中移除位置信息
+Replace Background	替换背景
+Reset	重置
+Reset Color Adjustments	重置颜色调整
+Reset to default	恢复默认
+Resize	调整大小
+Resize…	调整大小…
+Resolution	分辨率
+Restart lightview to start using the GPU.	重启 lightview 以开始使用 GPU。
+Revert	还原
+Rotate Left	向左旋转
+Rotate Right	向右旋转
+Rounded Rectangle	圆角矩形
+Run the AI tools on any graphics card with Vulkan or Direct3D 12 ({mb} MB download, WebGPU). A weak built-in graphics chip can be slower than the CPU.	在任何支持 Vulkan 或 Direct3D 12 的显卡上运行 AI 工具 (下载 {mb} MB,WebGPU)。性能较弱的集成显卡可能比 CPU 还慢。
+Run the AI tools on the graphics card ({mb} MB download, NVIDIA's CUDA libraries).	在显卡上运行 AI 工具 (下载 {mb} MB,NVIDIA 的 CUDA 库)。
+Running {file}…	正在运行 {file}…
+SCUNet σ15 — light noise	SCUNet σ15 — 轻度噪点
+SCUNet σ25 — moderate noise	SCUNet σ25 — 中度噪点
+SCUNet σ50 — heavy noise	SCUNet σ50 — 重度噪点
+SCUNet — noise and JPEG artifacts (recommended)	SCUNet — 噪点和 JPEG 伪影 (推荐)
+Saturation	饱和度
+Saturation: from grey to vivid color	饱和度: 从灰色到鲜艳的颜色
+Save As…	另存为…
+Save copy…	保存副本…
+Saved in JPEG files	保存在 JPEG 文件中
+Saved {name}	已保存 {name}
+Saves a copy of the file with this metadata (without other edits). Camera maker notes are removed.	用这些元数据保存文件的副本 (不含其他编辑)。相机厂商注释会被移除。
+Select	选择
+Select All	全选
+Select Object	选择对象
+Select Object (AI)	选择对象 (AI)
+Selecting the object…	正在选择对象…
+Settings	设置
+Settings…	设置…
+Shapes	形状
+Show Drawing Toolbar	显示绘图工具栏
+Show Image Information	显示图像信息
+Silueta — small and fast	Silueta — 小巧快速
+Size read from the model when it runs; the usual normalisation.	运行时从模型读取尺寸;使用常规归一化。
+Sketch	素描
+Smoother zooming and panning. Uses more GPU memory and makes switching images a little slower.	缩放和平移更平滑。会占用更多显存,切换图像也会稍慢。
+Sort order	排序方式
+Std (R, G, B)	标准差 (R, G, B)
+Strength	强度
+Stroke	描边
+SwinIR σ25 — moderate noise, very slow	SwinIR σ25 — 中度噪点,非常慢
+Text	文字
+Text colour	文字颜色
+The AI runtime isn't installed yet: Local AI > Download AI Runtime…	尚未安装 AI 运行时: 本地 AI > 下载 AI 运行时…
+The GPU couldn't be used, so the CPU is: {e}	无法使用 GPU,因此改用 CPU: {e}
+The corners must form a shape with no crossing sides	各角必须构成边不交叉的形状
+the model's mask decoder is missing	缺少模型的掩码解码器
+Thickness	粗细
+Tint	色调
+Tools	工具
+Undo	撤销
+Use YYYY:MM:DD HH:MM:SS	请使用 YYYY:MM:DD HH:MM:SS 格式
+Use the GPU	使用 GPU
+Used by Remove Background and Remove Background and Crop.	用于移除背景以及移除背景并裁剪。
+Uses Bilinear while GPU scaling is on	GPU 缩放开启时使用双线性
+U²-Net people — portraits	U²-Net people — 人像
+U²-Net small — fastest	U²-Net small — 最快
+U²-Net — general	U²-Net — 通用
+Value: from black to full color	明度: 从黑色到最饱满的颜色
+View	视图
+Welcome to lightview	欢迎使用 lightview
+Width	宽度
+Your edits to {name} haven't been saved.	你对 {name} 的编辑尚未保存。
+Zoom	缩放
+Zoom In	放大
+Zoom Out	缩小
+a GPU library was missing from the download	下载中缺少一个 GPU 库
+about {time} left	剩余约 {time}
+can't save as .{ext}: use .jpg, .png, .webp, .bmp, .tif or .gif	无法保存为 .{ext}: 请使用 .jpg、.png、.webp、.bmp、.tif 或 .gif
+choose a new name: the original is never modified	请选择新名称: 原文件永远不会被修改
+compressed SVG files aren't supported	不支持压缩的 SVG 文件
+couldn't read this file's EXIF safely	无法安全地读取此文件的 EXIF
+edited: {w} × {h}	编辑后: {w} × {h}
+lightview is now the default image viewer	lightview 现在是默认图像查看器
+no data folder	没有数据文件夹
+no frames	没有帧
+no subject found	未找到主体
+pick an .onnx file	请选择 .onnx 文件
+the download didn't match its checksum	下载内容与校验和不匹配
+the model has no image input	模型没有图像输入
+the model's output changed size between tiles	模型的输出尺寸在图块之间发生了变化
+the model's output doesn't match its input size	模型的输出与其输入尺寸不匹配
+the model's output isn't a whole multiple of its input	模型的输出不是其输入的整数倍
+the written file didn't check out: the location wasn't removed	写入的文件未通过检查: 位置信息未被移除
+the written file didn't check out: {e}	写入的文件未通过检查: {e}
+the written file didn't check out: {label} wasn't saved	写入的文件未通过检查: {label} 未被保存
+this file crashed its decoder	此文件导致其解码器崩溃
+this file's EXIF couldn't be processed	无法处理此文件的 EXIF
+this image is too large to open	此图像太大,无法打开
+this isn't a regular file	这不是普通文件
+{format}, {count} frames	{format},帧数: {count}
+{name} is already installed	{name} 已安装
+{name} will be moved to the Trash.	{name} 将被移到回收站。
+{task} done	{task} 完成
+{task} failed: {e}	{task} 失败: {e}
+{task} on the GPU	在 GPU 上{task}
+{task} preview of the visible area · drag to compare · Before | After	可见区域的{task}预览 · 拖动比较 · 之前 | 之后
+Remove Object	移除对象
+LaMa — best quality, slower	LaMa — 质量最好,较慢
+MI-GAN — fast	MI-GAN — 快速
+ONNX export by Carve on Hugging Face; its origin isn't verified.	由 Hugging Face 上的 Carve 导出的 ONNX;来源未经验证。
+the selection is empty	选区为空
+No images in {name}	{name} 中没有图像
+Can't open {name}: not a supported image	无法打开 {name}: 不是支持的图像
+Save Copy	保存副本
+Copy Path	复制路径
+Show in File Manager	在文件管理器中显示
+Rename…	重命名…
+First Image	第一张图像
+Last Image	最后一张图像
+Copied the path	已复制路径
+Rename Image	重命名图像
+Rename	重命名
+That isn't a valid file name	这不是有效的文件名
+{name} already exists	{name} 已存在
+File changed on disk	磁盘上的文件已更改
+{name} changed on disk. Reloading it discards your edits.	{name} 在磁盘上已更改。重新加载会丢弃你的编辑。
+Reload	重新加载
+Keep Edits	保留编辑
+Pixel grid	像素网格
+Shows the edges of the pixels when zoomed far in.	放大很多时显示像素的边缘。
+Click a pixel to copy its colour · Esc to stop	单击像素以复制其颜色 · Esc 停止
+Copied {color}	已复制 {color}
+Copy Color	复制颜色
+this file is damaged or cut short	此文件已损坏或不完整
+HEIC and AVIF files need libheif, which isn't installed	HEIC 和 AVIF 文件需要 libheif,但尚未安装
+this file needs a libheif decoder plugin, which isn't installed	此文件需要 libheif 解码器插件,但尚未安装
+this file needs Microsoft's HEIF Image Extensions and HEVC or AV1 Video Extensions	此文件需要 Microsoft 的 HEIF 图像扩展,以及 HEVC 或 AV1 视频扩展
+Pages	页面
+Next Page	下一页
+Previous Page	上一页
+{format}, {count} pages	{format},页数: {count}
+page {n} of {count}	第 {n} 页,共 {count} 页
+Colour management	色彩管理
+Converts images with a colour profile to sRGB, so wide-gamut photos look right on an sRGB monitor. Turn it off for a wide-gamut monitor.	将带有颜色配置文件的图像转换为 sRGB,使广色域照片在 sRGB 显示器上显示正确。如使用广色域显示器,请将其关闭。
+this RAW file has no embedded preview	此 RAW 文件没有内嵌预览
+{format} (embedded preview)	{format} (内嵌预览)
+EXIF isn't read from this kind of RAW file yet	尚不能读取此类 RAW 文件的 EXIF
+A RAW file's metadata is shown, not edited.	RAW 文件的元数据仅供显示,不能编辑。
+A WebP file's metadata is shown, not edited.	WebP 文件的元数据仅供显示,不能编辑。
+EXIF is shown for JPEG, PNG, WebP, TIFF and RAW files	JPEG、PNG、WebP、TIFF 和 RAW 文件会显示 EXIF
+the copy must be a .{ext} file	副本必须是 .{ext} 文件
+the written file didn't check out: the image changed	写入的文件未通过检查: 图像发生了变化
+Copy File	复制文件
+Copied the file	已复制文件
+Couldn't copy the file: {e}	无法复制文件: {e}
+Straighten…	拉直…
+Straighten	拉直
+Greyscale	灰度
+Invert Colors	反转颜色
+Remove Red Eye	去除红眼
+Pixelate Selection	像素化选区
+Select the eyes first, then choose this.	请先选中眼睛,再选择此项。
+Hides faces. For text, a solid shape is safer: pixelation can sometimes be undone.	用于遮挡人脸。对于文字,用实心形状更安全: 像素化有时可以被还原。
+Red eye removed	已去除红眼
+Pixelated	已像素化
+Turn until the lines run straight · Enter to apply · Esc to cancel	旋转到线条变直 · Enter 应用 · Esc 取消
+Recognize Text	识别文字
+PP-OCRv5 Latin — European languages	PP-OCRv5 Latin — 欧洲语言
+PP-OCRv5 — Chinese, Japanese and English	PP-OCRv5 — 中文、日文和英文
+Converted to ONNX by Satoru Nakamura (University of Tokyo) from PaddlePaddle's published models.	由中村觉 (东京大学) 根据 PaddlePaddle 发布的模型转换为 ONNX。
+the model's output doesn't match its character list	模型的输出与其字符列表不匹配
+Read QR Code	读取二维码
+No QR code found	未找到二维码
+No text found	未找到文字
+QR Code	二维码
+Text in Image	图像中的文字
+Couldn't read the text: {e}	无法读取文字: {e}
+Reading QR codes…	正在读取二维码…
+Recognizing text…	正在识别文字…
+Reads the selection, or the whole image. Straighten tilted text first, and select small text in a large image so it's read at full size.	读取选区或整张图像。请先拉直倾斜的文字;大图中的小字请先选中,以便按原尺寸读取。
+Reads the selection, or the whole image. Shows what the code says; links are never opened.	读取选区或整张图像。显示二维码的内容;链接永远不会被打开。
+Keyboard Shortcuts	键盘快捷键
+Press keys… (Esc to cancel)	请按键… (Esc 取消)
+Change	更改
+Remove	移除
+Reset All Shortcuts	重置所有快捷键
+{keys} is already used by {action}	{keys} 已被 {action} 使用
+Copy, Cut, Paste, Enter, Esc and Delete	复制、剪切、粘贴、Enter、Esc 和 Delete
+Change Keyboard Shortcuts…	更改键盘快捷键…
+Theme	主题
+Follow system	跟随系统
+Dark	深色
+Light	浅色
+High contrast	高对比度
+bigger than 64 KiB	大于 64 KiB
+invalid value	无效的值
+line	行
+Your own themes go in the themes folder next to the AI models. Choosing a theme again reloads its file.	自定义主题放在 AI 模型旁边的 themes 文件夹中。再次选择某个主题会重新加载其文件。
+Couldn't load the theme, so the base theme is used: {e}	无法加载主题,因此使用基础主题: {e}
+Open themes folder	打开主题文件夹
+Group Duplicates in Folder…	将文件夹中的重复图像分组…
+Group Duplicates in Folder	将文件夹中的重复图像分组
+Compares the images in this folder (not its subfolders) and moves each group of look-alikes into a folder of its own. Nothing is deleted, and Ctrl+Z moves them back. Rotated copies and heavy crops aren't found.	比较此文件夹中的图像 (不含子文件夹),并将每组相似图像移到各自的文件夹中。不会删除任何内容,按 Ctrl+Z 可移回。旋转过的副本和大幅裁剪的图像无法找到。
+Comparing images: {done} of {total}	正在比较图像: {done} / {total}
+How different each image is from its closest look-alike:	每张图像与其最相似图像的差异:
+Largest difference	最大差异
+{meaning} · suggested: {n}	{meaning} · 建议: {n}
+Identical pixels only	仅像素完全相同
+Resized or recompressed copies	缩放或重新压缩的副本
+Small edits, crops and bursts	小修改、裁剪和连拍
+Merely similar scenes too	连仅仅相似的场景也包括
+Groups: {groups} · Images to move: {moving} · Staying: {staying}	分组: {groups} · 要移动的图像: {moving} · 保留: {staying}
+Not compared: {n}	未比较: {n}
+Not compared	未比较
+{name} · difference: {d}	{name} · 差异: {d}
+Move	移动
+Images moved: {n} · Folders: {f}	已移动图像: {n} · 文件夹: {f}
+Stopped: {e}	已停止: {e}
+Images moved back: {n}	已移回图像: {n}
+{name}: changed since it was compared	{name}: 比较后已更改
+{name}: already in the folder	{name}: 已在该文件夹中
+{name}: its old name is taken	{name}: 原名称已被占用
+the file is gone	文件已不存在
+About {s} s left	剩余约 {s} 秒
+About {m} min left	剩余约 {m} 分钟
+Smallest group	最小分组
+Groups with fewer images stay where they are.	图像数量少于此值的分组保持原位。
+Resize Optimally	优化尺寸
+Shrinks the image to the size its detail needs, measured on its sharpest part. Never enlarges; Ctrl+Z undoes it.	将图像缩小到其细节所需的尺寸,按最清晰的部分测量。从不放大;按 Ctrl+Z 可撤销。
+Already at its optimal size	已是最佳尺寸
+Resized to {w} × {h} px	已调整为 {w} × {h} px

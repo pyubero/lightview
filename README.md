@@ -32,7 +32,7 @@ and it never goes online on its own.
   and copy text out of an image, all on your own computer and offline. Nothing is installed until
   you ask for it ([AI tools](#ai-tools)).
 - **Private by design.** No telemetry, no account, and it never goes online on its own.
-- **Multilingual.** It starts in your system's language, and currently supports nine languages.
+- **Multilingual.** It starts in your system's language, and currently supports fifteen, including Chinese, Japanese and Korean.
 - **Accessibility features.** Menus, dialogs and settings can be read by a screen reader such as
   Orca or Narrator. All actions can be assigned their own keyboard shortcut. Adjustable UI font size,
   and a customizable high contrast theme.

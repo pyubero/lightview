@@ -1,6 +1,6 @@
 //! The few things that differ between Linux and Windows.
 use std::ffi::OsStr;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 
 /// A command for a helper program (curl, tar, PowerShell…). On Windows it gets no console window, which
@@ -112,6 +112,28 @@ pub fn locale() -> Option<String> {
 #[cfg(not(windows))]
 pub fn locale() -> Option<String> {
     None
+}
+
+/// The system's font file and face index for a CJK language (fontconfig tag `ja`, `zh-cn`, `zh-tw`, `ko`):
+/// Roboto has no CJK glyphs. fontconfig falls back to any font, so the caller checks the glyphs.
+#[cfg(not(windows))]
+pub fn cjk_font(tag: &str) -> Option<(PathBuf, u32)> {
+    let out = command("fc-match").args(["-f", "%{file}\n%{index}", &format!("sans-serif:lang={tag}")]).output().ok()?;
+    let out = String::from_utf8(out.stdout).ok()?;
+    let (file, index) = out.split_once('\n')?;
+    Some((PathBuf::from(file), index.trim().parse().ok()?))
+}
+
+/// The CJK fonts every Windows 10/11 has, whatever its language.
+#[cfg(windows)]
+pub fn cjk_font(tag: &str) -> Option<(PathBuf, u32)> {
+    let file = match tag {
+        "ja" => "YuGothM.ttc",
+        "zh-tw" => "msjh.ttc",
+        "ko" => "malgun.ttf",
+        _ => "msyh.ttc",
+    };
+    Some((PathBuf::from(std::env::var_os("WINDIR")?).join("Fonts").join(file), 0))
 }
 
 /// The desktop's dark/light preference from the XDG desktop portal, which winit 0.30 doesn't read on

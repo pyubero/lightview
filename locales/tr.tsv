@@ -1,0 +1,424 @@
+AI Models	Yapay Zekâ Modelleri
+AI Models…	Yapay Zekâ Modelleri…
+AI runtime (ONNX Runtime)	Yapay zekâ çalışma ortamı (ONNX Runtime)
+Accept and Continue	Kabul Et ve Devam Et
+Accept and Download	Kabul Et ve İndir
+Accessibility	Erişilebilirlik
+Actual Size	Gerçek Boyut
+Add model file…	Model dosyası ekle…
+Added {name}	{name} eklendi
+Adjust Color	Rengi Ayarla
+Adjust Color…	Rengi Ayarla…
+Adjust Curves	Eğrileri Ayarla
+Adjust Curves…	Eğrileri Ayarla…
+All channels together: overall brightness	Tüm kanallar birlikte: genel parlaklık
+Animation	Animasyon
+Applies the next time lightview starts	lightview bir sonraki açılışta uygulanır
+Apply sigmoid (the model outputs logits)	Sigmoid uygula (model logit verir)
+Apply to Selection	Seçime Uygula
+Apply to Whole Image{size} (about {estimate})	Tüm Görüntüye Uygula{size} (yaklaşık {estimate})
+Arrow	Ok
+Artist	Sanatçı
+Auto Levels	Otomatik Düzeyler
+Blur Background	Arka Planı Bulanıklaştır
+Blur Background…	Arka Planı Bulanıklaştır…
+BSRGAN 4× — upscales and sharpens, may invent detail	BSRGAN 4× — büyütür ve keskinleştirir, ayrıntı uydurabilir
+Background colour	Arka plan rengi
+BiRefNet lite — best quality, slow	BiRefNet lite — en iyi kalite, yavaş
+Bicubic	Bikübik
+Bilinear	Bilineer
+Blue: how much blue each pixel has	Mavi: her pikselde ne kadar mavi var
+Camera	Fotoğraf makinesi
+Camera make	Fotoğraf makinesi markası
+Camera model	Fotoğraf makinesi modeli
+Can't open this image:\n{e}	Bu görüntü açılamıyor:\n{e}
+Cancel	İptal
+Cancelled	İptal edildi
+Check for updates	Güncellemeleri denetle
+Close	Kapat
+Click to add a point, drag to move it, right-click to remove it	Nokta eklemek için tıklayın, taşımak için sürükleyin, kaldırmak için sağ tıklayın
+Color space	Renk uzayı
+Colour	Renk
+Colour profile	Renk profili
+Continue	Devam
+Contrast	Kontrast
+Converted to ONNX by Heliosoph LLC from the authors' published weights.	Yazarların yayımladığı ağırlıklardan Heliosoph LLC tarafından ONNX'e dönüştürüldü.
+Copied {w} × {h} px	{w} × {h} px kopyalandı
+Copy	Kopyala
+Copyright	Telif hakkı
+Couldn't add the model: {e}	Model eklenemedi: {e}
+Couldn't delete the image: {e}	Görüntü silinemedi: {e}
+Couldn't download {file}: {e}	{file} indirilemedi: {e}
+Couldn't install the AI runtime: {e}	Yapay zekâ çalışma ortamı kurulamadı: {e}
+Couldn't process the image: {e}	Görüntü işlenemedi: {e}
+Couldn't read {file}: {e}	{file} okunamadı: {e}
+Couldn't restore the image: {e}	Görüntü geri yüklenemedi: {e}
+Couldn't save {name}: {e}	{name} kaydedilemedi: {e}
+Couldn't select the object: {e}	Nesne seçilemedi: {e}
+Crop	Kırp
+Cut	Kes
+DarkIR brightens dark and night photos and removes their noise and blur. On a well-lit photo it overexposes.	DarkIR karanlık ve gece fotoğraflarını aydınlatır, gürültü ve bulanıklığı giderir. İyi aydınlatılmış bir fotoğrafta aşırı pozlama yapar.
+DarkIR — dark and night photos, same size	DarkIR — karanlık ve gece fotoğrafları, aynı boyut
+Date modified	Değiştirilme tarihi
+Date taken	Çekim tarihi
+Default window size	Varsayılan pencere boyutu
+Delete image?	Görüntü silinsin mi?
+Delete Image…	Görüntüyü Sil…
+Delete Selection	Seçimi Sil
+Denoise	Gürültü Gider
+Denoise and Enhance run about 10× faster on a GTX 1050	Gürültü Giderme ve İyileştirme bir GTX 1050'de yaklaşık 10 kat hızlı çalışır
+Describe the image for people who can't see it	Görüntüyü göremeyen kişiler için betimleyin
+Description	Açıklama
+Deselect	Seçimi Kaldır
+Detect size	Boyutu algıla
+Dimensions	Boyutlar
+Discard	Vazgeç
+Discard edits?	Düzenlemelerden vazgeçilsin mi?
+Distance: {d} px · ΔX: {dx} px · ΔY: {dy} px	Mesafe: {d} px · ΔX: {dx} px · ΔY: {dy} px
+Done	Tamam
+Download	İndir
+Download AI Runtime…	Yapay Zekâ Çalışma Ortamını İndir…
+Download GPU Support	GPU Desteğini İndir
+Downloaded from Microsoft (ONNX Runtime) and NVIDIA (CUDA libraries, via their official PyPI packages).	Microsoft'tan (ONNX Runtime) ve NVIDIA'dan (CUDA kitaplıkları, resmî PyPI paketleri üzerinden) indirilir.
+Downloaded from Microsoft's official PyPI package (onnxruntime-ep-webgpu).	Microsoft'un resmî PyPI paketinden (onnxruntime-ep-webgpu) indirilir.
+Downloaded {file}	{file} indirildi
+Downloading GPU support ({mb} MB)…	GPU desteği indiriliyor ({mb} MB)…
+Downloading the AI runtime…	Yapay zekâ çalışma ortamı indiriliyor…
+Downloading…	İndiriliyor…
+Drag a box around one object; its outline becomes the selection. Holes inside it stay selected.	Bir nesnenin çevresine kutu sürükleyin; ana hattı seçim olur. İçindeki boşluklar seçili kalır.
+Drag to measure in image pixels · Esc to stop	Görüntü pikseliyle ölçmek için sürükleyin · Durdurmak için Esc
+Drag to select · Enter to crop · Esc to cancel	Seçmek için sürükleyin · Kırpmak için Enter · İptal için Esc
+Drag the corners onto a rectangle · Enter to apply · Esc to cancel	Köşeleri bir dikdörtgenin üzerine sürükleyin · Uygulamak için Enter · İptal için Esc
+Drawings, text and pasted images will be merged into the image and can't be edited afterwards. Ctrl+Z undoes it.	Çizimler, metin ve yapıştırılan görüntüler görüntüyle birleştirilir ve sonradan düzenlenemez. Ctrl+Z bunu geri alır.
+Edit	Düzen
+Edit the image description	Görüntü açıklamasını düzenle
+Ellipse	Elips
+Elliptical Selection	Eliptik Seçim
+Embedded (unnamed)	Gömülü (adsız)
+Enhance Image	Görüntüyü İyileştir
+Enhance Image uses generative AI. To make the image look better it may invent or alter fine details, such as textures, text or faces, that weren't in the original.	Görüntüyü İyileştir üretken yapay zekâ kullanır. Görüntüyü daha iyi göstermek için dokular, yazılar veya yüzler gibi özgün görüntüde olmayan ince ayrıntıları uydurabilir ya da değiştirebilir.
+Enter Full Screen	Tam Ekrana Geç
+Exposure	Pozlama
+File	Dosya
+File name	Dosya adı
+File size	Dosya boyutu
+Fill	Dolgu
+Fills the background with the background colour from Settings.	Arka planı Ayarlar'daki arka plan rengiyle doldurur.
+Fit to Window	Pencereye Sığdır
+Flip Horizontally	Yatay Çevir
+Flip Vertically	Dikey Çevir
+Folder	Klasör
+Font size	Yazı tipi boyutu
+For a faithful clean-up, use Denoise instead.	Aslına sadık bir temizlik için bunun yerine Gürültü Gider'i kullanın.
+Format	Biçim
+GPU (AMD, Intel and others, experimental)	GPU (AMD, Intel ve diğerleri, deneysel)
+GPU (NVIDIA)	GPU (NVIDIA)
+GPU image scaling	GPU ile görüntü ölçekleme
+GPU support	GPU desteği
+GPU support installed: restart lightview to use it	GPU desteği kuruldu: kullanmak için lightview'u yeniden başlatın
+General	Genel
+Green: how much green each pixel has	Yeşil: her pikselde ne kadar yeşil var
+Height	Yükseklik
+Hide Drawing Toolbar	Çizim Araç Çubuğunu Gizle
+Hide Image Information	Görüntü Bilgilerini Gizle
+Highlight	Vurgulayıcı
+Hue: the color itself, such as red or blue	Ton: rengin kendisi, örneğin kırmızı ya da mavi
+IS-Net anime — illustrations	IS-Net anime — çizimler
+IS-Net — general, clean edges	IS-Net — genel, temiz kenarlar
+Image	Görüntü
+Image description	Görüntü açıklaması
+Images	Görüntüler
+Input size	Giriş boyutu
+Installed the AI runtime	Yapay zekâ çalışma ortamı kuruldu
+Interpolation	Ara değerleme
+It also makes the image {k}× bigger ({pixels}× the pixels), which takes a while for a big photo.	Görüntüyü de {k} kat büyütür ({pixels} kat piksel), bu da büyük bir fotoğrafta zaman alır.
+It's no longer in the Trash	Artık Çöp Kutusu'nda değil
+Keep aspect ratio	En boy oranını koru
+Language	Dil
+Lasso	Kement
+Lens	Objektif
+Licence ({step} of {count}) — {title}	Lisans ({step} / {count}) — {title}
+Licence — {title}	Lisans — {title}
+Lightness: from black, through color, to white	Açıklık: siyahtan renge, oradan beyaza
+Line	Çizgi
+Local AI	Yerel Yapay Zekâ
+Location	Konum
+Magnifier	Büyüteç
+Make lightview my default image viewer	lightview'u varsayılan görüntü görüntüleyicim yap
+Make lightview the default image viewer	lightview'u varsayılan görüntü görüntüleyici yap
+Mean (R, G, B)	Ortalama (R, G, B)
+Measure	Ölç
+Merge drawings into the image?	Çizimler görüntüyle birleştirilsin mi?
+MobileSAM — finds the object in a box	MobileSAM — kutudaki nesneyi bulur
+Model	Model
+Name	Ad
+Nearest	En yakın komşu
+Next Frame	Sonraki Kare
+Next Image	Sonraki Görüntü
+no graphics card with Vulkan or Direct3D 12 was found	Vulkan veya Direct3D 12 destekli ekran kartı bulunamadı
+No location in this file	Bu dosyada konum yok
+No model installed yet.	Henüz kurulu model yok.
+No object found in the box	Kutuda nesne bulunamadı
+No recent files	Son dosya yok
+None (sRGB assumed)	Yok (sRGB varsayılır)
+Nothing to paste: {e}	Yapıştırılacak bir şey yok: {e}
+OK	Tamam
+ONNX export (half precision) by FuryTMP on Hugging Face; its origin isn't verified.	Hugging Face'teki FuryTMP'nin ONNX dışa aktarımı (yarım duyarlık); kaynağı doğrulanmadı.
+ONNX export by Acly on Hugging Face, from the authors' weights; downloaded from Heliosoph LLC's copy.	Hugging Face'teki Acly'nin yazarların ağırlıklarından yaptığı ONNX dışa aktarımı; Heliosoph LLC'nin kopyasından indirilir.
+ONNX model	ONNX modeli
+Only add models from sources you trust: they run with your permissions.	Yalnızca güvendiğiniz kaynaklardan model ekleyin: sizin izinlerinizle çalışırlar.
+Open Recent	Son Kullanılanlar
+Open in Google Maps	Google Haritalar'da aç
+Open models folder	Modeller klasörünü aç
+Open project page	Proje sayfasını aç
+Open…	Aç…
+Other tags ({count})	Diğer etiketler ({count})
+Output	Çıktı
+Paste	Yapıştır
+Pause Animation	Animasyonu Duraklat
+Percentage	Yüzde
+Correct Perspective	Perspektifi Düzelt
+Play Animation	Animasyonu Oynat
+Please read and accept the licence before downloading.	İndirmeden önce lütfen lisansı okuyup kabul edin.
+Preprocessing: {file}	Ön işleme: {file}
+Previous Frame	Önceki Kare
+Previous Image	Önceki Görüntü
+Read the input size from the model	Giriş boyutunu modelden oku
+Real-ESRGAN 4× half precision	Real-ESRGAN 4× yarım duyarlık
+Real-ESRGAN 4× — upscales, smooth, may invent detail	Real-ESRGAN 4× — büyütür, pürüzsüz, ayrıntı uydurabilir
+Real-ESRGAN and DarkIR can't be downloaded here. Convert them yourself with lightview-models, then copy the .onnx files into the models folder:	Real-ESRGAN ve DarkIR buradan indirilemez. Onları lightview-models ile kendiniz dönüştürün, ardından .onnx dosyalarını modeller klasörüne kopyalayın:
+Real-ESRGAN general 4× half precision	Real-ESRGAN general 4× yarım duyarlık
+Real-ESRGAN general 4× — fast, softer	Real-ESRGAN general 4× — hızlı, daha yumuşak
+Rectangle	Dikdörtgen
+Rectangular Selection	Dikdörtgen Seçim
+Red: how much red each pixel has	Kırmızı: her pikselde ne kadar kırmızı var
+Redo	Yinele
+Remove Background	Arka Planı Kaldır
+Remove Background and Crop	Arka Planı Kaldır ve Kırp
+Remove location from the copy	Konumu kopyadan kaldır
+Replace Background	Arka Planı Değiştir
+Reset	Sıfırla
+Reset Color Adjustments	Renk Ayarlarını Sıfırla
+Reset to default	Varsayılana döndür
+Resize	Yeniden Boyutlandır
+Resize…	Yeniden Boyutlandır…
+Resolution	Çözünürlük
+Restart lightview to start using the GPU.	GPU'yu kullanmaya başlamak için lightview'u yeniden başlatın.
+Revert	Geri Döndür
+Rotate Left	Sola Döndür
+Rotate Right	Sağa Döndür
+Rounded Rectangle	Yuvarlak Dikdörtgen
+Run the AI tools on any graphics card with Vulkan or Direct3D 12 ({mb} MB download, WebGPU). A weak built-in graphics chip can be slower than the CPU.	Yapay zekâ araçlarını Vulkan veya Direct3D 12 destekli herhangi bir ekran kartında çalıştırın ({mb} MB indirme, WebGPU). Zayıf bir dahili grafik yongası CPU'dan yavaş olabilir.
+Run the AI tools on the graphics card ({mb} MB download, NVIDIA's CUDA libraries).	Yapay zekâ araçlarını ekran kartında çalıştırın ({mb} MB indirme, NVIDIA'nın CUDA kitaplıkları).
+Running {file}…	{file} çalışıyor…
+SCUNet σ15 — light noise	SCUNet σ15 — hafif gürültü
+SCUNet σ25 — moderate noise	SCUNet σ25 — orta gürültü
+SCUNet σ50 — heavy noise	SCUNet σ50 — yoğun gürültü
+SCUNet — noise and JPEG artifacts (recommended)	SCUNet — gürültü ve JPEG bozulmaları (önerilen)
+Saturation	Doygunluk
+Saturation: from grey to vivid color	Doygunluk: griden canlı renge
+Save As…	Farklı Kaydet…
+Save copy…	Kopyayı kaydet…
+Saved in JPEG files	JPEG dosyalarına kaydedilir
+Saved {name}	{name} kaydedildi
+Saves a copy of the file with this metadata (without other edits). Camera maker notes are removed.	Dosyanın bu meta verilerle bir kopyasını kaydeder (diğer düzenlemeler olmadan). Fotoğraf makinesi üretici notları kaldırılır.
+Select	Seç
+Select All	Tümünü Seç
+Select Object	Nesne Seç
+Select Object (AI)	Nesne Seç (Yapay Zekâ)
+Selecting the object…	Nesne seçiliyor…
+Settings	Ayarlar
+Settings…	Ayarlar…
+Shapes	Şekiller
+Show Drawing Toolbar	Çizim Araç Çubuğunu Göster
+Show Image Information	Görüntü Bilgilerini Göster
+Silueta — small and fast	Silueta — küçük ve hızlı
+Size read from the model when it runs; the usual normalisation.	Boyut model çalışırken modelden okunur; olağan normalleştirme.
+Sketch	Eskiz
+Smoother zooming and panning. Uses more GPU memory and makes switching images a little slower.	Daha akıcı yakınlaştırma ve kaydırma. Daha fazla GPU belleği kullanır ve görüntüler arasında geçişi biraz yavaşlatır.
+Sort order	Sıralama
+Std (R, G, B)	Std sapma (R, G, B)
+Strength	Güç
+Stroke	Kontur
+SwinIR σ25 — moderate noise, very slow	SwinIR σ25 — orta gürültü, çok yavaş
+Text	Metin
+Text colour	Metin rengi
+The AI runtime isn't installed yet: Local AI > Download AI Runtime…	Yapay zekâ çalışma ortamı henüz kurulmadı: Yerel Yapay Zekâ > Yapay Zekâ Çalışma Ortamını İndir…
+The GPU couldn't be used, so the CPU is: {e}	GPU kullanılamadı, bu yüzden CPU kullanılıyor: {e}
+The corners must form a shape with no crossing sides	Köşeler kenarları kesişmeyen bir şekil oluşturmalı
+the model's mask decoder is missing	modelin maske kod çözücüsü eksik
+Thickness	Kalınlık
+Tint	Renk tonu
+Tools	Araçlar
+Undo	Geri Al
+Use YYYY:MM:DD HH:MM:SS	YYYY:MM:DD HH:MM:SS biçimini kullanın
+Use the GPU	GPU'yu kullan
+Used by Remove Background and Remove Background and Crop.	Arka Planı Kaldır ile Arka Planı Kaldır ve Kırp tarafından kullanılır.
+Uses Bilinear while GPU scaling is on	GPU ölçekleme açıkken Bilineer kullanır
+U²-Net people — portraits	U²-Net people — portreler
+U²-Net small — fastest	U²-Net small — en hızlı
+U²-Net — general	U²-Net — genel
+Value: from black to full color	Değer: siyahtan tam renge
+View	Görünüm
+Welcome to lightview	lightview'a hoş geldiniz
+Width	Genişlik
+Your edits to {name} haven't been saved.	{name} üzerindeki düzenlemeleriniz kaydedilmedi.
+Zoom	Yakınlaştırma
+Zoom In	Yakınlaştır
+Zoom Out	Uzaklaştır
+a GPU library was missing from the download	indirilen dosyalarda bir GPU kitaplığı eksikti
+about {time} left	yaklaşık {time} kaldı
+can't save as .{ext}: use .jpg, .png, .webp, .bmp, .tif or .gif	.{ext} olarak kaydedilemez: .jpg, .png, .webp, .bmp, .tif veya .gif kullanın
+choose a new name: the original is never modified	yeni bir ad seçin: özgün dosya asla değiştirilmez
+compressed SVG files aren't supported	sıkıştırılmış SVG dosyaları desteklenmiyor
+couldn't read this file's EXIF safely	bu dosyanın EXIF'i güvenle okunamadı
+edited: {w} × {h}	düzenlenmiş: {w} × {h}
+lightview is now the default image viewer	lightview artık varsayılan görüntü görüntüleyici
+no data folder	veri klasörü yok
+no frames	kare yok
+no subject found	özne bulunamadı
+pick an .onnx file	bir .onnx dosyası seçin
+the download didn't match its checksum	indirilen dosya sağlama toplamıyla eşleşmedi
+the model has no image input	modelin görüntü girişi yok
+the model's output changed size between tiles	modelin çıktı boyutu döşemeler arasında değişti
+the model's output doesn't match its input size	modelin çıktısı giriş boyutuyla eşleşmiyor
+the model's output isn't a whole multiple of its input	modelin çıktısı girişinin tam katı değil
+the written file didn't check out: the location wasn't removed	yazılan dosya denetimden geçmedi: konum kaldırılmadı
+the written file didn't check out: {e}	yazılan dosya denetimden geçmedi: {e}
+the written file didn't check out: {label} wasn't saved	yazılan dosya denetimden geçmedi: {label} kaydedilmedi
+this file crashed its decoder	bu dosya kod çözücüsünü çökertti
+this file's EXIF couldn't be processed	bu dosyanın EXIF'i işlenemedi
+this image is too large to open	bu görüntü açılamayacak kadar büyük
+this isn't a regular file	bu normal bir dosya değil
+{format}, {count} frames	{format}, kare: {count}
+{name} is already installed	{name} zaten kurulu
+{name} will be moved to the Trash.	{name} Çöp Kutusu'na taşınacak.
+{task} done	{task}: tamamlandı
+{task} failed: {e}	{task}: başarısız: {e}
+{task} on the GPU	{task}: GPU üzerinde
+{task} preview of the visible area · drag to compare · Before | After	{task}: görünen alanın önizlemesi · karşılaştırmak için sürükleyin · Önce | Sonra
+Remove Object	Nesneyi Kaldır
+LaMa — best quality, slower	LaMa — en iyi kalite, daha yavaş
+MI-GAN — fast	MI-GAN — hızlı
+ONNX export by Carve on Hugging Face; its origin isn't verified.	Hugging Face'teki Carve'ın ONNX dışa aktarımı; kaynağı doğrulanmadı.
+the selection is empty	seçim boş
+No images in {name}	{name} içinde görüntü yok
+Can't open {name}: not a supported image	{name} açılamıyor: desteklenen bir görüntü değil
+Save Copy	Kopyayı Kaydet
+Copy Path	Yolu Kopyala
+Show in File Manager	Dosya Yöneticisinde Göster
+Rename…	Yeniden Adlandır…
+First Image	İlk Görüntü
+Last Image	Son Görüntü
+Copied the path	Yol kopyalandı
+Rename Image	Görüntüyü Yeniden Adlandır
+Rename	Yeniden Adlandır
+That isn't a valid file name	Bu geçerli bir dosya adı değil
+{name} already exists	{name} zaten var
+File changed on disk	Dosya diskte değişti
+{name} changed on disk. Reloading it discards your edits.	{name} diskte değişti. Yeniden yüklemek düzenlemelerinizi atar.
+Reload	Yeniden Yükle
+Keep Edits	Düzenlemeleri Koru
+Pixel grid	Piksel ızgarası
+Shows the edges of the pixels when zoomed far in.	Çok yakınlaştırıldığında piksellerin kenarlarını gösterir.
+Click a pixel to copy its colour · Esc to stop	Rengini kopyalamak için bir piksele tıklayın · Durdurmak için Esc
+Copied {color}	{color} kopyalandı
+Copy Color	Rengi Kopyala
+this file is damaged or cut short	bu dosya hasarlı ya da yarım kalmış
+HEIC and AVIF files need libheif, which isn't installed	HEIC ve AVIF dosyaları libheif gerektirir, ancak kurulu değil
+this file needs a libheif decoder plugin, which isn't installed	bu dosya bir libheif kod çözücü eklentisi gerektirir, ancak kurulu değil
+this file needs Microsoft's HEIF Image Extensions and HEVC or AV1 Video Extensions	bu dosya Microsoft'un HEIF Görüntü Uzantıları'nı ve HEVC ya da AV1 Video Uzantıları'nı gerektirir
+Pages	Sayfalar
+Next Page	Sonraki Sayfa
+Previous Page	Önceki Sayfa
+{format}, {count} pages	{format}, sayfa: {count}
+page {n} of {count}	sayfa {n} / {count}
+Colour management	Renk yönetimi
+Converts images with a colour profile to sRGB, so wide-gamut photos look right on an sRGB monitor. Turn it off for a wide-gamut monitor.	Renk profili olan görüntüleri sRGB'ye dönüştürür, böylece geniş gamlı fotoğraflar sRGB monitörde doğru görünür. Geniş gamlı bir monitörde kapatın.
+this RAW file has no embedded preview	bu RAW dosyasında gömülü önizleme yok
+{format} (embedded preview)	{format} (gömülü önizleme)
+EXIF isn't read from this kind of RAW file yet	Bu tür RAW dosyalarından EXIF henüz okunmuyor
+A RAW file's metadata is shown, not edited.	RAW dosyasının meta verileri gösterilir, düzenlenmez.
+A WebP file's metadata is shown, not edited.	WebP dosyasının meta verileri gösterilir, düzenlenmez.
+EXIF is shown for JPEG, PNG, WebP, TIFF and RAW files	EXIF; JPEG, PNG, WebP, TIFF ve RAW dosyaları için gösterilir
+the copy must be a .{ext} file	kopya bir .{ext} dosyası olmalı
+the written file didn't check out: the image changed	yazılan dosya denetimden geçmedi: görüntü değişti
+Copy File	Dosyayı Kopyala
+Copied the file	Dosya kopyalandı
+Couldn't copy the file: {e}	Dosya kopyalanamadı: {e}
+Straighten…	Düzleştir…
+Straighten	Düzleştir
+Greyscale	Gri Tonlama
+Invert Colors	Renkleri Ters Çevir
+Remove Red Eye	Kırmızı Gözü Gider
+Pixelate Selection	Seçimi Pikselleştir
+Select the eyes first, then choose this.	Önce gözleri seçin, sonra bunu seçin.
+Hides faces. For text, a solid shape is safer: pixelation can sometimes be undone.	Yüzleri gizler. Metin için düz bir şekil daha güvenlidir: pikselleştirme bazen geri alınabilir.
+Red eye removed	Kırmızı göz giderildi
+Pixelated	Pikselleştirildi
+Turn until the lines run straight · Enter to apply · Esc to cancel	Çizgiler düzleşene kadar döndürün · Uygulamak için Enter · İptal için Esc
+Recognize Text	Metni Tanı
+PP-OCRv5 Latin — European languages	PP-OCRv5 Latin — Avrupa dilleri
+PP-OCRv5 — Chinese, Japanese and English	PP-OCRv5 — Çince, Japonca ve İngilizce
+Converted to ONNX by Satoru Nakamura (University of Tokyo) from PaddlePaddle's published models.	PaddlePaddle'ın yayımladığı modellerden Satoru Nakamura (Tokyo Üniversitesi) tarafından ONNX'e dönüştürüldü.
+the model's output doesn't match its character list	modelin çıktısı karakter listesiyle eşleşmiyor
+Read QR Code	QR Kodu Oku
+No QR code found	QR kodu bulunamadı
+No text found	Metin bulunamadı
+QR Code	QR Kodu
+Text in Image	Görüntüdeki Metin
+Couldn't read the text: {e}	Metin okunamadı: {e}
+Reading QR codes…	QR kodları okunuyor…
+Recognizing text…	Metin tanınıyor…
+Reads the selection, or the whole image. Straighten tilted text first, and select small text in a large image so it's read at full size.	Seçimi ya da tüm görüntüyü okur. Eğik metni önce düzleştirin; büyük bir görüntüdeki küçük metni seçin ki tam boyutta okunsun.
+Reads the selection, or the whole image. Shows what the code says; links are never opened.	Seçimi ya da tüm görüntüyü okur. Kodun içeriğini gösterir; bağlantılar asla açılmaz.
+Keyboard Shortcuts	Klavye Kısayolları
+Press keys… (Esc to cancel)	Tuşlara basın… (İptal için Esc)
+Change	Değiştir
+Remove	Kaldır
+Reset All Shortcuts	Tüm Kısayolları Sıfırla
+{keys} is already used by {action}	{keys} zaten {action} tarafından kullanılıyor
+Copy, Cut, Paste, Enter, Esc and Delete	Kopyala, Kes, Yapıştır, Enter, Esc ve Delete
+Change Keyboard Shortcuts…	Klavye Kısayollarını Değiştir…
+Theme	Tema
+Follow system	Sistemi izle
+Dark	Koyu
+Light	Açık
+High contrast	Yüksek karşıtlık
+bigger than 64 KiB	64 KiB'den büyük
+invalid value	geçersiz değer
+line	satır
+Your own themes go in the themes folder next to the AI models. Choosing a theme again reloads its file.	Kendi temalarınız yapay zekâ modellerinin yanındaki themes klasörüne konur. Bir temayı yeniden seçmek dosyasını yeniden yükler.
+Couldn't load the theme, so the base theme is used: {e}	Tema yüklenemedi, bu yüzden temel tema kullanılıyor: {e}
+Open themes folder	Temalar klasörünü aç
+Group Duplicates in Folder…	Klasördeki Kopyaları Grupla…
+Group Duplicates in Folder	Klasördeki Kopyaları Grupla
+Compares the images in this folder (not its subfolders) and moves each group of look-alikes into a folder of its own. Nothing is deleted, and Ctrl+Z moves them back. Rotated copies and heavy crops aren't found.	Bu klasördeki (alt klasörler hariç) görüntüleri karşılaştırır ve birbirine benzeyen her grubu kendi klasörüne taşır. Hiçbir şey silinmez ve Ctrl+Z onları geri taşır. Döndürülmüş kopyalar ve çok kırpılmış görüntüler bulunmaz.
+Comparing images: {done} of {total}	Görüntüler karşılaştırılıyor: {done} / {total}
+How different each image is from its closest look-alike:	Her görüntünün en çok benzediği görüntüden farkı:
+Largest difference	En büyük fark
+{meaning} · suggested: {n}	{meaning} · önerilen: {n}
+Identical pixels only	Yalnızca aynı pikseller
+Resized or recompressed copies	Yeniden boyutlandırılmış ya da yeniden sıkıştırılmış kopyalar
+Small edits, crops and bursts	Küçük düzenlemeler, kırpmalar ve seri çekimler
+Merely similar scenes too	Yalnızca benzer sahneler de
+Groups: {groups} · Images to move: {moving} · Staying: {staying}	Gruplar: {groups} · Taşınacak görüntüler: {moving} · Kalanlar: {staying}
+Not compared: {n}	Karşılaştırılmadı: {n}
+Not compared	Karşılaştırılmadı
+{name} · difference: {d}	{name} · fark: {d}
+Move	Taşı
+Images moved: {n} · Folders: {f}	Taşınan görüntüler: {n} · Klasörler: {f}
+Stopped: {e}	Durduruldu: {e}
+Images moved back: {n}	Geri taşınan görüntüler: {n}
+{name}: changed since it was compared	{name}: karşılaştırıldıktan sonra değişti
+{name}: already in the folder	{name}: zaten klasörde
+{name}: its old name is taken	{name}: eski adı kullanılıyor
+the file is gone	dosya artık yok
+About {s} s left	Yaklaşık {s} sn kaldı
+About {m} min left	Yaklaşık {m} dk kaldı
+Smallest group	En küçük grup
+Groups with fewer images stay where they are.	Daha az görüntülü gruplar yerinde kalır.
+Resize Optimally	En Uygun Boyuta Getir
+Shrinks the image to the size its detail needs, measured on its sharpest part. Never enlarges; Ctrl+Z undoes it.	Görüntüyü, en keskin bölümünde ölçülen ayrıntısının gerektirdiği boyuta küçültür. Asla büyütmez; Ctrl+Z geri alır.
+Already at its optimal size	Zaten en uygun boyutta
+Resized to {w} × {h} px	{w} × {h} px olarak yeniden boyutlandırıldı

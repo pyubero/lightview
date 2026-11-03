@@ -139,9 +139,14 @@ The models, how to install them and the tips for text recognition are in the REA
 
 ## Languages, shortcuts and accessibility
 
-- **Nine languages:** English, Spanish, French, German, Italian, Portuguese, Polish, Dutch and
-  Russian. lightview starts in your system's language. The Polish, Dutch and Russian texts are
-  machine translations: corrections are welcome ([`TRANSLATING.md`](TRANSLATING.md)).
+- **Fifteen languages:** English, Spanish, French, German, Italian, Portuguese, Polish, Dutch,
+  Russian, Japanese, Chinese (Simplified and Traditional), Korean, Ukrainian and Turkish. lightview
+  starts in your system's language. The texts from Polish onwards are machine translations:
+  corrections are welcome ([`TRANSLATING.md`](TRANSLATING.md)).
+- **Chinese, Japanese and Korean** are drawn with your system's CJK font (on Linux the one
+  fontconfig picks, such as Noto Sans CJK from the `fonts-noto-cjk` package; on Windows the one
+  built in). Without one, those texts show as boxes. The font is loaded once per start, so after
+  switching between two of these languages, restart lightview for the new one's character style.
 - **Your own shortcuts.** Any menu item can get a keyboard shortcut, and the default ones can be
   changed, in Edit → Settings → Change Keyboard Shortcuts….
 - **Screen readers.** Menus, dialogs and settings can be read by a screen reader such as Orca or

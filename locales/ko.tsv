@@ -1,0 +1,424 @@
+AI Models	AI 모델
+AI Models…	AI 모델…
+AI runtime (ONNX Runtime)	AI 런타임 (ONNX Runtime)
+Accept and Continue	동의하고 계속
+Accept and Download	동의하고 다운로드
+Accessibility	접근성
+Actual Size	실제 크기
+Add model file…	모델 파일 추가…
+Added {name}	{name}을(를) 추가함
+Adjust Color	색상 조정
+Adjust Color…	색상 조정…
+Adjust Curves	곡선 조정
+Adjust Curves…	곡선 조정…
+All channels together: overall brightness	모든 채널 함께: 전체 밝기
+Animation	애니메이션
+Applies the next time lightview starts	lightview를 다음에 시작할 때 적용됩니다
+Apply sigmoid (the model outputs logits)	시그모이드 적용 (모델이 로짓을 출력함)
+Apply to Selection	선택 영역에 적용
+Apply to Whole Image{size} (about {estimate})	전체 이미지에 적용{size} (약 {estimate})
+Arrow	화살표
+Artist	작성자
+Auto Levels	자동 레벨
+Blur Background	배경 흐리게
+Blur Background…	배경 흐리게…
+BSRGAN 4× — upscales and sharpens, may invent detail	BSRGAN 4× — 확대 및 선명화, 디테일을 지어낼 수 있음
+Background colour	배경색
+BiRefNet lite — best quality, slow	BiRefNet lite — 최고 품질, 느림
+Bicubic	바이큐빅
+Bilinear	바이리니어
+Blue: how much blue each pixel has	파랑: 각 픽셀의 파란색 양
+Camera	카메라
+Camera make	카메라 제조사
+Camera model	카메라 모델
+Can't open this image:\n{e}	이 이미지를 열 수 없습니다:\n{e}
+Cancel	취소
+Cancelled	취소됨
+Check for updates	업데이트 확인
+Close	닫기
+Click to add a point, drag to move it, right-click to remove it	클릭하여 점 추가, 드래그하여 이동, 오른쪽 클릭하여 제거
+Color space	색 공간
+Colour	색상
+Colour profile	색상 프로필
+Continue	계속
+Contrast	대비
+Converted to ONNX by Heliosoph LLC from the authors' published weights.	Heliosoph LLC가 저자들이 공개한 가중치를 ONNX로 변환했습니다.
+Copied {w} × {h} px	{w} × {h} px 복사함
+Copy	복사
+Copyright	저작권
+Couldn't add the model: {e}	모델을 추가할 수 없습니다: {e}
+Couldn't delete the image: {e}	이미지를 삭제할 수 없습니다: {e}
+Couldn't download {file}: {e}	{file}을(를) 다운로드할 수 없습니다: {e}
+Couldn't install the AI runtime: {e}	AI 런타임을 설치할 수 없습니다: {e}
+Couldn't process the image: {e}	이미지를 처리할 수 없습니다: {e}
+Couldn't read {file}: {e}	{file}을(를) 읽을 수 없습니다: {e}
+Couldn't restore the image: {e}	이미지를 복원할 수 없습니다: {e}
+Couldn't save {name}: {e}	{name}을(를) 저장할 수 없습니다: {e}
+Couldn't select the object: {e}	개체를 선택할 수 없습니다: {e}
+Crop	자르기
+Cut	잘라내기
+DarkIR brightens dark and night photos and removes their noise and blur. On a well-lit photo it overexposes.	DarkIR은 어두운 사진과 야간 사진을 밝게 하고 노이즈와 흐림을 없앱니다. 밝은 사진에서는 노출 과다가 됩니다.
+DarkIR — dark and night photos, same size	DarkIR — 어두운 사진·야간 사진, 크기 유지
+Date modified	수정한 날짜
+Date taken	촬영한 날짜
+Default window size	기본 창 크기
+Delete image?	이미지를 삭제할까요?
+Delete Image…	이미지 삭제…
+Delete Selection	선택 영역 삭제
+Denoise	노이즈 제거
+Denoise and Enhance run about 10× faster on a GTX 1050	노이즈 제거와 화질 향상은 GTX 1050에서 약 10배 빠릅니다
+Describe the image for people who can't see it	이미지를 볼 수 없는 사람을 위해 이미지를 설명합니다
+Description	설명
+Deselect	선택 해제
+Detect size	크기 감지
+Dimensions	크기
+Discard	버리기
+Discard edits?	편집 내용을 버릴까요?
+Distance: {d} px · ΔX: {dx} px · ΔY: {dy} px	거리: {d} px · ΔX: {dx} px · ΔY: {dy} px
+Done	완료
+Download	다운로드
+Download AI Runtime…	AI 런타임 다운로드…
+Download GPU Support	GPU 지원 다운로드
+Downloaded from Microsoft (ONNX Runtime) and NVIDIA (CUDA libraries, via their official PyPI packages).	Microsoft (ONNX Runtime)와 NVIDIA (CUDA 라이브러리, 공식 PyPI 패키지를 통해)에서 다운로드합니다.
+Downloaded from Microsoft's official PyPI package (onnxruntime-ep-webgpu).	Microsoft의 공식 PyPI 패키지 (onnxruntime-ep-webgpu)에서 다운로드합니다.
+Downloaded {file}	{file} 다운로드함
+Downloading GPU support ({mb} MB)…	GPU 지원 다운로드 중 ({mb} MB)…
+Downloading the AI runtime…	AI 런타임 다운로드 중…
+Downloading…	다운로드 중…
+Drag a box around one object; its outline becomes the selection. Holes inside it stay selected.	개체 하나를 상자로 둘러 드래그하면 그 윤곽이 선택 영역이 됩니다. 안쪽의 구멍도 선택된 상태로 남습니다.
+Drag to measure in image pixels · Esc to stop	드래그하여 이미지 픽셀 단위로 측정 · Esc로 중지
+Drag to select · Enter to crop · Esc to cancel	드래그하여 선택 · Enter로 자르기 · Esc로 취소
+Drag the corners onto a rectangle · Enter to apply · Esc to cancel	모서리를 직사각형의 꼭짓점으로 드래그 · Enter로 적용 · Esc로 취소
+Drawings, text and pasted images will be merged into the image and can't be edited afterwards. Ctrl+Z undoes it.	그림, 텍스트, 붙여넣은 이미지가 이미지에 병합되어 이후에 편집할 수 없습니다. Ctrl+Z로 되돌릴 수 있습니다.
+Edit	편집
+Edit the image description	이미지 설명 편집
+Ellipse	타원
+Elliptical Selection	타원 선택
+Embedded (unnamed)	포함됨 (이름 없음)
+Enhance Image	화질 향상
+Enhance Image uses generative AI. To make the image look better it may invent or alter fine details, such as textures, text or faces, that weren't in the original.	화질 향상은 생성형 AI를 사용합니다. 이미지를 더 보기 좋게 만들기 위해 질감, 글자, 얼굴처럼 원본에 없던 세부를 지어내거나 바꿀 수 있습니다.
+Enter Full Screen	전체 화면
+Exposure	노출
+File	파일
+File name	파일 이름
+File size	파일 크기
+Fill	채우기
+Fills the background with the background colour from Settings.	설정의 배경색으로 배경을 채웁니다.
+Fit to Window	창에 맞추기
+Flip Horizontally	좌우 뒤집기
+Flip Vertically	상하 뒤집기
+Folder	폴더
+Font size	글꼴 크기
+For a faithful clean-up, use Denoise instead.	원본에 충실하게 정리하려면 대신 노이즈 제거를 사용하세요.
+Format	형식
+GPU (AMD, Intel and others, experimental)	GPU (AMD, Intel 등, 실험적)
+GPU (NVIDIA)	GPU (NVIDIA)
+GPU image scaling	GPU 이미지 크기 조정
+GPU support	GPU 지원
+GPU support installed: restart lightview to use it	GPU 지원 설치됨: 사용하려면 lightview를 다시 시작하세요
+General	일반
+Green: how much green each pixel has	초록: 각 픽셀의 초록색 양
+Height	높이
+Hide Drawing Toolbar	그리기 도구 모음 숨기기
+Hide Image Information	이미지 정보 숨기기
+Highlight	형광펜
+Hue: the color itself, such as red or blue	색조: 빨강이나 파랑 같은 색 자체
+IS-Net anime — illustrations	IS-Net anime — 일러스트
+IS-Net — general, clean edges	IS-Net — 일반, 깔끔한 가장자리
+Image	이미지
+Image description	이미지 설명
+Images	이미지
+Input size	입력 크기
+Installed the AI runtime	AI 런타임 설치함
+Interpolation	보간
+It also makes the image {k}× bigger ({pixels}× the pixels), which takes a while for a big photo.	이미지도 {k}배 커지므로 (픽셀 수는 {pixels}배) 큰 사진은 시간이 걸립니다.
+It's no longer in the Trash	더 이상 휴지통에 없습니다
+Keep aspect ratio	가로세로 비율 유지
+Language	언어
+Lasso	올가미
+Lens	렌즈
+Licence ({step} of {count}) — {title}	라이선스 ({step} / {count}) — {title}
+Licence — {title}	라이선스 — {title}
+Lightness: from black, through color, to white	밝기: 검정에서 색을 거쳐 흰색까지
+Line	선
+Local AI	로컬 AI
+Location	위치
+Magnifier	돋보기
+Make lightview my default image viewer	lightview를 내 기본 이미지 뷰어로 설정
+Make lightview the default image viewer	lightview를 기본 이미지 뷰어로 설정
+Mean (R, G, B)	평균 (R, G, B)
+Measure	측정
+Merge drawings into the image?	그림을 이미지에 병합할까요?
+MobileSAM — finds the object in a box	MobileSAM — 상자 안의 개체를 찾음
+Model	모델
+Name	이름
+Nearest	최근접 이웃
+Next Frame	다음 프레임
+Next Image	다음 이미지
+no graphics card with Vulkan or Direct3D 12 was found	Vulkan 또는 Direct3D 12를 지원하는 그래픽 카드를 찾지 못했습니다
+No location in this file	이 파일에는 위치 정보가 없습니다
+No model installed yet.	아직 설치된 모델이 없습니다.
+No object found in the box	상자 안에서 개체를 찾지 못했습니다
+No recent files	최근 파일 없음
+None (sRGB assumed)	없음 (sRGB로 간주)
+Nothing to paste: {e}	붙여넣을 것이 없습니다: {e}
+OK	확인
+ONNX export (half precision) by FuryTMP on Hugging Face; its origin isn't verified.	Hugging Face의 FuryTMP가 만든 ONNX 내보내기 (반정밀도). 출처는 확인되지 않았습니다.
+ONNX export by Acly on Hugging Face, from the authors' weights; downloaded from Heliosoph LLC's copy.	Hugging Face의 Acly가 저자들의 가중치로 만든 ONNX 내보내기. Heliosoph LLC의 사본에서 다운로드합니다.
+ONNX model	ONNX 모델
+Only add models from sources you trust: they run with your permissions.	신뢰할 수 있는 출처의 모델만 추가하세요: 사용자의 권한으로 실행됩니다.
+Open Recent	최근 파일 열기
+Open in Google Maps	Google 지도에서 열기
+Open models folder	모델 폴더 열기
+Open project page	프로젝트 페이지 열기
+Open…	열기…
+Other tags ({count})	기타 태그 ({count})
+Output	출력
+Paste	붙여넣기
+Pause Animation	애니메이션 일시 정지
+Percentage	백분율
+Correct Perspective	원근 보정
+Play Animation	애니메이션 재생
+Please read and accept the licence before downloading.	다운로드하기 전에 라이선스를 읽고 동의해 주세요.
+Preprocessing: {file}	전처리: {file}
+Previous Frame	이전 프레임
+Previous Image	이전 이미지
+Read the input size from the model	모델에서 입력 크기 읽기
+Real-ESRGAN 4× half precision	Real-ESRGAN 4× 반정밀도
+Real-ESRGAN 4× — upscales, smooth, may invent detail	Real-ESRGAN 4× — 확대, 부드러움, 디테일을 지어낼 수 있음
+Real-ESRGAN and DarkIR can't be downloaded here. Convert them yourself with lightview-models, then copy the .onnx files into the models folder:	Real-ESRGAN과 DarkIR은 여기서 다운로드할 수 없습니다. lightview-models로 직접 변환한 다음 .onnx 파일을 모델 폴더에 복사하세요:
+Real-ESRGAN general 4× half precision	Real-ESRGAN general 4× 반정밀도
+Real-ESRGAN general 4× — fast, softer	Real-ESRGAN general 4× — 빠름, 다소 부드러움
+Rectangle	직사각형
+Rectangular Selection	사각형 선택
+Red: how much red each pixel has	빨강: 각 픽셀의 빨간색 양
+Redo	다시 실행
+Remove Background	배경 제거
+Remove Background and Crop	배경 제거 후 자르기
+Remove location from the copy	사본에서 위치 정보 제거
+Replace Background	배경 바꾸기
+Reset	초기화
+Reset Color Adjustments	색상 조정 초기화
+Reset to default	기본값으로 재설정
+Resize	크기 조정
+Resize…	크기 조정…
+Resolution	해상도
+Restart lightview to start using the GPU.	GPU를 사용하려면 lightview를 다시 시작하세요.
+Revert	되돌리기
+Rotate Left	왼쪽으로 회전
+Rotate Right	오른쪽으로 회전
+Rounded Rectangle	둥근 직사각형
+Run the AI tools on any graphics card with Vulkan or Direct3D 12 ({mb} MB download, WebGPU). A weak built-in graphics chip can be slower than the CPU.	Vulkan 또는 Direct3D 12를 지원하는 모든 그래픽 카드에서 AI 도구를 실행합니다 ({mb} MB 다운로드, WebGPU). 성능이 낮은 내장 그래픽은 CPU보다 느릴 수 있습니다.
+Run the AI tools on the graphics card ({mb} MB download, NVIDIA's CUDA libraries).	그래픽 카드에서 AI 도구를 실행합니다 ({mb} MB 다운로드, NVIDIA의 CUDA 라이브러리).
+Running {file}…	{file} 실행 중…
+SCUNet σ15 — light noise	SCUNet σ15 — 약한 노이즈
+SCUNet σ25 — moderate noise	SCUNet σ25 — 중간 노이즈
+SCUNet σ50 — heavy noise	SCUNet σ50 — 강한 노이즈
+SCUNet — noise and JPEG artifacts (recommended)	SCUNet — 노이즈와 JPEG 아티팩트 (권장)
+Saturation	채도
+Saturation: from grey to vivid color	채도: 회색에서 선명한 색까지
+Save As…	다른 이름으로 저장…
+Save copy…	사본 저장…
+Saved in JPEG files	JPEG 파일에 저장됨
+Saved {name}	{name} 저장함
+Saves a copy of the file with this metadata (without other edits). Camera maker notes are removed.	이 메타데이터로 파일의 사본을 저장합니다 (다른 편집은 제외). 카메라 제조사 노트는 제거됩니다.
+Select	선택
+Select All	모두 선택
+Select Object	개체 선택
+Select Object (AI)	개체 선택 (AI)
+Selecting the object…	개체 선택 중…
+Settings	설정
+Settings…	설정…
+Shapes	도형
+Show Drawing Toolbar	그리기 도구 모음 표시
+Show Image Information	이미지 정보 표시
+Silueta — small and fast	Silueta — 작고 빠름
+Size read from the model when it runs; the usual normalisation.	크기는 실행할 때 모델에서 읽습니다. 일반적인 정규화입니다.
+Sketch	스케치
+Smoother zooming and panning. Uses more GPU memory and makes switching images a little slower.	확대/축소와 이동이 더 부드러워집니다. GPU 메모리를 더 쓰고 이미지 전환이 조금 느려집니다.
+Sort order	정렬 순서
+Std (R, G, B)	표준편차 (R, G, B)
+Strength	강도
+Stroke	윤곽선
+SwinIR σ25 — moderate noise, very slow	SwinIR σ25 — 중간 노이즈, 매우 느림
+Text	텍스트
+Text colour	글자 색
+The AI runtime isn't installed yet: Local AI > Download AI Runtime…	AI 런타임이 아직 설치되지 않았습니다: 로컬 AI > AI 런타임 다운로드…
+The GPU couldn't be used, so the CPU is: {e}	GPU를 사용할 수 없어 CPU를 사용합니다: {e}
+The corners must form a shape with no crossing sides	모서리는 변이 교차하지 않는 모양이어야 합니다
+the model's mask decoder is missing	모델의 마스크 디코더가 없습니다
+Thickness	두께
+Tint	색조 보정
+Tools	도구
+Undo	실행 취소
+Use YYYY:MM:DD HH:MM:SS	YYYY:MM:DD HH:MM:SS 형식을 사용하세요
+Use the GPU	GPU 사용
+Used by Remove Background and Remove Background and Crop.	배경 제거와 배경 제거 후 자르기에 사용됩니다.
+Uses Bilinear while GPU scaling is on	GPU 크기 조정이 켜져 있는 동안에는 바이리니어를 사용합니다
+U²-Net people — portraits	U²-Net people — 인물 사진
+U²-Net small — fastest	U²-Net small — 가장 빠름
+U²-Net — general	U²-Net — 일반
+Value: from black to full color	명도: 검정에서 가장 진한 색까지
+View	보기
+Welcome to lightview	lightview에 오신 것을 환영합니다
+Width	너비
+Your edits to {name} haven't been saved.	{name}의 편집 내용이 저장되지 않았습니다.
+Zoom	확대/축소
+Zoom In	확대
+Zoom Out	축소
+a GPU library was missing from the download	다운로드에 GPU 라이브러리가 빠져 있습니다
+about {time} left	약 {time} 남음
+can't save as .{ext}: use .jpg, .png, .webp, .bmp, .tif or .gif	.{ext}(으)로 저장할 수 없습니다: .jpg, .png, .webp, .bmp, .tif 또는 .gif를 사용하세요
+choose a new name: the original is never modified	새 이름을 고르세요: 원본은 절대 수정되지 않습니다
+compressed SVG files aren't supported	압축된 SVG 파일은 지원하지 않습니다
+couldn't read this file's EXIF safely	이 파일의 EXIF를 안전하게 읽을 수 없습니다
+edited: {w} × {h}	편집 후: {w} × {h}
+lightview is now the default image viewer	이제 lightview가 기본 이미지 뷰어입니다
+no data folder	데이터 폴더 없음
+no frames	프레임 없음
+no subject found	피사체를 찾지 못함
+pick an .onnx file	.onnx 파일을 고르세요
+the download didn't match its checksum	다운로드가 체크섬과 일치하지 않습니다
+the model has no image input	모델에 이미지 입력이 없습니다
+the model's output changed size between tiles	모델의 출력 크기가 타일마다 달라졌습니다
+the model's output doesn't match its input size	모델의 출력이 입력 크기와 맞지 않습니다
+the model's output isn't a whole multiple of its input	모델의 출력이 입력의 정수배가 아닙니다
+the written file didn't check out: the location wasn't removed	기록한 파일 확인 실패: 위치 정보가 제거되지 않았습니다
+the written file didn't check out: {e}	기록한 파일 확인 실패: {e}
+the written file didn't check out: {label} wasn't saved	기록한 파일 확인 실패: {label}이(가) 저장되지 않았습니다
+this file crashed its decoder	이 파일 때문에 디코더가 충돌했습니다
+this file's EXIF couldn't be processed	이 파일의 EXIF를 처리할 수 없습니다
+this image is too large to open	이 이미지는 너무 커서 열 수 없습니다
+this isn't a regular file	일반 파일이 아닙니다
+{format}, {count} frames	{format}, 프레임 수: {count}
+{name} is already installed	{name}은(는) 이미 설치되어 있습니다
+{name} will be moved to the Trash.	{name}을(를) 휴지통으로 옮깁니다.
+{task} done	{task} 완료
+{task} failed: {e}	{task} 실패: {e}
+{task} on the GPU	GPU에서 {task}
+{task} preview of the visible area · drag to compare · Before | After	보이는 영역의 {task} 미리 보기 · 드래그하여 비교 · 이전 | 이후
+Remove Object	개체 지우기
+LaMa — best quality, slower	LaMa — 최고 품질, 다소 느림
+MI-GAN — fast	MI-GAN — 빠름
+ONNX export by Carve on Hugging Face; its origin isn't verified.	Hugging Face의 Carve가 만든 ONNX 내보내기. 출처는 확인되지 않았습니다.
+the selection is empty	선택 영역이 비어 있습니다
+No images in {name}	{name}에 이미지가 없습니다
+Can't open {name}: not a supported image	{name}을(를) 열 수 없습니다: 지원하지 않는 이미지입니다
+Save Copy	사본 저장
+Copy Path	경로 복사
+Show in File Manager	파일 관리자에서 보기
+Rename…	이름 바꾸기…
+First Image	첫 이미지
+Last Image	마지막 이미지
+Copied the path	경로를 복사함
+Rename Image	이미지 이름 바꾸기
+Rename	이름 바꾸기
+That isn't a valid file name	올바른 파일 이름이 아닙니다
+{name} already exists	{name}이(가) 이미 있습니다
+File changed on disk	디스크의 파일이 바뀌었습니다
+{name} changed on disk. Reloading it discards your edits.	{name}이(가) 디스크에서 바뀌었습니다. 다시 불러오면 편집 내용이 사라집니다.
+Reload	다시 불러오기
+Keep Edits	편집 유지
+Pixel grid	픽셀 격자
+Shows the edges of the pixels when zoomed far in.	크게 확대했을 때 픽셀의 경계를 보여 줍니다.
+Click a pixel to copy its colour · Esc to stop	픽셀을 클릭하여 색을 복사 · Esc로 중지
+Copied {color}	{color} 복사함
+Copy Color	색 복사
+this file is damaged or cut short	이 파일은 손상되었거나 잘려 있습니다
+HEIC and AVIF files need libheif, which isn't installed	HEIC 및 AVIF 파일에는 libheif가 필요하지만 설치되어 있지 않습니다
+this file needs a libheif decoder plugin, which isn't installed	이 파일에는 libheif 디코더 플러그인이 필요하지만 설치되어 있지 않습니다
+this file needs Microsoft's HEIF Image Extensions and HEVC or AV1 Video Extensions	이 파일에는 Microsoft의 HEIF 이미지 확장과 HEVC 또는 AV1 비디오 확장이 필요합니다
+Pages	페이지
+Next Page	다음 페이지
+Previous Page	이전 페이지
+{format}, {count} pages	{format}, 페이지 수: {count}
+page {n} of {count}	{n} / {count} 페이지
+Colour management	색상 관리
+Converts images with a colour profile to sRGB, so wide-gamut photos look right on an sRGB monitor. Turn it off for a wide-gamut monitor.	색상 프로필이 있는 이미지를 sRGB로 변환하여 광색역 사진이 sRGB 모니터에서 올바르게 보이게 합니다. 광색역 모니터에서는 끄세요.
+this RAW file has no embedded preview	이 RAW 파일에는 포함된 미리 보기가 없습니다
+{format} (embedded preview)	{format} (포함된 미리 보기)
+EXIF isn't read from this kind of RAW file yet	이런 종류의 RAW 파일에서는 아직 EXIF를 읽지 못합니다
+A RAW file's metadata is shown, not edited.	RAW 파일의 메타데이터는 표시만 되고 편집할 수 없습니다.
+A WebP file's metadata is shown, not edited.	WebP 파일의 메타데이터는 표시만 되고 편집할 수 없습니다.
+EXIF is shown for JPEG, PNG, WebP, TIFF and RAW files	EXIF는 JPEG, PNG, WebP, TIFF, RAW 파일에서 표시됩니다
+the copy must be a .{ext} file	사본은 .{ext} 파일이어야 합니다
+the written file didn't check out: the image changed	기록한 파일 확인 실패: 이미지가 바뀌었습니다
+Copy File	파일 복사
+Copied the file	파일을 복사함
+Couldn't copy the file: {e}	파일을 복사할 수 없습니다: {e}
+Straighten…	수평 맞추기…
+Straighten	수평 맞추기
+Greyscale	흑백
+Invert Colors	색상 반전
+Remove Red Eye	적목 현상 제거
+Pixelate Selection	선택 영역 모자이크
+Select the eyes first, then choose this.	먼저 눈을 선택한 다음 이것을 고르세요.
+Hides faces. For text, a solid shape is safer: pixelation can sometimes be undone.	얼굴을 가립니다. 글자에는 꽉 찬 도형이 더 안전합니다: 모자이크는 복원될 수도 있습니다.
+Red eye removed	적목 현상을 제거함
+Pixelated	모자이크 처리함
+Turn until the lines run straight · Enter to apply · Esc to cancel	선이 곧아질 때까지 돌리기 · Enter로 적용 · Esc로 취소
+Recognize Text	텍스트 인식
+PP-OCRv5 Latin — European languages	PP-OCRv5 Latin — 유럽 언어
+PP-OCRv5 — Chinese, Japanese and English	PP-OCRv5 — 중국어, 일본어, 영어
+Converted to ONNX by Satoru Nakamura (University of Tokyo) from PaddlePaddle's published models.	나카무라 사토루 (도쿄 대학)가 PaddlePaddle의 공개 모델을 ONNX로 변환했습니다.
+the model's output doesn't match its character list	모델의 출력이 문자 목록과 맞지 않습니다
+Read QR Code	QR 코드 읽기
+No QR code found	QR 코드를 찾지 못했습니다
+No text found	텍스트를 찾지 못했습니다
+QR Code	QR 코드
+Text in Image	이미지 속 텍스트
+Couldn't read the text: {e}	텍스트를 읽을 수 없습니다: {e}
+Reading QR codes…	QR 코드 읽는 중…
+Recognizing text…	텍스트 인식 중…
+Reads the selection, or the whole image. Straighten tilted text first, and select small text in a large image so it's read at full size.	선택 영역이나 전체 이미지를 읽습니다. 기울어진 글자는 먼저 수평을 맞추고, 큰 이미지의 작은 글자는 선택해서 원래 크기로 읽히게 하세요.
+Reads the selection, or the whole image. Shows what the code says; links are never opened.	선택 영역이나 전체 이미지를 읽습니다. 코드의 내용을 보여 주며, 링크는 절대 열지 않습니다.
+Keyboard Shortcuts	키보드 단축키
+Press keys… (Esc to cancel)	키를 누르세요… (Esc로 취소)
+Change	변경
+Remove	제거
+Reset All Shortcuts	모든 단축키 초기화
+{keys} is already used by {action}	{keys}은(는) 이미 {action}에 사용 중입니다
+Copy, Cut, Paste, Enter, Esc and Delete	복사, 잘라내기, 붙여넣기, Enter, Esc, Delete
+Change Keyboard Shortcuts…	키보드 단축키 변경…
+Theme	테마
+Follow system	시스템 설정 따르기
+Dark	어둡게
+Light	밝게
+High contrast	고대비
+bigger than 64 KiB	64 KiB보다 큼
+invalid value	잘못된 값
+line	줄
+Your own themes go in the themes folder next to the AI models. Choosing a theme again reloads its file.	직접 만든 테마는 AI 모델 옆의 themes 폴더에 넣으세요. 테마를 다시 고르면 파일을 다시 불러옵니다.
+Couldn't load the theme, so the base theme is used: {e}	테마를 불러올 수 없어 기본 테마를 사용합니다: {e}
+Open themes folder	테마 폴더 열기
+Group Duplicates in Folder…	폴더의 중복 이미지 묶기…
+Group Duplicates in Folder	폴더의 중복 이미지 묶기
+Compares the images in this folder (not its subfolders) and moves each group of look-alikes into a folder of its own. Nothing is deleted, and Ctrl+Z moves them back. Rotated copies and heavy crops aren't found.	이 폴더 (하위 폴더 제외)의 이미지를 비교하여 비슷한 이미지 묶음을 각각 별도의 폴더로 옮깁니다. 아무것도 삭제되지 않으며 Ctrl+Z로 되돌릴 수 있습니다. 회전된 사본과 많이 잘린 이미지는 찾지 못합니다.
+Comparing images: {done} of {total}	이미지 비교 중: {done} / {total}
+How different each image is from its closest look-alike:	각 이미지와 가장 비슷한 이미지의 차이:
+Largest difference	최대 차이
+{meaning} · suggested: {n}	{meaning} · 추천: {n}
+Identical pixels only	픽셀이 똑같은 것만
+Resized or recompressed copies	크기 조정되거나 다시 압축된 사본
+Small edits, crops and bursts	작은 편집, 자르기, 연속 촬영
+Merely similar scenes too	그저 비슷한 장면까지
+Groups: {groups} · Images to move: {moving} · Staying: {staying}	묶음: {groups} · 옮길 이미지: {moving} · 남는 이미지: {staying}
+Not compared: {n}	비교하지 못함: {n}
+Not compared	비교하지 못함
+{name} · difference: {d}	{name} · 차이: {d}
+Move	옮기기
+Images moved: {n} · Folders: {f}	옮긴 이미지: {n} · 폴더: {f}
+Stopped: {e}	중지됨: {e}
+Images moved back: {n}	되돌린 이미지: {n}
+{name}: changed since it was compared	{name}: 비교한 뒤에 바뀌었습니다
+{name}: already in the folder	{name}: 이미 폴더 안에 있습니다
+{name}: its old name is taken	{name}: 원래 이름이 이미 사용 중입니다
+the file is gone	파일이 없습니다
+About {s} s left	약 {s}초 남음
+About {m} min left	약 {m}분 남음
+Smallest group	최소 묶음
+Groups with fewer images stay where they are.	이보다 이미지가 적은 묶음은 그대로 둡니다.
+Resize Optimally	최적 크기로 줄이기
+Shrinks the image to the size its detail needs, measured on its sharpest part. Never enlarges; Ctrl+Z undoes it.	디테일에 필요한 크기로 이미지를 줄입니다. 가장 선명한 부분에서 측정하며 확대하지는 않습니다. Ctrl+Z로 되돌릴 수 있습니다.
+Already at its optimal size	이미 최적 크기입니다
+Resized to {w} × {h} px	{w} × {h} px로 크기 조정함

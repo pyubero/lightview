@@ -18,7 +18,9 @@ Couldn't save {name}: {e}	No se pudo guardar {name}: {e}
 - **Menu names.** The same English text can appear in several places (a menu item and a setting, for
   instance); it gets one translation.
 - **Characters.** The UI font is Roboto, which covers Latin, Greek and Cyrillic. Chinese, Japanese and
-  Korean need another font and aren't supported yet. A test fails if a character can't be drawn.
+  Korean use the system's CJK font. Right-to-left scripts (Arabic, Hebrew) and scripts that need
+  shaping (Hindi, Thai) aren't supported. A test fails if a character can't be drawn; for CJK it's
+  checked only on a machine with a CJK font installed.
 
 ## Correcting a translation
 
@@ -32,6 +34,7 @@ closes, so to keep your own untouched, start it with a throwaway data folder:
 1. Copy `locales/es.tsv` to `locales/<code>.tsv` and translate the right-hand side of every line.
 2. In `src/i18n.rs`, add the language at the end of `Language` and of `Language::ALL`, its own name
    in `name()`, the file in `source()`, its code in `from_locale()`, and raise the size of `TABLES`.
-   Add it to `TRANSLATED` in the tests.
+   Add it to `TRANSLATED` in the tests. A CJK language also needs its fontconfig tag in `cjk_tag()`
+   (and, on Windows, its font file in `platform::cjk_font`).
 3. In `lightview.desktop`, add `GenericName[<code>]` and `Comment[<code>]`.
 4. Run `cargo test`.

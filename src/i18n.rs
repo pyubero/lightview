@@ -17,10 +17,19 @@ pub enum Language {
     Polish,
     Dutch,
     Russian,
+    Japanese,
+    ChineseSimplified,
+    ChineseTraditional,
+    Korean,
+    Ukrainian,
+    Turkish,
 }
 
 impl Language {
-    pub const ALL: [Self; 9] = [Self::English, Self::Spanish, Self::French, Self::German, Self::Italian, Self::Portuguese, Self::Polish, Self::Dutch, Self::Russian];
+    pub const ALL: [Self; 15] = [
+        Self::English, Self::Spanish, Self::French, Self::German, Self::Italian, Self::Portuguese, Self::Polish, Self::Dutch, Self::Russian,
+        Self::Japanese, Self::ChineseSimplified, Self::ChineseTraditional, Self::Korean, Self::Ukrainian, Self::Turkish,
+    ];
 
     /// In its own language, so it can be found whatever the current one is.
     pub fn name(self) -> &'static str {
@@ -34,6 +43,12 @@ impl Language {
             Self::Polish => "Polski",
             Self::Dutch => "Nederlands",
             Self::Russian => "Русский",
+            Self::Japanese => "日本語",
+            Self::ChineseSimplified => "简体中文",
+            Self::ChineseTraditional => "繁體中文",
+            Self::Korean => "한국어",
+            Self::Ukrainian => "Українська",
+            Self::Turkish => "Türkçe",
         }
     }
 
@@ -48,6 +63,12 @@ impl Language {
             Self::Polish => include_str!("../locales/pl.tsv"),
             Self::Dutch => include_str!("../locales/nl.tsv"),
             Self::Russian => include_str!("../locales/ru.tsv"),
+            Self::Japanese => include_str!("../locales/ja.tsv"),
+            Self::ChineseSimplified => include_str!("../locales/zh_CN.tsv"),
+            Self::ChineseTraditional => include_str!("../locales/zh_TW.tsv"),
+            Self::Korean => include_str!("../locales/ko.tsv"),
+            Self::Ukrainian => include_str!("../locales/uk.tsv"),
+            Self::Turkish => include_str!("../locales/tr.tsv"),
         }
     }
 
@@ -61,7 +82,24 @@ impl Language {
             Some("pl") => Self::Polish,
             Some("nl") => Self::Dutch,
             Some("ru") => Self::Russian,
+            Some("ja") => Self::Japanese,
+            Some("zh") if ["TW", "HK", "MO", "Hant"].iter().any(|r| locale.contains(r)) => Self::ChineseTraditional,
+            Some("zh") => Self::ChineseSimplified,
+            Some("ko") => Self::Korean,
+            Some("uk") => Self::Ukrainian,
+            Some("tr") => Self::Turkish,
             _ => Self::English,
+        }
+    }
+
+    /// The fontconfig language tag of the CJK font this language needs, if it needs one.
+    pub fn cjk_tag(self) -> Option<&'static str> {
+        match self {
+            Self::Japanese => Some("ja"),
+            Self::ChineseSimplified => Some("zh-cn"),
+            Self::ChineseTraditional => Some("zh-tw"),
+            Self::Korean => Some("ko"),
+            _ => None,
         }
     }
 }
@@ -73,7 +111,7 @@ pub fn system_language() -> Language {
 }
 
 static CURRENT: AtomicU8 = AtomicU8::new(0);
-static TABLES: [OnceLock<HashMap<String, String>>; 9] = [const { OnceLock::new() }; 9];
+static TABLES: [OnceLock<HashMap<String, String>>; 15] = [const { OnceLock::new() }; 15];
 
 pub fn set(language: Language) {
     CURRENT.store(language as u8, Ordering::Relaxed);
@@ -132,7 +170,10 @@ mod tests {
     use super::*;
     use std::collections::BTreeSet;
 
-    const TRANSLATED: [Language; 8] = [Language::Spanish, Language::French, Language::German, Language::Italian, Language::Portuguese, Language::Polish, Language::Dutch, Language::Russian];
+    const TRANSLATED: [Language; 14] = [
+        Language::Spanish, Language::French, Language::German, Language::Italian, Language::Portuguese, Language::Polish, Language::Dutch, Language::Russian,
+        Language::Japanese, Language::ChineseSimplified, Language::ChineseTraditional, Language::Korean, Language::Ukrainian, Language::Turkish,
+    ];
 
     /// Every literal passed to `tr`/`trf` in the sources, as written there.
     fn keys_in_sources() -> BTreeSet<String> {
@@ -199,8 +240,16 @@ mod tests {
         let roboto = FontRef::try_from_slice(include_bytes!("../fonts/Roboto-Regular.ttf")).unwrap();
         let icons = FontRef::try_from_slice(include_bytes!("../fonts/emoji-icon-font.ttf")).unwrap();
         for language in TRANSLATED {
+            let cjk = language.cjk_tag().map(|tag| crate::markup::read_cjk_font(tag));
+            if cjk.as_ref().is_some_and(Option::is_none) {
+                eprintln!("{language:?} not checked: no CJK font installed");
+                continue;
+            }
+            let cjk = cjk.flatten();
+            let cjk = cjk.as_ref().map(|f| FontRef::try_from_slice_and_index((*f.font).as_ref(), f.index).unwrap());
             for c in language.source().chars().filter(|c| !c.is_control()) {
-                assert!(roboto.glyph_id(c).0 != 0 || icons.glyph_id(c).0 != 0, "{language:?}: no glyph for {c}");
+                let drawn = roboto.glyph_id(c).0 != 0 || icons.glyph_id(c).0 != 0 || cjk.as_ref().is_some_and(|f| f.glyph_id(c).0 != 0);
+                assert!(drawn, "{language:?}: no glyph for {c}");
             }
         }
     }
@@ -230,7 +279,15 @@ mod tests {
         assert_eq!(lookup(Language::Russian, "Open…"), "Открыть…");
         assert_eq!(Language::ALL.map(|l| l as usize), std::array::from_fn(|i| i), "ALL is in declaration order");
         assert_eq!(Language::ALL.len(), TABLES.len());
-        assert_eq!(Language::from_locale("ja_JP"), Language::English);
+        assert_eq!(Language::from_locale("ja_JP"), Language::Japanese);
+        assert_eq!(Language::from_locale("zh_CN.UTF-8"), Language::ChineseSimplified);
+        assert_eq!(Language::from_locale("zh_TW.UTF-8"), Language::ChineseTraditional);
+        assert_eq!(Language::from_locale("zh-HK"), Language::ChineseTraditional);
+        assert_eq!(Language::from_locale("zh-Hant-TW"), Language::ChineseTraditional);
+        assert_eq!(Language::from_locale("ko_KR.UTF-8"), Language::Korean);
+        assert_eq!(Language::from_locale("uk_UA.UTF-8"), Language::Ukrainian);
+        assert_eq!(Language::from_locale("tr_TR.UTF-8"), Language::Turkish);
+        assert_eq!(Language::from_locale("ar_EG"), Language::English);
         assert_eq!(Language::from_locale("C"), Language::English);
     }
 

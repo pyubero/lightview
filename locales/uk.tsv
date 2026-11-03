@@ -1,0 +1,424 @@
+AI Models	Моделі ШІ
+AI Models…	Моделі ШІ…
+AI runtime (ONNX Runtime)	Середовище ШІ (ONNX Runtime)
+Accept and Continue	Прийняти й продовжити
+Accept and Download	Прийняти й завантажити
+Accessibility	Спеціальні можливості
+Actual Size	Справжній розмір
+Add model file…	Додати файл моделі…
+Added {name}	Додано {name}
+Adjust Color	Налаштувати колір
+Adjust Color…	Налаштувати колір…
+Adjust Curves	Налаштувати криві
+Adjust Curves…	Налаштувати криві…
+All channels together: overall brightness	Усі канали разом: загальна яскравість
+Animation	Анімація
+Applies the next time lightview starts	Застосується під час наступного запуску lightview
+Apply sigmoid (the model outputs logits)	Застосувати сигмоїду (модель видає логіти)
+Apply to Selection	Застосувати до виділення
+Apply to Whole Image{size} (about {estimate})	Застосувати до всього зображення{size} (близько {estimate})
+Arrow	Стрілка
+Artist	Автор
+Auto Levels	Автоматичні рівні
+Blur Background	Розмити тло
+Blur Background…	Розмити тло…
+BSRGAN 4× — upscales and sharpens, may invent detail	BSRGAN 4× — збільшує й підвищує різкість, може вигадувати деталі
+Background colour	Колір тла
+BiRefNet lite — best quality, slow	BiRefNet lite — найкраща якість, повільно
+Bicubic	Бікубічна
+Bilinear	Білінійна
+Blue: how much blue each pixel has	Синій: скільки синього в кожному пікселі
+Camera	Камера
+Camera make	Виробник камери
+Camera model	Модель камери
+Can't open this image:\n{e}	Не вдається відкрити це зображення:\n{e}
+Cancel	Скасувати
+Cancelled	Скасовано
+Check for updates	Перевірити оновлення
+Close	Закрити
+Click to add a point, drag to move it, right-click to remove it	Клацніть, щоб додати точку, перетягніть, щоб перемістити, клацніть правою кнопкою, щоб видалити
+Color space	Колірний простір
+Colour	Колір
+Colour profile	Колірний профіль
+Continue	Продовжити
+Contrast	Контраст
+Converted to ONNX by Heliosoph LLC from the authors' published weights.	Перетворено в ONNX компанією Heliosoph LLC з опублікованих авторами ваг.
+Copied {w} × {h} px	Скопійовано {w} × {h} px
+Copy	Копіювати
+Copyright	Авторське право
+Couldn't add the model: {e}	Не вдалося додати модель: {e}
+Couldn't delete the image: {e}	Не вдалося видалити зображення: {e}
+Couldn't download {file}: {e}	Не вдалося завантажити {file}: {e}
+Couldn't install the AI runtime: {e}	Не вдалося встановити середовище ШІ: {e}
+Couldn't process the image: {e}	Не вдалося обробити зображення: {e}
+Couldn't read {file}: {e}	Не вдалося прочитати {file}: {e}
+Couldn't restore the image: {e}	Не вдалося відновити зображення: {e}
+Couldn't save {name}: {e}	Не вдалося зберегти {name}: {e}
+Couldn't select the object: {e}	Не вдалося виділити об'єкт: {e}
+Crop	Обрізати
+Cut	Вирізати
+DarkIR brightens dark and night photos and removes their noise and blur. On a well-lit photo it overexposes.	DarkIR освітлює темні та нічні фото й прибирає з них шум і розмиття. На добре освітленому фото дає пересвітлення.
+DarkIR — dark and night photos, same size	DarkIR — темні та нічні фото, той самий розмір
+Date modified	Дата зміни
+Date taken	Дата зйомки
+Default window size	Типовий розмір вікна
+Delete image?	Видалити зображення?
+Delete Image…	Видалити зображення…
+Delete Selection	Видалити виділене
+Denoise	Прибрати шум
+Denoise and Enhance run about 10× faster on a GTX 1050	Прибирання шуму й покращення працюють приблизно в 10 разів швидше на GTX 1050
+Describe the image for people who can't see it	Опишіть зображення для людей, які не можуть його бачити
+Description	Опис
+Deselect	Зняти виділення
+Detect size	Визначити розмір
+Dimensions	Розміри
+Discard	Відкинути
+Discard edits?	Відкинути зміни?
+Distance: {d} px · ΔX: {dx} px · ΔY: {dy} px	Відстань: {d} px · ΔX: {dx} px · ΔY: {dy} px
+Done	Готово
+Download	Завантажити
+Download AI Runtime…	Завантажити середовище ШІ…
+Download GPU Support	Завантажити підтримку GPU
+Downloaded from Microsoft (ONNX Runtime) and NVIDIA (CUDA libraries, via their official PyPI packages).	Завантажується з Microsoft (ONNX Runtime) і NVIDIA (бібліотеки CUDA, через їхні офіційні пакети PyPI).
+Downloaded from Microsoft's official PyPI package (onnxruntime-ep-webgpu).	Завантажується з офіційного пакета PyPI від Microsoft (onnxruntime-ep-webgpu).
+Downloaded {file}	Завантажено {file}
+Downloading GPU support ({mb} MB)…	Завантаження підтримки GPU ({mb} MB)…
+Downloading the AI runtime…	Завантаження середовища ШІ…
+Downloading…	Завантаження…
+Drag a box around one object; its outline becomes the selection. Holes inside it stay selected.	Обведіть рамкою один об'єкт; його контур стане виділенням. Отвори всередині залишаться виділеними.
+Drag to measure in image pixels · Esc to stop	Перетягніть, щоб виміряти в пікселях зображення · Esc — зупинити
+Drag to select · Enter to crop · Esc to cancel	Перетягніть, щоб виділити · Enter — обрізати · Esc — скасувати
+Drag the corners onto a rectangle · Enter to apply · Esc to cancel	Перетягніть кути на прямокутник · Enter — застосувати · Esc — скасувати
+Drawings, text and pasted images will be merged into the image and can't be edited afterwards. Ctrl+Z undoes it.	Малюнки, текст і вставлені зображення буде об'єднано із зображенням, і їх більше не можна буде редагувати. Ctrl+Z скасовує це.
+Edit	Редагування
+Edit the image description	Змінити опис зображення
+Ellipse	Еліпс
+Elliptical Selection	Еліптичне виділення
+Embedded (unnamed)	Вбудований (без назви)
+Enhance Image	Покращити зображення
+Enhance Image uses generative AI. To make the image look better it may invent or alter fine details, such as textures, text or faces, that weren't in the original.	Покращення зображення використовує генеративний ШІ. Щоб зображення виглядало краще, він може вигадати або змінити дрібні деталі, як-от текстури, текст чи обличчя, яких не було в оригіналі.
+Enter Full Screen	Повноекранний режим
+Exposure	Експозиція
+File	Файл
+File name	Назва файлу
+File size	Розмір файлу
+Fill	Заливка
+Fills the background with the background colour from Settings.	Заповнює тло кольором тла з налаштувань.
+Fit to Window	Умістити у вікно
+Flip Horizontally	Віддзеркалити горизонтально
+Flip Vertically	Віддзеркалити вертикально
+Folder	Тека
+Font size	Розмір шрифту
+For a faithful clean-up, use Denoise instead.	Для точного очищення використовуйте натомість «Прибрати шум».
+Format	Формат
+GPU (AMD, Intel and others, experimental)	GPU (AMD, Intel та інші, експериментально)
+GPU (NVIDIA)	GPU (NVIDIA)
+GPU image scaling	Масштабування зображень на GPU
+GPU support	Підтримка GPU
+GPU support installed: restart lightview to use it	Підтримку GPU встановлено: перезапустіть lightview, щоб використовувати її
+General	Загальні
+Green: how much green each pixel has	Зелений: скільки зеленого в кожному пікселі
+Height	Висота
+Hide Drawing Toolbar	Сховати панель малювання
+Hide Image Information	Сховати відомості про зображення
+Highlight	Маркер
+Hue: the color itself, such as red or blue	Відтінок: сам колір, наприклад червоний чи синій
+IS-Net anime — illustrations	IS-Net anime — ілюстрації
+IS-Net — general, clean edges	IS-Net — загальна, чисті краї
+Image	Зображення
+Image description	Опис зображення
+Images	Зображення
+Input size	Розмір входу
+Installed the AI runtime	Середовище ШІ встановлено
+Interpolation	Інтерполяція
+It also makes the image {k}× bigger ({pixels}× the pixels), which takes a while for a big photo.	Зображення також стане в {k} рази більшим ({pixels}× пікселів), що для великого фото займе час.
+It's no longer in the Trash	Його вже немає в Смітнику
+Keep aspect ratio	Зберігати пропорції
+Language	Мова
+Lasso	Ласо
+Lens	Об'єктив
+Licence ({step} of {count}) — {title}	Ліцензія ({step} з {count}) — {title}
+Licence — {title}	Ліцензія — {title}
+Lightness: from black, through color, to white	Світлість: від чорного через колір до білого
+Line	Лінія
+Local AI	Локальний ШІ
+Location	Розташування
+Magnifier	Лупа
+Make lightview my default image viewer	Зробити lightview моїм типовим переглядачем зображень
+Make lightview the default image viewer	Зробити lightview типовим переглядачем зображень
+Mean (R, G, B)	Середнє (R, G, B)
+Measure	Вимірювання
+Merge drawings into the image?	Об'єднати малюнки із зображенням?
+MobileSAM — finds the object in a box	MobileSAM — знаходить об'єкт у рамці
+Model	Модель
+Name	Назва
+Nearest	Найближчий сусід
+Next Frame	Наступний кадр
+Next Image	Наступне зображення
+no graphics card with Vulkan or Direct3D 12 was found	не знайдено відеокарти з Vulkan або Direct3D 12
+No location in this file	У цьому файлі немає розташування
+No model installed yet.	Ще не встановлено жодної моделі.
+No object found in the box	У рамці не знайдено об'єкта
+No recent files	Немає недавніх файлів
+None (sRGB assumed)	Немає (вважається sRGB)
+Nothing to paste: {e}	Немає що вставити: {e}
+OK	OK
+ONNX export (half precision) by FuryTMP on Hugging Face; its origin isn't verified.	Експорт в ONNX (половинна точність) від FuryTMP на Hugging Face; походження не перевірено.
+ONNX export by Acly on Hugging Face, from the authors' weights; downloaded from Heliosoph LLC's copy.	Експорт в ONNX від Acly на Hugging Face з ваг авторів; завантажується з копії Heliosoph LLC.
+ONNX model	Модель ONNX
+Only add models from sources you trust: they run with your permissions.	Додавайте моделі лише з джерел, яким довіряєте: вони працюють з вашими правами.
+Open Recent	Недавні файли
+Open in Google Maps	Відкрити в Google Картах
+Open models folder	Відкрити теку моделей
+Open project page	Відкрити сторінку проєкту
+Open…	Відкрити…
+Other tags ({count})	Інші теги ({count})
+Output	Вихід
+Paste	Вставити
+Pause Animation	Призупинити анімацію
+Percentage	Відсоток
+Correct Perspective	Виправити перспективу
+Play Animation	Відтворити анімацію
+Please read and accept the licence before downloading.	Прочитайте й прийміть ліцензію перед завантаженням.
+Preprocessing: {file}	Попередня обробка: {file}
+Previous Frame	Попередній кадр
+Previous Image	Попереднє зображення
+Read the input size from the model	Прочитати розмір входу з моделі
+Real-ESRGAN 4× half precision	Real-ESRGAN 4× половинна точність
+Real-ESRGAN 4× — upscales, smooth, may invent detail	Real-ESRGAN 4× — збільшує, гладко, може вигадувати деталі
+Real-ESRGAN and DarkIR can't be downloaded here. Convert them yourself with lightview-models, then copy the .onnx files into the models folder:	Real-ESRGAN і DarkIR не можна завантажити тут. Перетворіть їх самі за допомогою lightview-models, а тоді скопіюйте файли .onnx у теку моделей:
+Real-ESRGAN general 4× half precision	Real-ESRGAN general 4× половинна точність
+Real-ESRGAN general 4× — fast, softer	Real-ESRGAN general 4× — швидко, м'якше
+Rectangle	Прямокутник
+Rectangular Selection	Прямокутне виділення
+Red: how much red each pixel has	Червоний: скільки червоного в кожному пікселі
+Redo	Повторити
+Remove Background	Видалити тло
+Remove Background and Crop	Видалити тло й обрізати
+Remove location from the copy	Видалити розташування з копії
+Replace Background	Замінити тло
+Reset	Скинути
+Reset Color Adjustments	Скинути налаштування кольору
+Reset to default	Відновити типове
+Resize	Змінити розмір
+Resize…	Змінити розмір…
+Resolution	Роздільність
+Restart lightview to start using the GPU.	Перезапустіть lightview, щоб почати використовувати GPU.
+Revert	Відновити
+Rotate Left	Повернути ліворуч
+Rotate Right	Повернути праворуч
+Rounded Rectangle	Заокруглений прямокутник
+Run the AI tools on any graphics card with Vulkan or Direct3D 12 ({mb} MB download, WebGPU). A weak built-in graphics chip can be slower than the CPU.	Запускати інструменти ШІ на будь-якій відеокарті з Vulkan або Direct3D 12 (завантаження {mb} MB, WebGPU). Слабка вбудована графіка може бути повільнішою за CPU.
+Run the AI tools on the graphics card ({mb} MB download, NVIDIA's CUDA libraries).	Запускати інструменти ШІ на відеокарті (завантаження {mb} MB, бібліотеки CUDA від NVIDIA).
+Running {file}…	Виконується {file}…
+SCUNet σ15 — light noise	SCUNet σ15 — легкий шум
+SCUNet σ25 — moderate noise	SCUNet σ25 — помірний шум
+SCUNet σ50 — heavy noise	SCUNet σ50 — сильний шум
+SCUNet — noise and JPEG artifacts (recommended)	SCUNet — шум і артефакти JPEG (рекомендовано)
+Saturation	Насиченість
+Saturation: from grey to vivid color	Насиченість: від сірого до яскравого кольору
+Save As…	Зберегти як…
+Save copy…	Зберегти копію…
+Saved in JPEG files	Зберігається у файлах JPEG
+Saved {name}	Збережено {name}
+Saves a copy of the file with this metadata (without other edits). Camera maker notes are removed.	Зберігає копію файлу з цими метаданими (без інших змін). Нотатки виробника камери видаляються.
+Select	Виділити
+Select All	Виділити все
+Select Object	Виділити об'єкт
+Select Object (AI)	Виділити об'єкт (ШІ)
+Selecting the object…	Виділення об'єкта…
+Settings	Налаштування
+Settings…	Налаштування…
+Shapes	Фігури
+Show Drawing Toolbar	Показати панель малювання
+Show Image Information	Показати відомості про зображення
+Silueta — small and fast	Silueta — мала й швидка
+Size read from the model when it runs; the usual normalisation.	Розмір читається з моделі під час запуску; звичайна нормалізація.
+Sketch	Ескіз
+Smoother zooming and panning. Uses more GPU memory and makes switching images a little slower.	Плавніше масштабування й прокручування. Використовує більше пам'яті GPU і трохи сповільнює перемикання зображень.
+Sort order	Порядок сортування
+Std (R, G, B)	Ст. відх. (R, G, B)
+Strength	Сила
+Stroke	Обведення
+SwinIR σ25 — moderate noise, very slow	SwinIR σ25 — помірний шум, дуже повільно
+Text	Текст
+Text colour	Колір тексту
+The AI runtime isn't installed yet: Local AI > Download AI Runtime…	Середовище ШІ ще не встановлено: Локальний ШІ > Завантажити середовище ШІ…
+The GPU couldn't be used, so the CPU is: {e}	Не вдалося використати GPU, тому використовується CPU: {e}
+The corners must form a shape with no crossing sides	Кути мають утворювати фігуру без перетину сторін
+the model's mask decoder is missing	бракує декодера масок моделі
+Thickness	Товщина
+Tint	Тонування
+Tools	Інструменти
+Undo	Відмінити
+Use YYYY:MM:DD HH:MM:SS	Використовуйте YYYY:MM:DD HH:MM:SS
+Use the GPU	Використовувати GPU
+Used by Remove Background and Remove Background and Crop.	Використовується функціями «Видалити тло» та «Видалити тло й обрізати».
+Uses Bilinear while GPU scaling is on	Використовує білінійну, поки ввімкнено масштабування на GPU
+U²-Net people — portraits	U²-Net people — портрети
+U²-Net small — fastest	U²-Net small — найшвидша
+U²-Net — general	U²-Net — загальна
+Value: from black to full color	Значення: від чорного до повного кольору
+View	Перегляд
+Welcome to lightview	Ласкаво просимо до lightview
+Width	Ширина
+Your edits to {name} haven't been saved.	Ваші зміни в {name} не збережено.
+Zoom	Масштаб
+Zoom In	Збільшити
+Zoom Out	Зменшити
+a GPU library was missing from the download	у завантаженні бракувало бібліотеки GPU
+about {time} left	залишилося близько {time}
+can't save as .{ext}: use .jpg, .png, .webp, .bmp, .tif or .gif	не можна зберегти як .{ext}: використовуйте .jpg, .png, .webp, .bmp, .tif або .gif
+choose a new name: the original is never modified	виберіть нову назву: оригінал ніколи не змінюється
+compressed SVG files aren't supported	стиснені файли SVG не підтримуються
+couldn't read this file's EXIF safely	не вдалося безпечно прочитати EXIF цього файлу
+edited: {w} × {h}	змінено: {w} × {h}
+lightview is now the default image viewer	lightview тепер типовий переглядач зображень
+no data folder	немає теки даних
+no frames	немає кадрів
+no subject found	об'єкт не знайдено
+pick an .onnx file	виберіть файл .onnx
+the download didn't match its checksum	завантаження не відповідає контрольній сумі
+the model has no image input	модель не має входу для зображення
+the model's output changed size between tiles	розмір виходу моделі змінився між плитками
+the model's output doesn't match its input size	вихід моделі не відповідає розміру її входу
+the model's output isn't a whole multiple of its input	вихід моделі не є цілим кратним її входу
+the written file didn't check out: the location wasn't removed	записаний файл не пройшов перевірку: розташування не видалено
+the written file didn't check out: {e}	записаний файл не пройшов перевірку: {e}
+the written file didn't check out: {label} wasn't saved	записаний файл не пройшов перевірку: {label} не збережено
+this file crashed its decoder	цей файл призвів до збою декодера
+this file's EXIF couldn't be processed	не вдалося обробити EXIF цього файлу
+this image is too large to open	це зображення завелике, щоб його відкрити
+this isn't a regular file	це не звичайний файл
+{format}, {count} frames	{format}, кадрів: {count}
+{name} is already installed	{name} уже встановлено
+{name} will be moved to the Trash.	{name} буде переміщено в Смітник.
+{task} done	{task}: готово
+{task} failed: {e}	{task}: помилка: {e}
+{task} on the GPU	{task} на GPU
+{task} preview of the visible area · drag to compare · Before | After	{task}: попередній перегляд видимої області · перетягніть, щоб порівняти · До | Після
+Remove Object	Видалити об'єкт
+LaMa — best quality, slower	LaMa — найкраща якість, повільніше
+MI-GAN — fast	MI-GAN — швидко
+ONNX export by Carve on Hugging Face; its origin isn't verified.	Експорт в ONNX від Carve на Hugging Face; походження не перевірено.
+the selection is empty	виділення порожнє
+No images in {name}	У {name} немає зображень
+Can't open {name}: not a supported image	Не вдається відкрити {name}: непідтримуване зображення
+Save Copy	Зберегти копію
+Copy Path	Копіювати шлях
+Show in File Manager	Показати у файловому менеджері
+Rename…	Перейменувати…
+First Image	Перше зображення
+Last Image	Останнє зображення
+Copied the path	Шлях скопійовано
+Rename Image	Перейменувати зображення
+Rename	Перейменувати
+That isn't a valid file name	Це неприпустима назва файлу
+{name} already exists	{name} уже існує
+File changed on disk	Файл змінено на диску
+{name} changed on disk. Reloading it discards your edits.	{name} змінено на диску. Перезавантаження відкине ваші зміни.
+Reload	Перезавантажити
+Keep Edits	Залишити зміни
+Pixel grid	Піксельна сітка
+Shows the edges of the pixels when zoomed far in.	Показує межі пікселів за великого збільшення.
+Click a pixel to copy its colour · Esc to stop	Клацніть піксель, щоб скопіювати його колір · Esc — зупинити
+Copied {color}	Скопійовано {color}
+Copy Color	Копіювати колір
+this file is damaged or cut short	цей файл пошкоджено або обірвано
+HEIC and AVIF files need libheif, which isn't installed	для файлів HEIC і AVIF потрібна libheif, яку не встановлено
+this file needs a libheif decoder plugin, which isn't installed	цьому файлу потрібен плагін декодера libheif, який не встановлено
+this file needs Microsoft's HEIF Image Extensions and HEVC or AV1 Video Extensions	цьому файлу потрібні «Розширення для зображень HEIF» від Microsoft і «Розширення для відео HEVC» або «AV1»
+Pages	Сторінки
+Next Page	Наступна сторінка
+Previous Page	Попередня сторінка
+{format}, {count} pages	{format}, сторінок: {count}
+page {n} of {count}	сторінка {n} з {count}
+Colour management	Керування кольором
+Converts images with a colour profile to sRGB, so wide-gamut photos look right on an sRGB monitor. Turn it off for a wide-gamut monitor.	Перетворює зображення з колірним профілем у sRGB, щоб фото з широким охопленням правильно виглядали на моніторі sRGB. Вимкніть для монітора з широким охопленням.
+this RAW file has no embedded preview	цей файл RAW не має вбудованого попереднього перегляду
+{format} (embedded preview)	{format} (вбудований попередній перегляд)
+EXIF isn't read from this kind of RAW file yet	EXIF з такого типу файлів RAW поки не читається
+A RAW file's metadata is shown, not edited.	Метадані файлу RAW показуються, але не редагуються.
+A WebP file's metadata is shown, not edited.	Метадані файлу WebP показуються, але не редагуються.
+EXIF is shown for JPEG, PNG, WebP, TIFF and RAW files	EXIF показується для файлів JPEG, PNG, WebP, TIFF і RAW
+the copy must be a .{ext} file	копія має бути файлом .{ext}
+the written file didn't check out: the image changed	записаний файл не пройшов перевірку: зображення змінилося
+Copy File	Копіювати файл
+Copied the file	Файл скопійовано
+Couldn't copy the file: {e}	Не вдалося скопіювати файл: {e}
+Straighten…	Вирівняти…
+Straighten	Вирівняти
+Greyscale	Відтінки сірого
+Invert Colors	Інвертувати кольори
+Remove Red Eye	Прибрати червоні очі
+Pixelate Selection	Пікселізувати виділення
+Select the eyes first, then choose this.	Спершу виділіть очі, а тоді виберіть це.
+Hides faces. For text, a solid shape is safer: pixelation can sometimes be undone.	Приховує обличчя. Для тексту надійніша суцільна фігура: пікселізацію іноді можна скасувати.
+Red eye removed	Червоні очі прибрано
+Pixelated	Пікселізовано
+Turn until the lines run straight · Enter to apply · Esc to cancel	Повертайте, доки лінії не стануть рівними · Enter — застосувати · Esc — скасувати
+Recognize Text	Розпізнати текст
+PP-OCRv5 Latin — European languages	PP-OCRv5 Latin — європейські мови
+PP-OCRv5 — Chinese, Japanese and English	PP-OCRv5 — китайська, японська та англійська
+Converted to ONNX by Satoru Nakamura (University of Tokyo) from PaddlePaddle's published models.	Перетворено в ONNX Сатору Накамурою (Токійський університет) з опублікованих моделей PaddlePaddle.
+the model's output doesn't match its character list	вихід моделі не відповідає її списку символів
+Read QR Code	Прочитати QR-код
+No QR code found	QR-код не знайдено
+No text found	Текст не знайдено
+QR Code	QR-код
+Text in Image	Текст на зображенні
+Couldn't read the text: {e}	Не вдалося прочитати текст: {e}
+Reading QR codes…	Читання QR-кодів…
+Recognizing text…	Розпізнавання тексту…
+Reads the selection, or the whole image. Straighten tilted text first, and select small text in a large image so it's read at full size.	Читає виділення або все зображення. Спершу вирівняйте нахилений текст, а дрібний текст на великому зображенні виділіть, щоб його прочитало в повному розмірі.
+Reads the selection, or the whole image. Shows what the code says; links are never opened.	Читає виділення або все зображення. Показує, що містить код; посилання ніколи не відкриваються.
+Keyboard Shortcuts	Клавіатурні скорочення
+Press keys… (Esc to cancel)	Натисніть клавіші… (Esc — скасувати)
+Change	Змінити
+Remove	Видалити
+Reset All Shortcuts	Скинути всі скорочення
+{keys} is already used by {action}	{keys} уже використовується для «{action}»
+Copy, Cut, Paste, Enter, Esc and Delete	Копіювати, Вирізати, Вставити, Enter, Esc і Delete
+Change Keyboard Shortcuts…	Змінити клавіатурні скорочення…
+Theme	Тема
+Follow system	Як у системі
+Dark	Темна
+Light	Світла
+High contrast	Висока контрастність
+bigger than 64 KiB	більше ніж 64 KiB
+invalid value	неприпустиме значення
+line	рядок
+Your own themes go in the themes folder next to the AI models. Choosing a theme again reloads its file.	Власні теми кладіть у теку themes поруч із моделями ШІ. Повторний вибір теми перечитує її файл.
+Couldn't load the theme, so the base theme is used: {e}	Не вдалося завантажити тему, тому використовується базова: {e}
+Open themes folder	Відкрити теку тем
+Group Duplicates in Folder…	Згрупувати дублікати в теці…
+Group Duplicates in Folder	Згрупувати дублікати в теці
+Compares the images in this folder (not its subfolders) and moves each group of look-alikes into a folder of its own. Nothing is deleted, and Ctrl+Z moves them back. Rotated copies and heavy crops aren't found.	Порівнює зображення в цій теці (без підтек) і переміщує кожну групу схожих у власну теку. Нічого не видаляється, а Ctrl+Z повертає їх назад. Повернуті копії та сильно обрізані зображення не знаходяться.
+Comparing images: {done} of {total}	Порівняння зображень: {done} з {total}
+How different each image is from its closest look-alike:	Наскільки кожне зображення відрізняється від найсхожішого:
+Largest difference	Найбільша різниця
+{meaning} · suggested: {n}	{meaning} · рекомендовано: {n}
+Identical pixels only	Лише ідентичні пікселі
+Resized or recompressed copies	Змінені за розміром або перестиснені копії
+Small edits, crops and bursts	Дрібні зміни, обрізання та серії знімків
+Merely similar scenes too	Навіть просто схожі сцени
+Groups: {groups} · Images to move: {moving} · Staying: {staying}	Груп: {groups} · Буде переміщено: {moving} · Залишиться: {staying}
+Not compared: {n}	Не порівняно: {n}
+Not compared	Не порівняно
+{name} · difference: {d}	{name} · різниця: {d}
+Move	Перемістити
+Images moved: {n} · Folders: {f}	Переміщено зображень: {n} · Тек: {f}
+Stopped: {e}	Зупинено: {e}
+Images moved back: {n}	Повернуто зображень: {n}
+{name}: changed since it was compared	{name}: змінено після порівняння
+{name}: already in the folder	{name}: уже в теці
+{name}: its old name is taken	{name}: його стару назву зайнято
+the file is gone	файлу більше немає
+About {s} s left	Залишилося близько {s} с
+About {m} min left	Залишилося близько {m} хв
+Smallest group	Найменша група
+Groups with fewer images stay where they are.	Групи з меншою кількістю зображень залишаються на місці.
+Resize Optimally	Оптимальний розмір
+Shrinks the image to the size its detail needs, measured on its sharpest part. Never enlarges; Ctrl+Z undoes it.	Зменшує зображення до розміру, якого потребують його деталі, виміряного на найрізкішій частині. Ніколи не збільшує; Ctrl+Z скасовує.
+Already at its optimal size	Уже має оптимальний розмір
+Resized to {w} × {h} px	Розмір змінено на {w} × {h} px
