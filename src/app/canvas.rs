@@ -44,7 +44,7 @@ impl App {
     /// resolution, because rendering every frame lags even at 1600×900.
     // shortcut: above the limit, and on animated images, markup stays at screen resolution; render on a thread if that's missed.
     pub(super) fn flattened(&mut self, full: Option<&Loaded>, doc: &Doc) -> Option<Arc<Frame>> {
-        let live = self.change_base.is_some() || self.adjusting.is_some() || self.editing_text.is_some();
+        let live = self.shown.change_base.is_some() || self.shown.adjusting.is_some() || self.shown.editing_text.is_some();
         let fits = doc.size[0] as u64 * doc.size[1] as u64 <= FLAT_MAX_PIXELS;
         let Some(l) = full.filter(|l| l.frames.len() == 1 && fits && !live && !doc.elements.is_empty()) else {
             self.flat = None;
@@ -95,23 +95,23 @@ impl App {
         for (i, e) in painted.iter().enumerate() {
             let own = e.texture_key().and_then(|key| {
                 used.push(key);
-                if let std::collections::hash_map::Entry::Vacant(slot) = self.element_textures.entry(key) {
+                if let std::collections::hash_map::Entry::Vacant(slot) = self.shown.element_textures.entry(key) {
                     let image = e.texture_image(ui.ctx().input(|i| i.max_texture_side) as f32)?;
                     slot.insert(ui.ctx().load_texture("markup", image, TextureOptions::LINEAR));
                 }
-                Some(self.element_textures[&key].id())
+                Some(self.shown.element_textures[&key].id())
             });
-            if Some(i) != self.editing_text {
+            if Some(i) != self.shown.editing_text {
                 markup::paint(&painter, e, &to_screen, k, texture, uv, own);
             }
         }
-        self.element_textures.retain(|key, _| used.contains(key));
-        if self.tool == Tool::Select && let Some(e) = self.selected.and_then(|i| doc.elements.get(i)) {
+        self.shown.element_textures.retain(|key, _| used.contains(key));
+        if self.shown.tool == Tool::Select && let Some(e) = self.shown.selected.and_then(|i| doc.elements.get(i)) {
             let r = Rect::from_two_pos(to_screen(e.bbox().min), to_screen(e.bbox().max)).expand(3.0);
             painter.rect_stroke(r, 0.0, egui::Stroke::new(1.0, Color32::from_rgb(66, 165, 245)), egui::StrokeKind::Outside);
             painter.rect_filled(Rect::from_center_size(r.max, Vec2::splat(9.0)), 1.0, Color32::from_rgb(66, 165, 245));
         }
-        let Some(i) = self.editing_text else { return };
+        let Some(i) = self.shown.editing_text else { return };
         let Some(e) = doc.elements.get(i) else { return };
         let mut text = e.text.clone();
         let font = egui::FontId::proportional(e.style.font_size * k);
@@ -132,10 +132,10 @@ impl App {
     pub(super) fn draw(&mut self, ui: &egui::Ui, full: Option<&Loaded>, doc: Option<Doc>, hovered_at: Option<Pos2>, viewport: Rect) {
         let ctx = ui.ctx();
         let ppp = ctx.pixels_per_point();
-        let preview = self.preview.clone();
+        let preview = self.shown.preview.clone();
         let base = doc.as_ref().and_then(|d| d.base.clone());
         let (frame, view, doc) = match (full, doc) {
-            (Some(l), Some(doc)) => (Some(base.as_ref().map_or(&l.frames[self.anim_frame], |b| &*b.0)), self.view, doc),
+            (Some(l), Some(doc)) => (Some(base.as_ref().map_or(&l.frames[self.shown.anim_frame], |b| &*b.0)), self.view, doc),
             _ => (preview.as_deref(), View::Fit, preview.as_ref().map(|f| Doc::new(f.w, f.h)).unwrap_or(Doc::new(1, 1))),
         };
         // Flattened pixels hold every edit, so they're drawn as a plain image of the output's size.
@@ -146,7 +146,7 @@ impl App {
             None => (frame, doc),
         };
         // A shrunk image is shown from its resized pixels: the decoded ones still hold the lost detail.
-        let bake_key = frame.filter(|_| doc.shrinks()).map(|_| BakeKey { generation: self.generation, anim_frame: self.anim_frame, crop: doc.crop, size: doc.plain_size() });
+        let bake_key = frame.filter(|_| doc.shrinks()).map(|_| BakeKey { generation: self.generation, anim_frame: self.shown.anim_frame, crop: doc.crop, size: doc.plain_size() });
         if let (Some(key), Some(frame)) = (bake_key, frame) && self.baked.as_ref().map(|b| b.0) != Some(key) {
             self.baked = Some((key, Arc::new(edit::bake(frame, &doc))));
         }
@@ -168,11 +168,11 @@ impl App {
         // shortcut: colour adjustments only run on the CPU path; add a shader if GPU users miss smooth zoom while adjusting.
         let gpu = self.settings.gpu_scaling && frame.w.max(frame.h) as usize <= ctx.input(|i| i.max_texture_side) && doc.adjust.is_identity();
         let key = if gpu {
-            TexKey { flat: flat.is_some(), generation: self.generation, anim_frame: self.anim_frame, gpu, interpolation, transform: Transform::default(), crop: [0.0; 4], size: [frame.w, frame.h], adjust: Adjust::default(), baked: bake_key }
+            TexKey { flat: flat.is_some(), generation: self.generation, anim_frame: self.shown.anim_frame, gpu, interpolation, transform: Transform::default(), crop: [0.0; 4], size: [frame.w, frame.h], adjust: Adjust::default(), baked: bake_key }
         } else {
             let src = source.to_source(crop);
             let size = [(dest.width() * ppp).round().max(1.0) as u32, (dest.height() * ppp).round().max(1.0) as u32];
-            TexKey { flat: flat.is_some(), generation: self.generation, anim_frame: self.anim_frame, gpu, interpolation, transform: doc.transform, crop: [src.min.x, src.min.y, src.width(), src.height()], size, adjust: doc.adjust, baked: bake_key }
+            TexKey { flat: flat.is_some(), generation: self.generation, anim_frame: self.shown.anim_frame, gpu, interpolation, transform: doc.transform, crop: [src.min.x, src.min.y, src.width(), src.height()], size, adjust: doc.adjust, baked: bake_key }
         };
         self.upload_texture(ctx, frame, key, &doc);
         let texture = self.texture.as_ref().unwrap().id();
@@ -184,7 +184,7 @@ impl App {
         // Straighten turns the drawn image about its centre: no pixel work while the slider moves.
         // shortcut: markup and the checkerboard stay upright meanwhile; turn them too if that's confusing.
         let centre = view::to_screen(dest, crop, doc.bounds().center());
-        let turn = egui::emath::Rot2::from_angle(if let Tool::Straighten(degrees) = self.tool { degrees.to_radians() } else { 0.0 });
+        let turn = egui::emath::Rot2::from_angle(if let Tool::Straighten(degrees) = self.shown.tool { degrees.to_radians() } else { 0.0 });
         let mut mesh = egui::Mesh::with_texture(texture);
         let shown = [crop.left_top(), crop.right_top(), crop.right_bottom(), crop.left_bottom()];
         let screen = [dest.left_top(), dest.right_top(), dest.right_bottom(), dest.left_bottom()];
@@ -202,10 +202,10 @@ impl App {
         self.paint_compare(ui, dest, crop);
         // The magnifier samples the image texture: the whole frame (GPU) or the visible part (CPU).
         let uv = |p: Pos2| if gpu { (source.source_point(p).to_vec2() / frame_size).to_pos2() } else { ((p - crop.min) / crop.size()).to_pos2() };
-        if !edited.elements.is_empty() || self.editing_text.is_some() || !self.element_textures.is_empty() {
+        if !edited.elements.is_empty() || self.shown.editing_text.is_some() || !self.shown.element_textures.is_empty() {
             self.paint_markup(ui, &edited, flat.is_some(), dest, crop, texture, &uv);
         }
-        if let Some(p) = hovered_at.filter(|_| self.tool == Tool::Draw(Shape::Magnifier) && self.compare.is_none()) && let Some(style) = self.style {
+        if let Some(p) = hovered_at.filter(|_| self.shown.tool == Tool::Draw(Shape::Magnifier) && self.shown.compare.is_none()) && let Some(style) = self.shown.style {
             // The lens a click here would place.
             let size = doc.size_vec();
             let lens = Element::lens(Rect::from_min_size(Pos2::ZERO, size).clamp(view::to_image(dest, crop, p)), size, style);
@@ -220,19 +220,19 @@ impl App {
             }
         }
         self.paint_selection(ui, dest, crop);
-        if let Tool::Crop(rect) = self.tool {
+        if let Tool::Crop(rect) = self.shown.tool {
             self.paint_crop(ui, rect, dest, crop, viewport);
         }
-        if let Tool::Perspective { corners, .. } = self.tool {
+        if let Tool::Perspective { corners, .. } = self.shown.tool {
             self.paint_perspective(ui, corners, dest, crop, viewport);
         }
-        if let Tool::Straighten(degrees) = self.tool {
+        if let Tool::Straighten(degrees) = self.shown.tool {
             self.paint_straighten(ui, degrees, doc.size_vec(), dest, crop, viewport);
         }
-        if let Tool::Measure { ends, .. } = self.tool {
+        if let Tool::Measure { ends, .. } = self.shown.tool {
             self.paint_measure(ui, ends, &edited, dest, crop, viewport);
         }
-        if self.tool == Tool::CopyColor {
+        if self.shown.tool == Tool::CopyColor {
             bubble(ui.painter(), Pos2::new(viewport.center().x, viewport.top() + 24.0), tr("Click a pixel to copy its colour · Esc to stop"));
         }
         if view::zoomed_in(crop, doc.size_vec()) {
@@ -319,7 +319,7 @@ impl App {
 
     /// The result on the right of the line, the original on the left.
     fn paint_compare(&self, ui: &egui::Ui, dest: Rect, crop: Rect) {
-        let Some(c) = &self.compare else { return };
+        let Some(c) = &self.shown.compare else { return };
         let r = Rect::from_two_pos(view::to_screen(dest, crop, c.region.min), view::to_screen(dest, crop, c.region.max));
         let x = r.left() + r.width() * c.split;
         let after = Rect::from_min_max(Pos2::new(x, r.top()), r.max);
@@ -331,7 +331,7 @@ impl App {
     }
 
     fn paint_selection(&self, ui: &egui::Ui, dest: Rect, crop: Rect) {
-        let Some(sel) = &self.selection else { return };
+        let Some(sel) = &self.shown.selection else { return };
         let mut outline: Vec<Pos2> = sel.outline().into_iter().map(|p| view::to_screen(dest, crop, p)).collect();
         outline.push(outline[0]);
         // Marching-ants style: white dashes over a dark line, visible on any image.

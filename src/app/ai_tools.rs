@@ -67,7 +67,7 @@ impl App {
         if self.reading || file == Some(None) {
             return;
         }
-        let region = self.selection.as_ref().filter(|s| !s.is_empty()).map(|s| Rect::from_min_max(s.bbox().min.floor(), s.bbox().max.ceil()).intersect(doc.bounds())).filter(|r| r.width() >= 1.0 && r.height() >= 1.0);
+        let region = self.shown.selection.as_ref().filter(|s| !s.is_empty()).map(|s| Rect::from_min_max(s.bbox().min.floor(), s.bbox().max.ceil()).intersect(doc.bounds())).filter(|r| r.width() >= 1.0 && r.height() >= 1.0);
         self.reading = true;
         self.set_status(if qr { tr("Reading QR codes…") } else { tr("Recognizing text…") });
         let notify = self.notify.clone();
@@ -93,7 +93,7 @@ impl App {
         let size = vis.size().min(Vec2::splat(256.0));
         let region = Rect::from_center_size(vis.center(), size);
         let region = Rect::from_min_max(region.min.round(), region.max.round()).intersect(doc.bounds());
-        self.compare = None;
+        self.shown.compare = None;
         self.run_restore(task, region, false, None);
     }
 
@@ -128,7 +128,7 @@ impl App {
         let task = crate::ai::Task::Inpaint;
         let Some((l, doc, path)) = self.current().and_then(|p| Some((self.cache.get(p)?.clone(), self.doc()?, p.clone()))) else { return };
         let Some(file) = crate::ai::choose(self.settings.ai.choice(task), task, &crate::ai::installed()) else { return };
-        let Some(sel) = self.selection.clone().filter(|s| !s.is_empty() && self.restoring.is_none()) else { return };
+        let Some(sel) = self.shown.selection.clone().filter(|s| !s.is_empty() && self.restoring.is_none()) else { return };
         let region = Rect::from_min_max(sel.bbox().min.floor(), sel.bbox().max.ceil()).intersect(doc.bounds());
         if region.width() < 1.0 || region.height() < 1.0 {
             return;
@@ -175,13 +175,13 @@ impl App {
 
     /// The bar over the before/after preview: Apply to Whole Image / Selection, Discard.
     pub(super) fn compare_bar(&mut self, ctx: &egui::Context, viewport: Rect) {
-        let Some(c) = &self.compare else { return };
+        let Some(c) = &self.shown.compare else { return };
         let Some(doc) = self.doc() else { return };
         let mp = doc.size_vec().x as f64 * doc.size_vec().y as f64 / 1e6;
         // shortcut: overlapping tiles do ~1.3–1.4× the image's pixels on a 12 MP photo; count the tiles if estimates are off.
         let estimate = format_duration(c.ms_per_mp * mp * 1.4 / 1000.0);
         // A bigger patch doesn't fit back into the image, so upscalers only do the whole image.
-        let selection = self.selection.clone().filter(|s| !s.is_empty() && c.scale == 1);
+        let selection = self.shown.selection.clone().filter(|s| !s.is_empty() && c.scale == 1);
         let result = if c.scale > 1 { format!(", {} × {} px", doc.size[0] * c.scale, doc.size[1] * c.scale) } else { String::new() };
         let (whole, sel, discard) = egui::Area::new(egui::Id::unique("compare-bar")).fixed_pos(Pos2::new(viewport.center().x - 260.0, viewport.top() + 12.0)).show(ctx, |ui| {
             egui::Frame::popup(ui.style()).show(ui, |ui| {
@@ -195,7 +195,7 @@ impl App {
         }).inner;
         let task = c.task;
         if whole || sel || discard {
-            self.compare = None;
+            self.shown.compare = None;
         }
         if whole {
             self.run_restore(task, doc.bounds(), true, None);

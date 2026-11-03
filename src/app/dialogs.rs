@@ -190,9 +190,9 @@ impl App {
 
     /// The Adjust Color or Adjust Curves panel: it changes the edits live, and Done makes them one undo step.
     pub(super) fn adjust_panel(&mut self, ctx: &egui::Context) {
-        let (Some(before), Some(mut doc)) = (self.adjusting.clone(), self.doc()) else { return };
+        let (Some(before), Some(mut doc)) = (self.shown.adjusting.clone(), self.doc()) else { return };
         let mut open = true;
-        let mut curves = self.curve_panel.take();
+        let mut curves = self.shown.curve_panel.take();
         let base = doc.base.clone();
         let frame = base.as_ref().map(|b| &*b.0).or(self.current().and_then(|c| self.cache.get(c)).map(|l| &l.frames[0]));
         let title = if curves.is_some() { tr("Adjust Curves") } else { tr("Adjust Color") };
@@ -201,13 +201,13 @@ impl App {
             None => edit::adjust_ui(ui, &mut doc.adjust, || self.auto_levels()),
         }).and_then(|r| r.inner).flatten();
         let mut adjust = doc.adjust;
-        self.doc = Some(doc);
-        self.curve_panel = curves;
+        self.shown.doc = Some(doc);
+        self.shown.curve_panel = curves;
         if choice.is_some() || !open {
             // Back to before the panel opened, then Done applies the result as one edit.
-            self.adjusting = None;
-            self.curve_panel = None;
-            self.doc = Some(before);
+            self.shown.adjusting = None;
+            self.shown.curve_panel = None;
+            self.shown.doc = Some(before);
             adjust.curves.keep_active();
             if choice == Some(true) {
                 self.edit(|d| d.adjust = adjust);
@@ -217,10 +217,10 @@ impl App {
 
     /// Straighten's angle. The canvas shows the image turned and its new bounds; Done or Enter applies it.
     pub(super) fn straighten_panel(&mut self, ctx: &egui::Context) {
-        if self.perspective_prompt {
+        if self.shown.perspective_prompt {
             return;
         }
-        let Tool::Straighten(degrees) = &mut self.tool else { return };
+        let Tool::Straighten(degrees) = &mut self.shown.tool else { return };
         let mut open = true;
         let choice = egui::Window::new(tr("Straighten")).open(&mut open).resizable(false).collapsible(false).show(ctx, |ui| {
             ui.add(egui::Slider::new(degrees, -180.0..=180.0).step_by(0.1).fixed_decimals(1).suffix("°"));
@@ -229,8 +229,8 @@ impl App {
         }).and_then(|r| r.inner).flatten();
         match choice {
             Some(true) => self.apply_straighten(),
-            Some(false) => self.tool = Tool::Pan,
-            None if !open => self.tool = Tool::Pan,
+            Some(false) => self.shown.tool = Tool::Pan,
+            None if !open => self.shown.tool = Tool::Pan,
             None => {}
         }
     }
@@ -360,7 +360,7 @@ impl App {
         });
         let (discard, cancel) = modal.inner;
         if discard && let Some(p) = self.pending.take() {
-            self.doc = None;
+            self.shown.doc = None;
             self.confirm(p);
         } else if cancel || modal.should_close() {
             self.pending = None;
@@ -370,7 +370,7 @@ impl App {
     /// Always asks before moving the current image to the Trash.
     /// Asks before the markup is flattened into the corrected image.
     pub(super) fn perspective_dialog(&mut self, ctx: &egui::Context) {
-        if !self.perspective_prompt {
+        if !self.shown.perspective_prompt {
             return;
         }
         let modal = egui::Modal::new(egui::Id::unique("perspective")).show(ctx, |ui| {
@@ -381,16 +381,16 @@ impl App {
         });
         let (accept, cancel) = modal.inner;
         if accept {
-            self.perspective_prompt = false;
+            self.shown.perspective_prompt = false;
             self.apply_perspective();
         } else if cancel || modal.should_close() {
-            self.perspective_prompt = false;
+            self.shown.perspective_prompt = false;
         }
     }
 
     /// The file changed on disk under unsaved edits: only the user can say which one wins.
     pub(super) fn changed_dialog(&mut self, ctx: &egui::Context) {
-        if !self.changed_prompt {
+        if !self.shown.changed_prompt {
             return;
         }
         let name = self.current().and_then(|p| p.file_name()).unwrap_or_default().to_string_lossy().into_owned();
@@ -407,9 +407,9 @@ impl App {
     }
 
     pub(super) fn answer_changed(&mut self, reload: bool) {
-        self.changed_prompt = false;
+        self.shown.changed_prompt = false;
         if reload {
-            self.doc = None;
+            self.shown.doc = None;
             self.reload();
         }
     }

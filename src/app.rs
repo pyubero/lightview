@@ -37,8 +37,9 @@ enum SelKind {
 }
 
 /// What dragging on the image does.
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, Default, PartialEq)]
 enum Tool {
+    #[default]
     Pan,
     /// The crop rect so far, in image px.
     Crop(Option<Rect>),
@@ -55,8 +56,9 @@ enum Tool {
 }
 
 /// What dragging with the Select tool does.
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, Default, PartialEq)]
 enum Grab {
+    #[default]
     None,
     Move,
     Resize,
@@ -69,7 +71,48 @@ enum Pending {
     Close,
 }
 
+/// What belongs to the image on screen: all of it starts afresh when another image is shown.
+#[derive(Default)]
+struct Shown {
+    preview: Option<Arc<Frame>>,
+    anim_frame: usize,
+    anim_due: Option<Instant>,
+    anim_paused: bool,
+    /// Edits to the current image (None: none yet), with undo/redo history.
+    doc: Option<Doc>,
+    undo: Vec<Doc>,
+    redo: Vec<Doc>,
+    /// Asking what to do: the file changed on disk, and there are unsaved edits.
+    changed_prompt: bool,
+    /// The edits last saved to a copy.
+    saved: Option<Doc>,
+    tool: Tool,
+    /// Asking before flattening the markup into the corrected image.
+    perspective_prompt: bool,
+    /// The style for new markup (None until the toolbar is first used on this image).
+    style: Option<Style>,
+    selected: Option<usize>,
+    grab: Grab,
+    /// The text element being typed into.
+    editing_text: Option<usize>,
+    /// The edits before the markup change in progress (a drag or typing), for one undo step.
+    change_base: Option<Doc>,
+    /// The element whose style the last undo step changed, so style tweaks merge into one step.
+    last_restyle: Option<usize>,
+    /// The selection, in output px.
+    selection: Option<Selection>,
+    /// Textures for Erase and Image elements, by `Element::texture_key`.
+    element_textures: HashMap<u64, TextureHandle>,
+    /// While Adjust Color or Adjust Curves is open: the edits from before it opened.
+    adjusting: Option<Doc>,
+    /// Some while the open panel is Adjust Curves rather than Adjust Color.
+    curve_panel: Option<CurvePanel>,
+    compare: Option<Compare>,
+}
+
 pub struct App {
+    /// The image on screen: its edits, tool, animation and dialogs.
+    shown: Shown,
     t0: Instant,
     timings: bool,
     bench: bool,
@@ -90,7 +133,6 @@ pub struct App {
     /// Decoded images for current ±1 only.
     // Arc so a frame can hold the current image while calling `&mut self` methods.
     cache: HashMap<PathBuf, Arc<Loaded>>,
-    preview: Option<Arc<Frame>>,
     error: Option<String>,
     view: View,
     texture: Option<TextureHandle>,
@@ -107,13 +149,6 @@ pub struct App {
     flat: Option<(u64, Doc, Arc<Frame>)>,
     /// Bumped whenever what's shown changes source (navigation, preview → full).
     generation: u64,
-    anim_frame: usize,
-    anim_due: Option<Instant>,
-    anim_paused: bool,
-    /// Edits to the current image (None: none yet), with undo/redo history.
-    doc: Option<Doc>,
-    undo: Vec<Doc>,
-    redo: Vec<Doc>,
     /// Images moved to the Trash this session, newest last; Ctrl+Z brings them back.
     deleted: Vec<PathBuf>,
     delete_prompt: bool,
@@ -122,40 +157,15 @@ pub struct App {
     watched: Arc<Mutex<Option<PathBuf>>>,
     /// The state lightview itself last left the current file in, which isn't a change to react to.
     own_stamp: Option<files::Stamp>,
-    /// Asking what to do: the file changed on disk, and there are unsaved edits.
-    changed_prompt: bool,
     /// The navigator's thumbnail, and what it holds.
     navigator: Option<(TexKey, TextureHandle)>,
-    /// The edits last saved to a copy.
-    saved: Option<Doc>,
-    tool: Tool,
     /// Crop, Measure and selection tools: where the drag started, in image px.
     drag_start: Option<Pos2>,
     /// A drag started with the right button is under way: it pans.
     right_pan: bool,
-    /// Asking before flattening the markup into the corrected image.
-    perspective_prompt: bool,
     show_toolbar: bool,
-    /// The style for new markup (None until the toolbar is first used on this image).
-    style: Option<Style>,
-    selected: Option<usize>,
-    grab: Grab,
-    /// The text element being typed into.
-    editing_text: Option<usize>,
     focus_text: bool,
-    /// The edits before the markup change in progress (a drag or typing), for one undo step.
-    change_base: Option<Doc>,
-    /// The element whose style the last undo step changed, so style tweaks merge into one step.
-    last_restyle: Option<usize>,
-    /// The selection, in output px.
-    selection: Option<Selection>,
-    /// Textures for Erase and Image elements, by `Element::texture_key`.
-    element_textures: HashMap<u64, TextureHandle>,
     resize_dialog: Option<ResizeDialog>,
-    /// While Adjust Color or Adjust Curves is open: the edits from before it opened.
-    adjusting: Option<Doc>,
-    /// Some while the open panel is Adjust Curves rather than Adjust Color.
-    curve_panel: Option<CurvePanel>,
     pending: Option<Pending>,
     show_ai_models: bool,
     /// The download whose licences are being shown, and which one (they come one at a time).
@@ -163,7 +173,6 @@ pub struct App {
     restoring: Option<Restoring>,
     /// How many Denoise / Enhance runs were started: the last run's id.
     restore_runs: u64,
-    compare: Option<Compare>,
     /// Enhance Image waiting for the user to read its model's notice: the model file.
     enhance_notice: Option<String>,
     /// Recognize Text or Read QR Code is running.
@@ -215,13 +224,14 @@ impl App {
         }
         let watched = files::watch(notify.clone(), std::time::Duration::from_secs(1));
         App {
+            shown: Shown::default(),
             t0, timings, bench, rx, loader, notify, recent, settings, show_info: false, show_settings: false, default_prompt, default_result: None, inspector: None,
             files: start.into_iter().collect(), index: 0,
-            cache: HashMap::new(), preview: None, error: None, view: View::Fit,
-            texture: None, tex_key: None, resized: None, baked: None, sharp: None, sharp_wanted: 1, flat: None, generation: 0, anim_frame: 0, anim_due: None, anim_paused: false,
-            doc: None, undo: Vec::new(), redo: Vec::new(), deleted: Vec::new(), delete_prompt: false, renaming: None, watched, own_stamp: None, changed_prompt: false, navigator: None, saved: None, tool: Tool::Pan, drag_start: None, right_pan: false, perspective_prompt: false,
-            show_toolbar, style: None, selected: None, grab: Grab::None, editing_text: None, focus_text: false, change_base: None, last_restyle: None, selection: None, element_textures: HashMap::new(),
-            resize_dialog: None, adjusting: None, curve_panel: None, pending: None, show_ai_models: false, license_prompt: None, restoring: None, restore_runs: 0, compare: None, enhance_notice: None, reading: false, found_text: None, show_shortcuts: false, recording: None, shortcut_error: None, visible: None, downloading: HashSet::new(),
+            cache: HashMap::new(), error: None, view: View::Fit,
+            texture: None, tex_key: None, resized: None, baked: None, sharp: None, sharp_wanted: 1, flat: None, generation: 0,
+            deleted: Vec::new(), delete_prompt: false, renaming: None, watched, own_stamp: None, navigator: None, drag_start: None, right_pan: false,
+            show_toolbar, focus_text: false,
+            resize_dialog: None, pending: None, show_ai_models: false, license_prompt: None, restoring: None, restore_runs: 0, enhance_notice: None, reading: false, found_text: None, show_shortcuts: false, recording: None, shortcut_error: None, visible: None, downloading: HashSet::new(),
             title: String::new(),
             window_reported: false, preview_reported: None, full_reported: false, nav_start: None, close_next: false, status: None, file_clipboard: None,
         }
@@ -274,7 +284,7 @@ impl App {
                         let image = egui::ColorImage::from_rgba_unmultiplied([img.width() as usize, img.height() as usize], img.as_raw());
                         let texture = self.notify.ctx.get().map(|ctx| ctx.load_texture("restored", image, TextureOptions::LINEAR));
                         let scale = (img.width() as f32 / region.width()).round().max(1.0) as u32;
-                        self.compare = texture.map(|texture| Compare { task: run.task, region, texture, split: 0.5, ms_per_mp, scale });
+                        self.shown.compare = texture.map(|texture| Compare { task: run.task, region, texture, split: 0.5, ms_per_mp, scale });
                     }
                     Ok((mut img, _)) => {
                         if let Some(sel) = &run.selection {
@@ -294,7 +304,7 @@ impl App {
                         });
                         // The filled area should be seen, not outlined.
                         if run.task == crate::ai::Task::Inpaint {
-                            self.selection = None;
+                            self.shown.selection = None;
                         }
                         self.set_status(trf("{task} done", &[("task", &run.task.title())]));
                     }
@@ -332,7 +342,7 @@ impl App {
                 Ok((img, object)) if self.current() == Some(&path) => {
                     let Some(doc) = self.doc() else { return };
                     let bounds = doc.bounds();
-                    let style = *self.style.get_or_insert_with(|| Style::for_image(doc.size_vec()));
+                    let style = *self.shown.style.get_or_insert_with(|| Style::for_image(doc.size_vec()));
                     // Erase everything, then put the cut-out back on top: one undo step.
                     self.edit(|d| {
                         d.elements.push(Element::erase(&Selection::Rect(bounds), false, bounds, Color32::TRANSPARENT));
@@ -352,7 +362,7 @@ impl App {
                     return;
                 }
                 if self.dirty() {
-                    self.changed_prompt = true;
+                    self.shown.changed_prompt = true;
                 } else {
                     self.reload();
                 }
@@ -366,14 +376,14 @@ impl App {
             }
             Msg::Preview(path, frame) => {
                 if self.current() == Some(&path) && !self.cache.contains_key(&path) {
-                    self.preview = Some(Arc::new(frame));
+                    self.shown.preview = Some(Arc::new(frame));
                     self.generation += 1;
                 }
             }
             Msg::Full(path, loaded) => {
                 if self.window().contains(&path) {
                     if self.current() == Some(&path) {
-                        self.preview = None;
+                        self.shown.preview = None;
                         self.generation += 1;
                     }
                     self.cache.insert(path, Arc::new(loaded));
@@ -394,7 +404,7 @@ impl App {
                 if let (Ok(()), Some((source, doc))) = (&result, written)
                     && self.current() == Some(&source)
                 {
-                    self.saved = Some(doc);
+                    self.shown.saved = Some(doc);
                 }
                 let name = path.file_name().unwrap_or_default().to_string_lossy().into_owned();
                 self.set_status(match &result {
@@ -424,12 +434,12 @@ impl App {
 
     /// The current image's edits (none yet is the identity), once it's decoded.
     fn doc(&self) -> Option<Doc> {
-        self.doc.clone().or_else(|| self.base_doc())
+        self.shown.doc.clone().or_else(|| self.base_doc())
     }
 
     /// Whether the current edits haven't been saved to a copy.
     fn dirty(&self) -> bool {
-        self.doc.is_some() && self.doc != self.saved.clone().or_else(|| self.base_doc())
+        self.shown.doc.is_some() && self.shown.doc != self.shown.saved.clone().or_else(|| self.base_doc())
     }
 
     /// Applies an edit to the current image as one undo step.
@@ -440,40 +450,40 @@ impl App {
         if doc != before {
             if doc.geometry() != before.geometry() {
                 // The measurement's and selection's points are in the old image coordinates.
-                (self.view, self.selection) = (View::Fit, None);
-                if let Tool::Measure { ends, .. } = &mut self.tool {
+                (self.view, self.shown.selection) = (View::Fit, None);
+                if let Tool::Measure { ends, .. } = &mut self.shown.tool {
                     *ends = None;
                 }
             }
             if doc.base != before.base {
                 self.generation += 1;
             }
-            self.undo.push(before);
-            self.redo.clear();
-            self.doc = Some(doc);
-            self.last_restyle = None;
+            self.shown.undo.push(before);
+            self.shown.redo.clear();
+            self.shown.doc = Some(doc);
+            self.shown.last_restyle = None;
         }
     }
 
     /// The current edits, to change in place; pair with `commit`.
     fn doc_mut(&mut self) -> Option<&mut Doc> {
-        if self.doc.is_none() {
-            self.doc = self.base_doc();
+        if self.shown.doc.is_none() {
+            self.shown.doc = self.base_doc();
         }
-        self.doc.as_mut()
+        self.shown.doc.as_mut()
     }
 
     /// Ends an in-place change that started from `before`, as one undo step.
     fn commit(&mut self, before: Doc) {
-        if self.doc.as_ref() != Some(&before) {
-            self.undo.push(before);
-            self.redo.clear();
+        if self.shown.doc.as_ref() != Some(&before) {
+            self.shown.undo.push(before);
+            self.shown.redo.clear();
         }
-        self.last_restyle = None;
+        self.shown.last_restyle = None;
     }
 
     fn undo_redo(&mut self, undo: bool) {
-        if undo && self.undo.is_empty() && let Some(path) = self.deleted.pop() {
+        if undo && self.shown.undo.is_empty() && let Some(path) = self.deleted.pop() {
             match files::restore_trashed(&path) {
                 Ok(()) => self.open(path),
                 Err(e) => self.set_status(trf("Couldn't restore the image: {e}", &[("e", &e)])),
@@ -481,20 +491,20 @@ impl App {
             return;
         }
         let Some(current) = self.doc() else { return };
-        let (from, to) = if undo { (&mut self.undo, &mut self.redo) } else { (&mut self.redo, &mut self.undo) };
+        let (from, to) = if undo { (&mut self.shown.undo, &mut self.shown.redo) } else { (&mut self.shown.redo, &mut self.shown.undo) };
         let Some(doc) = from.pop() else { return };
-        (self.selected, self.editing_text, self.change_base, self.last_restyle) = (None, None, None, None);
+        (self.shown.selected, self.shown.editing_text, self.shown.change_base, self.shown.last_restyle) = (None, None, None, None);
         if current.base != doc.base {
             self.generation += 1;
         }
         to.push(current);
-        if self.doc.as_ref().is_none_or(|d| d.geometry() != doc.geometry()) {
-            (self.view, self.selection) = (View::Fit, None);
-                if let Tool::Measure { ends, .. } = &mut self.tool {
+        if self.shown.doc.as_ref().is_none_or(|d| d.geometry() != doc.geometry()) {
+            (self.view, self.shown.selection) = (View::Fit, None);
+                if let Tool::Measure { ends, .. } = &mut self.shown.tool {
                     *ends = None;
                 }
         }
-        self.doc = Some(doc);
+        self.shown.doc = Some(doc);
     }
 
     /// Runs `p` now, or asks first when that would lose unsaved edits.
@@ -576,27 +586,13 @@ impl App {
     /// Clears what's shown, before switching to another image.
     fn reset_shown(&mut self) {
         self.view = View::Fit;
-        self.preview = None;
         self.error = None;
         (self.sharp, self.sharp_wanted) = (None, 1);
         self.generation += 1;
-        self.anim_frame = 0;
-        self.anim_due = None;
-        self.anim_paused = false;
-        (self.doc, self.saved) = (None, None);
-        self.undo.clear();
-        self.redo.clear();
-        self.tool = Tool::Pan;
-        self.perspective_prompt = false;
-        self.adjusting = None;
-        (self.style, self.selected, self.grab, self.editing_text, self.change_base, self.last_restyle) = (None, None, Grab::None, None, None, None);
-        self.selection = None;
-        self.element_textures.clear();
         if let Some(r) = self.restoring.take() {
             r.cancel.store(true, Ordering::Relaxed);
         }
-        self.compare = None;
-        self.changed_prompt = false;
+        self.shown = Shown::default();
     }
 
     fn open_dialog(&self) {
@@ -671,7 +667,7 @@ impl App {
         if self.inspector.as_ref().is_none_or(|i| i.path != path) {
             self.inspector = Some(Inspector::new(&path));
         }
-        let doc = self.doc.clone();
+        let doc = self.shown.doc.clone();
         let ins = self.inspector.as_mut().unwrap();
         let save = egui::Panel::right("inspector").size_range(240.0..=320.0).default_size(320.0).resizable(true).show(ui, |ui| inspector::ui(ui, ins, l, doc.as_ref())).inner;
         let Some(d) = ins.exif.as_ref().ok().filter(|_| save) else { return };
@@ -707,10 +703,10 @@ impl App {
     fn copy_selection(&mut self, ctx: &egui::Context) {
         let Some((l, doc)) = self.current().and_then(|p| self.cache.get(p)).cloned().zip(self.doc()) else { return };
         // shortcut: renders the full edited image on the UI thread; move it to a thread if copying big images stutters.
-        let Ok(img) = edit::render(&l.frames[self.anim_frame.min(l.frames.len() - 1)], &doc) else { return };
+        let Ok(img) = edit::render(&l.frames[self.shown.anim_frame.min(l.frames.len() - 1)], &doc) else { return };
         let img = img.into_rgba8();
         let bounds = doc.bounds();
-        let sel = self.selection.clone().unwrap_or(Selection::Rect(bounds));
+        let sel = self.shown.selection.clone().unwrap_or(Selection::Rect(bounds));
         let b = Rect::from_min_max(sel.bbox().min.floor(), sel.bbox().max.ceil()).intersect(bounds);
         let (x, y, w, h) = (b.min.x as u32, b.min.y as u32, b.width() as u32, b.height() as u32);
         if w == 0 || h == 0 {
@@ -725,7 +721,7 @@ impl App {
     }
 
     fn delete_selection(&mut self) {
-        let (Some(sel), Some(doc)) = (self.selection.take(), self.doc()) else { return };
+        let (Some(sel), Some(doc)) = (self.shown.selection.take(), self.doc()) else { return };
         let (bounds, color) = (doc.bounds(), self.erase_color());
         self.edit(|d| d.elements.push(Element::erase(&sel, false, bounds, color)));
     }
@@ -764,7 +760,7 @@ impl App {
 
     /// Crops to the selection; for an ellipse or lasso, the outside is erased too.
     fn image_from_selection(&mut self) {
-        let (Some(sel), Some(doc)) = (self.selection.take(), self.doc()) else { return };
+        let (Some(sel), Some(doc)) = (self.shown.selection.take(), self.doc()) else { return };
         let r = Rect::from_min_max(sel.bbox().min.round(), sel.bbox().max.round()).intersect(doc.bounds());
         let color = self.erase_color();
         self.edit(|d| {
@@ -777,7 +773,7 @@ impl App {
 
     /// Straightens what the perspective tool's corners enclose, as one undo step.
     fn apply_perspective(&mut self) {
-        let corners = match self.tool {
+        let corners = match self.shown.tool {
             Tool::Perspective { corners, .. } => Some(corners),
             Tool::Straighten(degrees) => self.doc().map(|doc| edit::straighten_corners(doc.size_vec(), degrees)),
             _ => None,
@@ -785,10 +781,10 @@ impl App {
         let (Some(corners), Some(l)) = (corners, self.current().and_then(|p| self.cache.get(p)).cloned()) else { return };
         let mut result = Ok(());
         // Straighten's corners lie outside the image: the new corners get the background colour.
-        let fill = matches!(self.tool, Tool::Straighten(_)).then_some(self.settings.background);
+        let fill = matches!(self.shown.tool, Tool::Straighten(_)).then_some(self.settings.background);
         self.edit(|d| result = d.perspective(&l.frames[0], corners, fill));
         match result {
-            Ok(()) => self.tool = Tool::Pan,
+            Ok(()) => self.shown.tool = Tool::Pan,
             Err(e) => self.set_status(e),
         }
     }
@@ -797,26 +793,26 @@ impl App {
     /// before merging the markup and keeps colour live.
     fn apply_straighten(&mut self) {
         let Some(doc) = self.doc() else { return };
-        if self.tool == Tool::Straighten(0.0) {
-            self.tool = Tool::Pan;
+        if self.shown.tool == Tool::Straighten(0.0) {
+            self.shown.tool = Tool::Pan;
             return;
         }
         if doc.elements.is_empty() {
             self.apply_perspective();
         } else {
-            self.perspective_prompt = true;
+            self.shown.perspective_prompt = true;
         }
     }
 
     /// Changes the selected pixels, as shown, with `f`, as a patch over them that Ctrl+Z removes.
     fn patch_selection(&mut self, f: fn(&mut image::RgbaImage), done: &str) {
         let Some((l, doc)) = self.current().and_then(|p| Some((self.cache.get(p)?.clone(), self.doc()?))) else { return };
-        let Some(sel) = self.selection.clone().filter(|s| !s.is_empty()) else { return };
+        let Some(sel) = self.shown.selection.clone().filter(|s| !s.is_empty()) else { return };
         let region = Rect::from_min_max(sel.bbox().min.floor(), sel.bbox().max.ceil()).intersect(doc.bounds());
         if region.width() < 1.0 || region.height() < 1.0 {
             return;
         }
-        let frame = &l.frames[self.anim_frame.min(l.frames.len() - 1)];
+        let frame = &l.frames[self.shown.anim_frame.min(l.frames.len() - 1)];
         let mut patch = match edit::render(frame, &doc) {
             Ok(img) => image::imageops::crop_imm(&img.into_rgba8(), region.min.x as u32, region.min.y as u32, region.width() as u32, region.height() as u32).to_image(),
             Err(e) => return self.set_status(e),
@@ -825,7 +821,7 @@ impl App {
         clip_to(&mut patch, &sel, region.min);
         let style = Style::for_image(region.size());
         self.edit(|d| d.elements.push(Element::pasted(Arc::new(patch), region.min, region.size(), style)));
-        self.selection = None;
+        self.shown.selection = None;
         self.set_status(done);
     }
 
@@ -834,12 +830,12 @@ impl App {
         let (Some(img), Some(doc)) = (image::RgbaImage::from_raw(w, h, pixels), self.doc()) else { return };
         let size = Vec2::new(w as f32, h as f32);
         let fit = (doc.size_vec() / size).min_elem().min(1.0);
-        let at = self.selection.as_ref().map_or(((doc.size_vec() - size * fit) / 2.0).to_pos2(), |s| s.bbox().min);
-        let style = *self.style.get_or_insert_with(|| Style::for_image(doc.size_vec()));
+        let at = self.shown.selection.as_ref().map_or(((doc.size_vec() - size * fit) / 2.0).to_pos2(), |s| s.bbox().min);
+        let style = *self.shown.style.get_or_insert_with(|| Style::for_image(doc.size_vec()));
         self.edit(|d| d.elements.push(Element::pasted(Arc::new(img), at, size * fit, style)));
         self.finish_text();
-        (self.tool, self.show_toolbar, self.selection) = (Tool::Select, true, None);
-        self.selected = self.doc.as_ref().map(|d| d.elements.len() - 1);
+        (self.shown.tool, self.show_toolbar, self.shown.selection) = (Tool::Select, true, None);
+        self.shown.selected = self.shown.doc.as_ref().map(|d| d.elements.len() - 1);
     }
 
     fn make_title(&self, zoom: Option<f32>) -> String {
@@ -848,7 +844,7 @@ impl App {
         let zoom = zoom.map_or(String::new(), |z| format!(" — {z:.2}×"));
         match self.cache.get(path) {
             Some(l) => {
-                let page = if l.paged() { format!(" — {}", trf("page {n} of {count}", &[("n", &(self.anim_frame + 1)), ("count", &l.frames.len())])) } else { String::new() };
+                let page = if l.paged() { format!(" — {}", trf("page {n} of {count}", &[("n", &(self.shown.anim_frame + 1)), ("count", &l.frames.len())])) } else { String::new() };
                 format!("{name}{page} — {}×{} — {}{zoom}", l.frames[0].w, l.frames[0].h, format_size(l.file_size))
             }
             None => name.into_owned(),

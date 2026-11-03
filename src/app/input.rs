@@ -12,18 +12,18 @@ use std::time::Instant;
 impl App {
     /// Changes element `i`'s style; consecutive changes to one element are one undo step.
     fn restyle(&mut self, i: usize, style: Style) {
-        if self.last_restyle == Some(i) {
+        if self.shown.last_restyle == Some(i) {
             if let Some(e) = self.doc_mut().and_then(|d| d.elements.get_mut(i)) {
                 e.style = style;
             }
         } else {
             self.edit(|d| d.elements[i].style = style);
-            self.last_restyle = Some(i);
+            self.shown.last_restyle = Some(i);
         }
     }
 
     fn pick(&self) -> Option<Pick> {
-        match self.tool {
+        match self.shown.tool {
             Tool::Select => Some(Pick::Select),
             Tool::Draw(s) => Some(Pick::Draw(s)),
             Tool::Measure { .. } => Some(Pick::Measure),
@@ -33,11 +33,11 @@ impl App {
 
     pub(super) fn set_pick(&mut self, pick: Pick) {
         self.finish_text();
-        self.selected = None;
-        self.tool = match pick {
+        self.shown.selected = None;
+        self.shown.tool = match pick {
             Pick::Select => Tool::Select,
             Pick::Draw(s) => Tool::Draw(s),
-            Pick::Measure if matches!(self.tool, Tool::Measure { .. }) => self.tool,
+            Pick::Measure if matches!(self.shown.tool, Tool::Measure { .. }) => self.shown.tool,
             Pick::Measure => Tool::Measure { ends: None, drag: 0 },
         };
         self.show_toolbar = true;
@@ -45,13 +45,13 @@ impl App {
 
     /// Stops typing into a text element; an empty one is removed.
     pub(super) fn finish_text(&mut self) {
-        let Some(i) = self.editing_text.take() else { return };
+        let Some(i) = self.shown.editing_text.take() else { return };
         if let Some(d) = self.doc_mut()
             && d.elements.get(i).is_some_and(Element::is_empty)
         {
             d.elements.remove(i);
         }
-        if let Some(before) = self.change_base.take() {
+        if let Some(before) = self.shown.change_base.take() {
             self.commit(before);
         }
     }
@@ -59,19 +59,19 @@ impl App {
     /// The markup toolbar, below the menu bar.
     pub(super) fn toolbar(&mut self, ui: &mut egui::Ui, actions: &mut Vec<Action>) {
         let Some(doc) = self.doc() else { return };
-        let defaults = *self.style.get_or_insert_with(|| Style::for_image(doc.size_vec()));
-        let selected = self.selected.and_then(|i| doc.elements.get(i));
-        let (mut style, styled) = match (selected, self.tool) {
+        let defaults = *self.shown.style.get_or_insert_with(|| Style::for_image(doc.size_vec()));
+        let selected = self.shown.selected.and_then(|i| doc.elements.get(i));
+        let (mut style, styled) = match (selected, self.shown.tool) {
             (Some(e), _) => (e.style, Some(e.shape)),
             (None, Tool::Draw(shape)) => (defaults, Some(shape)),
             _ => (defaults, None),
         };
         let pick = self.pick();
-        let out = egui::Panel::top("markup").show(ui, |ui| markup::toolbar_ui(ui, pick, &mut style, styled, !(self.undo.is_empty() && self.deleted.is_empty()), !self.redo.is_empty())).inner;
+        let out = egui::Panel::top("markup").show(ui, |ui| markup::toolbar_ui(ui, pick, &mut style, styled, !(self.shown.undo.is_empty() && self.deleted.is_empty()), !self.shown.redo.is_empty())).inner;
         if out.style_changed {
-            match self.selected {
+            match self.shown.selected {
                 Some(i) => self.restyle(i, style),
-                None => self.style = Some(style),
+                None => self.shown.style = Some(style),
             }
         }
         actions.extend(out.pick.map(Action::Pick));
@@ -83,7 +83,7 @@ impl App {
 
     /// Select and Draw tools: dragging and clicking on the image. `dest`/`vis` is the layout.
     pub(super) fn markup_input(&mut self, ctx: &egui::Context, drag: &egui::Response, dest: Rect, vis: Rect, doc: &Doc) {
-        if drag.hovered() && self.tool != Tool::Select {
+        if drag.hovered() && self.shown.tool != Tool::Select {
             ctx.set_cursor_icon(CursorIcon::Crosshair);
         }
         let k = dest.width() / vis.width();
@@ -91,9 +91,9 @@ impl App {
         let at = |p: Pos2| bounds.clamp(view::to_image(dest, vis, p));
         let origin = ctx.input(|i| i.pointer.press_origin());
         let pointer = drag.interact_pointer_pos();
-        let style = *self.style.get_or_insert_with(|| Style::for_image(doc.size_vec()));
+        let style = *self.shown.style.get_or_insert_with(|| Style::for_image(doc.size_vec()));
         let hit = |p: Pos2| doc.elements.iter().rposition(|e| e.shape != Shape::Erase && e.bbox().expand(6.0 / k).contains(p));
-        match self.tool {
+        match self.shown.tool {
             Tool::Draw(shape @ (Shape::Text | Shape::Magnifier)) => {
                 if drag.clicked() && let Some(p) = pointer.map(at) {
                     self.finish_text();
@@ -102,7 +102,7 @@ impl App {
                     d.elements.push(e);
                     let i = d.elements.len() - 1;
                     if shape == Shape::Text {
-                        (self.editing_text, self.focus_text, self.change_base) = (Some(i), true, Some(doc.clone()));
+                        (self.shown.editing_text, self.focus_text, self.shown.change_base) = (Some(i), true, Some(doc.clone()));
                     } else {
                         self.commit(doc.clone());
                     }
@@ -110,12 +110,12 @@ impl App {
             }
             Tool::Draw(shape) => {
                 if drag.drag_started() && let Some(o) = origin {
-                    self.change_base = Some(doc.clone());
+                    self.shown.change_base = Some(doc.clone());
                     if let Some(d) = self.doc_mut() {
                         d.elements.push(Element::new(shape, at(o), style));
                     }
                 }
-                if drag.dragged() && self.change_base.is_some() && let Some(p) = pointer.map(at) {
+                if drag.dragged() && self.shown.change_base.is_some() && let Some(p) = pointer.map(at) {
                     let e = self.doc_mut().and_then(|d| d.elements.last_mut());
                     match e {
                         Some(e) if shape == Shape::Sketch => {
@@ -127,7 +127,7 @@ impl App {
                         None => {}
                     }
                 }
-                if drag.drag_stopped() && let Some(before) = self.change_base.take() {
+                if drag.drag_stopped() && let Some(before) = self.shown.change_base.take() {
                     if let Some(d) = self.doc_mut()
                         && d.elements.last().is_some_and(Element::is_empty)
                     {
@@ -140,28 +140,28 @@ impl App {
                 // Select.
                 if drag.clicked() {
                     self.finish_text();
-                    self.selected = pointer.map(at).and_then(hit);
+                    self.shown.selected = pointer.map(at).and_then(hit);
                 }
-                if drag.double_clicked() && let Some(i) = self.selected.filter(|&i| doc.elements[i].shape == Shape::Text) {
-                    (self.editing_text, self.focus_text, self.change_base) = (Some(i), true, Some(doc.clone()));
+                if drag.double_clicked() && let Some(i) = self.shown.selected.filter(|&i| doc.elements[i].shape == Shape::Text) {
+                    (self.shown.editing_text, self.focus_text, self.shown.change_base) = (Some(i), true, Some(doc.clone()));
                 }
                 if drag.drag_started() && let Some(o) = origin {
-                    let handle = self.selected.and_then(|i| doc.elements.get(i)).is_some_and(|e| view::to_screen(dest, vis, e.bbox().max).distance(o) < 10.0);
-                    self.grab = if handle {
+                    let handle = self.shown.selected.and_then(|i| doc.elements.get(i)).is_some_and(|e| view::to_screen(dest, vis, e.bbox().max).distance(o) < 10.0);
+                    self.shown.grab = if handle {
                         Grab::Resize
                     } else if let Some(i) = hit(at(o)) {
-                        self.selected = Some(i);
+                        self.shown.selected = Some(i);
                         Grab::Move
                     } else {
                         Grab::None
                     };
-                    if self.grab != Grab::None {
-                        self.change_base = Some(doc.clone());
+                    if self.shown.grab != Grab::None {
+                        self.shown.change_base = Some(doc.clone());
                     }
                 }
-                if drag.dragged() && self.grab != Grab::None && let Some(i) = self.selected {
+                if drag.dragged() && self.shown.grab != Grab::None && let Some(i) = self.shown.selected {
                     let delta = drag.drag_delta() / k;
-                    let grab = self.grab;
+                    let grab = self.shown.grab;
                     if let Some(e) = self.doc_mut().and_then(|d| d.elements.get_mut(i)) {
                         match (grab, e.shape) {
                             (Grab::Move, _) => e.translate(delta),
@@ -179,8 +179,8 @@ impl App {
                         }
                     }
                 }
-                if drag.drag_stopped() && let Some(before) = self.change_base.take() {
-                    self.grab = Grab::None;
+                if drag.drag_stopped() && let Some(before) = self.shown.change_base.take() {
+                    self.shown.grab = Grab::None;
                     self.commit(before);
                 }
             }
@@ -282,30 +282,30 @@ impl App {
                 Action::Close => self.confirm(Pending::Close),
                 Action::Undo => self.undo_redo(true),
                 Action::Redo => self.undo_redo(false),
-                Action::Crop if self.selection.is_some() => self.image_from_selection(),
-                Action::Crop => self.tool = Tool::Crop(None),
+                Action::Crop if self.shown.selection.is_some() => self.image_from_selection(),
+                Action::Crop => self.shown.tool = Tool::Crop(None),
                 Action::Perspective => {
                     if let Some(doc) = self.doc() {
                         self.finish_text();
                         let r = doc.bounds().shrink2(doc.size_vec() * 0.1);
                         let corners = [r.left_top(), r.right_top(), r.right_bottom(), r.left_bottom()];
-                        (self.tool, self.selected) = (Tool::Perspective { corners, drag: None }, None);
+                        (self.shown.tool, self.shown.selected) = (Tool::Perspective { corners, drag: None }, None);
                     }
                 }
                 Action::Resize => self.resize_dialog = self.doc().map(|d| ResizeDialog::new(&d)),
                 Action::Info => self.show_info = !self.show_info,
                 Action::Settings => self.show_settings = true,
                 Action::AdjustColor => {
-                    if self.adjusting.is_none() {
-                        self.adjusting = self.doc();
+                    if self.shown.adjusting.is_none() {
+                        self.shown.adjusting = self.doc();
                     }
-                    self.curve_panel = None;
+                    self.shown.curve_panel = None;
                 }
                 Action::AdjustCurves => {
-                    if self.adjusting.is_none() {
-                        self.adjusting = self.doc();
+                    if self.shown.adjusting.is_none() {
+                        self.shown.adjusting = self.doc();
                     }
-                    self.curve_panel.get_or_insert_default();
+                    self.shown.curve_panel.get_or_insert_default();
                 }
                 Action::AutoLevels => {
                     if let Some([exposure, contrast]) = self.auto_levels() {
@@ -320,34 +320,34 @@ impl App {
                 Action::Straighten => {
                     if self.doc().is_some() {
                         self.finish_text();
-                        (self.tool, self.selected) = (Tool::Straighten(0.0), None);
+                        (self.shown.tool, self.shown.selected) = (Tool::Straighten(0.0), None);
                     }
                 }
-                Action::Measure if matches!(self.tool, Tool::Measure { .. }) => self.tool = Tool::Pan,
-                Action::Measure => self.tool = Tool::Measure { ends: None, drag: 0 },
-                Action::CopyColor if self.tool == Tool::CopyColor => self.tool = Tool::Pan,
+                Action::Measure if matches!(self.shown.tool, Tool::Measure { .. }) => self.shown.tool = Tool::Pan,
+                Action::Measure => self.shown.tool = Tool::Measure { ends: None, drag: 0 },
+                Action::CopyColor if self.shown.tool == Tool::CopyColor => self.shown.tool = Tool::Pan,
                 Action::CopyColor => {
                     self.finish_text();
-                    (self.tool, self.selected) = (Tool::CopyColor, None);
+                    (self.shown.tool, self.shown.selected) = (Tool::CopyColor, None);
                 }
                 Action::ShowToolbar => {
                     self.show_toolbar = !self.show_toolbar;
                     if !self.show_toolbar {
                         self.finish_text();
-                        (self.tool, self.selected) = (Tool::Pan, None);
+                        (self.shown.tool, self.shown.selected) = (Tool::Pan, None);
                     }
                 }
                 Action::Pick(pick) => self.set_pick(*pick),
                 Action::Describe => self.show_info = true,
                 Action::SelectTool(kind) => {
                     self.finish_text();
-                    (self.tool, self.selected) = (Tool::Selection(*kind), None);
+                    (self.shown.tool, self.shown.selected) = (Tool::Selection(*kind), None);
                 }
-                Action::SelectAll => self.selection = self.doc().map(|d| Selection::Rect(d.bounds())),
-                Action::Deselect => self.selection = None,
+                Action::SelectAll => self.shown.selection = self.doc().map(|d| Selection::Rect(d.bounds())),
+                Action::Deselect => self.shown.selection = None,
                 Action::Copy => self.copy_selection(ctx),
                 Action::Cut => {
-                    if self.selection.is_some() {
+                    if self.shown.selection.is_some() {
                         self.copy_selection(ctx);
                         self.delete_selection();
                     }
@@ -374,8 +374,8 @@ impl App {
                 Action::NextImage => self.confirm(Pending::Navigate(1)),
                 Action::FirstImage => self.go_to(0),
                 Action::LastImage => self.go_to(self.files.len().saturating_sub(1)),
-                Action::Play => (self.anim_paused, self.anim_due) = (false, None),
-                Action::Pause => self.anim_paused = true,
+                Action::Play => (self.shown.anim_paused, self.shown.anim_due) = (false, None),
+                Action::Pause => self.shown.anim_paused = true,
                 _ => {} // zoom and frame-step actions are applied below, once the image is known
             }
         }
@@ -391,34 +391,34 @@ impl App {
         let enter = !typing && ctx.input(|i| i.key_pressed(Key::Enter));
         let delete_key = !typing && ctx.input(|i| i.key_pressed(Key::Delete));
         let delete = delete_key || !typing && ctx.input(|i| i.key_pressed(Key::Backspace));
-        if esc && !typing && let Some(before) = self.change_base.take() {
+        if esc && !typing && let Some(before) = self.shown.change_base.take() {
             // Cancel the drawing in progress.
-            (self.doc, self.grab) = (Some(before), Grab::None);
-        } else if esc && !typing && self.tool != Tool::Pan && !self.perspective_prompt {
-            if matches!(self.tool, Tool::Selection(_)) {
-                self.selection = None;
+            (self.shown.doc, self.shown.grab) = (Some(before), Grab::None);
+        } else if esc && !typing && self.shown.tool != Tool::Pan && !self.shown.perspective_prompt {
+            if matches!(self.shown.tool, Tool::Selection(_)) {
+                self.shown.selection = None;
             }
-            (self.tool, self.selected) = (Tool::Pan, None);
+            (self.shown.tool, self.shown.selected) = (Tool::Pan, None);
         } else if esc && !typing && fullscreen {
             ctx.send_viewport_cmd(ViewportCommand::Fullscreen(false));
         }
-        if enter && let Tool::Crop(Some(r)) = self.tool {
+        if enter && let Tool::Crop(Some(r)) = self.shown.tool {
             self.edit(|d| d.crop_to(r));
-            self.tool = Tool::Pan;
+            self.shown.tool = Tool::Pan;
         }
-        if enter && matches!(self.tool, Tool::Straighten(_)) && !self.perspective_prompt {
+        if enter && matches!(self.shown.tool, Tool::Straighten(_)) && !self.shown.perspective_prompt {
             self.apply_straighten();
         }
-        if enter && matches!(self.tool, Tool::Perspective { .. }) && !self.perspective_prompt && self.adjusting.is_none() {
-            if self.doc.as_ref().is_some_and(|d| !d.elements.is_empty()) {
-                self.perspective_prompt = true;
+        if enter && matches!(self.shown.tool, Tool::Perspective { .. }) && !self.shown.perspective_prompt && self.shown.adjusting.is_none() {
+            if self.shown.doc.as_ref().is_some_and(|d| !d.elements.is_empty()) {
+                self.shown.perspective_prompt = true;
             } else {
                 self.apply_perspective();
             }
         }
-        if delete && self.tool == Tool::Select && let Some(i) = self.selected.take() {
+        if delete && self.shown.tool == Tool::Select && let Some(i) = self.shown.selected.take() {
             self.edit(|d| drop(d.elements.remove(i)));
-        } else if delete && self.selection.is_some() {
+        } else if delete && self.shown.selection.is_some() {
             self.delete_selection();
         } else if delete_key && self.current().is_some() {
             self.delete_prompt = true;
@@ -442,7 +442,7 @@ impl App {
             self.right_pan = !drag.drag_stopped();
             return drag;
         }
-        if let Some(c) = &mut self.compare {
+        if let Some(c) = &mut self.shown.compare {
             // Dragging moves the before/after line instead of using the tool.
             if drag.dragged() && let Some(p) = drag.interact_pointer_pos() {
                 let left = view::to_screen(dest, vis, c.region.min).x;
@@ -451,7 +451,7 @@ impl App {
             }
             return drag;
         }
-        match self.tool {
+        match self.shown.tool {
             Tool::Pan | Tool::Straighten(_) if drag.dragged() => self.view = view::pan(self.view, drag.drag_delta(), img, viewport, ppp),
             Tool::Pan | Tool::Straighten(_) => {}
             Tool::Select | Tool::Draw(_) => self.markup_input(ctx, &drag, dest, vis, doc),
@@ -471,15 +471,15 @@ impl App {
         let bounds = Rect::from_min_size(Pos2::ZERO, img);
         let at = |p: Pos2| bounds.clamp(view::to_image(dest, vis, p));
         if drag.clicked() {
-            self.selection = None;
+            self.shown.selection = None;
         }
         if drag.drag_started() && let Some(o) = ctx.input(|i| i.pointer.press_origin()) {
             self.drag_start = Some(at(o));
-            self.selection = (kind == SelKind::Lasso).then(|| Selection::Lasso(vec![at(o)]));
+            self.shown.selection = (kind == SelKind::Lasso).then(|| Selection::Lasso(vec![at(o)]));
         }
         if drag.dragged() && let (Some(a), Some(p)) = (self.drag_start, drag.interact_pointer_pos().map(at)) {
             let k = dest.width() / vis.width();
-            match (kind, &mut self.selection) {
+            match (kind, &mut self.shown.selection) {
                 (SelKind::Lasso, Some(Selection::Lasso(points))) => {
                     if points.last().is_none_or(|q| q.distance(p) * k >= 2.0) {
                         points.push(p);
@@ -489,8 +489,8 @@ impl App {
                 (_, sel) => *sel = Some(Selection::Rect(Rect::from_two_pos(a, p))),
             }
         }
-        if drag.drag_stopped() && self.selection.as_ref().is_some_and(Selection::is_empty) {
-            self.selection = None;
+        if drag.drag_stopped() && self.shown.selection.as_ref().is_some_and(Selection::is_empty) {
+            self.shown.selection = None;
         }
     }
 
@@ -505,7 +505,7 @@ impl App {
         if drag.drag_started() && let Some(o) = origin {
             self.drag_start = Some(at(o));
             // Measure: grab an endpoint near the press, or start a new line.
-            if let Tool::Measure { ends, drag: held } = &mut self.tool {
+            if let Tool::Measure { ends, drag: held } = &mut self.shown.tool {
                 match ends.and_then(|m| (0..2).find(|&i| view::to_screen(dest, vis, m[i]).distance(o) < 10.0)) {
                     Some(i) => *held = i,
                     None => (*ends, *held) = (Some([at(o); 2]), 1),
@@ -513,7 +513,7 @@ impl App {
             }
         }
         if drag.dragged() && let (Some(a), Some(p)) = (self.drag_start, drag.interact_pointer_pos()) {
-            match &mut self.tool {
+            match &mut self.shown.tool {
                 Tool::Measure { ends: Some(m), drag: held } => m[*held] = at(p),
                 Tool::Crop(rect) => *rect = Some(Rect::from_two_pos(a, view::snap_ratio(a, at(p), bounds))),
                 _ => {}
@@ -529,7 +529,7 @@ impl App {
         let Some(p) = drag.interact_pointer_pos().filter(|_| drag.clicked()) else { return };
         let Some(l) = self.current().and_then(|c| self.cache.get(c)).cloned() else { return };
         // shortcut: renders the full edited image on the UI thread, like Copy; fine for one click.
-        let Ok(img) = edit::render(&l.frames[self.anim_frame.min(l.frames.len() - 1)], doc) else { return };
+        let Ok(img) = edit::render(&l.frames[self.shown.anim_frame.min(l.frames.len() - 1)], doc) else { return };
         let img = img.into_rgba8();
         let p = view::to_image(dest, vis, p);
         let (x, y) = ((p.x as u32).min(img.width() - 1), (p.y as u32).min(img.height() - 1));
@@ -543,7 +543,7 @@ impl App {
         if drag.hovered() {
             ctx.set_cursor_icon(CursorIcon::Crosshair);
         }
-        let Tool::Perspective { corners, drag: held } = &mut self.tool else { return };
+        let Tool::Perspective { corners, drag: held } = &mut self.shown.tool else { return };
         if drag.drag_started() && let Some(o) = ctx.input(|i| i.pointer.press_origin()) {
             let off = |i: usize| view::to_screen(dest, vis, corners[i]).distance(o);
             *held = (0..4).min_by(|&a, &b| off(a).total_cmp(&off(b))).filter(|&i| off(i) < 14.0);
@@ -602,17 +602,17 @@ impl App {
                 Action::PrevFrame => frames.len() - 1,
                 _ => continue,
             };
-            self.anim_frame = (self.anim_frame + step) % frames.len();
-            self.anim_paused = true;
+            self.shown.anim_frame = (self.shown.anim_frame + step) % frames.len();
+            self.shown.anim_paused = true;
         }
-        if frames.len() > 1 && !self.anim_paused && !l.paged() {
+        if frames.len() > 1 && !self.shown.anim_paused && !l.paged() {
             let now = Instant::now();
-            let due = *self.anim_due.get_or_insert(now + frames[self.anim_frame].delay);
+            let due = *self.shown.anim_due.get_or_insert(now + frames[self.shown.anim_frame].delay);
             if now >= due {
-                self.anim_frame = (self.anim_frame + 1) % frames.len();
-                self.anim_due = Some(now + frames[self.anim_frame].delay);
+                self.shown.anim_frame = (self.shown.anim_frame + 1) % frames.len();
+                self.shown.anim_due = Some(now + frames[self.shown.anim_frame].delay);
             }
-            ctx.request_repaint_after(self.anim_due.unwrap() - now);
+            ctx.request_repaint_after(self.shown.anim_due.unwrap() - now);
         }
     }
 }

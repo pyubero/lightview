@@ -234,7 +234,7 @@ impl App {
         let can_save = loaded.is_some_and(|l| l.frames.len() == 1);
         let paged = loaded.is_some_and(|l| l.paged());
         let animated = loaded.is_some_and(|l| l.frames.len() > 1) && !paged;
-        let selected = self.selection.is_some();
+        let selected = self.shown.selection.is_some();
         let idle = self.restoring.is_none();
         let ready = |task| has_image && idle && crate::ai::runtime_installed() && crate::ai::choose(self.settings.ai.choice(task), task, &crate::ai::installed()).is_some();
         match action {
@@ -243,17 +243,17 @@ impl App {
             Action::SaveAs => can_save,
             Action::CopyPath | Action::CopyFile | Action::ShowInFolder | Action::DeleteImage => self.current().is_some(),
             Action::Rename => self.current().is_some() && idle,
-            Action::Undo => !(self.undo.is_empty() && self.deleted.is_empty()),
-            Action::Redo => !self.redo.is_empty(),
+            Action::Undo => !(self.shown.undo.is_empty() && self.deleted.is_empty()),
+            Action::Redo => !self.shown.redo.is_empty(),
             Action::Cut | Action::DeleteSelection | Action::Deselect => selected,
             Action::PrevImage | Action::FirstImage => self.index > 0,
             Action::NextImage | Action::LastImage => self.index + 1 < self.files.len(),
-            Action::Play => animated && self.anim_paused,
-            Action::Pause => animated && !self.anim_paused,
+            Action::Play => animated && self.shown.anim_paused,
+            Action::Pause => animated && !self.shown.anim_paused,
             Action::NextFrame | Action::PrevFrame => animated || paged,
             // Done in Adjust Color goes back to the edits from before the panel opened.
-            Action::Perspective | Action::Straighten => can_save && self.adjusting.is_none(),
-            Action::Greyscale | Action::Invert => has_image && self.adjusting.is_none(),
+            Action::Perspective | Action::Straighten => can_save && self.shown.adjusting.is_none(),
+            Action::Greyscale | Action::Invert => has_image && self.shown.adjusting.is_none(),
             Action::RedEye | Action::Pixelate => has_image && selected && idle,
             Action::Cutout(_) => ready(Task::Background),
             Action::Restore(task) => ready(*task),
@@ -415,10 +415,10 @@ impl App {
                 labelled(ui, label, Action::ShowToolbar, actions);
                 ui.separator();
                 for kind in [SelKind::Rect, SelKind::Ellipse, SelKind::Lasso] {
-                    selectable(ui, Action::SelectTool(kind), self.tool == Tool::Selection(kind), actions);
+                    selectable(ui, Action::SelectTool(kind), self.shown.tool == Tool::Selection(kind), actions);
                 }
-                selectable(ui, Action::Measure, matches!(self.tool, Tool::Measure { .. }), actions);
-                selectable(ui, Action::CopyColor, self.tool == Tool::CopyColor, actions);
+                selectable(ui, Action::Measure, matches!(self.shown.tool, Tool::Measure { .. }), actions);
+                selectable(ui, Action::CopyColor, self.shown.tool == Tool::CopyColor, actions);
                 hinted(ui, Action::ReadText(true), tr("Reads the selection, or the whole image. Shows what the code says; links are never opened."), actions);
                 ui.separator();
                 item(ui, Action::Pick(Pick::Draw(Shape::Sketch)), actions);

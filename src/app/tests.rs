@@ -120,12 +120,12 @@ fn pages_step_by_hand_and_never_play() {
     for _ in 0..3 {
         app.animate(&ctx, &loaded, &[]);
     }
-    assert_eq!(app.anim_frame, 0);
+    assert_eq!(app.shown.anim_frame, 0);
     assert!(app.make_title(None).contains(trf("page {n} of {count}", &[("n", &1), ("count", &3)]).as_str()));
     app.animate(&ctx, &loaded, &[crate::app::menu::Action::NextFrame]);
-    assert_eq!(app.anim_frame, 1);
+    assert_eq!(app.shown.anim_frame, 1);
     app.animate(&ctx, &loaded, &[crate::app::menu::Action::PrevFrame, crate::app::menu::Action::PrevFrame]);
-    assert_eq!(app.anim_frame, 2);
+    assert_eq!(app.shown.anim_frame, 2);
 }
 
 #[test]
@@ -139,7 +139,7 @@ fn title_shows_the_zoom() {
 fn only_the_edits_written_count_as_saved() {
     let (mut app, path) = app_with_image();
     app.edit(Doc::rotate_left);
-    let doc = app.doc.clone().unwrap();
+    let doc = app.shown.doc.clone().unwrap();
     let dest = PathBuf::from("/nonexistent/copy.jpg");
     // An EXIF copy, a failed save, and a Save As of the image shown before navigating.
     app.handle(Msg::Saved(dest.clone(), Ok(()), None));
@@ -173,14 +173,14 @@ fn removing_an_object_pastes_the_fill_once_and_clears_the_selection() {
     let sel = Selection::Rect(region);
     let run = |id, sel| Restoring { id, task: crate::ai::Task::Inpaint, progress: 0.0, started: Instant::now(), cancel: Arc::default(), selection: Some(sel) };
     // A failure keeps the selection for another try.
-    app.selection = Some(sel.clone());
+    app.shown.selection = Some(sel.clone());
     app.restoring = Some(run(1, sel.clone()));
     app.handle(Msg::Restored(1, path.clone(), region, true, Err("boom".into())));
-    assert!(app.selection.is_some() && app.doc().is_none_or(|d| d.elements.is_empty()));
+    assert!(app.shown.selection.is_some() && app.doc().is_none_or(|d| d.elements.is_empty()));
     app.restoring = Some(run(2, sel));
     let fill = image::RgbaImage::from_pixel(1, 1, image::Rgba([1, 2, 3, 255]));
     app.handle(Msg::Restored(2, path, region, true, Ok((fill, 0.0))));
-    assert!(app.selection.is_none() && app.restoring.is_none());
+    assert!(app.shown.selection.is_none() && app.restoring.is_none());
     assert_eq!(app.doc().map(|d| d.elements.len()), Some(1));
 }
 
@@ -226,20 +226,20 @@ const RIGHT: egui::PointerButton = egui::PointerButton::Secondary;
 fn right_drag_pans_with_any_tool() {
     for tool in [Tool::Draw(Shape::Rect), Tool::Draw(Shape::Magnifier), Tool::Select, Tool::Selection(SelKind::Rect), Tool::Crop(None), Tool::Measure { ends: None, drag: 0 }, Tool::Pan] {
         let (mut app, start) = app_zoomed_in();
-        app.tool = tool;
+        app.shown.tool = tool;
         feed(&mut app, drag_events(RIGHT));
         assert_ne!(app.view, start);
         assert!(!app.right_pan);
         // The tool saw nothing.
-        assert!(app.doc().unwrap().elements.is_empty() && app.change_base.is_none());
-        assert!(app.selection.is_none() && app.tool == tool);
+        assert!(app.doc().unwrap().elements.is_empty() && app.shown.change_base.is_none());
+        assert!(app.shown.selection.is_none() && app.shown.tool == tool);
     }
 }
 
 #[test]
 fn left_drag_still_uses_the_tool_or_pans() {
     let (mut app, start) = app_zoomed_in();
-    app.tool = Tool::Draw(Shape::Rect);
+    app.shown.tool = Tool::Draw(Shape::Rect);
     feed(&mut app, drag_events(LEFT));
     assert_eq!(app.view, start);
     assert_eq!(app.doc().unwrap().elements.len(), 1);
@@ -251,25 +251,25 @@ fn left_drag_still_uses_the_tool_or_pans() {
 #[test]
 fn a_right_press_during_a_left_drawing_leaves_it_alone() {
     let (mut app, start) = app_zoomed_in();
-    app.tool = Tool::Draw(Shape::Rect);
+    app.shown.tool = Tool::Draw(Shape::Rect);
     let mut events = drag_events(LEFT);
     // Tapped once the drawing is under way.
     events.splice(4..4, [press(RIGHT, true, 160.0), press(RIGHT, false, 160.0)]);
     feed(&mut app, events);
     assert_eq!(app.view, start);
-    assert!(app.change_base.is_none() && !app.right_pan);
+    assert!(app.shown.change_base.is_none() && !app.right_pan);
     assert_eq!(app.doc().unwrap().elements.len(), 1);
-    assert_eq!(app.undo.len(), 1);
+    assert_eq!(app.shown.undo.len(), 1);
 }
 
 #[test]
 fn right_drag_pans_the_before_after_preview() {
     let (mut app, start) = app_zoomed_in();
     let texture = egui::Context::default().load_texture("t", egui::ColorImage::example(), TextureOptions::LINEAR);
-    app.compare = Some(Compare { task: crate::ai::Task::Denoise, region: Rect::from_min_size(Pos2::ZERO, Vec2::splat(10.0)), texture, split: 0.5, ms_per_mp: 0.0, scale: 1 });
+    app.shown.compare = Some(Compare { task: crate::ai::Task::Denoise, region: Rect::from_min_size(Pos2::ZERO, Vec2::splat(10.0)), texture, split: 0.5, ms_per_mp: 0.0, scale: 1 });
     feed(&mut app, drag_events(RIGHT));
     assert_ne!(app.view, start);
-    assert_eq!(app.compare.as_ref().map(|c| c.split), Some(0.5));
+    assert_eq!(app.shown.compare.as_ref().map(|c| c.split), Some(0.5));
 }
 
 fn with_line(app: &mut App) -> Arc<Loaded> {
@@ -326,17 +326,17 @@ fn markup_stays_at_screen_resolution_until_a_change_ends() {
     let l = with_line(&mut app);
     let doc = app.doc().unwrap();
     // A small image too: rendering every frame of a drag lags at 1600×900.
-    app.change_base = Some(doc.clone());
+    app.shown.change_base = Some(doc.clone());
     assert!(app.flattened(Some(&l), &doc).is_none(), "tracing");
-    app.change_base = None;
+    app.shown.change_base = None;
     assert!(app.flattened(Some(&l), &doc).is_some(), "released");
-    app.adjusting = Some(doc.clone());
+    app.shown.adjusting = Some(doc.clone());
     assert!(app.flattened(Some(&l), &doc).is_none(), "Adjust Color open");
-    app.adjusting = None;
+    app.shown.adjusting = None;
     // Typing, even once something else has taken `change_base`.
-    app.editing_text = Some(0);
+    app.shown.editing_text = Some(0);
     assert!(app.flattened(Some(&l), &doc).is_none(), "typing");
-    app.editing_text = None;
+    app.shown.editing_text = None;
     assert!(app.flattened(Some(&l), &doc).is_some(), "text finished");
 }
 
@@ -359,22 +359,22 @@ fn the_texture_follows_flattening_with_the_elements_still_editable() {
     assert!(draw(&mut app).flat);
     assert_eq!(app.doc().unwrap().elements.len(), 1, "flattening only changes the view");
     // Without flattening it's drawn on top again, from a new texture.
-    app.adjusting = app.doc();
+    app.shown.adjusting = app.doc();
     assert!(!draw(&mut app).flat);
 }
 
 #[test]
 fn curves_panel_runs_on_a_real_app() {
     let (mut app, _) = app_with_image();
-    app.adjusting = app.doc();
-    app.curve_panel = Some(CurvePanel::default());
+    app.shown.adjusting = app.doc();
+    app.shown.curve_panel = Some(CurvePanel::default());
     let ctx = egui::Context::default();
     ctx.set_fonts(markup::font_definitions());
     for _ in 0..3 {
         let mut output = ctx.run_ui(egui::RawInput::default(), |ui| app.adjust_panel(ui.ctx()));
         output.textures_delta.clear();
     }
-    assert!(app.curve_panel.is_some() && app.adjusting.is_some(), "still open");
+    assert!(app.shown.curve_panel.is_some() && app.shown.adjusting.is_some(), "still open");
     assert_eq!(app.doc().unwrap().adjust, edit::Adjust::default(), "just opening it changes nothing");
 }
 
@@ -431,12 +431,12 @@ fn pixelate_and_red_eye_patch_the_selection_and_undo() {
     app.cache.insert(path, Arc::new(Loaded { frames: vec![frame], file_size: 6, svg: None }));
     let ctx = egui::Context::default();
     for action in [Action::Pixelate, Action::RedEye] {
-        app.selection = Some(crate::markup::Selection::Ellipse(Rect::from_min_size(Pos2::new(5.0, 4.0), Vec2::new(20.0, 16.0))));
+        app.shown.selection = Some(crate::markup::Selection::Ellipse(Rect::from_min_size(Pos2::new(5.0, 4.0), Vec2::new(20.0, 16.0))));
         app.run_actions(&[action.clone()], &ctx, false);
         let doc = app.doc().unwrap();
         assert_eq!(doc.elements.len(), 1, "one patch");
         assert_eq!(doc.elements[0].points, [Pos2::new(5.0, 4.0), Pos2::new(25.0, 20.0)]);
-        assert!(app.selection.is_none(), "the result is shown, not outlined");
+        assert!(app.shown.selection.is_none(), "the result is shown, not outlined");
         app.run_actions(&[Action::Undo], &ctx, false);
         assert!(app.doc().unwrap().elements.is_empty());
     }
@@ -484,15 +484,15 @@ fn straighten_applies_through_perspective() {
     app.cache.insert(path, Arc::new(Loaded { frames: vec![frame], file_size: 6, svg: None }));
     let ctx = egui::Context::default();
     app.run_actions(&[Action::Straighten], &ctx, false);
-    assert!(app.tool == Tool::Straighten(0.0));
+    assert!(app.shown.tool == Tool::Straighten(0.0));
     app.apply_straighten();
-    assert!(app.tool == Tool::Pan && app.doc().unwrap().base.is_none(), "0° changes nothing");
+    assert!(app.shown.tool == Tool::Pan && app.doc().unwrap().base.is_none(), "0° changes nothing");
     app.run_actions(&[Action::Straighten], &ctx, false);
-    app.tool = Tool::Straighten(8.0);
+    app.shown.tool = Tool::Straighten(8.0);
     app.apply_straighten();
     let doc = app.doc().unwrap();
     let s = edit::straighten_size(Vec2::new(40.0, 30.0), 8.0);
-    assert!(app.tool == Tool::Pan && doc.base.is_some());
+    assert!(app.shown.tool == Tool::Pan && doc.base.is_some());
     assert_eq!(doc.size, [s.x.round() as u32, s.y.round() as u32]);
     let [r, g, b] = app.settings.background;
     let frame = &app.cache.get(app.current().unwrap()).unwrap().frames[0];
@@ -512,14 +512,14 @@ fn copy_file_says_what_happened() {
 
 /// The Perspective tool's corners, while it's the tool.
 fn corners(app: &App) -> Option<[Pos2; 4]> {
-    match app.tool {
+    match app.shown.tool {
         Tool::Perspective { corners, .. } => Some(corners),
         _ => None,
     }
 }
 
 fn set_corners(app: &mut App, corners: [Pos2; 4]) {
-    app.tool = Tool::Perspective { corners, drag: None };
+    app.shown.tool = Tool::Perspective { corners, drag: None };
 }
 
 /// One frame of `handle_keys` with `key` pressed.
@@ -565,7 +565,7 @@ fn perspective_shows_undoes_and_redoes() {
     let (mut app, l) = app_with_corners();
     assert_eq!(drawn_range(&mut app, &l), (0, 255));
     press_key(&mut app, Key::Enter);
-    assert!(app.tool == Tool::Pan);
+    assert!(app.shown.tool == Tool::Pan);
     assert_eq!(app.doc().unwrap().size, [300, 800]);
     assert!(app.dirty());
     assert_eq!(drawn_range(&mut app, &l), (255, 255), "only the white part is left");
@@ -596,7 +596,7 @@ fn perspective_asks_before_flattening_markup() {
     let (mut app, _) = app_with_corners();
     with_line(&mut app);
     press_key(&mut app, Key::Enter);
-    assert!(app.perspective_prompt);
+    assert!(app.shown.perspective_prompt);
     assert_eq!(app.doc().unwrap().elements.len(), 1, "nothing is flattened yet");
     // Enter and Esc belong to the dialog while it's open.
     press_key(&mut app, Key::Enter);
@@ -613,7 +613,7 @@ fn perspective_refuses_crossed_corners_and_keeps_the_tool() {
     let [a, b, c, d] = corners(&app).unwrap();
     set_corners(&mut app, [a, c, b, d]);
     press_key(&mut app, Key::Enter);
-    assert!(corners(&app).is_some() && app.doc.is_none() && app.status.is_some());
+    assert!(corners(&app).is_some() && app.shown.doc.is_none() && app.status.is_some());
 }
 
 #[test]
@@ -628,7 +628,7 @@ fn perspective_corners_follow_the_drag() {
     let moved = corners(&app).unwrap();
     assert!(moved[0].distance(at(190.0)) < 1.0, "{:?}", moved[0]);
     assert_eq!(moved[1], far);
-    assert!(matches!(app.tool, Tool::Perspective { drag: None, .. }));
+    assert!(matches!(app.shown.tool, Tool::Perspective { drag: None, .. }));
     // A press away from every corner moves none.
     set_corners(&mut app, [at(150.0), far, far, far]);
     feed(&mut app, drag_events(LEFT));
@@ -666,7 +666,7 @@ fn dropped_image_opens_and_edits_ask_first() {
     app.open_dropped(vec![dir.join("b.png")]);
     assert!(matches!(app.pending, Some(Pending::Open(_))), "unsaved edits ask first");
     app.pending = None;
-    app.doc = None;
+    app.shown.doc = None;
     app.open_dropped(vec![dir.join("b.png"), dir.join("notes.txt")]);
     assert_eq!(app.files, [dir.join("b.png")]);
     std::fs::remove_dir_all(dir).unwrap();
@@ -702,21 +702,21 @@ fn a_change_on_disk_reloads_or_asks() {
     app.own_stamp = Some(stamp);
     app.edit(Doc::rotate_left);
     app.handle(changed(&path));
-    assert!(!app.changed_prompt && app.dirty());
+    assert!(!app.shown.changed_prompt && app.dirty());
     app.own_stamp = None;
     // Someone else's write, with edits: they stay until the user answers.
     app.handle(changed(&path));
-    assert!(app.changed_prompt && app.dirty());
+    assert!(app.shown.changed_prompt && app.dirty());
     let ctx = egui::Context::default();
     ctx.set_fonts(markup::font_definitions());
     let mut output = ctx.run_ui(egui::RawInput::default(), |ui| app.changed_dialog(ui.ctx()));
     output.textures_delta.clear();
-    assert!(app.changed_prompt && app.dirty(), "it waits");
+    assert!(app.shown.changed_prompt && app.dirty(), "it waits");
     app.answer_changed(false);
-    assert!(!app.changed_prompt && app.dirty(), "Keep Edits");
+    assert!(!app.shown.changed_prompt && app.dirty(), "Keep Edits");
     app.handle(changed(&path));
     app.answer_changed(true);
-    assert!(!app.changed_prompt && !app.dirty() && app.doc.is_none(), "Reload");
+    assert!(!app.shown.changed_prompt && !app.dirty() && app.shown.doc.is_none(), "Reload");
 }
 
 /// A real file changing under a real watcher and decoder, with no edits and then with some.
@@ -746,7 +746,7 @@ fn an_outside_write_reaches_the_screen() {
     wait_for(&mut app, &|app| width(app) == Some(6));
     app.edit(Doc::rotate_left);
     image::RgbImage::new(8, 2).save(&path).unwrap();
-    wait_for(&mut app, &|app| app.changed_prompt);
+    wait_for(&mut app, &|app| app.shown.changed_prompt);
     assert_eq!(width(&app), Some(6), "the edits' image stays until the user answers");
     app.answer_changed(true);
     wait_for(&mut app, &|app| width(app) == Some(8));
@@ -761,15 +761,15 @@ fn changing_the_colour_setting_decodes_again_and_keeps_the_edits() {
     app.settings.color_managed = false;
     app.apply_color_setting();
     assert!(!app.cache.contains_key(&path) && app.generation > generation);
-    assert!(app.doc.is_some());
+    assert!(app.shown.doc.is_some());
 }
 
 #[test]
 fn navigating_away_drops_the_question() {
     let mut app = app_in_folder();
-    app.changed_prompt = true;
+    app.shown.changed_prompt = true;
     app.navigate(1);
-    assert!(!app.changed_prompt);
+    assert!(!app.shown.changed_prompt);
 }
 
 #[test]
@@ -819,7 +819,7 @@ fn home_and_end_go_to_the_ends_and_stay_put_there() {
     // Already there: edits survive, with no question.
     app.files.truncate(2);
     app.run_actions(&[Action::LastImage], &ctx, false);
-    assert!(app.pending.is_none() && app.doc.is_some() && app.index == 1);
+    assert!(app.pending.is_none() && app.shown.doc.is_some() && app.index == 1);
 }
 
 #[test]
@@ -1055,7 +1055,7 @@ fn the_navigator_shows_only_when_zoomed_in_and_isnt_rebuilt_by_panning() {
 fn clicking_the_navigator_moves_the_view_and_not_the_tool() {
     let (mut app, _) = app_zoomed_in();
     let (ctx, l) = (test_ctx(), app.cache.values().next().unwrap().clone());
-    app.tool = Tool::Draw(Shape::Rect);
+    app.shown.tool = Tool::Draw(Shape::Rect);
     let viewport = Rect::from_min_size(Pos2::ZERO, Vec2::splat(400.0));
     let nav = view::navigator_rect(Vec2::splat(1000.0), viewport);
     click_at(&mut app, &ctx, &l, nav.right_bottom() - Vec2::splat(10.0));
@@ -1088,7 +1088,7 @@ fn app_picking() -> (App, Arc<Loaded>) {
     let l = Arc::new(Loaded { frames: vec![frame], file_size: 8, svg: None });
     app.cache.insert(path, l.clone());
     app.run_actions(&[Action::CopyColor], &egui::Context::default(), false);
-    assert!(app.tool == Tool::CopyColor);
+    assert!(app.shown.tool == Tool::CopyColor);
     (app, l)
 }
 
@@ -1103,7 +1103,7 @@ fn copy_color_copies_the_pixel_clicked() {
     app.edit(Doc::flip_horizontal);
     assert!(click_at(&mut app, &ctx, &l, Pos2::new(100.0, 200.0)).contains(&copied("#FF1000")));
     press_key(&mut app, Key::Escape);
-    assert!(app.tool == Tool::Pan);
+    assert!(app.shown.tool == Tool::Pan);
 }
 
 #[derive(Debug)]
@@ -1151,15 +1151,15 @@ fn shortcuts_obey_the_menus_rules() {
     let (mut app, path) = app_with_image();
     let ctx = egui::Context::default();
     // Adjust Color is open: Greyscale would be lost on Done, and Perspective is greyed out.
-    app.adjusting = app.doc();
+    app.shown.adjusting = app.doc();
     app.run_actions(&[Action::Greyscale, Action::Perspective, Action::Straighten], &ctx, false);
-    assert!(app.doc().unwrap().adjust.is_identity() && app.tool == Tool::Pan);
+    assert!(app.doc().unwrap().adjust.is_identity() && app.shown.tool == Tool::Pan);
     // An animation can't be warped.
-    app.adjusting = None;
+    app.shown.adjusting = None;
     let frame = app.cache.get(&path).unwrap().frames[0].clone();
     app.cache.insert(path, Arc::new(Loaded { frames: vec![frame.clone(), frame], file_size: 6, svg: None }));
     app.run_actions(&[Action::Perspective], &ctx, false);
-    assert!(app.tool == Tool::Pan);
+    assert!(app.shown.tool == Tool::Pan);
 }
 
 #[test]
@@ -1167,11 +1167,22 @@ fn a_tool_starts_afresh() {
     let (mut app, _) = app_with_image();
     let ctx = egui::Context::default();
     app.run_actions(&[Action::Crop], &ctx, false);
-    app.tool = Tool::Crop(Some(Rect::from_min_size(Pos2::ZERO, Vec2::splat(1.0))));
+    app.shown.tool = Tool::Crop(Some(Rect::from_min_size(Pos2::ZERO, Vec2::splat(1.0))));
     app.run_actions(&[Action::Measure], &ctx, false);
-    app.tool = Tool::Measure { ends: Some([Pos2::ZERO; 2]), drag: 1 };
+    app.shown.tool = Tool::Measure { ends: Some([Pos2::ZERO; 2]), drag: 1 };
     app.run_actions(&[Action::Crop], &ctx, false);
-    assert!(app.tool == Tool::Crop(None));
+    assert!(app.shown.tool == Tool::Crop(None));
     app.run_actions(&[Action::Measure], &ctx, false);
-    assert!(app.tool == Tool::Measure { ends: None, drag: 0 }, "no line from before");
+    assert!(app.shown.tool == Tool::Measure { ends: None, drag: 0 }, "no line from before");
+}
+
+#[test]
+fn another_image_starts_afresh() {
+    let (mut app, _) = app_with_image();
+    app.files.push(PathBuf::from("/b.png"));
+    app.shown.adjusting = app.doc();
+    app.shown.curve_panel = Some(CurvePanel::default());
+    app.shown.tool = Tool::Crop(None);
+    app.navigate(1);
+    assert!(app.shown.curve_panel.is_none() && app.shown.adjusting.is_none() && app.shown.tool == Tool::Pan);
 }
