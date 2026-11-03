@@ -1839,7 +1839,7 @@ mod tests {
         let (mut app, _) = app_with_image();
         (app.show_shortcuts, app.recording) = (true, Some(Action::Crop));
         let ctx = egui::Context::default();
-        let mut frame = |app: &mut App, events: Vec<egui::Event>| {
+        let frame = |app: &mut App, events: Vec<egui::Event>| {
             let input = egui::RawInput { events, ..Default::default() };
             let mut output = ctx.run_ui(input, |ui| {
                 app.record_shortcut(ui.ctx());

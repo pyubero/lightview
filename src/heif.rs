@@ -233,7 +233,7 @@ mod libheif {
 #[cfg(windows)]
 mod wic {
     use super::*;
-    use windows::Win32::Foundation::WINCODEC_ERR_COMPONENTNOTFOUND;
+    use windows::Win32::Foundation::{WINCODEC_ERR_COMPONENTINITIALIZEFAILURE, WINCODEC_ERR_COMPONENTNOTFOUND};
     use windows::Win32::Graphics::Imaging::*;
     use windows::Win32::System::Com::*;
     use windows::core::Interface;
@@ -264,7 +264,7 @@ mod wic {
             })()
         };
         result.unwrap_or_else(|e| {
-            Err(if e.code() == WINCODEC_ERR_COMPONENTNOTFOUND { tr("this file needs Microsoft's HEIF Image Extensions and HEVC or AV1 Video Extensions").into() } else { e.message() })
+            Err(if e.code() == WINCODEC_ERR_COMPONENTNOTFOUND || e.code() == WINCODEC_ERR_COMPONENTINITIALIZEFAILURE { tr("this file needs Microsoft's HEIF Image Extensions and HEVC or AV1 Video Extensions").into() } else { e.message() })
         })
     }
 }
