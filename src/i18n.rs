@@ -33,13 +33,17 @@ pub enum Language {
     Danish,
     Finnish,
     Norwegian,
+    Catalan,
+    Basque,
+    Galician,
 }
 
 impl Language {
-    pub const ALL: [Self; 25] = [
+    pub const ALL: [Self; 28] = [
         Self::English, Self::Spanish, Self::French, Self::German, Self::Italian, Self::Portuguese, Self::Polish, Self::Dutch, Self::Russian,
         Self::Japanese, Self::ChineseSimplified, Self::ChineseTraditional, Self::Korean, Self::Ukrainian, Self::Turkish,
         Self::Indonesian, Self::Vietnamese, Self::Czech, Self::Swedish, Self::Hungarian, Self::Romanian, Self::Greek, Self::Danish, Self::Finnish, Self::Norwegian,
+        Self::Catalan, Self::Basque, Self::Galician,
     ];
 
     /// In its own language, so it can be found whatever the current one is.
@@ -70,6 +74,9 @@ impl Language {
             Self::Danish => "Dansk",
             Self::Finnish => "Suomi",
             Self::Norwegian => "Norsk bokmål",
+            Self::Catalan => "Català",
+            Self::Basque => "Euskara",
+            Self::Galician => "Galego",
         }
     }
 
@@ -100,6 +107,9 @@ impl Language {
             Self::Danish => include_str!("../locales/da.tsv"),
             Self::Finnish => include_str!("../locales/fi.tsv"),
             Self::Norwegian => include_str!("../locales/nb.tsv"),
+            Self::Catalan => include_str!("../locales/ca.tsv"),
+            Self::Basque => include_str!("../locales/eu.tsv"),
+            Self::Galician => include_str!("../locales/gl.tsv"),
         }
     }
 
@@ -130,6 +140,9 @@ impl Language {
             Some("fi") => Self::Finnish,
             // Nynorsk users read Bokmål too.
             Some("nb" | "no" | "nn") => Self::Norwegian,
+            Some("ca") => Self::Catalan,
+            Some("eu") => Self::Basque,
+            Some("gl") => Self::Galician,
             _ => Self::English,
         }
     }
@@ -153,7 +166,7 @@ pub fn system_language() -> Language {
 }
 
 static CURRENT: AtomicU8 = AtomicU8::new(0);
-static TABLES: [OnceLock<HashMap<String, String>>; 25] = [const { OnceLock::new() }; 25];
+static TABLES: [OnceLock<HashMap<String, String>>; 28] = [const { OnceLock::new() }; 28];
 
 pub fn set(language: Language) {
     CURRENT.store(language as u8, Ordering::Relaxed);
@@ -212,11 +225,11 @@ mod tests {
     use super::*;
     use std::collections::BTreeSet;
 
-    const TRANSLATED: [Language; 24] = [
+    const TRANSLATED: [Language; 27] = [
         Language::Spanish, Language::French, Language::German, Language::Italian, Language::Portuguese, Language::Polish, Language::Dutch, Language::Russian,
         Language::Japanese, Language::ChineseSimplified, Language::ChineseTraditional, Language::Korean, Language::Ukrainian, Language::Turkish,
         Language::Indonesian, Language::Vietnamese, Language::Czech, Language::Swedish, Language::Hungarian, Language::Romanian, Language::Greek,
-        Language::Danish, Language::Finnish, Language::Norwegian,
+        Language::Danish, Language::Finnish, Language::Norwegian, Language::Catalan, Language::Basque, Language::Galician,
     ];
 
     /// Every literal passed to `tr`/`trf` in the sources, as written there.
@@ -336,6 +349,9 @@ mod tests {
         assert_eq!(Language::from_locale("el_GR"), Language::Greek);
         assert_eq!(Language::from_locale("nn_NO.UTF-8"), Language::Norwegian);
         assert_eq!(Language::from_locale("sv_FI"), Language::Swedish);
+        assert_eq!(Language::from_locale("ca_ES@valencia"), Language::Catalan);
+        assert_eq!(Language::from_locale("eu_ES.UTF-8"), Language::Basque);
+        assert_eq!(Language::from_locale("gl_ES"), Language::Galician);
         assert_eq!(Language::from_locale("ar_EG"), Language::English);
         assert_eq!(Language::from_locale("C"), Language::English);
     }

@@ -1,0 +1,426 @@
+AI Models	Models d'IA
+AI Models…	Models d'IA…
+AI runtime (ONNX Runtime)	Entorn d'execució d'IA (ONNX Runtime)
+Accept and Continue	Accepta i continua
+Accept and Download	Accepta i baixa
+Accessibility	Accessibilitat
+Actual Size	Mida real
+Add model file…	Afegeix un fitxer de model…
+Added {name}	S'ha afegit {name}
+Adjust Color	Ajusta el color
+Adjust Color…	Ajusta el color…
+Adjust Curves	Ajusta les corbes
+Adjust Curves…	Ajusta les corbes…
+All channels together: overall brightness	Tots els canals alhora: brillantor general
+Animation	Animació
+Applies the next time lightview starts	S'aplica la propera vegada que s'iniciï lightview
+Apply sigmoid (the model outputs logits)	Aplica la sigmoide (el model retorna logits)
+Apply to Selection	Aplica a la selecció
+Apply to Whole Image{size} (about {estimate})	Aplica a tota la imatge{size} (uns {estimate})
+Arrow	Fletxa
+Artist	Artista
+Auto Levels	Nivells automàtics
+Blur Background	Difumina el fons
+Blur Background…	Difumina el fons…
+BSRGAN 4× — upscales and sharpens, may invent detail	BSRGAN 4× — amplia i enfoca, pot inventar detalls
+Background colour	Color de fons
+BiRefNet lite — best quality, slow	BiRefNet lite — la millor qualitat, lent
+Bicubic	Bicúbica
+Bilinear	Bilineal
+Blue: how much blue each pixel has	Blau: quant blau té cada píxel
+Camera	Càmera
+Camera make	Fabricant de la càmera
+Camera model	Model de la càmera
+Can't open this image:\n{e}	No es pot obrir aquesta imatge:\n{e}
+Cancel	Cancel·la
+Cancelled	Cancel·lat
+Check for updates	Cerca actualitzacions
+Close	Tanca
+Click to add a point, drag to move it, right-click to remove it	Feu clic per afegir un punt, arrossegueu per moure'l, feu clic dret per suprimir-lo
+Color space	Espai de color
+Colour	Color
+Colour profile	Perfil de color
+Continue	Continua
+Contrast	Contrast
+Converted to ONNX by Heliosoph LLC from the authors' published weights.	Convertit a ONNX per Heliosoph LLC a partir dels pesos publicats pels autors.
+Copied {w} × {h} px	S'han copiat {w} × {h} px
+Copy	Copia
+Copyright	Copyright
+Couldn't add the model: {e}	No s'ha pogut afegir el model: {e}
+Couldn't delete the image: {e}	No s'ha pogut suprimir la imatge: {e}
+Couldn't download {file}: {e}	No s'ha pogut baixar {file}: {e}
+Couldn't install the AI runtime: {e}	No s'ha pogut instal·lar l'entorn d'execució d'IA: {e}
+Couldn't process the image: {e}	No s'ha pogut processar la imatge: {e}
+Couldn't read {file}: {e}	No s'ha pogut llegir {file}: {e}
+Couldn't restore the image: {e}	No s'ha pogut restaurar la imatge: {e}
+Couldn't save {name}: {e}	No s'ha pogut desar {name}: {e}
+Couldn't select the object: {e}	No s'ha pogut seleccionar l'objecte: {e}
+Crop	Retalla
+Cut	Talla
+DarkIR brightens dark and night photos and removes their noise and blur. On a well-lit photo it overexposes.	DarkIR aclareix les fotos fosques i nocturnes i n'elimina el soroll i el desenfocament. En una foto ben il·luminada, la sobreexposa.
+DarkIR — dark and night photos, same size	DarkIR — fotos fosques i nocturnes, mateixa mida
+Date modified	Data de modificació
+Date taken	Data de captura
+Default window size	Mida predeterminada de la finestra
+Delete image?	Voleu suprimir la imatge?
+Delete Image…	Suprimeix la imatge…
+Delete Selection	Suprimeix la selecció
+Denoise	Redueix el soroll
+Denoise and Enhance run about 10× faster on a GTX 1050	Redueix el soroll i Millora s'executen unes 10× més ràpid en una GTX 1050
+Describe the image for people who can't see it	Descriviu la imatge per a les persones que no la poden veure
+Description	Descripció
+Deselect	Desselecciona
+Detect size	Detecta la mida
+Dimensions	Dimensions
+Discard	Descarta
+Discard edits?	Voleu descartar les edicions?
+Distance: {d} px · ΔX: {dx} px · ΔY: {dy} px	Distància: {d} px · ΔX: {dx} px · ΔY: {dy} px
+Done	Fet
+Download	Baixa
+Download AI Runtime…	Baixa l'entorn d'execució d'IA…
+Download GPU Support	Baixa el suport de GPU
+Downloaded from Microsoft (ONNX Runtime) and NVIDIA (CUDA libraries, via their official PyPI packages).	Baixat de Microsoft (ONNX Runtime) i NVIDIA (biblioteques CUDA, a través dels seus paquets oficials de PyPI).
+Downloaded from Microsoft's official PyPI package (onnxruntime-ep-webgpu).	Baixat del paquet oficial de PyPI de Microsoft (onnxruntime-ep-webgpu).
+Downloaded {file}	S'ha baixat {file}
+Downloading GPU support ({mb} MB)…	S'està baixant el suport de GPU ({mb} MB)…
+Downloading the AI runtime…	S'està baixant l'entorn d'execució d'IA…
+Downloading…	S'està baixant…
+Drag a box around one object; its outline becomes the selection. Holes inside it stay selected.	Arrossegueu un requadre al voltant d'un objecte; el seu contorn es converteix en la selecció. Els forats de dins queden seleccionats.
+Drag to measure in image pixels · Esc to stop	Arrossegueu per mesurar en píxels de la imatge · Esc per aturar
+Drag to select · Enter to crop · Esc to cancel	Arrossegueu per seleccionar · Retorn per retallar · Esc per cancel·lar
+Drag the corners onto a rectangle · Enter to apply · Esc to cancel	Arrossegueu les cantonades sobre un rectangle · Retorn per aplicar · Esc per cancel·lar
+Drawings, text and pasted images will be merged into the image and can't be edited afterwards. Ctrl+Z undoes it.	Els dibuixos, el text i les imatges enganxades es fusionaran amb la imatge i no es podran editar després. Ctrl+Z ho desfà.
+Edit	Edita
+Edit the image description	Edita la descripció de la imatge
+Ellipse	El·lipse
+Elliptical Selection	Selecció el·líptica
+Embedded (unnamed)	Incrustat (sense nom)
+Enhance Image	Millora la imatge
+Enhance Image uses generative AI. To make the image look better it may invent or alter fine details, such as textures, text or faces, that weren't in the original.	Millora la imatge fa servir IA generativa. Perquè la imatge es vegi millor, pot inventar o alterar detalls fins, com textures, text o cares, que no hi eren a l'original.
+Enter Full Screen	Pantalla completa
+Exposure	Exposició
+File	Fitxer
+File name	Nom del fitxer
+File size	Mida del fitxer
+Fill	Emplenament
+Fills the background with the background colour from Settings.	Emplena el fons amb el color de fons de la Configuració.
+Fit to Window	Ajusta a la finestra
+Flip Horizontally	Inverteix horitzontalment
+Flip Vertically	Inverteix verticalment
+Folder	Carpeta
+Font size	Mida de la lletra
+For a faithful clean-up, use Denoise instead.	Per a una neteja fidel, feu servir Redueix el soroll.
+Format	Format
+GPU (AMD, Intel and others, experimental)	GPU (AMD, Intel i altres, experimental)
+GPU (NVIDIA)	GPU (NVIDIA)
+GPU image scaling	Escalat de la imatge amb GPU
+GPU support	Suport de GPU
+GPU support installed: restart lightview to use it	Suport de GPU instal·lat: reinicieu lightview per fer-lo servir
+General	General
+Green: how much green each pixel has	Verd: quant verd té cada píxel
+Height	Alçada
+Hide Drawing Toolbar	Amaga la barra de dibuix
+Hide Image Information	Amaga la informació de la imatge
+Highlight	Retolador
+Hue: the color itself, such as red or blue	To: el color en si, com el vermell o el blau
+IS-Net anime — illustrations	IS-Net anime — il·lustracions
+IS-Net — general, clean edges	IS-Net — general, vores netes
+Image	Imatge
+Image description	Descripció de la imatge
+Images	Imatges
+Input size	Mida d'entrada
+Installed the AI runtime	S'ha instal·lat l'entorn d'execució d'IA
+Interpolation	Interpolació
+It also makes the image {k}× bigger ({pixels}× the pixels), which takes a while for a big photo.	També fa la imatge {k}× més gran ({pixels}× els píxels), cosa que triga una estona amb una foto gran.
+It's no longer in the Trash	Ja no és a la paperera
+Keep aspect ratio	Mantén la relació d'aspecte
+Language	Idioma
+Lasso	Llaç
+Lens	Objectiu
+Licence ({step} of {count}) — {title}	Llicència ({step} de {count}) — {title}
+Licence — {title}	Llicència — {title}
+Lightness: from black, through color, to white	Lluminositat: del negre, passant pel color, fins al blanc
+Line	Línia
+Local AI	IA local
+Location	Ubicació
+Magnifier	Lupa
+Make lightview my default image viewer	Fes que lightview sigui el meu visualitzador d'imatges predeterminat
+Make lightview the default image viewer	Fes que lightview sigui el visualitzador d'imatges predeterminat
+Mean (R, G, B)	Mitjana (R, G, B)
+Measure	Mesura
+Merge drawings into the image?	Voleu fusionar els dibuixos amb la imatge?
+MobileSAM — finds the object in a box	MobileSAM — troba l'objecte dins d'un requadre
+Model	Model
+Name	Nom
+Nearest	Veí més proper
+Next Frame	Fotograma següent
+Next Image	Imatge següent
+no graphics card with Vulkan or Direct3D 12 was found	no s'ha trobat cap targeta gràfica amb Vulkan o Direct3D 12
+No location in this file	Aquest fitxer no té ubicació
+No model installed yet.	Encara no hi ha cap model instal·lat.
+No object found in the box	No s'ha trobat cap objecte al requadre
+No recent files	No hi ha fitxers recents
+None (sRGB assumed)	Cap (se suposa sRGB)
+Nothing to paste: {e}	No hi ha res per enganxar: {e}
+OK	D'acord
+ONNX export (half precision) by FuryTMP on Hugging Face; its origin isn't verified.	Exportació ONNX (mitja precisió) de FuryTMP a Hugging Face; el seu origen no està verificat.
+ONNX export by Acly on Hugging Face, from the authors' weights; downloaded from Heliosoph LLC's copy.	Exportació ONNX d'Acly a Hugging Face, a partir dels pesos dels autors; baixada de la còpia d'Heliosoph LLC.
+ONNX model	Model ONNX
+Only add models from sources you trust: they run with your permissions.	Afegiu només models de fonts de confiança: s'executen amb els vostres permisos.
+Open Recent	Obre un recent
+Open in Google Maps	Obre a Google Maps
+Open models folder	Obre la carpeta de models
+Open project page	Obre la pàgina del projecte
+Open…	Obre…
+Other tags ({count})	Altres etiquetes ({count})
+Output	Sortida
+Paste	Enganxa
+Pause Animation	Pausa l'animació
+Percentage	Percentatge
+Correct Perspective	Corregeix la perspectiva
+Play Animation	Reprodueix l'animació
+Please read and accept the licence before downloading.	Llegiu i accepteu la llicència abans de baixar.
+Preprocessing: {file}	Preprocessament: {file}
+Previous Frame	Fotograma anterior
+Previous Image	Imatge anterior
+Read the input size from the model	Llegeix la mida d'entrada del model
+Real-ESRGAN 4× half precision	Real-ESRGAN 4× mitja precisió
+Real-ESRGAN 4× — upscales, smooth, may invent detail	Real-ESRGAN 4× — amplia, suau, pot inventar detalls
+Real-ESRGAN and DarkIR can't be downloaded here. Convert them yourself with lightview-models, then copy the .onnx files into the models folder:	Real-ESRGAN i DarkIR no es poden baixar aquí. Convertiu-los vosaltres mateixos amb lightview-models i després copieu els fitxers .onnx a la carpeta de models:
+Real-ESRGAN general 4× half precision	Real-ESRGAN general 4× mitja precisió
+Real-ESRGAN general 4× — fast, softer	Real-ESRGAN general 4× — ràpid, més suau
+Rectangle	Rectangle
+Rectangular Selection	Selecció rectangular
+Red: how much red each pixel has	Vermell: quant vermell té cada píxel
+Redo	Refés
+Remove Background	Elimina el fons
+Remove Background and Crop	Elimina el fons i retalla
+Remove location from the copy	Elimina la ubicació de la còpia
+Replace Background	Substitueix el fons
+Reset	Restableix
+Reset Color Adjustments	Restableix els ajustos de color
+Reset to default	Restableix el valor predeterminat
+Resize	Canvia la mida
+Resize…	Canvia la mida…
+Resolution	Resolució
+Restart lightview to start using the GPU.	Reinicieu lightview per començar a fer servir la GPU.
+Revert	Reverteix
+Rotate Left	Gira a l'esquerra
+Rotate Right	Gira a la dreta
+Rounded Rectangle	Rectangle arrodonit
+Run the AI tools on any graphics card with Vulkan or Direct3D 12 ({mb} MB download, WebGPU). A weak built-in graphics chip can be slower than the CPU.	Executa les eines d'IA en qualsevol targeta gràfica amb Vulkan o Direct3D 12 (baixada de {mb} MB, WebGPU). Un xip gràfic integrat poc potent pot ser més lent que la CPU.
+Run the AI tools on the graphics card ({mb} MB download, NVIDIA's CUDA libraries).	Executa les eines d'IA a la targeta gràfica (baixada de {mb} MB, biblioteques CUDA de NVIDIA).
+Running {file}…	S'està executant {file}…
+SCUNet σ15 — light noise	SCUNet σ15 — soroll lleu
+SCUNet σ25 — moderate noise	SCUNet σ25 — soroll moderat
+SCUNet σ50 — heavy noise	SCUNet σ50 — soroll intens
+SCUNet — noise and JPEG artifacts (recommended)	SCUNet — soroll i artefactes JPEG (recomanat)
+Saturation	Saturació
+Saturation: from grey to vivid color	Saturació: del gris al color viu
+Save As…	Desa com a…
+Save copy…	Desa una còpia…
+Saved in JPEG files	Es desa als fitxers JPEG
+Saved {name}	S'ha desat {name}
+Saves a copy of the file with this metadata (without other edits). Camera maker notes are removed.	Desa una còpia del fitxer amb aquestes metadades (sense altres edicions). Les notes del fabricant de la càmera s'eliminen.
+Select	Selecciona
+Select All	Selecciona-ho tot
+Select Object	Selecciona un objecte
+Select Object (AI)	Selecciona un objecte (IA)
+Selecting the object…	S'està seleccionant l'objecte…
+Settings	Configuració
+Settings…	Configuració…
+Shapes	Formes
+Show Drawing Toolbar	Mostra la barra de dibuix
+Show Image Information	Mostra la informació de la imatge
+Silueta — small and fast	Silueta — petit i ràpid
+Size read from the model when it runs; the usual normalisation.	Mida llegida del model quan s'executa; la normalització habitual.
+Sketch	Esbós
+Smoother zooming and panning. Uses more GPU memory and makes switching images a little slower.	Zoom i desplaçament més suaus. Fa servir més memòria de GPU i fa una mica més lent el canvi d'imatge.
+Sort order	Ordenació
+Std (R, G, B)	Desv. est. (R, G, B)
+Strength	Intensitat
+Stroke	Traç
+SwinIR σ25 — moderate noise, very slow	SwinIR σ25 — soroll moderat, molt lent
+Text	Text
+Text colour	Color del text
+The AI runtime isn't installed yet: Local AI > Download AI Runtime…	L'entorn d'execució d'IA encara no està instal·lat: IA local > Baixa l'entorn d'execució d'IA…
+The GPU couldn't be used, so the CPU is: {e}	No s'ha pogut fer servir la GPU, així que es fa servir la CPU: {e}
+The corners must form a shape with no crossing sides	Les cantonades han de formar una figura sense costats que es creuin
+the model's mask decoder is missing	falta el descodificador de màscara del model
+Thickness	Gruix
+Tint	Matís
+Tools	Eines
+Undo	Desfés
+Use YYYY:MM:DD HH:MM:SS	Feu servir AAAA:MM:DD HH:MM:SS
+Use the GPU	Fes servir la GPU
+Used by Remove Background and Remove Background and Crop.	El fan servir Elimina el fons i Elimina el fons i retalla.
+Uses Bilinear while GPU scaling is on	Fa servir Bilineal mentre l'escalat amb GPU està activat
+U²-Net people — portraits	U²-Net persones — retrats
+U²-Net small — fastest	U²-Net petit — el més ràpid
+U²-Net — general	U²-Net — general
+Value: from black to full color	Valor: del negre al color ple
+View	Visualitza
+Welcome to lightview	Us donem la benvinguda a lightview
+Width	Amplada
+Your edits to {name} haven't been saved.	Les edicions de {name} no s'han desat.
+Zoom	Zoom
+Zoom In	Amplia
+Zoom Out	Redueix
+a GPU library was missing from the download	faltava una biblioteca de GPU a la baixada
+about {time} left	falten uns {time}
+can't save as .{ext}: use .jpg, .png, .webp, .bmp, .tif or .gif	no es pot desar com a .{ext}: feu servir .jpg, .png, .webp, .bmp, .tif o .gif
+choose a new name: the original is never modified	trieu un nom nou: l'original no es modifica mai
+compressed SVG files aren't supported	els fitxers SVG comprimits no són compatibles
+couldn't read this file's EXIF safely	no s'ha pogut llegir l'EXIF d'aquest fitxer de manera segura
+edited: {w} × {h}	editat: {w} × {h}
+lightview is now the default image viewer	lightview és ara el visualitzador d'imatges predeterminat
+no data folder	no hi ha carpeta de dades
+no frames	no hi ha fotogrames
+no subject found	no s'ha trobat cap subjecte
+pick an .onnx file	trieu un fitxer .onnx
+the download didn't match its checksum	la baixada no coincideix amb la suma de verificació
+the model has no image input	el model no té cap entrada d'imatge
+the model's output changed size between tiles	la sortida del model ha canviat de mida entre fragments
+the model's output doesn't match its input size	la sortida del model no coincideix amb la mida d'entrada
+the model's output isn't a whole multiple of its input	la sortida del model no és un múltiple exacte de l'entrada
+the written file didn't check out: the location wasn't removed	el fitxer escrit no ha superat la comprovació: no s'ha eliminat la ubicació
+the written file didn't check out: {e}	el fitxer escrit no ha superat la comprovació: {e}
+the written file didn't check out: {label} wasn't saved	el fitxer escrit no ha superat la comprovació: no s'ha desat {label}
+this file crashed its decoder	aquest fitxer ha fet fallar el descodificador
+this file's EXIF couldn't be processed	no s'ha pogut processar l'EXIF d'aquest fitxer
+this image is too large to open	aquesta imatge és massa gran per obrir-la
+this isn't a regular file	no és un fitxer normal
+{format}, {count} frames	{format}, {count} fotogrames
+{name} is already installed	{name} ja està instal·lat
+{name} will be moved to the Trash.	{name} es mourà a la paperera.
+{task} done	{task}: fet
+{task} failed: {e}	{task}: ha fallat: {e}
+{task} on the GPU	{task} a la GPU
+{task} preview of the visible area · drag to compare · Before | After	{task}: previsualització de l'àrea visible · arrossegueu per comparar · Abans | Després
+Remove Object	Elimina un objecte
+LaMa — best quality, slower	LaMa — la millor qualitat, més lent
+MI-GAN — fast	MI-GAN — ràpid
+ONNX export by Carve on Hugging Face; its origin isn't verified.	Exportació ONNX de Carve a Hugging Face; el seu origen no està verificat.
+the selection is empty	la selecció és buida
+No images in {name}	No hi ha imatges a {name}
+Can't open {name}: not a supported image	No es pot obrir {name}: no és una imatge compatible
+Save Copy	Desa una còpia
+Copy Path	Copia el camí
+Show in File Manager	Mostra al gestor de fitxers
+Rename…	Canvia el nom…
+First Image	Primera imatge
+Last Image	Última imatge
+Copied the path	S'ha copiat el camí
+Rename Image	Canvia el nom de la imatge
+Rename	Canvia el nom
+That isn't a valid file name	No és un nom de fitxer vàlid
+{name} already exists	{name} ja existeix
+File changed on disk	El fitxer ha canviat al disc
+{name} changed on disk. Reloading it discards your edits.	{name} ha canviat al disc. Si el torneu a carregar, es descartaran les edicions.
+Reload	Torna a carregar
+Keep Edits	Mantén les edicions
+Pixel grid	Quadrícula de píxels
+Shows the edges of the pixels when zoomed far in.	Mostra les vores dels píxels quan s'amplia molt.
+Click a pixel to copy its colour · Esc to stop	Feu clic en un píxel per copiar-ne el color · Esc per aturar
+Copied {color}	S'ha copiat {color}
+Copy Color	Copia el color
+this file is damaged or cut short	aquest fitxer està malmès o incomplet
+HEIC and AVIF files need libheif, which isn't installed	Els fitxers HEIC i AVIF necessiten libheif, que no està instal·lat
+this file needs a libheif decoder plugin, which isn't installed	aquest fitxer necessita un connector descodificador de libheif, que no està instal·lat
+this file needs Microsoft's HEIF Image Extensions and HEVC or AV1 Video Extensions	aquest fitxer necessita les HEIF Image Extensions de Microsoft i les HEVC o AV1 Video Extensions
+Pages	Pàgines
+Next Page	Pàgina següent
+Previous Page	Pàgina anterior
+{format}, {count} pages	{format}, {count} pàgines
+page {n} of {count}	pàgina {n} de {count}
+Colour management	Gestió del color
+Converts images with a colour profile to sRGB, so wide-gamut photos look right on an sRGB monitor. Turn it off for a wide-gamut monitor.	Converteix les imatges amb perfil de color a sRGB, perquè les fotos de gamma àmplia es vegin bé en un monitor sRGB. Desactiveu-ho per a un monitor de gamma àmplia.
+this RAW file has no embedded preview	aquest fitxer RAW no té cap previsualització incrustada
+{format} (embedded preview)	{format} (previsualització incrustada)
+EXIF isn't read from this kind of RAW file yet	Encara no es llegeix l'EXIF d'aquest tipus de fitxer RAW
+A RAW file's metadata is shown, not edited.	Les metadades d'un fitxer RAW es mostren, però no s'editen.
+A WebP file's metadata is shown, not edited.	Les metadades d'un fitxer WebP es mostren, però no s'editen.
+EXIF is shown for JPEG, PNG, WebP, TIFF and RAW files	L'EXIF es mostra per als fitxers JPEG, PNG, WebP, TIFF i RAW
+the copy must be a .{ext} file	la còpia ha de ser un fitxer .{ext}
+the written file didn't check out: the image changed	el fitxer escrit no ha superat la comprovació: la imatge ha canviat
+Copy File	Copia el fitxer
+Copied the file	S'ha copiat el fitxer
+Couldn't copy the file: {e}	No s'ha pogut copiar el fitxer: {e}
+Straighten…	Endreça…
+Straighten	Endreça
+Greyscale	Escala de grisos
+Invert Colors	Inverteix els colors
+Remove Red Eye	Elimina els ulls vermells
+Pixelate Selection	Pixela la selecció
+Select the eyes first, then choose this.	Seleccioneu primer els ulls i després trieu això.
+Hides faces. For text, a solid shape is safer: pixelation can sometimes be undone.	Amaga cares. Per al text, una forma sòlida és més segura: a vegades la pixelació es pot desfer.
+Red eye removed	S'han eliminat els ulls vermells
+Pixelated	Pixelat
+Turn until the lines run straight · Enter to apply · Esc to cancel	Gireu fins que les línies quedin rectes · Retorn per aplicar · Esc per cancel·lar
+Recognize Text	Reconeix el text
+PP-OCRv5 Latin — European languages	PP-OCRv5 Latin — llengües europees
+PP-OCRv5 — Chinese, Japanese and English	PP-OCRv5 — xinès, japonès i anglès
+Converted to ONNX by Satoru Nakamura (University of Tokyo) from PaddlePaddle's published models.	Convertit a ONNX per Satoru Nakamura (Universitat de Tòquio) a partir dels models publicats per PaddlePaddle.
+the model's output doesn't match its character list	la sortida del model no coincideix amb la seva llista de caràcters
+Read QR Code	Llegeix un codi QR
+No QR code found	No s'ha trobat cap codi QR
+No text found	No s'ha trobat cap text
+QR Code	Codi QR
+Text in Image	Text de la imatge
+Couldn't read the text: {e}	No s'ha pogut llegir el text: {e}
+Reading QR codes…	S'estan llegint els codis QR…
+Recognizing text…	S'està reconeixent el text…
+Reads the selection, or the whole image. Straighten tilted text first, and select small text in a large image so it's read at full size.	Llegeix la selecció o tota la imatge. Endreceu primer el text inclinat i seleccioneu el text petit d'una imatge gran perquè es llegeixi a mida completa.
+Reads the selection, or the whole image. Shows what the code says; links are never opened.	Llegeix la selecció o tota la imatge. Mostra què diu el codi; els enllaços no s'obren mai.
+Keyboard Shortcuts	Dreceres de teclat
+Press keys… (Esc to cancel)	Premeu les tecles… (Esc per cancel·lar)
+Change	Canvia
+Remove	Suprimeix
+Reset All Shortcuts	Restableix totes les dreceres
+{keys} is already used by {action}	{keys} ja el fa servir {action}
+Copy, Cut, Paste, Enter, Esc and Delete	Copia, Talla, Enganxa, Retorn, Esc i Supr
+Change Keyboard Shortcuts…	Canvia les dreceres de teclat…
+Theme	Tema
+Follow system	Segueix el sistema
+Dark	Fosc
+Light	Clar
+High contrast	Contrast alt
+bigger than 64 KiB	més gran de 64 KiB
+invalid value	valor no vàlid
+line	línia
+Your own themes go in the themes folder next to the AI models. Choosing a theme again reloads its file.	Els vostres temes van a la carpeta de temes, al costat dels models d'IA. Si torneu a triar un tema, se'n torna a carregar el fitxer.
+Couldn't load the theme, so the base theme is used: {e}	No s'ha pogut carregar el tema, així que es fa servir el tema base: {e}
+Open themes folder	Obre la carpeta de temes
+Group Duplicates in Folder…	Agrupa els duplicats de la carpeta…
+Group Duplicates in Folder	Agrupa els duplicats de la carpeta
+Compares the images in this folder (not its subfolders) and moves each group of look-alikes into a folder of its own. Nothing is deleted, and Ctrl+Z moves them back. Rotated copies and heavy crops aren't found.	Compara les imatges d'aquesta carpeta (no de les subcarpetes) i mou cada grup d'imatges semblants a una carpeta pròpia. No se suprimeix res, i Ctrl+Z les torna al seu lloc. No es troben les còpies girades ni els retalls grans.
+Comparing images: {done} of {total}	S'estan comparant les imatges: {done} de {total}
+How different each image is from its closest look-alike:	Com de diferent és cada imatge de la més semblant:
+Largest difference	Diferència màxima
+{meaning} · suggested: {n}	{meaning} · suggerit: {n}
+Identical pixels only	Només píxels idèntics
+Resized or recompressed copies	Còpies redimensionades o recomprimides
+Small edits, crops and bursts	Edicions petites, retalls i ràfegues
+Merely similar scenes too	També escenes només semblants
+Groups: {groups} · Images to move: {moving} · Staying: {staying}	Grups: {groups} · Imatges per moure: {moving} · Es queden: {staying}
+Not compared: {n}	No comparades: {n}
+Not compared	No comparada
+{name} · difference: {d}	{name} · diferència: {d}
+Move	Mou
+Images moved: {n} · Folders: {f}	Imatges mogudes: {n} · Carpetes: {f}
+Stopped: {e}	S'ha aturat: {e}
+Images moved back: {n}	Imatges retornades: {n}
+{name}: changed since it was compared	{name}: ha canviat des de la comparació
+{name}: already in the folder	{name}: ja és a la carpeta
+{name}: its old name is taken	{name}: el seu nom antic està ocupat
+the file is gone	el fitxer ja no hi és
+About {s} s left	Falten uns {s} s
+About {m} min left	Falten uns {m} min
+Smallest group	Grup més petit
+Groups with fewer images stay where they are.	Els grups amb menys imatges es queden on són.
+Resize Optimally	Mida òptima
+Shrinks the image to the size its detail needs, measured on its sharpest part. Never enlarges; Ctrl+Z undoes it.	Redueix la imatge a la mida que necessiten els seus detalls, mesurada a la part més nítida. No l'amplia mai; Ctrl+Z ho desfà.
+Already at its optimal size	Ja té la mida òptima
+Resized to {w} × {h} px	S'ha canviat la mida a {w} × {h} px
+The image changed while {task} ran; run it again	La imatge ha canviat mentre s'executava {task}; torneu-ho a executar
+lightview hit an internal error	lightview ha trobat un error intern

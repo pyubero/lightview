@@ -1,0 +1,426 @@
+AI Models	Modelos de IA
+AI Models…	Modelos de IA…
+AI runtime (ONNX Runtime)	Contorno de execución de IA (ONNX Runtime)
+Accept and Continue	Aceptar e continuar
+Accept and Download	Aceptar e descargar
+Accessibility	Accesibilidade
+Actual Size	Tamaño real
+Add model file…	Engadir ficheiro de modelo…
+Added {name}	Engadido: {name}
+Adjust Color	Axustar cor
+Adjust Color…	Axustar cor…
+Adjust Curves	Axustar curvas
+Adjust Curves…	Axustar curvas…
+All channels together: overall brightness	Todas as canles á vez: brillo xeral
+Animation	Animación
+Applies the next time lightview starts	Aplícase a próxima vez que se inicie lightview
+Apply sigmoid (the model outputs logits)	Aplicar sigmoide (o modelo devolve logits)
+Apply to Selection	Aplicar á selección
+Apply to Whole Image{size} (about {estimate})	Aplicar a toda a imaxe{size} (uns {estimate})
+Arrow	Frecha
+Artist	Artista
+Auto Levels	Niveis automáticos
+Blur Background	Desenfocar o fondo
+Blur Background…	Desenfocar o fondo…
+BSRGAN 4× — upscales and sharpens, may invent detail	BSRGAN 4× — amplía e enfoca, pode inventar detalles
+Background colour	Cor de fondo
+BiRefNet lite — best quality, slow	BiRefNet lite — a mellor calidade, lento
+Bicubic	Bicúbica
+Bilinear	Bilineal
+Blue: how much blue each pixel has	Azul: canto azul ten cada píxel
+Camera	Cámara
+Camera make	Fabricante da cámara
+Camera model	Modelo da cámara
+Can't open this image:\n{e}	Non se pode abrir esta imaxe:\n{e}
+Cancel	Cancelar
+Cancelled	Cancelado
+Check for updates	Buscar actualizacións
+Close	Pechar
+Click to add a point, drag to move it, right-click to remove it	Preme para engadir un punto, arrastra para movelo, preme co botón dereito para quitalo
+Color space	Espazo de cor
+Colour	Cor
+Colour profile	Perfil de cor
+Continue	Continuar
+Contrast	Contraste
+Converted to ONNX by Heliosoph LLC from the authors' published weights.	Convertido a ONNX por Heliosoph LLC a partir dos pesos publicados polos autores.
+Copied {w} × {h} px	Copiáronse {w} × {h} px
+Copy	Copiar
+Copyright	Copyright
+Couldn't add the model: {e}	Non se puido engadir o modelo: {e}
+Couldn't delete the image: {e}	Non se puido eliminar a imaxe: {e}
+Couldn't download {file}: {e}	Non se puido descargar {file}: {e}
+Couldn't install the AI runtime: {e}	Non se puido instalar o contorno de execución de IA: {e}
+Couldn't process the image: {e}	Non se puido procesar a imaxe: {e}
+Couldn't read {file}: {e}	Non se puido ler {file}: {e}
+Couldn't restore the image: {e}	Non se puido restaurar a imaxe: {e}
+Couldn't save {name}: {e}	Non se puido gardar {name}: {e}
+Couldn't select the object: {e}	Non se puido seleccionar o obxecto: {e}
+Crop	Recortar
+Cut	Cortar
+DarkIR brightens dark and night photos and removes their noise and blur. On a well-lit photo it overexposes.	DarkIR aclara as fotos escuras e nocturnas e elimina o seu ruído e desenfoque. Nunha foto ben iluminada, sobreexpón.
+DarkIR — dark and night photos, same size	DarkIR — fotos escuras e nocturnas, mesmo tamaño
+Date modified	Data de modificación
+Date taken	Data de captura
+Default window size	Tamaño predeterminado da xanela
+Delete image?	Eliminar a imaxe?
+Delete Image…	Eliminar imaxe…
+Delete Selection	Eliminar selección
+Denoise	Reducir ruído
+Denoise and Enhance run about 10× faster on a GTX 1050	Reducir ruído e Mellorar van unhas 10× máis rápido nunha GTX 1050
+Describe the image for people who can't see it	Describe a imaxe para as persoas que non a poden ver
+Description	Descrición
+Deselect	Deseleccionar
+Detect size	Detectar tamaño
+Dimensions	Dimensións
+Discard	Descartar
+Discard edits?	Descartar as edicións?
+Distance: {d} px · ΔX: {dx} px · ΔY: {dy} px	Distancia: {d} px · ΔX: {dx} px · ΔY: {dy} px
+Done	Feito
+Download	Descargar
+Download AI Runtime…	Descargar contorno de execución de IA…
+Download GPU Support	Descargar compatibilidade con GPU
+Downloaded from Microsoft (ONNX Runtime) and NVIDIA (CUDA libraries, via their official PyPI packages).	Descargado de Microsoft (ONNX Runtime) e NVIDIA (bibliotecas CUDA, a través dos seus paquetes oficiais de PyPI).
+Downloaded from Microsoft's official PyPI package (onnxruntime-ep-webgpu).	Descargado do paquete oficial de PyPI de Microsoft (onnxruntime-ep-webgpu).
+Downloaded {file}	Descargado: {file}
+Downloading GPU support ({mb} MB)…	Descargando a compatibilidade con GPU ({mb} MB)…
+Downloading the AI runtime…	Descargando o contorno de execución de IA…
+Downloading…	Descargando…
+Drag a box around one object; its outline becomes the selection. Holes inside it stay selected.	Arrastra un recadro arredor dun obxecto; o seu contorno convértese na selección. Os buratos de dentro seguen seleccionados.
+Drag to measure in image pixels · Esc to stop	Arrastra para medir en píxeles da imaxe · Esc para parar
+Drag to select · Enter to crop · Esc to cancel	Arrastra para seleccionar · Intro para recortar · Esc para cancelar
+Drag the corners onto a rectangle · Enter to apply · Esc to cancel	Arrastra as esquinas sobre un rectángulo · Intro para aplicar · Esc para cancelar
+Drawings, text and pasted images will be merged into the image and can't be edited afterwards. Ctrl+Z undoes it.	Os debuxos, o texto e as imaxes pegadas fusionaranse coa imaxe e non se poderán editar despois. Ctrl+Z desfaino.
+Edit	Editar
+Edit the image description	Editar a descrición da imaxe
+Ellipse	Elipse
+Elliptical Selection	Selección elíptica
+Embedded (unnamed)	Incrustado (sen nome)
+Enhance Image	Mellorar imaxe
+Enhance Image uses generative AI. To make the image look better it may invent or alter fine details, such as textures, text or faces, that weren't in the original.	Mellorar imaxe usa IA xerativa. Para que a imaxe se vexa mellor, pode inventar ou alterar detalles finos, como texturas, texto ou caras, que non estaban no orixinal.
+Enter Full Screen	Pantalla completa
+Exposure	Exposición
+File	Ficheiro
+File name	Nome do ficheiro
+File size	Tamaño do ficheiro
+Fill	Recheo
+Fills the background with the background colour from Settings.	Enche o fondo coa cor de fondo da Configuración.
+Fit to Window	Axustar á xanela
+Flip Horizontally	Voltear horizontalmente
+Flip Vertically	Voltear verticalmente
+Folder	Cartafol
+Font size	Tamaño da letra
+For a faithful clean-up, use Denoise instead.	Para unha limpeza fiel, usa Reducir ruído.
+Format	Formato
+GPU (AMD, Intel and others, experimental)	GPU (AMD, Intel e outras, experimental)
+GPU (NVIDIA)	GPU (NVIDIA)
+GPU image scaling	Escalado da imaxe coa GPU
+GPU support	Compatibilidade con GPU
+GPU support installed: restart lightview to use it	Compatibilidade con GPU instalada: reinicia lightview para usala
+General	Xeral
+Green: how much green each pixel has	Verde: canto verde ten cada píxel
+Height	Altura
+Hide Drawing Toolbar	Ocultar a barra de debuxo
+Hide Image Information	Ocultar a información da imaxe
+Highlight	Marcador
+Hue: the color itself, such as red or blue	Ton: a propia cor, como o vermello ou o azul
+IS-Net anime — illustrations	IS-Net anime — ilustracións
+IS-Net — general, clean edges	IS-Net — xeral, bordos limpos
+Image	Imaxe
+Image description	Descrición da imaxe
+Images	Imaxes
+Input size	Tamaño de entrada
+Installed the AI runtime	Instalouse o contorno de execución de IA
+Interpolation	Interpolación
+It also makes the image {k}× bigger ({pixels}× the pixels), which takes a while for a big photo.	Tamén fai a imaxe {k}× máis grande ({pixels}× os píxeles), o que leva un tempo cunha foto grande.
+It's no longer in the Trash	Xa non está no lixo
+Keep aspect ratio	Manter a proporción
+Language	Idioma
+Lasso	Lazo
+Lens	Obxectivo
+Licence ({step} of {count}) — {title}	Licenza ({step} de {count}) — {title}
+Licence — {title}	Licenza — {title}
+Lightness: from black, through color, to white	Luminosidade: do negro, pasando pola cor, ao branco
+Line	Liña
+Local AI	IA local
+Location	Localización
+Magnifier	Lupa
+Make lightview my default image viewer	Facer de lightview o meu visor de imaxes predeterminado
+Make lightview the default image viewer	Facer de lightview o visor de imaxes predeterminado
+Mean (R, G, B)	Media (R, G, B)
+Measure	Medir
+Merge drawings into the image?	Fusionar os debuxos coa imaxe?
+MobileSAM — finds the object in a box	MobileSAM — atopa o obxecto nun recadro
+Model	Modelo
+Name	Nome
+Nearest	Máis próximo
+Next Frame	Fotograma seguinte
+Next Image	Imaxe seguinte
+no graphics card with Vulkan or Direct3D 12 was found	non se atopou ningunha tarxeta gráfica con Vulkan ou Direct3D 12
+No location in this file	Este ficheiro non ten localización
+No model installed yet.	Aínda non hai ningún modelo instalado.
+No object found in the box	Non se atopou ningún obxecto no recadro
+No recent files	Non hai ficheiros recentes
+None (sRGB assumed)	Ningún (suponse sRGB)
+Nothing to paste: {e}	Non hai nada que pegar: {e}
+OK	Aceptar
+ONNX export (half precision) by FuryTMP on Hugging Face; its origin isn't verified.	Exportación ONNX (media precisión) de FuryTMP en Hugging Face; a súa orixe non está verificada.
+ONNX export by Acly on Hugging Face, from the authors' weights; downloaded from Heliosoph LLC's copy.	Exportación ONNX de Acly en Hugging Face, a partir dos pesos dos autores; descargada da copia de Heliosoph LLC.
+ONNX model	Modelo ONNX
+Only add models from sources you trust: they run with your permissions.	Engade só modelos de fontes nas que confíes: execútanse cos teus permisos.
+Open Recent	Abrir recente
+Open in Google Maps	Abrir en Google Maps
+Open models folder	Abrir o cartafol de modelos
+Open project page	Abrir a páxina do proxecto
+Open…	Abrir…
+Other tags ({count})	Outras etiquetas ({count})
+Output	Saída
+Paste	Pegar
+Pause Animation	Pausar a animación
+Percentage	Porcentaxe
+Correct Perspective	Corrixir a perspectiva
+Play Animation	Reproducir a animación
+Please read and accept the licence before downloading.	Le e acepta a licenza antes de descargar.
+Preprocessing: {file}	Preprocesamento: {file}
+Previous Frame	Fotograma anterior
+Previous Image	Imaxe anterior
+Read the input size from the model	Ler o tamaño de entrada do modelo
+Real-ESRGAN 4× half precision	Real-ESRGAN 4× media precisión
+Real-ESRGAN 4× — upscales, smooth, may invent detail	Real-ESRGAN 4× — amplía, suave, pode inventar detalles
+Real-ESRGAN and DarkIR can't be downloaded here. Convert them yourself with lightview-models, then copy the .onnx files into the models folder:	Real-ESRGAN e DarkIR non se poden descargar aquí. Convérteos ti mesmo con lightview-models e despois copia os ficheiros .onnx no cartafol de modelos:
+Real-ESRGAN general 4× half precision	Real-ESRGAN general 4× media precisión
+Real-ESRGAN general 4× — fast, softer	Real-ESRGAN general 4× — rápido, máis suave
+Rectangle	Rectángulo
+Rectangular Selection	Selección rectangular
+Red: how much red each pixel has	Vermello: canto vermello ten cada píxel
+Redo	Refacer
+Remove Background	Eliminar o fondo
+Remove Background and Crop	Eliminar o fondo e recortar
+Remove location from the copy	Eliminar a localización da copia
+Replace Background	Substituír o fondo
+Reset	Restablecer
+Reset Color Adjustments	Restablecer os axustes de cor
+Reset to default	Restablecer o predeterminado
+Resize	Cambiar o tamaño
+Resize…	Cambiar o tamaño…
+Resolution	Resolución
+Restart lightview to start using the GPU.	Reinicia lightview para comezar a usar a GPU.
+Revert	Reverter
+Rotate Left	Rotar á esquerda
+Rotate Right	Rotar á dereita
+Rounded Rectangle	Rectángulo redondeado
+Run the AI tools on any graphics card with Vulkan or Direct3D 12 ({mb} MB download, WebGPU). A weak built-in graphics chip can be slower than the CPU.	Executa as ferramentas de IA en calquera tarxeta gráfica con Vulkan ou Direct3D 12 (descarga de {mb} MB, WebGPU). Un chip gráfico integrado pouco potente pode ser máis lento que a CPU.
+Run the AI tools on the graphics card ({mb} MB download, NVIDIA's CUDA libraries).	Executa as ferramentas de IA na tarxeta gráfica (descarga de {mb} MB, bibliotecas CUDA de NVIDIA).
+Running {file}…	Executando {file}…
+SCUNet σ15 — light noise	SCUNet σ15 — ruído leve
+SCUNet σ25 — moderate noise	SCUNet σ25 — ruído moderado
+SCUNet σ50 — heavy noise	SCUNet σ50 — ruído intenso
+SCUNet — noise and JPEG artifacts (recommended)	SCUNet — ruído e artefactos JPEG (recomendado)
+Saturation	Saturación
+Saturation: from grey to vivid color	Saturación: do gris á cor viva
+Save As…	Gardar como…
+Save copy…	Gardar unha copia…
+Saved in JPEG files	Gárdase nos ficheiros JPEG
+Saved {name}	Gardado: {name}
+Saves a copy of the file with this metadata (without other edits). Camera maker notes are removed.	Garda unha copia do ficheiro con estes metadatos (sen outras edicións). As notas do fabricante da cámara elimínanse.
+Select	Seleccionar
+Select All	Seleccionar todo
+Select Object	Seleccionar obxecto
+Select Object (AI)	Seleccionar obxecto (IA)
+Selecting the object…	Seleccionando o obxecto…
+Settings	Configuración
+Settings…	Configuración…
+Shapes	Formas
+Show Drawing Toolbar	Mostrar a barra de debuxo
+Show Image Information	Mostrar a información da imaxe
+Silueta — small and fast	Silueta — pequeno e rápido
+Size read from the model when it runs; the usual normalisation.	Tamaño lido do modelo ao executalo; a normalización habitual.
+Sketch	Bosquexo
+Smoother zooming and panning. Uses more GPU memory and makes switching images a little slower.	Zoom e desprazamento máis suaves. Usa máis memoria da GPU e fai un pouco máis lento o cambio de imaxe.
+Sort order	Orde
+Std (R, G, B)	Desv. típ. (R, G, B)
+Strength	Intensidade
+Stroke	Trazo
+SwinIR σ25 — moderate noise, very slow	SwinIR σ25 — ruído moderado, moi lento
+Text	Texto
+Text colour	Cor do texto
+The AI runtime isn't installed yet: Local AI > Download AI Runtime…	O contorno de execución de IA aínda non está instalado: IA local > Descargar contorno de execución de IA…
+The GPU couldn't be used, so the CPU is: {e}	Non se puido usar a GPU, así que se usa a CPU: {e}
+The corners must form a shape with no crossing sides	As esquinas deben formar unha figura sen lados que se crucen
+the model's mask decoder is missing	falta o descodificador de máscara do modelo
+Thickness	Grosor
+Tint	Matiz
+Tools	Ferramentas
+Undo	Desfacer
+Use YYYY:MM:DD HH:MM:SS	Usa AAAA:MM:DD HH:MM:SS
+Use the GPU	Usar a GPU
+Used by Remove Background and Remove Background and Crop.	Úsano Eliminar o fondo e Eliminar o fondo e recortar.
+Uses Bilinear while GPU scaling is on	Usa Bilineal mentres o escalado coa GPU está activado
+U²-Net people — portraits	U²-Net persoas — retratos
+U²-Net small — fastest	U²-Net pequeno — o máis rápido
+U²-Net — general	U²-Net — xeral
+Value: from black to full color	Valor: do negro á cor plena
+View	Ver
+Welcome to lightview	Benvido/a a lightview
+Width	Largura
+Your edits to {name} haven't been saved.	As túas edicións de {name} non se gardaron.
+Zoom	Zoom
+Zoom In	Ampliar
+Zoom Out	Reducir
+a GPU library was missing from the download	faltaba unha biblioteca de GPU na descarga
+about {time} left	quedan uns {time}
+can't save as .{ext}: use .jpg, .png, .webp, .bmp, .tif or .gif	non se pode gardar como .{ext}: usa .jpg, .png, .webp, .bmp, .tif ou .gif
+choose a new name: the original is never modified	escolle un nome novo: o orixinal nunca se modifica
+compressed SVG files aren't supported	os ficheiros SVG comprimidos non son compatibles
+couldn't read this file's EXIF safely	non se puido ler o EXIF deste ficheiro de forma segura
+edited: {w} × {h}	editado: {w} × {h}
+lightview is now the default image viewer	lightview é agora o visor de imaxes predeterminado
+no data folder	non hai cartafol de datos
+no frames	non hai fotogramas
+no subject found	non se atopou ningún suxeito
+pick an .onnx file	escolle un ficheiro .onnx
+the download didn't match its checksum	a descarga non coincide coa súa suma de verificación
+the model has no image input	o modelo non ten entrada de imaxe
+the model's output changed size between tiles	a saída do modelo cambiou de tamaño entre fragmentos
+the model's output doesn't match its input size	a saída do modelo non coincide co seu tamaño de entrada
+the model's output isn't a whole multiple of its input	a saída do modelo non é un múltiplo exacto da súa entrada
+the written file didn't check out: the location wasn't removed	o ficheiro escrito non superou a comprobación: non se eliminou a localización
+the written file didn't check out: {e}	o ficheiro escrito non superou a comprobación: {e}
+the written file didn't check out: {label} wasn't saved	o ficheiro escrito non superou a comprobación: non se gardou {label}
+this file crashed its decoder	este ficheiro fixo fallar o seu descodificador
+this file's EXIF couldn't be processed	non se puido procesar o EXIF deste ficheiro
+this image is too large to open	esta imaxe é demasiado grande para abrila
+this isn't a regular file	este non é un ficheiro normal
+{format}, {count} frames	{format}, {count} fotogramas
+{name} is already installed	{name} xa está instalado
+{name} will be moved to the Trash.	{name} moverase ao lixo.
+{task} done	{task}: feito
+{task} failed: {e}	{task}: fallou: {e}
+{task} on the GPU	{task} na GPU
+{task} preview of the visible area · drag to compare · Before | After	{task}: vista previa da área visible · arrastra para comparar · Antes | Despois
+Remove Object	Eliminar obxecto
+LaMa — best quality, slower	LaMa — a mellor calidade, máis lento
+MI-GAN — fast	MI-GAN — rápido
+ONNX export by Carve on Hugging Face; its origin isn't verified.	Exportación ONNX de Carve en Hugging Face; a súa orixe non está verificada.
+the selection is empty	a selección está baleira
+No images in {name}	Non hai imaxes en {name}
+Can't open {name}: not a supported image	Non se pode abrir {name}: non é unha imaxe compatible
+Save Copy	Gardar copia
+Copy Path	Copiar a ruta
+Show in File Manager	Mostrar no xestor de ficheiros
+Rename…	Renomear…
+First Image	Primeira imaxe
+Last Image	Última imaxe
+Copied the path	Copiouse a ruta
+Rename Image	Renomear a imaxe
+Rename	Renomear
+That isn't a valid file name	Ese non é un nome de ficheiro válido
+{name} already exists	{name} xa existe
+File changed on disk	O ficheiro cambiou no disco
+{name} changed on disk. Reloading it discards your edits.	{name} cambiou no disco. Se o volves cargar, descartaranse as túas edicións.
+Reload	Volver cargar
+Keep Edits	Manter as edicións
+Pixel grid	Grade de píxeles
+Shows the edges of the pixels when zoomed far in.	Mostra os bordos dos píxeles cando se amplía moito.
+Click a pixel to copy its colour · Esc to stop	Preme nun píxel para copiar a súa cor · Esc para parar
+Copied {color}	Copiado: {color}
+Copy Color	Copiar a cor
+this file is damaged or cut short	este ficheiro está danado ou incompleto
+HEIC and AVIF files need libheif, which isn't installed	Os ficheiros HEIC e AVIF necesitan libheif, que non está instalado
+this file needs a libheif decoder plugin, which isn't installed	este ficheiro necesita un complemento descodificador de libheif, que non está instalado
+this file needs Microsoft's HEIF Image Extensions and HEVC or AV1 Video Extensions	este ficheiro necesita as HEIF Image Extensions de Microsoft e as HEVC ou AV1 Video Extensions
+Pages	Páxinas
+Next Page	Páxina seguinte
+Previous Page	Páxina anterior
+{format}, {count} pages	{format}, {count} páxinas
+page {n} of {count}	páxina {n} de {count}
+Colour management	Xestión da cor
+Converts images with a colour profile to sRGB, so wide-gamut photos look right on an sRGB monitor. Turn it off for a wide-gamut monitor.	Converte as imaxes con perfil de cor a sRGB, para que as fotos de gama ampla se vexan ben nun monitor sRGB. Desactívao para un monitor de gama ampla.
+this RAW file has no embedded preview	este ficheiro RAW non ten vista previa incrustada
+{format} (embedded preview)	{format} (vista previa incrustada)
+EXIF isn't read from this kind of RAW file yet	Aínda non se le o EXIF deste tipo de ficheiro RAW
+A RAW file's metadata is shown, not edited.	Os metadatos dun ficheiro RAW móstranse, non se editan.
+A WebP file's metadata is shown, not edited.	Os metadatos dun ficheiro WebP móstranse, non se editan.
+EXIF is shown for JPEG, PNG, WebP, TIFF and RAW files	O EXIF móstrase para ficheiros JPEG, PNG, WebP, TIFF e RAW
+the copy must be a .{ext} file	a copia debe ser un ficheiro .{ext}
+the written file didn't check out: the image changed	o ficheiro escrito non superou a comprobación: a imaxe cambiou
+Copy File	Copiar o ficheiro
+Copied the file	Copiouse o ficheiro
+Couldn't copy the file: {e}	Non se puido copiar o ficheiro: {e}
+Straighten…	Endereitar…
+Straighten	Endereitar
+Greyscale	Escala de grises
+Invert Colors	Inverter as cores
+Remove Red Eye	Eliminar ollos vermellos
+Pixelate Selection	Pixelar a selección
+Select the eyes first, then choose this.	Selecciona primeiro os ollos e despois escolle isto.
+Hides faces. For text, a solid shape is safer: pixelation can sometimes be undone.	Oculta caras. Para texto, unha forma sólida é máis segura: ás veces a pixelación pódese desfacer.
+Red eye removed	Elimináronse os ollos vermellos
+Pixelated	Pixelado
+Turn until the lines run straight · Enter to apply · Esc to cancel	Xira ata que as liñas queden rectas · Intro para aplicar · Esc para cancelar
+Recognize Text	Recoñecer texto
+PP-OCRv5 Latin — European languages	PP-OCRv5 Latin — linguas europeas
+PP-OCRv5 — Chinese, Japanese and English	PP-OCRv5 — chinés, xaponés e inglés
+Converted to ONNX by Satoru Nakamura (University of Tokyo) from PaddlePaddle's published models.	Convertido a ONNX por Satoru Nakamura (Universidade de Tokio) a partir dos modelos publicados por PaddlePaddle.
+the model's output doesn't match its character list	a saída do modelo non coincide coa súa lista de caracteres
+Read QR Code	Ler código QR
+No QR code found	Non se atopou ningún código QR
+No text found	Non se atopou ningún texto
+QR Code	Código QR
+Text in Image	Texto na imaxe
+Couldn't read the text: {e}	Non se puido ler o texto: {e}
+Reading QR codes…	Lendo códigos QR…
+Recognizing text…	Recoñecendo o texto…
+Reads the selection, or the whole image. Straighten tilted text first, and select small text in a large image so it's read at full size.	Le a selección ou toda a imaxe. Endereita primeiro o texto inclinado e selecciona o texto pequeno dunha imaxe grande para que se lea a tamaño completo.
+Reads the selection, or the whole image. Shows what the code says; links are never opened.	Le a selección ou toda a imaxe. Mostra o que di o código; as ligazóns nunca se abren.
+Keyboard Shortcuts	Atallos de teclado
+Press keys… (Esc to cancel)	Preme as teclas… (Esc para cancelar)
+Change	Cambiar
+Remove	Quitar
+Reset All Shortcuts	Restablecer todos os atallos
+{keys} is already used by {action}	{keys} xa o usa {action}
+Copy, Cut, Paste, Enter, Esc and Delete	Copiar, Cortar, Pegar, Intro, Esc e Supr
+Change Keyboard Shortcuts…	Cambiar os atallos de teclado…
+Theme	Tema
+Follow system	Seguir o sistema
+Dark	Escuro
+Light	Claro
+High contrast	Alto contraste
+bigger than 64 KiB	maior de 64 KiB
+invalid value	valor non válido
+line	liña
+Your own themes go in the themes folder next to the AI models. Choosing a theme again reloads its file.	Os teus temas van no cartafol de temas, ao lado dos modelos de IA. Ao escoller de novo un tema vólvese cargar o seu ficheiro.
+Couldn't load the theme, so the base theme is used: {e}	Non se puido cargar o tema, así que se usa o tema base: {e}
+Open themes folder	Abrir o cartafol de temas
+Group Duplicates in Folder…	Agrupar os duplicados do cartafol…
+Group Duplicates in Folder	Agrupar os duplicados do cartafol
+Compares the images in this folder (not its subfolders) and moves each group of look-alikes into a folder of its own. Nothing is deleted, and Ctrl+Z moves them back. Rotated copies and heavy crops aren't found.	Compara as imaxes deste cartafol (non dos subcartafoles) e move cada grupo de imaxes parecidas a un cartafol propio. Non se elimina nada, e Ctrl+Z vólveas mover. Non se atopan as copias rotadas nin os recortes grandes.
+Comparing images: {done} of {total}	Comparando imaxes: {done} de {total}
+How different each image is from its closest look-alike:	Canto se diferencia cada imaxe da máis parecida:
+Largest difference	Diferenza máxima
+{meaning} · suggested: {n}	{meaning} · suxerido: {n}
+Identical pixels only	Só píxeles idénticos
+Resized or recompressed copies	Copias redimensionadas ou recomprimidas
+Small edits, crops and bursts	Edicións pequenas, recortes e ráfagas
+Merely similar scenes too	Tamén escenas só parecidas
+Groups: {groups} · Images to move: {moving} · Staying: {staying}	Grupos: {groups} · Imaxes que mover: {moving} · Quedan: {staying}
+Not compared: {n}	Sen comparar: {n}
+Not compared	Sen comparar
+{name} · difference: {d}	{name} · diferenza: {d}
+Move	Mover
+Images moved: {n} · Folders: {f}	Imaxes movidas: {n} · Cartafoles: {f}
+Stopped: {e}	Detido: {e}
+Images moved back: {n}	Imaxes devoltas: {n}
+{name}: changed since it was compared	{name}: cambiou desde a comparación
+{name}: already in the folder	{name}: xa está no cartafol
+{name}: its old name is taken	{name}: o seu nome antigo está ocupado
+the file is gone	o ficheiro xa non existe
+About {s} s left	Quedan uns {s} s
+About {m} min left	Quedan uns {m} min
+Smallest group	Grupo máis pequeno
+Groups with fewer images stay where they are.	Os grupos con menos imaxes quedan onde están.
+Resize Optimally	Tamaño óptimo
+Shrinks the image to the size its detail needs, measured on its sharpest part. Never enlarges; Ctrl+Z undoes it.	Reduce a imaxe ao tamaño que necesitan os seus detalles, medido na súa parte máis nítida. Nunca amplía; Ctrl+Z desfaino.
+Already at its optimal size	Xa ten o tamaño óptimo
+Resized to {w} × {h} px	Cambiouse o tamaño a {w} × {h} px
+The image changed while {task} ran; run it again	A imaxe cambiou mentres se executaba {task}; volve executalo
+lightview hit an internal error	lightview atopou un erro interno

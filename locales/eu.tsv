@@ -1,0 +1,426 @@
+AI Models	AA ereduak
+AI Models…	AA ereduak…
+AI runtime (ONNX Runtime)	AA exekuzio-ingurunea (ONNX Runtime)
+Accept and Continue	Onartu eta jarraitu
+Accept and Download	Onartu eta deskargatu
+Accessibility	Irisgarritasuna
+Actual Size	Benetako tamaina
+Add model file…	Gehitu eredu-fitxategia…
+Added {name}	Gehituta: {name}
+Adjust Color	Doitu kolorea
+Adjust Color…	Doitu kolorea…
+Adjust Curves	Doitu kurbak
+Adjust Curves…	Doitu kurbak…
+All channels together: overall brightness	Kanal guztiak batera: distira orokorra
+Animation	Animazioa
+Applies the next time lightview starts	lightview hurrengoz abiaraztean aplikatuko da
+Apply sigmoid (the model outputs logits)	Aplikatu sigmoidea (ereduak logitak ematen ditu)
+Apply to Selection	Aplikatu hautapenari
+Apply to Whole Image{size} (about {estimate})	Aplikatu irudi osoari{size} (gutxi gorabehera {estimate})
+Arrow	Gezia
+Artist	Artista
+Auto Levels	Maila automatikoak
+Blur Background	Lausotu atzeko planoa
+Blur Background…	Lausotu atzeko planoa…
+BSRGAN 4× — upscales and sharpens, may invent detail	BSRGAN 4× — handitu eta zorrozten du, xehetasunak asma ditzake
+Background colour	Atzeko planoaren kolorea
+BiRefNet lite — best quality, slow	BiRefNet lite — kalitate onena, motela
+Bicubic	Bikubikoa
+Bilinear	Bilineala
+Blue: how much blue each pixel has	Urdina: pixel bakoitzak zenbat urdin duen
+Camera	Kamera
+Camera make	Kameraren fabrikatzailea
+Camera model	Kameraren modeloa
+Can't open this image:\n{e}	Ezin da irudi hau ireki:\n{e}
+Cancel	Utzi
+Cancelled	Bertan behera utzita
+Check for updates	Bilatu eguneraketak
+Close	Itxi
+Click to add a point, drag to move it, right-click to remove it	Egin klik puntu bat gehitzeko, arrastatu mugitzeko, eskuineko klik kentzeko
+Color space	Kolore-espazioa
+Colour	Kolorea
+Colour profile	Kolore-profila
+Continue	Jarraitu
+Contrast	Kontrastea
+Converted to ONNX by Heliosoph LLC from the authors' published weights.	Heliosoph LLC-k ONNXera bihurtua, egileek argitaratutako pisuetatik.
+Copied {w} × {h} px	Kopiatuta: {w} × {h} px
+Copy	Kopiatu
+Copyright	Copyrighta
+Couldn't add the model: {e}	Ezin izan da eredua gehitu: {e}
+Couldn't delete the image: {e}	Ezin izan da irudia ezabatu: {e}
+Couldn't download {file}: {e}	Ezin izan da {file} deskargatu: {e}
+Couldn't install the AI runtime: {e}	Ezin izan da AA exekuzio-ingurunea instalatu: {e}
+Couldn't process the image: {e}	Ezin izan da irudia prozesatu: {e}
+Couldn't read {file}: {e}	Ezin izan da {file} irakurri: {e}
+Couldn't restore the image: {e}	Ezin izan da irudia leheneratu: {e}
+Couldn't save {name}: {e}	Ezin izan da {name} gorde: {e}
+Couldn't select the object: {e}	Ezin izan da objektua hautatu: {e}
+Crop	Moztu
+Cut	Ebaki
+DarkIR brightens dark and night photos and removes their noise and blur. On a well-lit photo it overexposes.	DarkIR-k argazki ilunak eta gauekoak argitzen ditu, eta zarata eta lausotasuna kentzen dizkie. Ondo argiztatutako argazki bat gehiegi argiztatzen du.
+DarkIR — dark and night photos, same size	DarkIR — argazki ilunak eta gauekoak, tamaina bera
+Date modified	Aldatze-data
+Date taken	Ateratze-data
+Default window size	Leihoaren tamaina lehenetsia
+Delete image?	Irudia ezabatu?
+Delete Image…	Ezabatu irudia…
+Delete Selection	Ezabatu hautapena
+Denoise	Kendu zarata
+Denoise and Enhance run about 10× faster on a GTX 1050	Kendu zarata eta Hobetu 10× inguru azkarrago dabiltza GTX 1050 batean
+Describe the image for people who can't see it	Deskribatu irudia ikusi ezin dutenentzat
+Description	Deskribapena
+Deselect	Desautatu
+Detect size	Detektatu tamaina
+Dimensions	Neurriak
+Discard	Baztertu
+Discard edits?	Edizioak baztertu?
+Distance: {d} px · ΔX: {dx} px · ΔY: {dy} px	Distantzia: {d} px · ΔX: {dx} px · ΔY: {dy} px
+Done	Eginda
+Download	Deskargatu
+Download AI Runtime…	Deskargatu AA exekuzio-ingurunea…
+Download GPU Support	Deskargatu GPU euskarria
+Downloaded from Microsoft (ONNX Runtime) and NVIDIA (CUDA libraries, via their official PyPI packages).	Microsoft-etik (ONNX Runtime) eta NVIDIAtik (CUDA liburutegiak, haien PyPI pakete ofizialen bidez) deskargatua.
+Downloaded from Microsoft's official PyPI package (onnxruntime-ep-webgpu).	Microsoft-en PyPI pakete ofizialetik deskargatua (onnxruntime-ep-webgpu).
+Downloaded {file}	Deskargatuta: {file}
+Downloading GPU support ({mb} MB)…	GPU euskarria deskargatzen ({mb} MB)…
+Downloading the AI runtime…	AA exekuzio-ingurunea deskargatzen…
+Downloading…	Deskargatzen…
+Drag a box around one object; its outline becomes the selection. Holes inside it stay selected.	Arrastatu koadro bat objektu baten inguruan; haren ingerada hautapena bihurtuko da. Barruko zuloak hautatuta geratzen dira.
+Drag to measure in image pixels · Esc to stop	Arrastatu irudiaren pixeletan neurtzeko · Esc gelditzeko
+Drag to select · Enter to crop · Esc to cancel	Arrastatu hautatzeko · Sartu mozteko · Esc uzteko
+Drag the corners onto a rectangle · Enter to apply · Esc to cancel	Arrastatu izkinak laukizuzen baten gainera · Sartu aplikatzeko · Esc uzteko
+Drawings, text and pasted images will be merged into the image and can't be edited afterwards. Ctrl+Z undoes it.	Marrazkiak, testua eta itsatsitako irudiak irudiarekin batuko dira eta ezingo dira gero editatu. Ctrl+Z-k desegiten du.
+Edit	Editatu
+Edit the image description	Editatu irudiaren deskribapena
+Ellipse	Elipsea
+Elliptical Selection	Hautapen eliptikoa
+Embedded (unnamed)	Txertatua (izenik gabe)
+Enhance Image	Hobetu irudia
+Enhance Image uses generative AI. To make the image look better it may invent or alter fine details, such as textures, text or faces, that weren't in the original.	Hobetu irudia-k AA sortzailea erabiltzen du. Irudia hobeto ikus dadin, jatorrizkoan ez zeuden xehetasun finak asma edo alda ditzake, hala nola ehundurak, testua edo aurpegiak.
+Enter Full Screen	Pantaila osoa
+Exposure	Esposizioa
+File	Fitxategia
+File name	Fitxategi-izena
+File size	Fitxategi-tamaina
+Fill	Betegarria
+Fills the background with the background colour from Settings.	Atzeko planoa Ezarpenetako atzeko planoaren kolorearekin betetzen du.
+Fit to Window	Doitu leihora
+Flip Horizontally	Irauli horizontalki
+Flip Vertically	Irauli bertikalki
+Folder	Karpeta
+Font size	Letra-tamaina
+For a faithful clean-up, use Denoise instead.	Garbiketa leial baterako, erabili Kendu zarata.
+Format	Formatua
+GPU (AMD, Intel and others, experimental)	GPU (AMD, Intel eta beste batzuk, esperimentala)
+GPU (NVIDIA)	GPU (NVIDIA)
+GPU image scaling	Irudia GPUrekin eskalatzea
+GPU support	GPU euskarria
+GPU support installed: restart lightview to use it	GPU euskarria instalatuta: berrabiarazi lightview erabiltzeko
+General	Orokorra
+Green: how much green each pixel has	Berdea: pixel bakoitzak zenbat berde duen
+Height	Altuera
+Hide Drawing Toolbar	Ezkutatu marrazketa-tresna-barra
+Hide Image Information	Ezkutatu irudiaren informazioa
+Highlight	Nabarmentzailea
+Hue: the color itself, such as red or blue	Ñabardura: kolorea bera, adibidez gorria edo urdina
+IS-Net anime — illustrations	IS-Net anime — ilustrazioak
+IS-Net — general, clean edges	IS-Net — orokorra, ertz garbiak
+Image	Irudia
+Image description	Irudiaren deskribapena
+Images	Irudiak
+Input size	Sarrera-tamaina
+Installed the AI runtime	AA exekuzio-ingurunea instalatuta
+Interpolation	Interpolazioa
+It also makes the image {k}× bigger ({pixels}× the pixels), which takes a while for a big photo.	Gainera, irudia {k}× handiagoa egiten du ({pixels}× pixel), eta horrek denbora behar du argazki handi batekin.
+It's no longer in the Trash	Jada ez dago zakarrontzian
+Keep aspect ratio	Mantendu aspektu-erlazioa
+Language	Hizkuntza
+Lasso	Lazoa
+Lens	Objektiboa
+Licence ({step} of {count}) — {title}	Lizentzia ({step}/{count}) — {title}
+Licence — {title}	Lizentzia — {title}
+Lightness: from black, through color, to white	Argitasuna: beltzetik, koloretik pasatuz, zuriraino
+Line	Lerroa
+Local AI	AA lokala
+Location	Kokapena
+Magnifier	Lupa
+Make lightview my default image viewer	Egin lightview nire irudi-ikustaile lehenetsia
+Make lightview the default image viewer	Egin lightview irudi-ikustaile lehenetsia
+Mean (R, G, B)	Batez bestekoa (R, G, B)
+Measure	Neurtu
+Merge drawings into the image?	Marrazkiak irudiarekin batu?
+MobileSAM — finds the object in a box	MobileSAM — koadro bateko objektua aurkitzen du
+Model	Eredua
+Name	Izena
+Nearest	Hurbilena
+Next Frame	Hurrengo fotograma
+Next Image	Hurrengo irudia
+no graphics card with Vulkan or Direct3D 12 was found	ez da aurkitu Vulkan edo Direct3D 12 duen txartel grafikorik
+No location in this file	Fitxategi honek ez du kokapenik
+No model installed yet.	Oraindik ez dago eredurik instalatuta.
+No object found in the box	Ez da objekturik aurkitu koadroan
+No recent files	Ez dago azken fitxategirik
+None (sRGB assumed)	Bat ere ez (sRGB jotzen da)
+Nothing to paste: {e}	Ez dago ezer itsasteko: {e}
+OK	Ados
+ONNX export (half precision) by FuryTMP on Hugging Face; its origin isn't verified.	FuryTMP-ren ONNX esportazioa (erdi-zehaztasuna) Hugging Face-n; jatorria ez dago egiaztatuta.
+ONNX export by Acly on Hugging Face, from the authors' weights; downloaded from Heliosoph LLC's copy.	Acly-ren ONNX esportazioa Hugging Face-n, egileen pisuetatik; Heliosoph LLC-ren kopiatik deskargatua.
+ONNX model	ONNX eredua
+Only add models from sources you trust: they run with your permissions.	Gehitu konfiantzazko iturrietako ereduak soilik: zure baimenekin exekutatzen dira.
+Open Recent	Ireki azkenak
+Open in Google Maps	Ireki Google Maps-en
+Open models folder	Ireki ereduen karpeta
+Open project page	Ireki proiektuaren orria
+Open…	Ireki…
+Other tags ({count})	Beste etiketa batzuk ({count})
+Output	Irteera
+Paste	Itsatsi
+Pause Animation	Pausatu animazioa
+Percentage	Ehunekoa
+Correct Perspective	Zuzendu perspektiba
+Play Animation	Erreproduzitu animazioa
+Please read and accept the licence before downloading.	Irakurri eta onartu lizentzia deskargatu aurretik.
+Preprocessing: {file}	Aurreprozesatzea: {file}
+Previous Frame	Aurreko fotograma
+Previous Image	Aurreko irudia
+Read the input size from the model	Irakurri sarrera-tamaina eredutik
+Real-ESRGAN 4× half precision	Real-ESRGAN 4× erdi-zehaztasuna
+Real-ESRGAN 4× — upscales, smooth, may invent detail	Real-ESRGAN 4× — handitzen du, leuna, xehetasunak asma ditzake
+Real-ESRGAN and DarkIR can't be downloaded here. Convert them yourself with lightview-models, then copy the .onnx files into the models folder:	Real-ESRGAN eta DarkIR ezin dira hemen deskargatu. Bihurtu zuk zeuk lightview-models erabiliz, eta kopiatu .onnx fitxategiak ereduen karpetara:
+Real-ESRGAN general 4× half precision	Real-ESRGAN general 4× erdi-zehaztasuna
+Real-ESRGAN general 4× — fast, softer	Real-ESRGAN general 4× — azkarra, leunagoa
+Rectangle	Laukizuzena
+Rectangular Selection	Hautapen laukizuzena
+Red: how much red each pixel has	Gorria: pixel bakoitzak zenbat gorri duen
+Redo	Berregin
+Remove Background	Kendu atzeko planoa
+Remove Background and Crop	Kendu atzeko planoa eta moztu
+Remove location from the copy	Kendu kokapena kopiatik
+Replace Background	Ordeztu atzeko planoa
+Reset	Berrezarri
+Reset Color Adjustments	Berrezarri kolore-doikuntzak
+Reset to default	Berrezarri lehenetsia
+Resize	Aldatu tamaina
+Resize…	Aldatu tamaina…
+Resolution	Bereizmena
+Restart lightview to start using the GPU.	Berrabiarazi lightview GPUa erabiltzen hasteko.
+Revert	Leheneratu
+Rotate Left	Biratu ezkerrera
+Rotate Right	Biratu eskuinera
+Rounded Rectangle	Laukizuzen biribildua
+Run the AI tools on any graphics card with Vulkan or Direct3D 12 ({mb} MB download, WebGPU). A weak built-in graphics chip can be slower than the CPU.	Exekutatu AA tresnak Vulkan edo Direct3D 12 duen edozein txartel grafikotan ({mb} MB-ko deskarga, WebGPU). Txip grafiko integratu ahul bat PUZa baino motelagoa izan daiteke.
+Run the AI tools on the graphics card ({mb} MB download, NVIDIA's CUDA libraries).	Exekutatu AA tresnak txartel grafikoan ({mb} MB-ko deskarga, NVIDIAren CUDA liburutegiak).
+Running {file}…	{file} exekutatzen…
+SCUNet σ15 — light noise	SCUNet σ15 — zarata arina
+SCUNet σ25 — moderate noise	SCUNet σ25 — zarata ertaina
+SCUNet σ50 — heavy noise	SCUNet σ50 — zarata handia
+SCUNet — noise and JPEG artifacts (recommended)	SCUNet — zarata eta JPEG artefaktuak (gomendatua)
+Saturation	Saturazioa
+Saturation: from grey to vivid color	Saturazioa: gristik kolore biziraino
+Save As…	Gorde honela…
+Save copy…	Gorde kopia…
+Saved in JPEG files	JPEG fitxategietan gordetzen da
+Saved {name}	Gordeta: {name}
+Saves a copy of the file with this metadata (without other edits). Camera maker notes are removed.	Fitxategiaren kopia bat gordetzen du metadatu hauekin (beste ediziorik gabe). Kamera-fabrikatzailearen oharrak kentzen dira.
+Select	Hautatu
+Select All	Hautatu dena
+Select Object	Hautatu objektua
+Select Object (AI)	Hautatu objektua (AA)
+Selecting the object…	Objektua hautatzen…
+Settings	Ezarpenak
+Settings…	Ezarpenak…
+Shapes	Formak
+Show Drawing Toolbar	Erakutsi marrazketa-tresna-barra
+Show Image Information	Erakutsi irudiaren informazioa
+Silueta — small and fast	Silueta — txikia eta azkarra
+Size read from the model when it runs; the usual normalisation.	Tamaina eredutik irakurtzen da exekutatzean; ohiko normalizazioa.
+Sketch	Zirriborroa
+Smoother zooming and panning. Uses more GPU memory and makes switching images a little slower.	Zoom eta mugimendu leunagoak. GPU memoria gehiago erabiltzen du eta irudiz aldatzea apur bat motelagoa da.
+Sort order	Ordenatzeko irizpidea
+Std (R, G, B)	Desb. est. (R, G, B)
+Strength	Indarra
+Stroke	Trazua
+SwinIR σ25 — moderate noise, very slow	SwinIR σ25 — zarata ertaina, oso motela
+Text	Testua
+Text colour	Testuaren kolorea
+The AI runtime isn't installed yet: Local AI > Download AI Runtime…	AA exekuzio-ingurunea ez dago oraindik instalatuta: AA lokala > Deskargatu AA exekuzio-ingurunea…
+The GPU couldn't be used, so the CPU is: {e}	Ezin izan da GPUa erabili, beraz PUZa erabiltzen da: {e}
+The corners must form a shape with no crossing sides	Izkinek alde gurutzaturik gabeko forma osatu behar dute
+the model's mask decoder is missing	ereduaren maskara-deskodetzailea falta da
+Thickness	Lodiera
+Tint	Tindua
+Tools	Tresnak
+Undo	Desegin
+Use YYYY:MM:DD HH:MM:SS	Erabili YYYY:MM:DD HH:MM:SS
+Use the GPU	Erabili GPUa
+Used by Remove Background and Remove Background and Crop.	Kendu atzeko planoa eta Kendu atzeko planoa eta moztu-k erabiltzen dute.
+Uses Bilinear while GPU scaling is on	Bilineala erabiltzen du GPU eskalatzea aktibo dagoen bitartean
+U²-Net people — portraits	U²-Net pertsonak — erretratuak
+U²-Net small — fastest	U²-Net txikia — azkarrena
+U²-Net — general	U²-Net — orokorra
+Value: from black to full color	Balioa: beltzetik kolore betera
+View	Ikusi
+Welcome to lightview	Ongi etorri lightview-ra
+Width	Zabalera
+Your edits to {name} haven't been saved.	{name} fitxategian egindako edizioak ez dira gorde.
+Zoom	Zooma
+Zoom In	Handiagotu
+Zoom Out	Txikiagotu
+a GPU library was missing from the download	GPU liburutegi bat falta zen deskargan
+about {time} left	{time} inguru falta dira
+can't save as .{ext}: use .jpg, .png, .webp, .bmp, .tif or .gif	ezin da .{ext} gisa gorde: erabili .jpg, .png, .webp, .bmp, .tif edo .gif
+choose a new name: the original is never modified	aukeratu izen berri bat: jatorrizkoa ez da inoiz aldatzen
+compressed SVG files aren't supported	SVG fitxategi konprimatuak ez dira onartzen
+couldn't read this file's EXIF safely	ezin izan da fitxategi honen EXIFa modu seguruan irakurri
+edited: {w} × {h}	editatua: {w} × {h}
+lightview is now the default image viewer	lightview da orain irudi-ikustaile lehenetsia
+no data folder	ez dago datu-karpetarik
+no frames	ez dago fotogramarik
+no subject found	ez da objektu nagusirik aurkitu
+pick an .onnx file	aukeratu .onnx fitxategi bat
+the download didn't match its checksum	deskarga ez dator bat bere kontrol-baturarekin
+the model has no image input	ereduak ez du irudi-sarrerarik
+the model's output changed size between tiles	ereduaren irteerak tamaina aldatu du lauzen artean
+the model's output doesn't match its input size	ereduaren irteera ez dator bat sarrera-tamainarekin
+the model's output isn't a whole multiple of its input	ereduaren irteera ez da sarreraren multiplo osoa
+the written file didn't check out: the location wasn't removed	idatzitako fitxategiak ez du egiaztapena gainditu: kokapena ez da kendu
+the written file didn't check out: {e}	idatzitako fitxategiak ez du egiaztapena gainditu: {e}
+the written file didn't check out: {label} wasn't saved	idatzitako fitxategiak ez du egiaztapena gainditu: {label} ez da gorde
+this file crashed its decoder	fitxategi honek bere deskodetzailea hondatu du
+this file's EXIF couldn't be processed	ezin izan da fitxategi honen EXIFa prozesatu
+this image is too large to open	irudi hau handiegia da irekitzeko
+this isn't a regular file	hau ez da fitxategi arrunta
+{format}, {count} frames	{format}, {count} fotograma
+{name} is already installed	{name} instalatuta dago jada
+{name} will be moved to the Trash.	{name} zakarrontzira eramango da.
+{task} done	{task}: eginda
+{task} failed: {e}	{task}: huts egin du: {e}
+{task} on the GPU	{task} GPUan
+{task} preview of the visible area · drag to compare · Before | After	{task}: eremu ikusgaiaren aurrebista · arrastatu alderatzeko · Aurretik | Ondoren
+Remove Object	Kendu objektua
+LaMa — best quality, slower	LaMa — kalitate onena, motelagoa
+MI-GAN — fast	MI-GAN — azkarra
+ONNX export by Carve on Hugging Face; its origin isn't verified.	Carve-ren ONNX esportazioa Hugging Face-n; jatorria ez dago egiaztatuta.
+the selection is empty	hautapena hutsik dago
+No images in {name}	Ez dago irudirik hemen: {name}
+Can't open {name}: not a supported image	Ezin da {name} ireki: ez da irudi onartu bat
+Save Copy	Gorde kopia
+Copy Path	Kopiatu bidea
+Show in File Manager	Erakutsi fitxategi-kudeatzailean
+Rename…	Aldatu izena…
+First Image	Lehen irudia
+Last Image	Azken irudia
+Copied the path	Bidea kopiatuta
+Rename Image	Aldatu irudiaren izena
+Rename	Aldatu izena
+That isn't a valid file name	Hori ez da fitxategi-izen baliozkoa
+{name} already exists	{name} badago lehendik
+File changed on disk	Fitxategia aldatu egin da diskoan
+{name} changed on disk. Reloading it discards your edits.	{name} aldatu egin da diskoan. Berriro kargatzeak zure edizioak baztertzen ditu.
+Reload	Kargatu berriro
+Keep Edits	Mantendu edizioak
+Pixel grid	Pixel-sareta
+Shows the edges of the pixels when zoomed far in.	Pixelen ertzak erakusten ditu asko handiagotzean.
+Click a pixel to copy its colour · Esc to stop	Egin klik pixel batean haren kolorea kopiatzeko · Esc gelditzeko
+Copied {color}	Kopiatuta: {color}
+Copy Color	Kopiatu kolorea
+this file is damaged or cut short	fitxategi hau hondatuta edo moztuta dago
+HEIC and AVIF files need libheif, which isn't installed	HEIC eta AVIF fitxategiek libheif behar dute, eta ez dago instalatuta
+this file needs a libheif decoder plugin, which isn't installed	fitxategi honek libheif deskodetzaile-plugin bat behar du, eta ez dago instalatuta
+this file needs Microsoft's HEIF Image Extensions and HEVC or AV1 Video Extensions	fitxategi honek Microsoft-en HEIF Image Extensions eta HEVC edo AV1 Video Extensions behar ditu
+Pages	Orriak
+Next Page	Hurrengo orria
+Previous Page	Aurreko orria
+{format}, {count} pages	{format}, {count} orri
+page {n} of {count}	{count} orritatik {n}.a
+Colour management	Kolore-kudeaketa
+Converts images with a colour profile to sRGB, so wide-gamut photos look right on an sRGB monitor. Turn it off for a wide-gamut monitor.	Kolore-profila duten irudiak sRGBra bihurtzen ditu, gama zabaleko argazkiak sRGB monitore batean ondo ikus daitezen. Desaktibatu gama zabaleko monitore baterako.
+this RAW file has no embedded preview	RAW fitxategi honek ez du aurrebista txertaturik
+{format} (embedded preview)	{format} (aurrebista txertatua)
+EXIF isn't read from this kind of RAW file yet	Oraindik ez da EXIFa irakurtzen RAW fitxategi mota honetatik
+A RAW file's metadata is shown, not edited.	RAW fitxategi baten metadatuak erakutsi egiten dira, ez editatu.
+A WebP file's metadata is shown, not edited.	WebP fitxategi baten metadatuak erakutsi egiten dira, ez editatu.
+EXIF is shown for JPEG, PNG, WebP, TIFF and RAW files	EXIFa JPEG, PNG, WebP, TIFF eta RAW fitxategietan erakusten da
+the copy must be a .{ext} file	kopiak .{ext} fitxategia izan behar du
+the written file didn't check out: the image changed	idatzitako fitxategiak ez du egiaztapena gainditu: irudia aldatu da
+Copy File	Kopiatu fitxategia
+Copied the file	Fitxategia kopiatuta
+Couldn't copy the file: {e}	Ezin izan da fitxategia kopiatu: {e}
+Straighten…	Zuzendu…
+Straighten	Zuzendu
+Greyscale	Gris-eskala
+Invert Colors	Alderantzikatu koloreak
+Remove Red Eye	Kendu begi gorriak
+Pixelate Selection	Pixelatu hautapena
+Select the eyes first, then choose this.	Hautatu begiak lehenik, eta gero aukeratu hau.
+Hides faces. For text, a solid shape is safer: pixelation can sometimes be undone.	Aurpegiak ezkutatzen ditu. Testurako, forma trinko bat seguruagoa da: pixelatzea batzuetan desegin daiteke.
+Red eye removed	Begi gorriak kenduta
+Pixelated	Pixelatuta
+Turn until the lines run straight · Enter to apply · Esc to cancel	Biratu lerroak zuzen geratu arte · Sartu aplikatzeko · Esc uzteko
+Recognize Text	Ezagutu testua
+PP-OCRv5 Latin — European languages	PP-OCRv5 Latin — Europako hizkuntzak
+PP-OCRv5 — Chinese, Japanese and English	PP-OCRv5 — txinera, japoniera eta ingelesa
+Converted to ONNX by Satoru Nakamura (University of Tokyo) from PaddlePaddle's published models.	Satoru Nakamurak (Tokioko Unibertsitatea) ONNXera bihurtua, PaddlePaddle-k argitaratutako ereduetatik.
+the model's output doesn't match its character list	ereduaren irteera ez dator bat bere karaktere-zerrendarekin
+Read QR Code	Irakurri QR kodea
+No QR code found	Ez da QR koderik aurkitu
+No text found	Ez da testurik aurkitu
+QR Code	QR kodea
+Text in Image	Irudiko testua
+Couldn't read the text: {e}	Ezin izan da testua irakurri: {e}
+Reading QR codes…	QR kodeak irakurtzen…
+Recognizing text…	Testua ezagutzen…
+Reads the selection, or the whole image. Straighten tilted text first, and select small text in a large image so it's read at full size.	Hautapena edo irudi osoa irakurtzen du. Zuzendu lehenik testu okertua, eta hautatu irudi handi bateko testu txikia, tamaina osoan irakur dadin.
+Reads the selection, or the whole image. Shows what the code says; links are never opened.	Hautapena edo irudi osoa irakurtzen du. Kodeak dioena erakusten du; estekak ez dira inoiz irekitzen.
+Keyboard Shortcuts	Laster-teklak
+Press keys… (Esc to cancel)	Sakatu teklak… (Esc uzteko)
+Change	Aldatu
+Remove	Kendu
+Reset All Shortcuts	Berrezarri laster-tekla guztiak
+{keys} is already used by {action}	{keys} jada erabiltzen du: {action}
+Copy, Cut, Paste, Enter, Esc and Delete	Kopiatu, Ebaki, Itsatsi, Sartu, Esc eta Ezabatu
+Change Keyboard Shortcuts…	Aldatu laster-teklak…
+Theme	Gaia
+Follow system	Jarraitu sistemari
+Dark	Iluna
+Light	Argia
+High contrast	Kontraste handia
+bigger than 64 KiB	64 KiB baino handiagoa
+invalid value	balio baliogabea
+line	lerroa
+Your own themes go in the themes folder next to the AI models. Choosing a theme again reloads its file.	Zure gaiak gaien karpetan doaz, AA ereduen ondoan. Gai bat berriro aukeratzean bere fitxategia berriro kargatzen da.
+Couldn't load the theme, so the base theme is used: {e}	Ezin izan da gaia kargatu, beraz oinarrizko gaia erabiltzen da: {e}
+Open themes folder	Ireki gaien karpeta
+Group Duplicates in Folder…	Taldekatu karpetako bikoiztuak…
+Group Duplicates in Folder	Taldekatu karpetako bikoiztuak
+Compares the images in this folder (not its subfolders) and moves each group of look-alikes into a folder of its own. Nothing is deleted, and Ctrl+Z moves them back. Rotated copies and heavy crops aren't found.	Karpeta honetako irudiak alderatzen ditu (ez azpikarpetetakoak) eta antzeko irudien talde bakoitza bere karpetara eramaten du. Ez da ezer ezabatzen, eta Ctrl+Z-k atzera eramaten ditu. Ez dira aurkitzen biratutako kopiak eta moztu handiak.
+Comparing images: {done} of {total}	Irudiak alderatzen: {done}/{total}
+How different each image is from its closest look-alike:	Irudi bakoitza bere antzekoenetik zenbat bereizten den:
+Largest difference	Alde handiena
+{meaning} · suggested: {n}	{meaning} · iradokia: {n}
+Identical pixels only	Pixel berdinak soilik
+Resized or recompressed copies	Tamaina aldatutako edo berriro konprimatutako kopiak
+Small edits, crops and bursts	Edizio txikiak, mozketak eta segidak
+Merely similar scenes too	Antzeko eszenak ere bai
+Groups: {groups} · Images to move: {moving} · Staying: {staying}	Taldeak: {groups} · Eramateko irudiak: {moving} · Geratzen dira: {staying}
+Not compared: {n}	Alderatu gabeak: {n}
+Not compared	Alderatu gabea
+{name} · difference: {d}	{name} · aldea: {d}
+Move	Eraman
+Images moved: {n} · Folders: {f}	Eramandako irudiak: {n} · Karpetak: {f}
+Stopped: {e}	Geldituta: {e}
+Images moved back: {n}	Itzulitako irudiak: {n}
+{name}: changed since it was compared	{name}: aldatu egin da alderatu zenetik
+{name}: already in the folder	{name}: jada karpetan dago
+{name}: its old name is taken	{name}: bere izen zaharra hartuta dago
+the file is gone	fitxategia ez dago jada
+About {s} s left	{s} s inguru falta dira
+About {m} min left	{m} min inguru falta dira
+Smallest group	Talde txikiena
+Groups with fewer images stay where they are.	Irudi gutxiago dituzten taldeak dauden lekuan geratzen dira.
+Resize Optimally	Tamaina optimoa
+Shrinks the image to the size its detail needs, measured on its sharpest part. Never enlarges; Ctrl+Z undoes it.	Irudia bere xehetasunek behar duten tamainara txikitzen du, zatirik zorrotzenean neurtuta. Ez du inoiz handitzen; Ctrl+Z-k desegiten du.
+Already at its optimal size	Jada tamaina optimoa du
+Resized to {w} × {h} px	Tamaina aldatuta: {w} × {h} px
+The image changed while {task} ran; run it again	Irudia aldatu egin da {task} exekutatzen ari zen bitartean; exekutatu berriro
+lightview hit an internal error	lightview-k barne-errore bat aurkitu du
