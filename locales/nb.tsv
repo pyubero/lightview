@@ -1,0 +1,426 @@
+AI Models	KI-modeller
+AI Models…	KI-modeller…
+AI runtime (ONNX Runtime)	KI-kjøremiljø (ONNX Runtime)
+Accept and Continue	Godta og fortsett
+Accept and Download	Godta og last ned
+Accessibility	Tilgjengelighet
+Actual Size	Faktisk størrelse
+Add model file…	Legg til modellfil…
+Added {name}	La til {name}
+Adjust Color	Juster farger
+Adjust Color…	Juster farger…
+Adjust Curves	Juster kurver
+Adjust Curves…	Juster kurver…
+All channels together: overall brightness	Alle kanaler samlet: total lysstyrke
+Animation	Animasjon
+Applies the next time lightview starts	Gjelder neste gang lightview starter
+Apply sigmoid (the model outputs logits)	Bruk sigmoid (modellen gir logits)
+Apply to Selection	Bruk på markering
+Apply to Whole Image{size} (about {estimate})	Bruk på hele bildet{size} (omtrent {estimate})
+Arrow	Pil
+Artist	Kunstner
+Auto Levels	Automatiske nivåer
+Blur Background	Gjør bakgrunnen uskarp
+Blur Background…	Gjør bakgrunnen uskarp…
+BSRGAN 4× — upscales and sharpens, may invent detail	BSRGAN 4× — forstørrer og skjerper, kan finne på detaljer
+Background colour	Bakgrunnsfarge
+BiRefNet lite — best quality, slow	BiRefNet lite — best kvalitet, treg
+Bicubic	Bikubisk
+Bilinear	Bilineær
+Blue: how much blue each pixel has	Blå: hvor mye blått hver piksel har
+Camera	Kamera
+Camera make	Kameraprodusent
+Camera model	Kameramodell
+Can't open this image:\n{e}	Kan ikke åpne bildet:\n{e}
+Cancel	Avbryt
+Cancelled	Avbrutt
+Check for updates	Se etter oppdateringer
+Close	Lukk
+Click to add a point, drag to move it, right-click to remove it	Klikk for å legge til et punkt, dra for å flytte det, høyreklikk for å fjerne det
+Color space	Fargerom
+Colour	Farge
+Colour profile	Fargeprofil
+Continue	Fortsett
+Contrast	Kontrast
+Converted to ONNX by Heliosoph LLC from the authors' published weights.	Konvertert til ONNX av Heliosoph LLC fra vektene forfatterne har publisert.
+Copied {w} × {h} px	Kopierte {w} × {h} px
+Copy	Kopier
+Copyright	Opphavsrett
+Couldn't add the model: {e}	Kunne ikke legge til modellen: {e}
+Couldn't delete the image: {e}	Kunne ikke slette bildet: {e}
+Couldn't download {file}: {e}	Kunne ikke laste ned {file}: {e}
+Couldn't install the AI runtime: {e}	Kunne ikke installere KI-kjøremiljøet: {e}
+Couldn't process the image: {e}	Kunne ikke behandle bildet: {e}
+Couldn't read {file}: {e}	Kunne ikke lese {file}: {e}
+Couldn't restore the image: {e}	Kunne ikke gjenopprette bildet: {e}
+Couldn't save {name}: {e}	Kunne ikke lagre {name}: {e}
+Couldn't select the object: {e}	Kunne ikke markere objektet: {e}
+Crop	Beskjær
+Cut	Klipp ut
+DarkIR brightens dark and night photos and removes their noise and blur. On a well-lit photo it overexposes.	DarkIR lysner mørke bilder og nattbilder og fjerner støy og uskarphet. Et godt belyst bilde blir overeksponert.
+DarkIR — dark and night photos, same size	DarkIR — mørke bilder og nattbilder, samme størrelse
+Date modified	Endringsdato
+Date taken	Opptaksdato
+Default window size	Standard vindusstørrelse
+Delete image?	Slette bildet?
+Delete Image…	Slett bilde…
+Delete Selection	Slett markering
+Denoise	Fjern støy
+Denoise and Enhance run about 10× faster on a GTX 1050	Fjern støy og Forbedre kjører omtrent 10× raskere på et GTX 1050
+Describe the image for people who can't see it	Beskriv bildet for dem som ikke kan se det
+Description	Beskrivelse
+Deselect	Fjern markering
+Detect size	Finn størrelse
+Dimensions	Dimensjoner
+Discard	Forkast
+Discard edits?	Forkaste endringene?
+Distance: {d} px · ΔX: {dx} px · ΔY: {dy} px	Avstand: {d} px · ΔX: {dx} px · ΔY: {dy} px
+Done	Ferdig
+Download	Last ned
+Download AI Runtime…	Last ned KI-kjøremiljø…
+Download GPU Support	Last ned GPU-støtte
+Downloaded from Microsoft (ONNX Runtime) and NVIDIA (CUDA libraries, via their official PyPI packages).	Lastet ned fra Microsoft (ONNX Runtime) og NVIDIA (CUDA-biblioteker, via deres offisielle PyPI-pakker).
+Downloaded from Microsoft's official PyPI package (onnxruntime-ep-webgpu).	Lastet ned fra Microsofts offisielle PyPI-pakke (onnxruntime-ep-webgpu).
+Downloaded {file}	Lastet ned {file}
+Downloading GPU support ({mb} MB)…	Laster ned GPU-støtte ({mb} MB)…
+Downloading the AI runtime…	Laster ned KI-kjøremiljøet…
+Downloading…	Laster ned…
+Drag a box around one object; its outline becomes the selection. Holes inside it stay selected.	Dra en boks rundt ett objekt; omrisset blir markeringen. Hull inni forblir markert.
+Drag to measure in image pixels · Esc to stop	Dra for å måle i bildepiksler · Esc for å stoppe
+Drag to select · Enter to crop · Esc to cancel	Dra for å markere · Enter for å beskjære · Esc for å avbryte
+Drag the corners onto a rectangle · Enter to apply · Esc to cancel	Dra hjørnene til et rektangel · Enter for å bruke · Esc for å avbryte
+Drawings, text and pasted images will be merged into the image and can't be edited afterwards. Ctrl+Z undoes it.	Tegninger, tekst og innlimte bilder slås sammen med bildet og kan ikke redigeres etterpå. Ctrl+Z angrer det.
+Edit	Rediger
+Edit the image description	Rediger bildebeskrivelsen
+Ellipse	Ellipse
+Elliptical Selection	Elliptisk markering
+Embedded (unnamed)	Innebygd (uten navn)
+Enhance Image	Forbedre bilde
+Enhance Image uses generative AI. To make the image look better it may invent or alter fine details, such as textures, text or faces, that weren't in the original.	Forbedre bilde bruker generativ KI. For at bildet skal se bedre ut, kan den finne på eller endre fine detaljer, som teksturer, tekst eller ansikter, som ikke fantes i originalen.
+Enter Full Screen	Fullskjerm
+Exposure	Eksponering
+File	Fil
+File name	Filnavn
+File size	Filstørrelse
+Fill	Fyll
+Fills the background with the background colour from Settings.	Fyller bakgrunnen med bakgrunnsfargen fra Innstillinger.
+Fit to Window	Tilpass til vinduet
+Flip Horizontally	Speilvend vannrett
+Flip Vertically	Speilvend loddrett
+Folder	Mappe
+Font size	Skriftstørrelse
+For a faithful clean-up, use Denoise instead.	For en tro opprydding, bruk heller Fjern støy.
+Format	Format
+GPU (AMD, Intel and others, experimental)	GPU (AMD, Intel og andre, eksperimentelt)
+GPU (NVIDIA)	GPU (NVIDIA)
+GPU image scaling	Bildeskalering med GPU
+GPU support	GPU-støtte
+GPU support installed: restart lightview to use it	GPU-støtte installert: start lightview på nytt for å bruke den
+General	Generelt
+Green: how much green each pixel has	Grønn: hvor mye grønt hver piksel har
+Height	Høyde
+Hide Drawing Toolbar	Skjul tegneverktøylinjen
+Hide Image Information	Skjul bildeinformasjon
+Highlight	Merkepenn
+Hue: the color itself, such as red or blue	Fargetone: selve fargen, for eksempel rød eller blå
+IS-Net anime — illustrations	IS-Net anime — illustrasjoner
+IS-Net — general, clean edges	IS-Net — generell, rene kanter
+Image	Bilde
+Image description	Bildebeskrivelse
+Images	Bilder
+Input size	Inndatastørrelse
+Installed the AI runtime	Installerte KI-kjøremiljøet
+Interpolation	Interpolering
+It also makes the image {k}× bigger ({pixels}× the pixels), which takes a while for a big photo.	Bildet blir også {k}× større ({pixels}× pikslene), noe som tar en stund for et stort foto.
+It's no longer in the Trash	Det er ikke lenger i papirkurven
+Keep aspect ratio	Behold sideforhold
+Language	Språk
+Lasso	Lasso
+Lens	Objektiv
+Licence ({step} of {count}) — {title}	Lisens ({step} av {count}) — {title}
+Licence — {title}	Lisens — {title}
+Lightness: from black, through color, to white	Lyshet: fra svart, gjennom farge, til hvitt
+Line	Linje
+Local AI	Lokal KI
+Location	Sted
+Magnifier	Forstørrelsesglass
+Make lightview my default image viewer	Gjør lightview til mitt standard bildeprogram
+Make lightview the default image viewer	Gjør lightview til standard bildeprogram
+Mean (R, G, B)	Gjennomsnitt (R, G, B)
+Measure	Mål
+Merge drawings into the image?	Slå sammen tegningene med bildet?
+MobileSAM — finds the object in a box	MobileSAM — finner objektet i en boks
+Model	Modell
+Name	Navn
+Nearest	Nærmeste
+Next Frame	Neste bilderute
+Next Image	Neste bilde
+no graphics card with Vulkan or Direct3D 12 was found	fant ingen skjermkort med Vulkan eller Direct3D 12
+No location in this file	Ingen stedsinformasjon i denne filen
+No model installed yet.	Ingen modell installert ennå.
+No object found in the box	Fant ikke noe objekt i boksen
+No recent files	Ingen nylige filer
+None (sRGB assumed)	Ingen (sRGB antas)
+Nothing to paste: {e}	Ingenting å lime inn: {e}
+OK	OK
+ONNX export (half precision) by FuryTMP on Hugging Face; its origin isn't verified.	ONNX-eksport (halv presisjon) av FuryTMP på Hugging Face; opprinnelsen er ikke bekreftet.
+ONNX export by Acly on Hugging Face, from the authors' weights; downloaded from Heliosoph LLC's copy.	ONNX-eksport av Acly på Hugging Face, fra forfatternes vekter; lastet ned fra Heliosoph LLCs kopi.
+ONNX model	ONNX-modell
+Only add models from sources you trust: they run with your permissions.	Legg bare til modeller fra kilder du stoler på: de kjører med dine tillatelser.
+Open Recent	Åpne nylige
+Open in Google Maps	Åpne i Google Maps
+Open models folder	Åpne modellmappen
+Open project page	Åpne prosjektsiden
+Open…	Åpne…
+Other tags ({count})	Andre tagger ({count})
+Output	Utdata
+Paste	Lim inn
+Pause Animation	Sett animasjon på pause
+Percentage	Prosent
+Correct Perspective	Korriger perspektiv
+Play Animation	Spill av animasjon
+Please read and accept the licence before downloading.	Les og godta lisensen før du laster ned.
+Preprocessing: {file}	Forbehandling: {file}
+Previous Frame	Forrige bilderute
+Previous Image	Forrige bilde
+Read the input size from the model	Les inndatastørrelsen fra modellen
+Real-ESRGAN 4× half precision	Real-ESRGAN 4× halv presisjon
+Real-ESRGAN 4× — upscales, smooth, may invent detail	Real-ESRGAN 4× — forstørrer, myk, kan finne på detaljer
+Real-ESRGAN and DarkIR can't be downloaded here. Convert them yourself with lightview-models, then copy the .onnx files into the models folder:	Real-ESRGAN og DarkIR kan ikke lastes ned her. Konverter dem selv med lightview-models, og kopier deretter .onnx-filene til modellmappen:
+Real-ESRGAN general 4× half precision	Real-ESRGAN general 4× halv presisjon
+Real-ESRGAN general 4× — fast, softer	Real-ESRGAN general 4× — rask, mykere
+Rectangle	Rektangel
+Rectangular Selection	Rektangulær markering
+Red: how much red each pixel has	Rød: hvor mye rødt hver piksel har
+Redo	Gjør om
+Remove Background	Fjern bakgrunn
+Remove Background and Crop	Fjern bakgrunn og beskjær
+Remove location from the copy	Fjern stedsinformasjon fra kopien
+Replace Background	Erstatt bakgrunn
+Reset	Tilbakestill
+Reset Color Adjustments	Tilbakestill fargejusteringer
+Reset to default	Tilbakestill til standard
+Resize	Endre størrelse
+Resize…	Endre størrelse…
+Resolution	Oppløsning
+Restart lightview to start using the GPU.	Start lightview på nytt for å begynne å bruke GPU-en.
+Revert	Tilbakestill til original
+Rotate Left	Roter mot venstre
+Rotate Right	Roter mot høyre
+Rounded Rectangle	Avrundet rektangel
+Run the AI tools on any graphics card with Vulkan or Direct3D 12 ({mb} MB download, WebGPU). A weak built-in graphics chip can be slower than the CPU.	Kjør KI-verktøyene på et hvilket som helst skjermkort med Vulkan eller Direct3D 12 ({mb} MB nedlasting, WebGPU). En svak innebygd grafikkbrikke kan være tregere enn prosessoren.
+Run the AI tools on the graphics card ({mb} MB download, NVIDIA's CUDA libraries).	Kjør KI-verktøyene på skjermkortet ({mb} MB nedlasting, NVIDIAs CUDA-biblioteker).
+Running {file}…	Kjører {file}…
+SCUNet σ15 — light noise	SCUNet σ15 — lett støy
+SCUNet σ25 — moderate noise	SCUNet σ25 — moderat støy
+SCUNet σ50 — heavy noise	SCUNet σ50 — kraftig støy
+SCUNet — noise and JPEG artifacts (recommended)	SCUNet — støy og JPEG-artefakter (anbefalt)
+Saturation	Metning
+Saturation: from grey to vivid color	Metning: fra grå til klar farge
+Save As…	Lagre som…
+Save copy…	Lagre kopi…
+Saved in JPEG files	Lagres i JPEG-filer
+Saved {name}	Lagret {name}
+Saves a copy of the file with this metadata (without other edits). Camera maker notes are removed.	Lagrer en kopi av filen med disse metadataene (uten andre endringer). Kameraprodusentens notater fjernes.
+Select	Merk
+Select All	Merk alt
+Select Object	Merk objekt
+Select Object (AI)	Merk objekt (KI)
+Selecting the object…	Markerer objektet…
+Settings	Innstillinger
+Settings…	Innstillinger…
+Shapes	Former
+Show Drawing Toolbar	Vis tegneverktøylinjen
+Show Image Information	Vis bildeinformasjon
+Silueta — small and fast	Silueta — liten og rask
+Size read from the model when it runs; the usual normalisation.	Størrelsen leses fra modellen når den kjører; vanlig normalisering.
+Sketch	Skisse
+Smoother zooming and panning. Uses more GPU memory and makes switching images a little slower.	Jevnere zooming og panorering. Bruker mer GPU-minne og gjør bytte av bilder litt tregere.
+Sort order	Sorteringsrekkefølge
+Std (R, G, B)	Std.avvik (R, G, B)
+Strength	Styrke
+Stroke	Strek
+SwinIR σ25 — moderate noise, very slow	SwinIR σ25 — moderat støy, svært treg
+Text	Tekst
+Text colour	Tekstfarge
+The AI runtime isn't installed yet: Local AI > Download AI Runtime…	KI-kjøremiljøet er ikke installert ennå: Lokal KI > Last ned KI-kjøremiljø…
+The GPU couldn't be used, so the CPU is: {e}	GPU-en kunne ikke brukes, så prosessoren brukes: {e}
+The corners must form a shape with no crossing sides	Hjørnene må danne en figur uten kryssende sider
+the model's mask decoder is missing	modellens maskedekoder mangler
+Thickness	Tykkelse
+Tint	Toning
+Tools	Verktøy
+Undo	Angre
+Use YYYY:MM:DD HH:MM:SS	Bruk YYYY:MM:DD HH:MM:SS
+Use the GPU	Bruk GPU-en
+Used by Remove Background and Remove Background and Crop.	Brukes av Fjern bakgrunn og Fjern bakgrunn og beskjær.
+Uses Bilinear while GPU scaling is on	Bruker Bilineær mens GPU-skalering er på
+U²-Net people — portraits	U²-Net personer — portretter
+U²-Net small — fastest	U²-Net liten — raskest
+U²-Net — general	U²-Net — generell
+Value: from black to full color	Verdi: fra svart til full farge
+View	Vis
+Welcome to lightview	Velkommen til lightview
+Width	Bredde
+Your edits to {name} haven't been saved.	Endringene dine i {name} er ikke lagret.
+Zoom	Zoom
+Zoom In	Zoom inn
+Zoom Out	Zoom ut
+a GPU library was missing from the download	et GPU-bibliotek manglet i nedlastingen
+about {time} left	omtrent {time} igjen
+can't save as .{ext}: use .jpg, .png, .webp, .bmp, .tif or .gif	kan ikke lagre som .{ext}: bruk .jpg, .png, .webp, .bmp, .tif eller .gif
+choose a new name: the original is never modified	velg et nytt navn: originalen endres aldri
+compressed SVG files aren't supported	komprimerte SVG-filer støttes ikke
+couldn't read this file's EXIF safely	kunne ikke lese filens EXIF på en trygg måte
+edited: {w} × {h}	redigert: {w} × {h}
+lightview is now the default image viewer	lightview er nå standard bildeprogram
+no data folder	ingen datamappe
+no frames	ingen bilderuter
+no subject found	fant ikke noe motiv
+pick an .onnx file	velg en .onnx-fil
+the download didn't match its checksum	nedlastingen stemte ikke med kontrollsummen
+the model has no image input	modellen har ingen bildeinndata
+the model's output changed size between tiles	modellens utdata endret størrelse mellom flisene
+the model's output doesn't match its input size	modellens utdata stemmer ikke med inndatastørrelsen
+the model's output isn't a whole multiple of its input	modellens utdata er ikke et helt multiplum av inndataene
+the written file didn't check out: the location wasn't removed	den skrevne filen besto ikke kontrollen: stedsinformasjonen ble ikke fjernet
+the written file didn't check out: {e}	den skrevne filen besto ikke kontrollen: {e}
+the written file didn't check out: {label} wasn't saved	den skrevne filen besto ikke kontrollen: {label} ble ikke lagret
+this file crashed its decoder	filen fikk dekoderen til å krasje
+this file's EXIF couldn't be processed	filens EXIF kunne ikke behandles
+this image is too large to open	bildet er for stort til å åpnes
+this isn't a regular file	dette er ikke en vanlig fil
+{format}, {count} frames	{format}, {count} bilderuter
+{name} is already installed	{name} er allerede installert
+{name} will be moved to the Trash.	{name} flyttes til papirkurven.
+{task} done	{task} ferdig
+{task} failed: {e}	{task} mislyktes: {e}
+{task} on the GPU	{task} på GPU-en
+{task} preview of the visible area · drag to compare · Before | After	{task}: forhåndsvisning av det synlige området · dra for å sammenligne · Før | Etter
+Remove Object	Fjern objekt
+LaMa — best quality, slower	LaMa — best kvalitet, tregere
+MI-GAN — fast	MI-GAN — rask
+ONNX export by Carve on Hugging Face; its origin isn't verified.	ONNX-eksport av Carve på Hugging Face; opprinnelsen er ikke bekreftet.
+the selection is empty	markeringen er tom
+No images in {name}	Ingen bilder i {name}
+Can't open {name}: not a supported image	Kan ikke åpne {name}: ikke et støttet bilde
+Save Copy	Lagre kopi
+Copy Path	Kopier bane
+Show in File Manager	Vis i filbehandleren
+Rename…	Gi nytt navn…
+First Image	Første bilde
+Last Image	Siste bilde
+Copied the path	Kopierte banen
+Rename Image	Gi bildet nytt navn
+Rename	Gi nytt navn
+That isn't a valid file name	Det er ikke et gyldig filnavn
+{name} already exists	{name} finnes allerede
+File changed on disk	Filen er endret på disken
+{name} changed on disk. Reloading it discards your edits.	{name} er endret på disken. Å laste den inn på nytt forkaster endringene dine.
+Reload	Last inn på nytt
+Keep Edits	Behold endringer
+Pixel grid	Pikselrutenett
+Shows the edges of the pixels when zoomed far in.	Viser kantene til pikslene når det er zoomet langt inn.
+Click a pixel to copy its colour · Esc to stop	Klikk på en piksel for å kopiere fargen · Esc for å stoppe
+Copied {color}	Kopierte {color}
+Copy Color	Kopier farge
+this file is damaged or cut short	filen er skadet eller avkortet
+HEIC and AVIF files need libheif, which isn't installed	HEIC- og AVIF-filer trenger libheif, som ikke er installert
+this file needs a libheif decoder plugin, which isn't installed	filen trenger et dekodertillegg for libheif, som ikke er installert
+this file needs Microsoft's HEIF Image Extensions and HEVC or AV1 Video Extensions	filen trenger Microsofts HEIF Image Extensions og HEVC eller AV1 Video Extensions
+Pages	Sider
+Next Page	Neste side
+Previous Page	Forrige side
+{format}, {count} pages	{format}, {count} sider
+page {n} of {count}	side {n} av {count}
+Colour management	Fargestyring
+Converts images with a colour profile to sRGB, so wide-gamut photos look right on an sRGB monitor. Turn it off for a wide-gamut monitor.	Konverterer bilder med fargeprofil til sRGB, slik at bilder med bredt fargespekter ser riktige ut på en sRGB-skjerm. Slå det av for en skjerm med bredt fargespekter.
+this RAW file has no embedded preview	RAW-filen har ingen innebygd forhåndsvisning
+{format} (embedded preview)	{format} (innebygd forhåndsvisning)
+EXIF isn't read from this kind of RAW file yet	EXIF leses ikke fra denne typen RAW-fil ennå
+A RAW file's metadata is shown, not edited.	Metadataene til en RAW-fil vises, men redigeres ikke.
+A WebP file's metadata is shown, not edited.	Metadataene til en WebP-fil vises, men redigeres ikke.
+EXIF is shown for JPEG, PNG, WebP, TIFF and RAW files	EXIF vises for JPEG-, PNG-, WebP-, TIFF- og RAW-filer
+the copy must be a .{ext} file	kopien må være en .{ext}-fil
+the written file didn't check out: the image changed	den skrevne filen besto ikke kontrollen: bildet ble endret
+Copy File	Kopier fil
+Copied the file	Kopierte filen
+Couldn't copy the file: {e}	Kunne ikke kopiere filen: {e}
+Straighten…	Rett opp…
+Straighten	Rett opp
+Greyscale	Gråtoner
+Invert Colors	Inverter farger
+Remove Red Eye	Fjern røde øyne
+Pixelate Selection	Pikseler markering
+Select the eyes first, then choose this.	Merk øynene først, og velg deretter dette.
+Hides faces. For text, a solid shape is safer: pixelation can sometimes be undone.	Skjuler ansikter. For tekst er en heldekkende figur tryggere: pikselering kan noen ganger reverseres.
+Red eye removed	Røde øyne fjernet
+Pixelated	Pikselert
+Turn until the lines run straight · Enter to apply · Esc to cancel	Drei til linjene er rette · Enter for å bruke · Esc for å avbryte
+Recognize Text	Gjenkjenn tekst
+PP-OCRv5 Latin — European languages	PP-OCRv5 Latin — europeiske språk
+PP-OCRv5 — Chinese, Japanese and English	PP-OCRv5 — kinesisk, japansk og engelsk
+Converted to ONNX by Satoru Nakamura (University of Tokyo) from PaddlePaddle's published models.	Konvertert til ONNX av Satoru Nakamura (Universitetet i Tokyo) fra PaddlePaddles publiserte modeller.
+the model's output doesn't match its character list	modellens utdata stemmer ikke med tegnlisten
+Read QR Code	Les QR-kode
+No QR code found	Fant ingen QR-kode
+No text found	Fant ingen tekst
+QR Code	QR-kode
+Text in Image	Tekst i bildet
+Couldn't read the text: {e}	Kunne ikke lese teksten: {e}
+Reading QR codes…	Leser QR-koder…
+Recognizing text…	Gjenkjenner tekst…
+Reads the selection, or the whole image. Straighten tilted text first, and select small text in a large image so it's read at full size.	Leser markeringen eller hele bildet. Rett opp skrå tekst først, og merk liten tekst i et stort bilde slik at den leses i full størrelse.
+Reads the selection, or the whole image. Shows what the code says; links are never opened.	Leser markeringen eller hele bildet. Viser hva koden sier; lenker åpnes aldri.
+Keyboard Shortcuts	Hurtigtaster
+Press keys… (Esc to cancel)	Trykk taster… (Esc for å avbryte)
+Change	Endre
+Remove	Fjern
+Reset All Shortcuts	Tilbakestill alle hurtigtaster
+{keys} is already used by {action}	{keys} brukes allerede av {action}
+Copy, Cut, Paste, Enter, Esc and Delete	Kopier, Klipp ut, Lim inn, Enter, Esc og Delete
+Change Keyboard Shortcuts…	Endre hurtigtaster…
+Theme	Tema
+Follow system	Følg systemet
+Dark	Mørkt
+Light	Lyst
+High contrast	Høy kontrast
+bigger than 64 KiB	større enn 64 KiB
+invalid value	ugyldig verdi
+line	linje
+Your own themes go in the themes folder next to the AI models. Choosing a theme again reloads its file.	Egne temaer legges i temamappen ved siden av KI-modellene. Velger du et tema på nytt, lastes filen inn på nytt.
+Couldn't load the theme, so the base theme is used: {e}	Kunne ikke laste inn temaet, så grunntemaet brukes: {e}
+Open themes folder	Åpne temamappen
+Group Duplicates in Folder…	Grupper duplikater i mappen…
+Group Duplicates in Folder	Grupper duplikater i mappen
+Compares the images in this folder (not its subfolders) and moves each group of look-alikes into a folder of its own. Nothing is deleted, and Ctrl+Z moves them back. Rotated copies and heavy crops aren't found.	Sammenligner bildene i denne mappen (ikke undermappene) og flytter hver gruppe med like bilder til sin egen mappe. Ingenting slettes, og Ctrl+Z flytter dem tilbake. Roterte kopier og kraftige beskjæringer blir ikke funnet.
+Comparing images: {done} of {total}	Sammenligner bilder: {done} av {total}
+How different each image is from its closest look-alike:	Hvor mye hvert bilde skiller seg fra det mest like:
+Largest difference	Største forskjell
+{meaning} · suggested: {n}	{meaning} · forslag: {n}
+Identical pixels only	Bare identiske piksler
+Resized or recompressed copies	Kopier med endret størrelse eller ny komprimering
+Small edits, crops and bursts	Små endringer, beskjæringer og bildeserier
+Merely similar scenes too	Også bare lignende motiver
+Groups: {groups} · Images to move: {moving} · Staying: {staying}	Grupper: {groups} · Bilder som flyttes: {moving} · Blir: {staying}
+Not compared: {n}	Ikke sammenlignet: {n}
+Not compared	Ikke sammenlignet
+{name} · difference: {d}	{name} · forskjell: {d}
+Move	Flytt
+Images moved: {n} · Folders: {f}	Flyttede bilder: {n} · Mapper: {f}
+Stopped: {e}	Stoppet: {e}
+Images moved back: {n}	Bilder flyttet tilbake: {n}
+{name}: changed since it was compared	{name}: endret siden sammenligningen
+{name}: already in the folder	{name}: allerede i mappen
+{name}: its old name is taken	{name}: det gamle navnet er opptatt
+the file is gone	filen finnes ikke lenger
+About {s} s left	Omtrent {s} s igjen
+About {m} min left	Omtrent {m} min igjen
+Smallest group	Minste gruppe
+Groups with fewer images stay where they are.	Grupper med færre bilder blir der de er.
+Resize Optimally	Optimal størrelse
+Shrinks the image to the size its detail needs, measured on its sharpest part. Never enlarges; Ctrl+Z undoes it.	Krymper bildet til størrelsen detaljene trenger, målt på den skarpeste delen. Forstørrer aldri; Ctrl+Z angrer det.
+Already at its optimal size	Har allerede optimal størrelse
+Resized to {w} × {h} px	Endret størrelse til {w} × {h} px
+The image changed while {task} ran; run it again	Bildet ble endret mens {task} kjørte; kjør på nytt
+lightview hit an internal error	lightview støtte på en intern feil

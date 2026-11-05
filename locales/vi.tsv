@@ -1,0 +1,426 @@
+AI Models	Mô hình AI
+AI Models…	Mô hình AI…
+AI runtime (ONNX Runtime)	Bộ chạy AI (ONNX Runtime)
+Accept and Continue	Chấp nhận và tiếp tục
+Accept and Download	Chấp nhận và tải xuống
+Accessibility	Trợ năng
+Actual Size	Kích thước thật
+Add model file…	Thêm tệp mô hình…
+Added {name}	Đã thêm {name}
+Adjust Color	Điều chỉnh màu
+Adjust Color…	Điều chỉnh màu…
+Adjust Curves	Điều chỉnh đường cong
+Adjust Curves…	Điều chỉnh đường cong…
+All channels together: overall brightness	Tất cả các kênh cùng lúc: độ sáng chung
+Animation	Hoạt ảnh
+Applies the next time lightview starts	Có hiệu lực vào lần khởi động lightview tiếp theo
+Apply sigmoid (the model outputs logits)	Áp dụng sigmoid (mô hình xuất ra logit)
+Apply to Selection	Áp dụng cho vùng chọn
+Apply to Whole Image{size} (about {estimate})	Áp dụng cho toàn bộ ảnh{size} (khoảng {estimate})
+Arrow	Mũi tên
+Artist	Tác giả
+Auto Levels	Tự động cân bằng mức
+Blur Background	Làm mờ nền
+Blur Background…	Làm mờ nền…
+BSRGAN 4× — upscales and sharpens, may invent detail	BSRGAN 4× — phóng to và làm nét, có thể tự tạo chi tiết
+Background colour	Màu nền
+BiRefNet lite — best quality, slow	BiRefNet lite — chất lượng tốt nhất, chậm
+Bicubic	Bicubic
+Bilinear	Bilinear
+Blue: how much blue each pixel has	Xanh lam: lượng xanh lam của mỗi điểm ảnh
+Camera	Máy ảnh
+Camera make	Hãng máy ảnh
+Camera model	Mẫu máy ảnh
+Can't open this image:\n{e}	Không thể mở ảnh này:\n{e}
+Cancel	Hủy
+Cancelled	Đã hủy
+Check for updates	Kiểm tra cập nhật
+Close	Đóng
+Click to add a point, drag to move it, right-click to remove it	Nhấp để thêm điểm, kéo để di chuyển, nhấp chuột phải để xóa
+Color space	Không gian màu
+Colour	Màu
+Colour profile	Hồ sơ màu
+Continue	Tiếp tục
+Contrast	Độ tương phản
+Converted to ONNX by Heliosoph LLC from the authors' published weights.	Được Heliosoph LLC chuyển sang ONNX từ trọng số do các tác giả công bố.
+Copied {w} × {h} px	Đã sao chép {w} × {h} px
+Copy	Sao chép
+Copyright	Bản quyền
+Couldn't add the model: {e}	Không thể thêm mô hình: {e}
+Couldn't delete the image: {e}	Không thể xóa ảnh: {e}
+Couldn't download {file}: {e}	Không thể tải xuống {file}: {e}
+Couldn't install the AI runtime: {e}	Không thể cài đặt bộ chạy AI: {e}
+Couldn't process the image: {e}	Không thể xử lý ảnh: {e}
+Couldn't read {file}: {e}	Không thể đọc {file}: {e}
+Couldn't restore the image: {e}	Không thể khôi phục ảnh: {e}
+Couldn't save {name}: {e}	Không thể lưu {name}: {e}
+Couldn't select the object: {e}	Không thể chọn đối tượng: {e}
+Crop	Cắt ảnh
+Cut	Cắt
+DarkIR brightens dark and night photos and removes their noise and blur. On a well-lit photo it overexposes.	DarkIR làm sáng ảnh tối và ảnh chụp đêm, đồng thời loại bỏ nhiễu và nhòe. Với ảnh đủ sáng, kết quả sẽ bị dư sáng.
+DarkIR — dark and night photos, same size	DarkIR — ảnh tối và ảnh đêm, giữ nguyên kích thước
+Date modified	Ngày sửa đổi
+Date taken	Ngày chụp
+Default window size	Kích thước cửa sổ mặc định
+Delete image?	Xóa ảnh?
+Delete Image…	Xóa ảnh…
+Delete Selection	Xóa vùng chọn
+Denoise	Khử nhiễu
+Denoise and Enhance run about 10× faster on a GTX 1050	Khử nhiễu và Nâng cao chạy nhanh hơn khoảng 10× trên GTX 1050
+Describe the image for people who can't see it	Mô tả ảnh cho người không thể nhìn thấy
+Description	Mô tả
+Deselect	Bỏ chọn
+Detect size	Phát hiện kích thước
+Dimensions	Kích thước
+Discard	Bỏ
+Discard edits?	Bỏ các chỉnh sửa?
+Distance: {d} px · ΔX: {dx} px · ΔY: {dy} px	Khoảng cách: {d} px · ΔX: {dx} px · ΔY: {dy} px
+Done	Xong
+Download	Tải xuống
+Download AI Runtime…	Tải bộ chạy AI…
+Download GPU Support	Tải hỗ trợ GPU
+Downloaded from Microsoft (ONNX Runtime) and NVIDIA (CUDA libraries, via their official PyPI packages).	Tải từ Microsoft (ONNX Runtime) và NVIDIA (thư viện CUDA, qua các gói PyPI chính thức của họ).
+Downloaded from Microsoft's official PyPI package (onnxruntime-ep-webgpu).	Tải từ gói PyPI chính thức của Microsoft (onnxruntime-ep-webgpu).
+Downloaded {file}	Đã tải {file}
+Downloading GPU support ({mb} MB)…	Đang tải hỗ trợ GPU ({mb} MB)…
+Downloading the AI runtime…	Đang tải bộ chạy AI…
+Downloading…	Đang tải…
+Drag a box around one object; its outline becomes the selection. Holes inside it stay selected.	Kéo một khung quanh một đối tượng; đường viền của nó trở thành vùng chọn. Các lỗ bên trong vẫn được chọn.
+Drag to measure in image pixels · Esc to stop	Kéo để đo bằng điểm ảnh của ảnh · Esc để dừng
+Drag to select · Enter to crop · Esc to cancel	Kéo để chọn · Enter để cắt · Esc để hủy
+Drag the corners onto a rectangle · Enter to apply · Esc to cancel	Kéo các góc vào một hình chữ nhật · Enter để áp dụng · Esc để hủy
+Drawings, text and pasted images will be merged into the image and can't be edited afterwards. Ctrl+Z undoes it.	Hình vẽ, chữ và ảnh dán sẽ được gộp vào ảnh và không thể chỉnh sửa sau đó. Ctrl+Z để hoàn tác.
+Edit	Sửa
+Edit the image description	Sửa mô tả ảnh
+Ellipse	Hình elip
+Elliptical Selection	Vùng chọn elip
+Embedded (unnamed)	Nhúng sẵn (không tên)
+Enhance Image	Nâng cao chất lượng ảnh
+Enhance Image uses generative AI. To make the image look better it may invent or alter fine details, such as textures, text or faces, that weren't in the original.	Nâng cao chất lượng ảnh dùng AI tạo sinh. Để ảnh trông đẹp hơn, nó có thể tự tạo hoặc thay đổi các chi tiết nhỏ như họa tiết, chữ hay khuôn mặt vốn không có trong ảnh gốc.
+Enter Full Screen	Vào toàn màn hình
+Exposure	Phơi sáng
+File	Tệp
+File name	Tên tệp
+File size	Kích thước tệp
+Fill	Tô
+Fills the background with the background colour from Settings.	Tô nền bằng màu nền trong Cài đặt.
+Fit to Window	Vừa cửa sổ
+Flip Horizontally	Lật ngang
+Flip Vertically	Lật dọc
+Folder	Thư mục
+Font size	Cỡ chữ
+For a faithful clean-up, use Denoise instead.	Để làm sạch trung thực, hãy dùng Khử nhiễu.
+Format	Định dạng
+GPU (AMD, Intel and others, experimental)	GPU (AMD, Intel và hãng khác, thử nghiệm)
+GPU (NVIDIA)	GPU (NVIDIA)
+GPU image scaling	Co giãn ảnh bằng GPU
+GPU support	Hỗ trợ GPU
+GPU support installed: restart lightview to use it	Đã cài hỗ trợ GPU: khởi động lại lightview để sử dụng
+General	Chung
+Green: how much green each pixel has	Xanh lục: lượng xanh lục của mỗi điểm ảnh
+Height	Chiều cao
+Hide Drawing Toolbar	Ẩn thanh công cụ vẽ
+Hide Image Information	Ẩn thông tin ảnh
+Highlight	Bút dạ quang
+Hue: the color itself, such as red or blue	Sắc độ: chính màu đó, như đỏ hoặc xanh
+IS-Net anime — illustrations	IS-Net anime — tranh minh họa
+IS-Net — general, clean edges	IS-Net — tổng quát, viền sạch
+Image	Ảnh
+Image description	Mô tả ảnh
+Images	Ảnh
+Input size	Kích thước đầu vào
+Installed the AI runtime	Đã cài bộ chạy AI
+Interpolation	Nội suy
+It also makes the image {k}× bigger ({pixels}× the pixels), which takes a while for a big photo.	Nó cũng làm ảnh lớn hơn {k}× ({pixels}× số điểm ảnh), việc này mất một lúc với ảnh lớn.
+It's no longer in the Trash	Ảnh không còn trong Thùng rác
+Keep aspect ratio	Giữ tỷ lệ khung hình
+Language	Ngôn ngữ
+Lasso	Lasso
+Lens	Ống kính
+Licence ({step} of {count}) — {title}	Giấy phép ({step} trên {count}) — {title}
+Licence — {title}	Giấy phép — {title}
+Lightness: from black, through color, to white	Độ sáng: từ đen, qua màu, đến trắng
+Line	Đường thẳng
+Local AI	AI cục bộ
+Location	Vị trí
+Magnifier	Kính lúp
+Make lightview my default image viewer	Đặt lightview làm trình xem ảnh mặc định của tôi
+Make lightview the default image viewer	Đặt lightview làm trình xem ảnh mặc định
+Mean (R, G, B)	Trung bình (R, G, B)
+Measure	Đo
+Merge drawings into the image?	Gộp hình vẽ vào ảnh?
+MobileSAM — finds the object in a box	MobileSAM — tìm đối tượng trong khung
+Model	Mô hình
+Name	Tên
+Nearest	Gần nhất
+Next Frame	Khung hình tiếp theo
+Next Image	Ảnh tiếp theo
+no graphics card with Vulkan or Direct3D 12 was found	không tìm thấy card đồ họa có Vulkan hoặc Direct3D 12
+No location in this file	Tệp này không có vị trí
+No model installed yet.	Chưa cài mô hình nào.
+No object found in the box	Không tìm thấy đối tượng trong khung
+No recent files	Không có tệp gần đây
+None (sRGB assumed)	Không có (mặc định sRGB)
+Nothing to paste: {e}	Không có gì để dán: {e}
+OK	OK
+ONNX export (half precision) by FuryTMP on Hugging Face; its origin isn't verified.	Bản xuất ONNX (độ chính xác một nửa) của FuryTMP trên Hugging Face; nguồn gốc chưa được xác minh.
+ONNX export by Acly on Hugging Face, from the authors' weights; downloaded from Heliosoph LLC's copy.	Bản xuất ONNX của Acly trên Hugging Face, từ trọng số của các tác giả; tải từ bản sao của Heliosoph LLC.
+ONNX model	Mô hình ONNX
+Only add models from sources you trust: they run with your permissions.	Chỉ thêm mô hình từ nguồn bạn tin cậy: chúng chạy với quyền của bạn.
+Open Recent	Mở gần đây
+Open in Google Maps	Mở trong Google Maps
+Open models folder	Mở thư mục mô hình
+Open project page	Mở trang dự án
+Open…	Mở…
+Other tags ({count})	Thẻ khác ({count})
+Output	Đầu ra
+Paste	Dán
+Pause Animation	Tạm dừng hoạt ảnh
+Percentage	Phần trăm
+Correct Perspective	Chỉnh phối cảnh
+Play Animation	Phát hoạt ảnh
+Please read and accept the licence before downloading.	Vui lòng đọc và chấp nhận giấy phép trước khi tải xuống.
+Preprocessing: {file}	Tiền xử lý: {file}
+Previous Frame	Khung hình trước
+Previous Image	Ảnh trước
+Read the input size from the model	Đọc kích thước đầu vào từ mô hình
+Real-ESRGAN 4× half precision	Real-ESRGAN 4× độ chính xác một nửa
+Real-ESRGAN 4× — upscales, smooth, may invent detail	Real-ESRGAN 4× — phóng to, mượt, có thể tự tạo chi tiết
+Real-ESRGAN and DarkIR can't be downloaded here. Convert them yourself with lightview-models, then copy the .onnx files into the models folder:	Không thể tải Real-ESRGAN và DarkIR tại đây. Hãy tự chuyển đổi bằng lightview-models, rồi sao chép các tệp .onnx vào thư mục mô hình:
+Real-ESRGAN general 4× half precision	Real-ESRGAN general 4× độ chính xác một nửa
+Real-ESRGAN general 4× — fast, softer	Real-ESRGAN general 4× — nhanh, mềm hơn
+Rectangle	Hình chữ nhật
+Rectangular Selection	Vùng chọn chữ nhật
+Red: how much red each pixel has	Đỏ: lượng đỏ của mỗi điểm ảnh
+Redo	Làm lại
+Remove Background	Xóa nền
+Remove Background and Crop	Xóa nền và cắt
+Remove location from the copy	Xóa vị trí khỏi bản sao
+Replace Background	Thay nền
+Reset	Đặt lại
+Reset Color Adjustments	Đặt lại điều chỉnh màu
+Reset to default	Khôi phục mặc định
+Resize	Đổi kích thước
+Resize…	Đổi kích thước…
+Resolution	Độ phân giải
+Restart lightview to start using the GPU.	Khởi động lại lightview để bắt đầu dùng GPU.
+Revert	Hoàn nguyên
+Rotate Left	Xoay trái
+Rotate Right	Xoay phải
+Rounded Rectangle	Hình chữ nhật bo góc
+Run the AI tools on any graphics card with Vulkan or Direct3D 12 ({mb} MB download, WebGPU). A weak built-in graphics chip can be slower than the CPU.	Chạy công cụ AI trên mọi card đồ họa có Vulkan hoặc Direct3D 12 (tải {mb} MB, WebGPU). Chip đồ họa tích hợp yếu có thể chậm hơn CPU.
+Run the AI tools on the graphics card ({mb} MB download, NVIDIA's CUDA libraries).	Chạy công cụ AI trên card đồ họa (tải {mb} MB, thư viện CUDA của NVIDIA).
+Running {file}…	Đang chạy {file}…
+SCUNet σ15 — light noise	SCUNet σ15 — nhiễu nhẹ
+SCUNet σ25 — moderate noise	SCUNet σ25 — nhiễu vừa
+SCUNet σ50 — heavy noise	SCUNet σ50 — nhiễu nặng
+SCUNet — noise and JPEG artifacts (recommended)	SCUNet — nhiễu và lỗi nén JPEG (khuyên dùng)
+Saturation	Độ bão hòa
+Saturation: from grey to vivid color	Độ bão hòa: từ xám đến màu rực
+Save As…	Lưu thành…
+Save copy…	Lưu bản sao…
+Saved in JPEG files	Được lưu trong tệp JPEG
+Saved {name}	Đã lưu {name}
+Saves a copy of the file with this metadata (without other edits). Camera maker notes are removed.	Lưu một bản sao của tệp với siêu dữ liệu này (không có chỉnh sửa khác). Ghi chú của hãng máy ảnh bị loại bỏ.
+Select	Chọn
+Select All	Chọn tất cả
+Select Object	Chọn đối tượng
+Select Object (AI)	Chọn đối tượng (AI)
+Selecting the object…	Đang chọn đối tượng…
+Settings	Cài đặt
+Settings…	Cài đặt…
+Shapes	Hình
+Show Drawing Toolbar	Hiện thanh công cụ vẽ
+Show Image Information	Hiện thông tin ảnh
+Silueta — small and fast	Silueta — nhỏ và nhanh
+Size read from the model when it runs; the usual normalisation.	Kích thước đọc từ mô hình khi chạy; chuẩn hóa thông thường.
+Sketch	Phác thảo
+Smoother zooming and panning. Uses more GPU memory and makes switching images a little slower.	Thu phóng và kéo mượt hơn. Dùng nhiều bộ nhớ GPU hơn và chuyển ảnh chậm hơn một chút.
+Sort order	Thứ tự sắp xếp
+Std (R, G, B)	Độ lệch chuẩn (R, G, B)
+Strength	Cường độ
+Stroke	Nét viền
+SwinIR σ25 — moderate noise, very slow	SwinIR σ25 — nhiễu vừa, rất chậm
+Text	Chữ
+Text colour	Màu chữ
+The AI runtime isn't installed yet: Local AI > Download AI Runtime…	Bộ chạy AI chưa được cài: AI cục bộ > Tải bộ chạy AI…
+The GPU couldn't be used, so the CPU is: {e}	Không dùng được GPU nên dùng CPU: {e}
+The corners must form a shape with no crossing sides	Các góc phải tạo thành hình không có cạnh cắt nhau
+the model's mask decoder is missing	thiếu bộ giải mã mặt nạ của mô hình
+Thickness	Độ dày
+Tint	Ánh màu
+Tools	Công cụ
+Undo	Hoàn tác
+Use YYYY:MM:DD HH:MM:SS	Dùng YYYY:MM:DD HH:MM:SS
+Use the GPU	Dùng GPU
+Used by Remove Background and Remove Background and Crop.	Được dùng bởi Xóa nền và Xóa nền và cắt.
+Uses Bilinear while GPU scaling is on	Dùng Bilinear khi bật co giãn bằng GPU
+U²-Net people — portraits	U²-Net người — chân dung
+U²-Net small — fastest	U²-Net nhỏ — nhanh nhất
+U²-Net — general	U²-Net — tổng quát
+Value: from black to full color	Giá trị: từ đen đến màu đầy đủ
+View	Xem
+Welcome to lightview	Chào mừng đến với lightview
+Width	Chiều rộng
+Your edits to {name} haven't been saved.	Các chỉnh sửa của bạn cho {name} chưa được lưu.
+Zoom	Thu phóng
+Zoom In	Phóng to
+Zoom Out	Thu nhỏ
+a GPU library was missing from the download	thiếu một thư viện GPU trong bản tải
+about {time} left	còn khoảng {time}
+can't save as .{ext}: use .jpg, .png, .webp, .bmp, .tif or .gif	không thể lưu thành .{ext}: hãy dùng .jpg, .png, .webp, .bmp, .tif hoặc .gif
+choose a new name: the original is never modified	hãy chọn tên mới: bản gốc không bao giờ bị sửa
+compressed SVG files aren't supported	không hỗ trợ tệp SVG nén
+couldn't read this file's EXIF safely	không thể đọc EXIF của tệp này một cách an toàn
+edited: {w} × {h}	đã sửa: {w} × {h}
+lightview is now the default image viewer	lightview giờ là trình xem ảnh mặc định
+no data folder	không có thư mục dữ liệu
+no frames	không có khung hình
+no subject found	không tìm thấy chủ thể
+pick an .onnx file	hãy chọn một tệp .onnx
+the download didn't match its checksum	bản tải không khớp với mã kiểm tra
+the model has no image input	mô hình không có đầu vào ảnh
+the model's output changed size between tiles	kích thước đầu ra của mô hình thay đổi giữa các ô
+the model's output doesn't match its input size	đầu ra của mô hình không khớp với kích thước đầu vào
+the model's output isn't a whole multiple of its input	đầu ra của mô hình không phải bội số nguyên của đầu vào
+the written file didn't check out: the location wasn't removed	tệp đã ghi không đạt kiểm tra: vị trí chưa được xóa
+the written file didn't check out: {e}	tệp đã ghi không đạt kiểm tra: {e}
+the written file didn't check out: {label} wasn't saved	tệp đã ghi không đạt kiểm tra: {label} chưa được lưu
+this file crashed its decoder	tệp này làm bộ giải mã bị lỗi
+this file's EXIF couldn't be processed	không thể xử lý EXIF của tệp này
+this image is too large to open	ảnh này quá lớn để mở
+this isn't a regular file	đây không phải tệp thông thường
+{format}, {count} frames	{format}, {count} khung hình
+{name} is already installed	{name} đã được cài
+{name} will be moved to the Trash.	{name} sẽ được chuyển vào Thùng rác.
+{task} done	{task} xong
+{task} failed: {e}	{task} thất bại: {e}
+{task} on the GPU	{task} trên GPU
+{task} preview of the visible area · drag to compare · Before | After	Xem trước {task} vùng đang hiển thị · kéo để so sánh · Trước | Sau
+Remove Object	Xóa đối tượng
+LaMa — best quality, slower	LaMa — chất lượng tốt nhất, chậm hơn
+MI-GAN — fast	MI-GAN — nhanh
+ONNX export by Carve on Hugging Face; its origin isn't verified.	Bản xuất ONNX của Carve trên Hugging Face; nguồn gốc chưa được xác minh.
+the selection is empty	vùng chọn trống
+No images in {name}	Không có ảnh nào trong {name}
+Can't open {name}: not a supported image	Không thể mở {name}: không phải ảnh được hỗ trợ
+Save Copy	Lưu bản sao
+Copy Path	Sao chép đường dẫn
+Show in File Manager	Hiện trong trình quản lý tệp
+Rename…	Đổi tên…
+First Image	Ảnh đầu tiên
+Last Image	Ảnh cuối cùng
+Copied the path	Đã sao chép đường dẫn
+Rename Image	Đổi tên ảnh
+Rename	Đổi tên
+That isn't a valid file name	Đó không phải tên tệp hợp lệ
+{name} already exists	{name} đã tồn tại
+File changed on disk	Tệp đã thay đổi trên đĩa
+{name} changed on disk. Reloading it discards your edits.	{name} đã thay đổi trên đĩa. Tải lại sẽ bỏ các chỉnh sửa của bạn.
+Reload	Tải lại
+Keep Edits	Giữ chỉnh sửa
+Pixel grid	Lưới điểm ảnh
+Shows the edges of the pixels when zoomed far in.	Hiện cạnh của các điểm ảnh khi phóng to nhiều.
+Click a pixel to copy its colour · Esc to stop	Nhấp vào một điểm ảnh để sao chép màu · Esc để dừng
+Copied {color}	Đã sao chép {color}
+Copy Color	Sao chép màu
+this file is damaged or cut short	tệp này bị hỏng hoặc bị cắt cụt
+HEIC and AVIF files need libheif, which isn't installed	Tệp HEIC và AVIF cần libheif, hiện chưa được cài
+this file needs a libheif decoder plugin, which isn't installed	tệp này cần một plugin giải mã libheif, hiện chưa được cài
+this file needs Microsoft's HEIF Image Extensions and HEVC or AV1 Video Extensions	tệp này cần HEIF Image Extensions của Microsoft và HEVC hoặc AV1 Video Extensions
+Pages	Trang
+Next Page	Trang sau
+Previous Page	Trang trước
+{format}, {count} pages	{format}, {count} trang
+page {n} of {count}	trang {n} trên {count}
+Colour management	Quản lý màu
+Converts images with a colour profile to sRGB, so wide-gamut photos look right on an sRGB monitor. Turn it off for a wide-gamut monitor.	Chuyển ảnh có hồ sơ màu sang sRGB để ảnh gam màu rộng hiển thị đúng trên màn hình sRGB. Tắt đi nếu dùng màn hình gam màu rộng.
+this RAW file has no embedded preview	tệp RAW này không có ảnh xem trước nhúng
+{format} (embedded preview)	{format} (ảnh xem trước nhúng)
+EXIF isn't read from this kind of RAW file yet	Chưa đọc EXIF từ loại tệp RAW này
+A RAW file's metadata is shown, not edited.	Siêu dữ liệu của tệp RAW chỉ được hiển thị, không chỉnh sửa.
+A WebP file's metadata is shown, not edited.	Siêu dữ liệu của tệp WebP chỉ được hiển thị, không chỉnh sửa.
+EXIF is shown for JPEG, PNG, WebP, TIFF and RAW files	EXIF được hiển thị cho tệp JPEG, PNG, WebP, TIFF và RAW
+the copy must be a .{ext} file	bản sao phải là tệp .{ext}
+the written file didn't check out: the image changed	tệp đã ghi không đạt kiểm tra: ảnh đã thay đổi
+Copy File	Sao chép tệp
+Copied the file	Đã sao chép tệp
+Couldn't copy the file: {e}	Không thể sao chép tệp: {e}
+Straighten…	Làm thẳng…
+Straighten	Làm thẳng
+Greyscale	Thang xám
+Invert Colors	Đảo màu
+Remove Red Eye	Xóa mắt đỏ
+Pixelate Selection	Làm mờ vùng chọn bằng điểm ảnh
+Select the eyes first, then choose this.	Hãy chọn mắt trước, rồi chọn mục này.
+Hides faces. For text, a solid shape is safer: pixelation can sometimes be undone.	Che khuôn mặt. Với chữ, một hình đặc an toàn hơn: hiệu ứng điểm ảnh đôi khi có thể bị đảo ngược.
+Red eye removed	Đã xóa mắt đỏ
+Pixelated	Đã làm mờ bằng điểm ảnh
+Turn until the lines run straight · Enter to apply · Esc to cancel	Xoay đến khi các đường thẳng hàng · Enter để áp dụng · Esc để hủy
+Recognize Text	Nhận dạng chữ
+PP-OCRv5 Latin — European languages	PP-OCRv5 Latin — các ngôn ngữ châu Âu
+PP-OCRv5 — Chinese, Japanese and English	PP-OCRv5 — tiếng Trung, tiếng Nhật và tiếng Anh
+Converted to ONNX by Satoru Nakamura (University of Tokyo) from PaddlePaddle's published models.	Được Satoru Nakamura (Đại học Tokyo) chuyển sang ONNX từ các mô hình do PaddlePaddle công bố.
+the model's output doesn't match its character list	đầu ra của mô hình không khớp với danh sách ký tự
+Read QR Code	Đọc mã QR
+No QR code found	Không tìm thấy mã QR
+No text found	Không tìm thấy chữ
+QR Code	Mã QR
+Text in Image	Chữ trong ảnh
+Couldn't read the text: {e}	Không thể đọc chữ: {e}
+Reading QR codes…	Đang đọc mã QR…
+Recognizing text…	Đang nhận dạng chữ…
+Reads the selection, or the whole image. Straighten tilted text first, and select small text in a large image so it's read at full size.	Đọc vùng chọn hoặc toàn bộ ảnh. Hãy làm thẳng chữ bị nghiêng trước, và chọn chữ nhỏ trong ảnh lớn để chữ được đọc ở kích thước đầy đủ.
+Reads the selection, or the whole image. Shows what the code says; links are never opened.	Đọc vùng chọn hoặc toàn bộ ảnh. Hiện nội dung của mã; liên kết không bao giờ được mở.
+Keyboard Shortcuts	Phím tắt
+Press keys… (Esc to cancel)	Nhấn phím… (Esc để hủy)
+Change	Đổi
+Remove	Gỡ
+Reset All Shortcuts	Đặt lại mọi phím tắt
+{keys} is already used by {action}	{keys} đã được dùng cho {action}
+Copy, Cut, Paste, Enter, Esc and Delete	Sao chép, Cắt, Dán, Enter, Esc và Delete
+Change Keyboard Shortcuts…	Đổi phím tắt…
+Theme	Giao diện
+Follow system	Theo hệ thống
+Dark	Tối
+Light	Sáng
+High contrast	Tương phản cao
+bigger than 64 KiB	lớn hơn 64 KiB
+invalid value	giá trị không hợp lệ
+line	dòng
+Your own themes go in the themes folder next to the AI models. Choosing a theme again reloads its file.	Giao diện riêng của bạn nằm trong thư mục themes cạnh các mô hình AI. Chọn lại một giao diện sẽ tải lại tệp của nó.
+Couldn't load the theme, so the base theme is used: {e}	Không thể tải giao diện nên dùng giao diện cơ sở: {e}
+Open themes folder	Mở thư mục giao diện
+Group Duplicates in Folder…	Nhóm ảnh trùng lặp trong thư mục…
+Group Duplicates in Folder	Nhóm ảnh trùng lặp trong thư mục
+Compares the images in this folder (not its subfolders) and moves each group of look-alikes into a folder of its own. Nothing is deleted, and Ctrl+Z moves them back. Rotated copies and heavy crops aren't found.	So sánh các ảnh trong thư mục này (không gồm thư mục con) và chuyển mỗi nhóm ảnh giống nhau vào một thư mục riêng. Không gì bị xóa, và Ctrl+Z sẽ chuyển chúng về. Không tìm thấy bản sao đã xoay hoặc bị cắt nhiều.
+Comparing images: {done} of {total}	Đang so sánh ảnh: {done} trên {total}
+How different each image is from its closest look-alike:	Mỗi ảnh khác bao nhiêu so với ảnh giống nó nhất:
+Largest difference	Mức khác biệt lớn nhất
+{meaning} · suggested: {n}	{meaning} · đề xuất: {n}
+Identical pixels only	Chỉ điểm ảnh giống hệt
+Resized or recompressed copies	Bản sao đã đổi kích thước hoặc nén lại
+Small edits, crops and bursts	Chỉnh sửa nhỏ, cắt và ảnh chụp liên tiếp
+Merely similar scenes too	Cả những cảnh chỉ tương tự
+Groups: {groups} · Images to move: {moving} · Staying: {staying}	Nhóm: {groups} · Ảnh sẽ chuyển: {moving} · Ở lại: {staying}
+Not compared: {n}	Không so sánh: {n}
+Not compared	Không so sánh
+{name} · difference: {d}	{name} · khác biệt: {d}
+Move	Chuyển
+Images moved: {n} · Folders: {f}	Đã chuyển ảnh: {n} · Thư mục: {f}
+Stopped: {e}	Đã dừng: {e}
+Images moved back: {n}	Đã chuyển ảnh về: {n}
+{name}: changed since it was compared	{name}: đã thay đổi kể từ khi so sánh
+{name}: already in the folder	{name}: đã có trong thư mục
+{name}: its old name is taken	{name}: tên cũ đã bị dùng
+the file is gone	tệp không còn nữa
+About {s} s left	Còn khoảng {s} giây
+About {m} min left	Còn khoảng {m} phút
+Smallest group	Nhóm nhỏ nhất
+Groups with fewer images stay where they are.	Các nhóm có ít ảnh hơn sẽ ở nguyên chỗ.
+Resize Optimally	Đổi kích thước tối ưu
+Shrinks the image to the size its detail needs, measured on its sharpest part. Never enlarges; Ctrl+Z undoes it.	Thu nhỏ ảnh về kích thước mà chi tiết của nó cần, đo trên phần sắc nét nhất. Không bao giờ phóng to; Ctrl+Z để hoàn tác.
+Already at its optimal size	Đã ở kích thước tối ưu
+Resized to {w} × {h} px	Đã đổi kích thước thành {w} × {h} px
+The image changed while {task} ran; run it again	Ảnh đã thay đổi khi {task} chạy; hãy chạy lại
+lightview hit an internal error	lightview gặp lỗi nội bộ

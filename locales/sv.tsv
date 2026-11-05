@@ -1,0 +1,426 @@
+AI Models	AI-modeller
+AI Models…	AI-modeller…
+AI runtime (ONNX Runtime)	AI-körmiljö (ONNX Runtime)
+Accept and Continue	Godkänn och fortsätt
+Accept and Download	Godkänn och ladda ner
+Accessibility	Tillgänglighet
+Actual Size	Verklig storlek
+Add model file…	Lägg till modellfil…
+Added {name}	Lade till {name}
+Adjust Color	Justera färg
+Adjust Color…	Justera färg…
+Adjust Curves	Justera kurvor
+Adjust Curves…	Justera kurvor…
+All channels together: overall brightness	Alla kanaler tillsammans: total ljusstyrka
+Animation	Animering
+Applies the next time lightview starts	Gäller nästa gång lightview startar
+Apply sigmoid (the model outputs logits)	Använd sigmoid (modellen ger logits)
+Apply to Selection	Tillämpa på markering
+Apply to Whole Image{size} (about {estimate})	Tillämpa på hela bilden{size} (cirka {estimate})
+Arrow	Pil
+Artist	Upphovsperson
+Auto Levels	Autonivåer
+Blur Background	Gör bakgrunden suddig
+Blur Background…	Gör bakgrunden suddig…
+BSRGAN 4× — upscales and sharpens, may invent detail	BSRGAN 4× — förstorar och skärper, kan hitta på detaljer
+Background colour	Bakgrundsfärg
+BiRefNet lite — best quality, slow	BiRefNet lite — bäst kvalitet, långsam
+Bicubic	Bikubisk
+Bilinear	Bilinjär
+Blue: how much blue each pixel has	Blå: hur mycket blått varje pixel har
+Camera	Kamera
+Camera make	Kameratillverkare
+Camera model	Kameramodell
+Can't open this image:\n{e}	Kan inte öppna bilden:\n{e}
+Cancel	Avbryt
+Cancelled	Avbruten
+Check for updates	Sök efter uppdateringar
+Close	Stäng
+Click to add a point, drag to move it, right-click to remove it	Klicka för att lägga till en punkt, dra för att flytta den, högerklicka för att ta bort den
+Color space	Färgrymd
+Colour	Färg
+Colour profile	Färgprofil
+Continue	Fortsätt
+Contrast	Kontrast
+Converted to ONNX by Heliosoph LLC from the authors' published weights.	Konverterad till ONNX av Heliosoph LLC från vikterna som upphovspersonerna publicerat.
+Copied {w} × {h} px	Kopierade {w} × {h} px
+Copy	Kopiera
+Copyright	Upphovsrätt
+Couldn't add the model: {e}	Kunde inte lägga till modellen: {e}
+Couldn't delete the image: {e}	Kunde inte ta bort bilden: {e}
+Couldn't download {file}: {e}	Kunde inte ladda ner {file}: {e}
+Couldn't install the AI runtime: {e}	Kunde inte installera AI-körmiljön: {e}
+Couldn't process the image: {e}	Kunde inte bearbeta bilden: {e}
+Couldn't read {file}: {e}	Kunde inte läsa {file}: {e}
+Couldn't restore the image: {e}	Kunde inte återställa bilden: {e}
+Couldn't save {name}: {e}	Kunde inte spara {name}: {e}
+Couldn't select the object: {e}	Kunde inte markera objektet: {e}
+Crop	Beskär
+Cut	Klipp ut
+DarkIR brightens dark and night photos and removes their noise and blur. On a well-lit photo it overexposes.	DarkIR ljusar upp mörka bilder och nattbilder och tar bort brus och oskärpa. En välbelyst bild blir överexponerad.
+DarkIR — dark and night photos, same size	DarkIR — mörka bilder och nattbilder, samma storlek
+Date modified	Ändringsdatum
+Date taken	Fotograferingsdatum
+Default window size	Standardstorlek på fönstret
+Delete image?	Ta bort bilden?
+Delete Image…	Ta bort bild…
+Delete Selection	Ta bort markering
+Denoise	Brusreducera
+Denoise and Enhance run about 10× faster on a GTX 1050	Brusreducera och Förbättra går ungefär 10× snabbare på ett GTX 1050
+Describe the image for people who can't see it	Beskriv bilden för den som inte kan se den
+Description	Beskrivning
+Deselect	Avmarkera
+Detect size	Hitta storlek
+Dimensions	Mått
+Discard	Släng
+Discard edits?	Släng ändringarna?
+Distance: {d} px · ΔX: {dx} px · ΔY: {dy} px	Avstånd: {d} px · ΔX: {dx} px · ΔY: {dy} px
+Done	Klar
+Download	Ladda ner
+Download AI Runtime…	Ladda ner AI-körmiljö…
+Download GPU Support	Ladda ner GPU-stöd
+Downloaded from Microsoft (ONNX Runtime) and NVIDIA (CUDA libraries, via their official PyPI packages).	Nedladdat från Microsoft (ONNX Runtime) och NVIDIA (CUDA-bibliotek, via deras officiella PyPI-paket).
+Downloaded from Microsoft's official PyPI package (onnxruntime-ep-webgpu).	Nedladdat från Microsofts officiella PyPI-paket (onnxruntime-ep-webgpu).
+Downloaded {file}	Laddade ner {file}
+Downloading GPU support ({mb} MB)…	Laddar ner GPU-stöd ({mb} MB)…
+Downloading the AI runtime…	Laddar ner AI-körmiljön…
+Downloading…	Laddar ner…
+Drag a box around one object; its outline becomes the selection. Holes inside it stay selected.	Dra en ruta runt ett objekt; dess kontur blir markeringen. Hål inuti förblir markerade.
+Drag to measure in image pixels · Esc to stop	Dra för att mäta i bildpixlar · Esc för att sluta
+Drag to select · Enter to crop · Esc to cancel	Dra för att markera · Enter för att beskära · Esc för att avbryta
+Drag the corners onto a rectangle · Enter to apply · Esc to cancel	Dra hörnen till en rektangel · Enter för att tillämpa · Esc för att avbryta
+Drawings, text and pasted images will be merged into the image and can't be edited afterwards. Ctrl+Z undoes it.	Teckningar, text och inklistrade bilder slås ihop med bilden och kan inte redigeras efteråt. Ctrl+Z ångrar det.
+Edit	Redigera
+Edit the image description	Redigera bildbeskrivningen
+Ellipse	Ellips
+Elliptical Selection	Elliptisk markering
+Embedded (unnamed)	Inbäddad (namnlös)
+Enhance Image	Förbättra bild
+Enhance Image uses generative AI. To make the image look better it may invent or alter fine details, such as textures, text or faces, that weren't in the original.	Förbättra bild använder generativ AI. För att bilden ska se bättre ut kan den hitta på eller ändra fina detaljer, som texturer, text eller ansikten, som inte fanns i originalet.
+Enter Full Screen	Helskärm
+Exposure	Exponering
+File	Arkiv
+File name	Filnamn
+File size	Filstorlek
+Fill	Fyllning
+Fills the background with the background colour from Settings.	Fyller bakgrunden med bakgrundsfärgen från Inställningar.
+Fit to Window	Anpassa till fönstret
+Flip Horizontally	Vänd vågrätt
+Flip Vertically	Vänd lodrätt
+Folder	Mapp
+Font size	Teckenstorlek
+For a faithful clean-up, use Denoise instead.	För en trogen uppstädning, använd Brusreducera i stället.
+Format	Format
+GPU (AMD, Intel and others, experimental)	GPU (AMD, Intel och andra, experimentellt)
+GPU (NVIDIA)	GPU (NVIDIA)
+GPU image scaling	Bildskalning med GPU
+GPU support	GPU-stöd
+GPU support installed: restart lightview to use it	GPU-stöd installerat: starta om lightview för att använda det
+General	Allmänt
+Green: how much green each pixel has	Grön: hur mycket grönt varje pixel har
+Height	Höjd
+Hide Drawing Toolbar	Dölj ritverktygsfältet
+Hide Image Information	Dölj bildinformation
+Highlight	Överstrykningspenna
+Hue: the color itself, such as red or blue	Nyans: själva färgen, till exempel röd eller blå
+IS-Net anime — illustrations	IS-Net anime — illustrationer
+IS-Net — general, clean edges	IS-Net — allmän, rena kanter
+Image	Bild
+Image description	Bildbeskrivning
+Images	Bilder
+Input size	Indatastorlek
+Installed the AI runtime	Installerade AI-körmiljön
+Interpolation	Interpolering
+It also makes the image {k}× bigger ({pixels}× the pixels), which takes a while for a big photo.	Bilden blir också {k}× större ({pixels}× pixlarna), vilket tar en stund för ett stort foto.
+It's no longer in the Trash	Den finns inte längre i papperskorgen
+Keep aspect ratio	Behåll proportioner
+Language	Språk
+Lasso	Lasso
+Lens	Objektiv
+Licence ({step} of {count}) — {title}	Licens ({step} av {count}) — {title}
+Licence — {title}	Licens — {title}
+Lightness: from black, through color, to white	Ljushet: från svart, via färg, till vitt
+Line	Linje
+Local AI	Lokal AI
+Location	Plats
+Magnifier	Förstoringsglas
+Make lightview my default image viewer	Gör lightview till mitt standardprogram för bilder
+Make lightview the default image viewer	Gör lightview till standardprogram för bilder
+Mean (R, G, B)	Medel (R, G, B)
+Measure	Mät
+Merge drawings into the image?	Slå ihop teckningarna med bilden?
+MobileSAM — finds the object in a box	MobileSAM — hittar objektet i en ruta
+Model	Modell
+Name	Namn
+Nearest	Närmaste
+Next Frame	Nästa bildruta
+Next Image	Nästa bild
+no graphics card with Vulkan or Direct3D 12 was found	inget grafikkort med Vulkan eller Direct3D 12 hittades
+No location in this file	Ingen plats i den här filen
+No model installed yet.	Ingen modell installerad än.
+No object found in the box	Inget objekt hittades i rutan
+No recent files	Inga senaste filer
+None (sRGB assumed)	Ingen (sRGB antas)
+Nothing to paste: {e}	Inget att klistra in: {e}
+OK	OK
+ONNX export (half precision) by FuryTMP on Hugging Face; its origin isn't verified.	ONNX-export (halv precision) av FuryTMP på Hugging Face; ursprunget är inte verifierat.
+ONNX export by Acly on Hugging Face, from the authors' weights; downloaded from Heliosoph LLC's copy.	ONNX-export av Acly på Hugging Face, från upphovspersonernas vikter; nedladdad från Heliosoph LLC:s kopia.
+ONNX model	ONNX-modell
+Only add models from sources you trust: they run with your permissions.	Lägg bara till modeller från källor du litar på: de körs med dina behörigheter.
+Open Recent	Öppna senaste
+Open in Google Maps	Öppna i Google Maps
+Open models folder	Öppna modellmappen
+Open project page	Öppna projektsidan
+Open…	Öppna…
+Other tags ({count})	Andra taggar ({count})
+Output	Utdata
+Paste	Klistra in
+Pause Animation	Pausa animering
+Percentage	Procent
+Correct Perspective	Korrigera perspektiv
+Play Animation	Spela animering
+Please read and accept the licence before downloading.	Läs och godkänn licensen innan du laddar ner.
+Preprocessing: {file}	Förbehandling: {file}
+Previous Frame	Föregående bildruta
+Previous Image	Föregående bild
+Read the input size from the model	Läs indatastorleken från modellen
+Real-ESRGAN 4× half precision	Real-ESRGAN 4× halv precision
+Real-ESRGAN 4× — upscales, smooth, may invent detail	Real-ESRGAN 4× — förstorar, mjuk, kan hitta på detaljer
+Real-ESRGAN and DarkIR can't be downloaded here. Convert them yourself with lightview-models, then copy the .onnx files into the models folder:	Real-ESRGAN och DarkIR kan inte laddas ner här. Konvertera dem själv med lightview-models och kopiera sedan .onnx-filerna till modellmappen:
+Real-ESRGAN general 4× half precision	Real-ESRGAN general 4× halv precision
+Real-ESRGAN general 4× — fast, softer	Real-ESRGAN general 4× — snabb, mjukare
+Rectangle	Rektangel
+Rectangular Selection	Rektangulär markering
+Red: how much red each pixel has	Röd: hur mycket rött varje pixel har
+Redo	Gör om
+Remove Background	Ta bort bakgrund
+Remove Background and Crop	Ta bort bakgrund och beskär
+Remove location from the copy	Ta bort platsen från kopian
+Replace Background	Ersätt bakgrund
+Reset	Återställ
+Reset Color Adjustments	Återställ färgjusteringar
+Reset to default	Återställ standard
+Resize	Ändra storlek
+Resize…	Ändra storlek…
+Resolution	Upplösning
+Restart lightview to start using the GPU.	Starta om lightview för att börja använda GPU:n.
+Revert	Återgå
+Rotate Left	Rotera åt vänster
+Rotate Right	Rotera åt höger
+Rounded Rectangle	Rundad rektangel
+Run the AI tools on any graphics card with Vulkan or Direct3D 12 ({mb} MB download, WebGPU). A weak built-in graphics chip can be slower than the CPU.	Kör AI-verktygen på valfritt grafikkort med Vulkan eller Direct3D 12 ({mb} MB nedladdning, WebGPU). Ett svagt inbyggt grafikchip kan vara långsammare än processorn.
+Run the AI tools on the graphics card ({mb} MB download, NVIDIA's CUDA libraries).	Kör AI-verktygen på grafikkortet ({mb} MB nedladdning, NVIDIAs CUDA-bibliotek).
+Running {file}…	Kör {file}…
+SCUNet σ15 — light noise	SCUNet σ15 — lätt brus
+SCUNet σ25 — moderate noise	SCUNet σ25 — måttligt brus
+SCUNet σ50 — heavy noise	SCUNet σ50 — kraftigt brus
+SCUNet — noise and JPEG artifacts (recommended)	SCUNet — brus och JPEG-artefakter (rekommenderas)
+Saturation	Mättnad
+Saturation: from grey to vivid color	Mättnad: från grå till klar färg
+Save As…	Spara som…
+Save copy…	Spara kopia…
+Saved in JPEG files	Sparas i JPEG-filer
+Saved {name}	Sparade {name}
+Saves a copy of the file with this metadata (without other edits). Camera maker notes are removed.	Sparar en kopia av filen med dessa metadata (utan andra ändringar). Kameratillverkarens anteckningar tas bort.
+Select	Markera
+Select All	Markera allt
+Select Object	Markera objekt
+Select Object (AI)	Markera objekt (AI)
+Selecting the object…	Markerar objektet…
+Settings	Inställningar
+Settings…	Inställningar…
+Shapes	Former
+Show Drawing Toolbar	Visa ritverktygsfältet
+Show Image Information	Visa bildinformation
+Silueta — small and fast	Silueta — liten och snabb
+Size read from the model when it runs; the usual normalisation.	Storleken läses från modellen när den körs; vanlig normalisering.
+Sketch	Skiss
+Smoother zooming and panning. Uses more GPU memory and makes switching images a little slower.	Mjukare zoomning och panorering. Använder mer GPU-minne och gör bildbyten lite långsammare.
+Sort order	Sorteringsordning
+Std (R, G, B)	Std.avv. (R, G, B)
+Strength	Styrka
+Stroke	Kontur
+SwinIR σ25 — moderate noise, very slow	SwinIR σ25 — måttligt brus, mycket långsam
+Text	Text
+Text colour	Textfärg
+The AI runtime isn't installed yet: Local AI > Download AI Runtime…	AI-körmiljön är inte installerad än: Lokal AI > Ladda ner AI-körmiljö…
+The GPU couldn't be used, so the CPU is: {e}	GPU:n kunde inte användas, så processorn används: {e}
+The corners must form a shape with no crossing sides	Hörnen måste bilda en form utan korsande sidor
+the model's mask decoder is missing	modellens maskavkodare saknas
+Thickness	Tjocklek
+Tint	Färgton
+Tools	Verktyg
+Undo	Ångra
+Use YYYY:MM:DD HH:MM:SS	Använd YYYY:MM:DD HH:MM:SS
+Use the GPU	Använd GPU:n
+Used by Remove Background and Remove Background and Crop.	Används av Ta bort bakgrund och Ta bort bakgrund och beskär.
+Uses Bilinear while GPU scaling is on	Använder Bilinjär när GPU-skalning är på
+U²-Net people — portraits	U²-Net människor — porträtt
+U²-Net small — fastest	U²-Net liten — snabbast
+U²-Net — general	U²-Net — allmän
+Value: from black to full color	Värde: från svart till full färg
+View	Visa
+Welcome to lightview	Välkommen till lightview
+Width	Bredd
+Your edits to {name} haven't been saved.	Dina ändringar i {name} har inte sparats.
+Zoom	Zoom
+Zoom In	Zooma in
+Zoom Out	Zooma ut
+a GPU library was missing from the download	ett GPU-bibliotek saknades i nedladdningen
+about {time} left	cirka {time} kvar
+can't save as .{ext}: use .jpg, .png, .webp, .bmp, .tif or .gif	kan inte spara som .{ext}: använd .jpg, .png, .webp, .bmp, .tif eller .gif
+choose a new name: the original is never modified	välj ett nytt namn: originalet ändras aldrig
+compressed SVG files aren't supported	komprimerade SVG-filer stöds inte
+couldn't read this file's EXIF safely	kunde inte läsa filens EXIF på ett säkert sätt
+edited: {w} × {h}	redigerad: {w} × {h}
+lightview is now the default image viewer	lightview är nu standardprogram för bilder
+no data folder	ingen datamapp
+no frames	inga bildrutor
+no subject found	inget motiv hittades
+pick an .onnx file	välj en .onnx-fil
+the download didn't match its checksum	nedladdningen matchade inte sin kontrollsumma
+the model has no image input	modellen har ingen bildindata
+the model's output changed size between tiles	modellens utdata ändrade storlek mellan rutorna
+the model's output doesn't match its input size	modellens utdata matchar inte dess indatastorlek
+the model's output isn't a whole multiple of its input	modellens utdata är inte en hel multipel av dess indata
+the written file didn't check out: the location wasn't removed	den skrivna filen klarade inte kontrollen: platsen togs inte bort
+the written file didn't check out: {e}	den skrivna filen klarade inte kontrollen: {e}
+the written file didn't check out: {label} wasn't saved	den skrivna filen klarade inte kontrollen: {label} sparades inte
+this file crashed its decoder	filen kraschade sin avkodare
+this file's EXIF couldn't be processed	filens EXIF kunde inte bearbetas
+this image is too large to open	bilden är för stor för att öppnas
+this isn't a regular file	det här är ingen vanlig fil
+{format}, {count} frames	{format}, {count} bildrutor
+{name} is already installed	{name} är redan installerad
+{name} will be moved to the Trash.	{name} flyttas till papperskorgen.
+{task} done	{task} klar
+{task} failed: {e}	{task} misslyckades: {e}
+{task} on the GPU	{task} på GPU:n
+{task} preview of the visible area · drag to compare · Before | After	{task}: förhandsvisning av det synliga området · dra för att jämföra · Före | Efter
+Remove Object	Ta bort objekt
+LaMa — best quality, slower	LaMa — bäst kvalitet, långsammare
+MI-GAN — fast	MI-GAN — snabb
+ONNX export by Carve on Hugging Face; its origin isn't verified.	ONNX-export av Carve på Hugging Face; ursprunget är inte verifierat.
+the selection is empty	markeringen är tom
+No images in {name}	Inga bilder i {name}
+Can't open {name}: not a supported image	Kan inte öppna {name}: ingen bild som stöds
+Save Copy	Spara kopia
+Copy Path	Kopiera sökväg
+Show in File Manager	Visa i filhanteraren
+Rename…	Byt namn…
+First Image	Första bilden
+Last Image	Sista bilden
+Copied the path	Kopierade sökvägen
+Rename Image	Byt namn på bild
+Rename	Byt namn
+That isn't a valid file name	Det är inget giltigt filnamn
+{name} already exists	{name} finns redan
+File changed on disk	Filen ändrades på disken
+{name} changed on disk. Reloading it discards your edits.	{name} ändrades på disken. Om den läses in igen slängs dina ändringar.
+Reload	Läs in igen
+Keep Edits	Behåll ändringar
+Pixel grid	Pixelrutnät
+Shows the edges of the pixels when zoomed far in.	Visar pixlarnas kanter vid stor inzoomning.
+Click a pixel to copy its colour · Esc to stop	Klicka på en pixel för att kopiera dess färg · Esc för att sluta
+Copied {color}	Kopierade {color}
+Copy Color	Kopiera färg
+this file is damaged or cut short	filen är skadad eller avkortad
+HEIC and AVIF files need libheif, which isn't installed	HEIC- och AVIF-filer behöver libheif, som inte är installerat
+this file needs a libheif decoder plugin, which isn't installed	filen behöver ett avkodartillägg för libheif, som inte är installerat
+this file needs Microsoft's HEIF Image Extensions and HEVC or AV1 Video Extensions	filen behöver Microsofts HEIF Image Extensions och HEVC eller AV1 Video Extensions
+Pages	Sidor
+Next Page	Nästa sida
+Previous Page	Föregående sida
+{format}, {count} pages	{format}, {count} sidor
+page {n} of {count}	sida {n} av {count}
+Colour management	Färghantering
+Converts images with a colour profile to sRGB, so wide-gamut photos look right on an sRGB monitor. Turn it off for a wide-gamut monitor.	Konverterar bilder med färgprofil till sRGB, så att foton med brett färgomfång ser rätt ut på en sRGB-skärm. Stäng av det för en skärm med brett färgomfång.
+this RAW file has no embedded preview	RAW-filen har ingen inbäddad förhandsvisning
+{format} (embedded preview)	{format} (inbäddad förhandsvisning)
+EXIF isn't read from this kind of RAW file yet	EXIF läses inte från den här sortens RAW-fil än
+A RAW file's metadata is shown, not edited.	En RAW-fils metadata visas men redigeras inte.
+A WebP file's metadata is shown, not edited.	En WebP-fils metadata visas men redigeras inte.
+EXIF is shown for JPEG, PNG, WebP, TIFF and RAW files	EXIF visas för JPEG-, PNG-, WebP-, TIFF- och RAW-filer
+the copy must be a .{ext} file	kopian måste vara en .{ext}-fil
+the written file didn't check out: the image changed	den skrivna filen klarade inte kontrollen: bilden ändrades
+Copy File	Kopiera fil
+Copied the file	Kopierade filen
+Couldn't copy the file: {e}	Kunde inte kopiera filen: {e}
+Straighten…	Räta upp…
+Straighten	Räta upp
+Greyscale	Gråskala
+Invert Colors	Invertera färger
+Remove Red Eye	Ta bort röda ögon
+Pixelate Selection	Pixla markering
+Select the eyes first, then choose this.	Markera ögonen först och välj sedan detta.
+Hides faces. For text, a solid shape is safer: pixelation can sometimes be undone.	Döljer ansikten. För text är en heltäckande form säkrare: pixling kan ibland göras ogjord.
+Red eye removed	Röda ögon borttagna
+Pixelated	Pixlad
+Turn until the lines run straight · Enter to apply · Esc to cancel	Vrid tills linjerna är raka · Enter för att tillämpa · Esc för att avbryta
+Recognize Text	Känn igen text
+PP-OCRv5 Latin — European languages	PP-OCRv5 Latin — europeiska språk
+PP-OCRv5 — Chinese, Japanese and English	PP-OCRv5 — kinesiska, japanska och engelska
+Converted to ONNX by Satoru Nakamura (University of Tokyo) from PaddlePaddle's published models.	Konverterad till ONNX av Satoru Nakamura (Tokyos universitet) från PaddlePaddles publicerade modeller.
+the model's output doesn't match its character list	modellens utdata matchar inte dess teckenlista
+Read QR Code	Läs QR-kod
+No QR code found	Ingen QR-kod hittades
+No text found	Ingen text hittades
+QR Code	QR-kod
+Text in Image	Text i bilden
+Couldn't read the text: {e}	Kunde inte läsa texten: {e}
+Reading QR codes…	Läser QR-koder…
+Recognizing text…	Känner igen text…
+Reads the selection, or the whole image. Straighten tilted text first, and select small text in a large image so it's read at full size.	Läser markeringen eller hela bilden. Räta upp lutande text först och markera liten text i en stor bild så att den läses i full storlek.
+Reads the selection, or the whole image. Shows what the code says; links are never opened.	Läser markeringen eller hela bilden. Visar vad koden säger; länkar öppnas aldrig.
+Keyboard Shortcuts	Kortkommandon
+Press keys… (Esc to cancel)	Tryck på tangenter… (Esc för att avbryta)
+Change	Ändra
+Remove	Ta bort
+Reset All Shortcuts	Återställ alla kortkommandon
+{keys} is already used by {action}	{keys} används redan av {action}
+Copy, Cut, Paste, Enter, Esc and Delete	Kopiera, Klipp ut, Klistra in, Enter, Esc och Delete
+Change Keyboard Shortcuts…	Ändra kortkommandon…
+Theme	Tema
+Follow system	Följ systemet
+Dark	Mörkt
+Light	Ljust
+High contrast	Hög kontrast
+bigger than 64 KiB	större än 64 KiB
+invalid value	ogiltigt värde
+line	rad
+Your own themes go in the themes folder next to the AI models. Choosing a theme again reloads its file.	Egna teman läggs i temamappen bredvid AI-modellerna. Att välja ett tema igen läser in dess fil på nytt.
+Couldn't load the theme, so the base theme is used: {e}	Kunde inte läsa in temat, så bastemat används: {e}
+Open themes folder	Öppna temamappen
+Group Duplicates in Folder…	Gruppera dubbletter i mappen…
+Group Duplicates in Folder	Gruppera dubbletter i mappen
+Compares the images in this folder (not its subfolders) and moves each group of look-alikes into a folder of its own. Nothing is deleted, and Ctrl+Z moves them back. Rotated copies and heavy crops aren't found.	Jämför bilderna i den här mappen (inte undermapparna) och flyttar varje grupp av liknande bilder till en egen mapp. Inget tas bort, och Ctrl+Z flyttar tillbaka dem. Roterade kopior och kraftiga beskärningar hittas inte.
+Comparing images: {done} of {total}	Jämför bilder: {done} av {total}
+How different each image is from its closest look-alike:	Hur mycket varje bild skiljer sig från den mest lika:
+Largest difference	Största skillnad
+{meaning} · suggested: {n}	{meaning} · förslag: {n}
+Identical pixels only	Bara identiska pixlar
+Resized or recompressed copies	Ändrade storlekar eller omkomprimerade kopior
+Small edits, crops and bursts	Små ändringar, beskärningar och bildserier
+Merely similar scenes too	Även bara liknande motiv
+Groups: {groups} · Images to move: {moving} · Staying: {staying}	Grupper: {groups} · Bilder att flytta: {moving} · Stannar: {staying}
+Not compared: {n}	Inte jämförda: {n}
+Not compared	Inte jämförd
+{name} · difference: {d}	{name} · skillnad: {d}
+Move	Flytta
+Images moved: {n} · Folders: {f}	Flyttade bilder: {n} · Mappar: {f}
+Stopped: {e}	Stoppad: {e}
+Images moved back: {n}	Tillbakaflyttade bilder: {n}
+{name}: changed since it was compared	{name}: ändrad sedan jämförelsen
+{name}: already in the folder	{name}: finns redan i mappen
+{name}: its old name is taken	{name}: dess gamla namn är upptaget
+the file is gone	filen finns inte längre
+About {s} s left	Cirka {s} s kvar
+About {m} min left	Cirka {m} min kvar
+Smallest group	Minsta grupp
+Groups with fewer images stay where they are.	Grupper med färre bilder stannar där de är.
+Resize Optimally	Optimal storlek
+Shrinks the image to the size its detail needs, measured on its sharpest part. Never enlarges; Ctrl+Z undoes it.	Krymper bilden till den storlek dess detaljer behöver, mätt på dess skarpaste del. Förstorar aldrig; Ctrl+Z ångrar det.
+Already at its optimal size	Har redan optimal storlek
+Resized to {w} × {h} px	Ändrade storlek till {w} × {h} px
+The image changed while {task} ran; run it again	Bilden ändrades medan {task} kördes; kör igen
+lightview hit an internal error	lightview stötte på ett internt fel

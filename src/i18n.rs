@@ -23,12 +23,23 @@ pub enum Language {
     Korean,
     Ukrainian,
     Turkish,
+    Indonesian,
+    Vietnamese,
+    Czech,
+    Swedish,
+    Hungarian,
+    Romanian,
+    Greek,
+    Danish,
+    Finnish,
+    Norwegian,
 }
 
 impl Language {
-    pub const ALL: [Self; 15] = [
+    pub const ALL: [Self; 25] = [
         Self::English, Self::Spanish, Self::French, Self::German, Self::Italian, Self::Portuguese, Self::Polish, Self::Dutch, Self::Russian,
         Self::Japanese, Self::ChineseSimplified, Self::ChineseTraditional, Self::Korean, Self::Ukrainian, Self::Turkish,
+        Self::Indonesian, Self::Vietnamese, Self::Czech, Self::Swedish, Self::Hungarian, Self::Romanian, Self::Greek, Self::Danish, Self::Finnish, Self::Norwegian,
     ];
 
     /// In its own language, so it can be found whatever the current one is.
@@ -49,6 +60,16 @@ impl Language {
             Self::Korean => "한국어",
             Self::Ukrainian => "Українська",
             Self::Turkish => "Türkçe",
+            Self::Indonesian => "Bahasa Indonesia",
+            Self::Vietnamese => "Tiếng Việt",
+            Self::Czech => "Čeština",
+            Self::Swedish => "Svenska",
+            Self::Hungarian => "Magyar",
+            Self::Romanian => "Română",
+            Self::Greek => "Ελληνικά",
+            Self::Danish => "Dansk",
+            Self::Finnish => "Suomi",
+            Self::Norwegian => "Norsk bokmål",
         }
     }
 
@@ -69,6 +90,16 @@ impl Language {
             Self::Korean => include_str!("../locales/ko.tsv"),
             Self::Ukrainian => include_str!("../locales/uk.tsv"),
             Self::Turkish => include_str!("../locales/tr.tsv"),
+            Self::Indonesian => include_str!("../locales/id.tsv"),
+            Self::Vietnamese => include_str!("../locales/vi.tsv"),
+            Self::Czech => include_str!("../locales/cs.tsv"),
+            Self::Swedish => include_str!("../locales/sv.tsv"),
+            Self::Hungarian => include_str!("../locales/hu.tsv"),
+            Self::Romanian => include_str!("../locales/ro.tsv"),
+            Self::Greek => include_str!("../locales/el.tsv"),
+            Self::Danish => include_str!("../locales/da.tsv"),
+            Self::Finnish => include_str!("../locales/fi.tsv"),
+            Self::Norwegian => include_str!("../locales/nb.tsv"),
         }
     }
 
@@ -88,6 +119,17 @@ impl Language {
             Some("ko") => Self::Korean,
             Some("uk") => Self::Ukrainian,
             Some("tr") => Self::Turkish,
+            Some("id" | "in") => Self::Indonesian,
+            Some("vi") => Self::Vietnamese,
+            Some("cs") => Self::Czech,
+            Some("sv") => Self::Swedish,
+            Some("hu") => Self::Hungarian,
+            Some("ro") => Self::Romanian,
+            Some("el") => Self::Greek,
+            Some("da") => Self::Danish,
+            Some("fi") => Self::Finnish,
+            // Nynorsk users read Bokmål too.
+            Some("nb" | "no" | "nn") => Self::Norwegian,
             _ => Self::English,
         }
     }
@@ -111,7 +153,7 @@ pub fn system_language() -> Language {
 }
 
 static CURRENT: AtomicU8 = AtomicU8::new(0);
-static TABLES: [OnceLock<HashMap<String, String>>; 15] = [const { OnceLock::new() }; 15];
+static TABLES: [OnceLock<HashMap<String, String>>; 25] = [const { OnceLock::new() }; 25];
 
 pub fn set(language: Language) {
     CURRENT.store(language as u8, Ordering::Relaxed);
@@ -170,9 +212,11 @@ mod tests {
     use super::*;
     use std::collections::BTreeSet;
 
-    const TRANSLATED: [Language; 14] = [
+    const TRANSLATED: [Language; 24] = [
         Language::Spanish, Language::French, Language::German, Language::Italian, Language::Portuguese, Language::Polish, Language::Dutch, Language::Russian,
         Language::Japanese, Language::ChineseSimplified, Language::ChineseTraditional, Language::Korean, Language::Ukrainian, Language::Turkish,
+        Language::Indonesian, Language::Vietnamese, Language::Czech, Language::Swedish, Language::Hungarian, Language::Romanian, Language::Greek,
+        Language::Danish, Language::Finnish, Language::Norwegian,
     ];
 
     /// Every literal passed to `tr`/`trf` in the sources, as written there.
@@ -287,6 +331,11 @@ mod tests {
         assert_eq!(Language::from_locale("ko_KR.UTF-8"), Language::Korean);
         assert_eq!(Language::from_locale("uk_UA.UTF-8"), Language::Ukrainian);
         assert_eq!(Language::from_locale("tr_TR.UTF-8"), Language::Turkish);
+        assert_eq!(Language::from_locale("in_ID"), Language::Indonesian);
+        assert_eq!(Language::from_locale("vi_VN.UTF-8"), Language::Vietnamese);
+        assert_eq!(Language::from_locale("el_GR"), Language::Greek);
+        assert_eq!(Language::from_locale("nn_NO.UTF-8"), Language::Norwegian);
+        assert_eq!(Language::from_locale("sv_FI"), Language::Swedish);
         assert_eq!(Language::from_locale("ar_EG"), Language::English);
         assert_eq!(Language::from_locale("C"), Language::English);
     }

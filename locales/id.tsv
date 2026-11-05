@@ -1,0 +1,426 @@
+AI Models	Model AI
+AI Models…	Model AI…
+AI runtime (ONNX Runtime)	Runtime AI (ONNX Runtime)
+Accept and Continue	Terima dan Lanjutkan
+Accept and Download	Terima dan Unduh
+Accessibility	Aksesibilitas
+Actual Size	Ukuran Asli
+Add model file…	Tambah berkas model…
+Added {name}	Ditambahkan: {name}
+Adjust Color	Sesuaikan Warna
+Adjust Color…	Sesuaikan Warna…
+Adjust Curves	Sesuaikan Kurva
+Adjust Curves…	Sesuaikan Kurva…
+All channels together: overall brightness	Semua kanal sekaligus: kecerahan keseluruhan
+Animation	Animasi
+Applies the next time lightview starts	Berlaku saat lightview dijalankan berikutnya
+Apply sigmoid (the model outputs logits)	Terapkan sigmoid (model mengeluarkan logit)
+Apply to Selection	Terapkan ke Seleksi
+Apply to Whole Image{size} (about {estimate})	Terapkan ke Seluruh Gambar{size} (sekitar {estimate})
+Arrow	Panah
+Artist	Seniman
+Auto Levels	Level Otomatis
+Blur Background	Buramkan Latar Belakang
+Blur Background…	Buramkan Latar Belakang…
+BSRGAN 4× — upscales and sharpens, may invent detail	BSRGAN 4× — memperbesar dan mempertajam, bisa mengarang detail
+Background colour	Warna latar belakang
+BiRefNet lite — best quality, slow	BiRefNet lite — kualitas terbaik, lambat
+Bicubic	Bikubik
+Bilinear	Bilinear
+Blue: how much blue each pixel has	Biru: seberapa banyak biru pada tiap piksel
+Camera	Kamera
+Camera make	Merek kamera
+Camera model	Model kamera
+Can't open this image:\n{e}	Tidak dapat membuka gambar ini:\n{e}
+Cancel	Batal
+Cancelled	Dibatalkan
+Check for updates	Periksa pembaruan
+Close	Tutup
+Click to add a point, drag to move it, right-click to remove it	Klik untuk menambah titik, seret untuk memindahkannya, klik kanan untuk menghapusnya
+Color space	Ruang warna
+Colour	Warna
+Colour profile	Profil warna
+Continue	Lanjutkan
+Contrast	Kontras
+Converted to ONNX by Heliosoph LLC from the authors' published weights.	Dikonversi ke ONNX oleh Heliosoph LLC dari bobot yang diterbitkan para penulisnya.
+Copied {w} × {h} px	Disalin {w} × {h} px
+Copy	Salin
+Copyright	Hak cipta
+Couldn't add the model: {e}	Tidak dapat menambahkan model: {e}
+Couldn't delete the image: {e}	Tidak dapat menghapus gambar: {e}
+Couldn't download {file}: {e}	Tidak dapat mengunduh {file}: {e}
+Couldn't install the AI runtime: {e}	Tidak dapat memasang runtime AI: {e}
+Couldn't process the image: {e}	Tidak dapat memproses gambar: {e}
+Couldn't read {file}: {e}	Tidak dapat membaca {file}: {e}
+Couldn't restore the image: {e}	Tidak dapat memulihkan gambar: {e}
+Couldn't save {name}: {e}	Tidak dapat menyimpan {name}: {e}
+Couldn't select the object: {e}	Tidak dapat memilih objek: {e}
+Crop	Potong
+Cut	Potong Keluar
+DarkIR brightens dark and night photos and removes their noise and blur. On a well-lit photo it overexposes.	DarkIR mencerahkan foto gelap dan malam serta menghilangkan derau dan buramnya. Pada foto yang terang hasilnya menjadi terlalu terang.
+DarkIR — dark and night photos, same size	DarkIR — foto gelap dan malam, ukuran sama
+Date modified	Tanggal diubah
+Date taken	Tanggal diambil
+Default window size	Ukuran jendela bawaan
+Delete image?	Hapus gambar?
+Delete Image…	Hapus Gambar…
+Delete Selection	Hapus Seleksi
+Denoise	Kurangi Derau
+Denoise and Enhance run about 10× faster on a GTX 1050	Kurangi Derau dan Tingkatkan berjalan sekitar 10× lebih cepat pada GTX 1050
+Describe the image for people who can't see it	Jelaskan gambar untuk orang yang tidak dapat melihatnya
+Description	Deskripsi
+Deselect	Batalkan Seleksi
+Detect size	Deteksi ukuran
+Dimensions	Dimensi
+Discard	Buang
+Discard edits?	Buang suntingan?
+Distance: {d} px · ΔX: {dx} px · ΔY: {dy} px	Jarak: {d} px · ΔX: {dx} px · ΔY: {dy} px
+Done	Selesai
+Download	Unduh
+Download AI Runtime…	Unduh Runtime AI…
+Download GPU Support	Unduh Dukungan GPU
+Downloaded from Microsoft (ONNX Runtime) and NVIDIA (CUDA libraries, via their official PyPI packages).	Diunduh dari Microsoft (ONNX Runtime) dan NVIDIA (pustaka CUDA, melalui paket PyPI resmi mereka).
+Downloaded from Microsoft's official PyPI package (onnxruntime-ep-webgpu).	Diunduh dari paket PyPI resmi Microsoft (onnxruntime-ep-webgpu).
+Downloaded {file}	Diunduh: {file}
+Downloading GPU support ({mb} MB)…	Mengunduh dukungan GPU ({mb} MB)…
+Downloading the AI runtime…	Mengunduh runtime AI…
+Downloading…	Mengunduh…
+Drag a box around one object; its outline becomes the selection. Holes inside it stay selected.	Seret kotak di sekitar satu objek; garis luarnya menjadi seleksi. Lubang di dalamnya tetap terpilih.
+Drag to measure in image pixels · Esc to stop	Seret untuk mengukur dalam piksel gambar · Esc untuk berhenti
+Drag to select · Enter to crop · Esc to cancel	Seret untuk memilih · Enter untuk memotong · Esc untuk membatalkan
+Drag the corners onto a rectangle · Enter to apply · Esc to cancel	Seret sudut-sudut ke sebuah persegi panjang · Enter untuk menerapkan · Esc untuk membatalkan
+Drawings, text and pasted images will be merged into the image and can't be edited afterwards. Ctrl+Z undoes it.	Gambar, teks, dan gambar tempelan akan digabungkan ke dalam gambar dan tidak bisa disunting lagi. Ctrl+Z membatalkannya.
+Edit	Edit
+Edit the image description	Sunting deskripsi gambar
+Ellipse	Elips
+Elliptical Selection	Seleksi Elips
+Embedded (unnamed)	Tertanam (tanpa nama)
+Enhance Image	Tingkatkan Gambar
+Enhance Image uses generative AI. To make the image look better it may invent or alter fine details, such as textures, text or faces, that weren't in the original.	Tingkatkan Gambar menggunakan AI generatif. Agar gambar terlihat lebih baik, ia dapat mengarang atau mengubah detail halus, seperti tekstur, teks, atau wajah, yang tidak ada di aslinya.
+Enter Full Screen	Masuk Layar Penuh
+Exposure	Eksposur
+File	Berkas
+File name	Nama berkas
+File size	Ukuran berkas
+Fill	Isi
+Fills the background with the background colour from Settings.	Mengisi latar belakang dengan warna latar belakang dari Pengaturan.
+Fit to Window	Sesuaikan dengan Jendela
+Flip Horizontally	Balik Horizontal
+Flip Vertically	Balik Vertikal
+Folder	Folder
+Font size	Ukuran huruf
+For a faithful clean-up, use Denoise instead.	Untuk pembersihan yang setia pada aslinya, gunakan Kurangi Derau.
+Format	Format
+GPU (AMD, Intel and others, experimental)	GPU (AMD, Intel, dan lainnya, eksperimental)
+GPU (NVIDIA)	GPU (NVIDIA)
+GPU image scaling	Penskalaan gambar dengan GPU
+GPU support	Dukungan GPU
+GPU support installed: restart lightview to use it	Dukungan GPU terpasang: mulai ulang lightview untuk menggunakannya
+General	Umum
+Green: how much green each pixel has	Hijau: seberapa banyak hijau pada tiap piksel
+Height	Tinggi
+Hide Drawing Toolbar	Sembunyikan Bilah Alat Gambar
+Hide Image Information	Sembunyikan Informasi Gambar
+Highlight	Stabilo
+Hue: the color itself, such as red or blue	Rona: warnanya sendiri, misalnya merah atau biru
+IS-Net anime — illustrations	IS-Net anime — ilustrasi
+IS-Net — general, clean edges	IS-Net — umum, tepi bersih
+Image	Gambar
+Image description	Deskripsi gambar
+Images	Gambar
+Input size	Ukuran masukan
+Installed the AI runtime	Runtime AI terpasang
+Interpolation	Interpolasi
+It also makes the image {k}× bigger ({pixels}× the pixels), which takes a while for a big photo.	Gambar juga menjadi {k}× lebih besar ({pixels}× pikselnya), yang memakan waktu untuk foto besar.
+It's no longer in the Trash	Gambar ini sudah tidak ada di Tempat Sampah
+Keep aspect ratio	Pertahankan rasio aspek
+Language	Bahasa
+Lasso	Laso
+Lens	Lensa
+Licence ({step} of {count}) — {title}	Lisensi ({step} dari {count}) — {title}
+Licence — {title}	Lisensi — {title}
+Lightness: from black, through color, to white	Kecerahan: dari hitam, melalui warna, ke putih
+Line	Garis
+Local AI	AI Lokal
+Location	Lokasi
+Magnifier	Kaca pembesar
+Make lightview my default image viewer	Jadikan lightview penampil gambar bawaan saya
+Make lightview the default image viewer	Jadikan lightview penampil gambar bawaan
+Mean (R, G, B)	Rata-rata (R, G, B)
+Measure	Ukur
+Merge drawings into the image?	Gabungkan gambar ke dalam citra?
+MobileSAM — finds the object in a box	MobileSAM — menemukan objek di dalam kotak
+Model	Model
+Name	Nama
+Nearest	Terdekat
+Next Frame	Bingkai Berikutnya
+Next Image	Gambar Berikutnya
+no graphics card with Vulkan or Direct3D 12 was found	tidak ditemukan kartu grafis dengan Vulkan atau Direct3D 12
+No location in this file	Tidak ada lokasi di berkas ini
+No model installed yet.	Belum ada model terpasang.
+No object found in the box	Tidak ada objek ditemukan di dalam kotak
+No recent files	Tidak ada berkas terbaru
+None (sRGB assumed)	Tidak ada (diasumsikan sRGB)
+Nothing to paste: {e}	Tidak ada yang bisa ditempel: {e}
+OK	OK
+ONNX export (half precision) by FuryTMP on Hugging Face; its origin isn't verified.	Ekspor ONNX (presisi setengah) oleh FuryTMP di Hugging Face; asal-usulnya tidak terverifikasi.
+ONNX export by Acly on Hugging Face, from the authors' weights; downloaded from Heliosoph LLC's copy.	Ekspor ONNX oleh Acly di Hugging Face, dari bobot para penulis; diunduh dari salinan Heliosoph LLC.
+ONNX model	Model ONNX
+Only add models from sources you trust: they run with your permissions.	Tambahkan model hanya dari sumber yang Anda percayai: model berjalan dengan izin Anda.
+Open Recent	Buka Terbaru
+Open in Google Maps	Buka di Google Maps
+Open models folder	Buka folder model
+Open project page	Buka halaman proyek
+Open…	Buka…
+Other tags ({count})	Tag lain ({count})
+Output	Keluaran
+Paste	Tempel
+Pause Animation	Jeda Animasi
+Percentage	Persentase
+Correct Perspective	Koreksi Perspektif
+Play Animation	Putar Animasi
+Please read and accept the licence before downloading.	Harap baca dan terima lisensi sebelum mengunduh.
+Preprocessing: {file}	Prapemrosesan: {file}
+Previous Frame	Bingkai Sebelumnya
+Previous Image	Gambar Sebelumnya
+Read the input size from the model	Baca ukuran masukan dari model
+Real-ESRGAN 4× half precision	Real-ESRGAN 4× presisi setengah
+Real-ESRGAN 4× — upscales, smooth, may invent detail	Real-ESRGAN 4× — memperbesar, halus, bisa mengarang detail
+Real-ESRGAN and DarkIR can't be downloaded here. Convert them yourself with lightview-models, then copy the .onnx files into the models folder:	Real-ESRGAN dan DarkIR tidak dapat diunduh di sini. Konversikan sendiri dengan lightview-models, lalu salin berkas .onnx ke folder model:
+Real-ESRGAN general 4× half precision	Real-ESRGAN general 4× presisi setengah
+Real-ESRGAN general 4× — fast, softer	Real-ESRGAN general 4× — cepat, lebih lembut
+Rectangle	Persegi Panjang
+Rectangular Selection	Seleksi Persegi Panjang
+Red: how much red each pixel has	Merah: seberapa banyak merah pada tiap piksel
+Redo	Ulangi
+Remove Background	Hapus Latar Belakang
+Remove Background and Crop	Hapus Latar Belakang dan Potong
+Remove location from the copy	Hapus lokasi dari salinan
+Replace Background	Ganti Latar Belakang
+Reset	Atur Ulang
+Reset Color Adjustments	Atur Ulang Penyesuaian Warna
+Reset to default	Kembalikan ke bawaan
+Resize	Ubah Ukuran
+Resize…	Ubah Ukuran…
+Resolution	Resolusi
+Restart lightview to start using the GPU.	Mulai ulang lightview untuk mulai menggunakan GPU.
+Revert	Kembalikan
+Rotate Left	Putar ke Kiri
+Rotate Right	Putar ke Kanan
+Rounded Rectangle	Persegi Panjang Membulat
+Run the AI tools on any graphics card with Vulkan or Direct3D 12 ({mb} MB download, WebGPU). A weak built-in graphics chip can be slower than the CPU.	Jalankan alat AI pada kartu grafis apa pun dengan Vulkan atau Direct3D 12 (unduhan {mb} MB, WebGPU). Cip grafis bawaan yang lemah bisa lebih lambat daripada CPU.
+Run the AI tools on the graphics card ({mb} MB download, NVIDIA's CUDA libraries).	Jalankan alat AI pada kartu grafis (unduhan {mb} MB, pustaka CUDA dari NVIDIA).
+Running {file}…	Menjalankan {file}…
+SCUNet σ15 — light noise	SCUNet σ15 — derau ringan
+SCUNet σ25 — moderate noise	SCUNet σ25 — derau sedang
+SCUNet σ50 — heavy noise	SCUNet σ50 — derau berat
+SCUNet — noise and JPEG artifacts (recommended)	SCUNet — derau dan artefak JPEG (disarankan)
+Saturation	Saturasi
+Saturation: from grey to vivid color	Saturasi: dari abu-abu ke warna cerah
+Save As…	Simpan Sebagai…
+Save copy…	Simpan salinan…
+Saved in JPEG files	Disimpan dalam berkas JPEG
+Saved {name}	Disimpan: {name}
+Saves a copy of the file with this metadata (without other edits). Camera maker notes are removed.	Menyimpan salinan berkas dengan metadata ini (tanpa suntingan lain). Catatan pembuat kamera dihapus.
+Select	Pilih
+Select All	Pilih Semua
+Select Object	Pilih Objek
+Select Object (AI)	Pilih Objek (AI)
+Selecting the object…	Memilih objek…
+Settings	Pengaturan
+Settings…	Pengaturan…
+Shapes	Bentuk
+Show Drawing Toolbar	Tampilkan Bilah Alat Gambar
+Show Image Information	Tampilkan Informasi Gambar
+Silueta — small and fast	Silueta — kecil dan cepat
+Size read from the model when it runs; the usual normalisation.	Ukuran dibaca dari model saat dijalankan; normalisasi biasa.
+Sketch	Sketsa
+Smoother zooming and panning. Uses more GPU memory and makes switching images a little slower.	Zoom dan geser yang lebih halus. Memakai lebih banyak memori GPU dan membuat perpindahan gambar sedikit lebih lambat.
+Sort order	Urutan
+Std (R, G, B)	Simpangan baku (R, G, B)
+Strength	Kekuatan
+Stroke	Garis tepi
+SwinIR σ25 — moderate noise, very slow	SwinIR σ25 — derau sedang, sangat lambat
+Text	Teks
+Text colour	Warna teks
+The AI runtime isn't installed yet: Local AI > Download AI Runtime…	Runtime AI belum terpasang: AI Lokal > Unduh Runtime AI…
+The GPU couldn't be used, so the CPU is: {e}	GPU tidak dapat digunakan, jadi CPU yang dipakai: {e}
+The corners must form a shape with no crossing sides	Sudut-sudut harus membentuk bangun tanpa sisi yang bersilangan
+the model's mask decoder is missing	dekoder mask model tidak ada
+Thickness	Ketebalan
+Tint	Rona warna
+Tools	Alat
+Undo	Urungkan
+Use YYYY:MM:DD HH:MM:SS	Gunakan YYYY:MM:DD HH:MM:SS
+Use the GPU	Gunakan GPU
+Used by Remove Background and Remove Background and Crop.	Dipakai oleh Hapus Latar Belakang dan Hapus Latar Belakang dan Potong.
+Uses Bilinear while GPU scaling is on	Memakai Bilinear selama penskalaan GPU aktif
+U²-Net people — portraits	U²-Net orang — potret
+U²-Net small — fastest	U²-Net kecil — tercepat
+U²-Net — general	U²-Net — umum
+Value: from black to full color	Nilai: dari hitam ke warna penuh
+View	Tampilan
+Welcome to lightview	Selamat datang di lightview
+Width	Lebar
+Your edits to {name} haven't been saved.	Suntingan Anda pada {name} belum disimpan.
+Zoom	Zoom
+Zoom In	Perbesar
+Zoom Out	Perkecil
+a GPU library was missing from the download	sebuah pustaka GPU tidak ada dalam unduhan
+about {time} left	sekitar {time} lagi
+can't save as .{ext}: use .jpg, .png, .webp, .bmp, .tif or .gif	tidak dapat menyimpan sebagai .{ext}: gunakan .jpg, .png, .webp, .bmp, .tif, atau .gif
+choose a new name: the original is never modified	pilih nama baru: berkas asli tidak pernah diubah
+compressed SVG files aren't supported	berkas SVG terkompresi tidak didukung
+couldn't read this file's EXIF safely	tidak dapat membaca EXIF berkas ini dengan aman
+edited: {w} × {h}	disunting: {w} × {h}
+lightview is now the default image viewer	lightview sekarang menjadi penampil gambar bawaan
+no data folder	tidak ada folder data
+no frames	tidak ada bingkai
+no subject found	tidak ditemukan subjek
+pick an .onnx file	pilih berkas .onnx
+the download didn't match its checksum	unduhan tidak cocok dengan checksum-nya
+the model has no image input	model tidak memiliki masukan gambar
+the model's output changed size between tiles	ukuran keluaran model berubah antar-ubin
+the model's output doesn't match its input size	keluaran model tidak sesuai dengan ukuran masukannya
+the model's output isn't a whole multiple of its input	keluaran model bukan kelipatan bulat dari masukannya
+the written file didn't check out: the location wasn't removed	berkas yang ditulis tidak lolos pemeriksaan: lokasi tidak dihapus
+the written file didn't check out: {e}	berkas yang ditulis tidak lolos pemeriksaan: {e}
+the written file didn't check out: {label} wasn't saved	berkas yang ditulis tidak lolos pemeriksaan: {label} tidak disimpan
+this file crashed its decoder	berkas ini membuat dekodernya mogok
+this file's EXIF couldn't be processed	EXIF berkas ini tidak dapat diproses
+this image is too large to open	gambar ini terlalu besar untuk dibuka
+this isn't a regular file	ini bukan berkas biasa
+{format}, {count} frames	{format}, {count} bingkai
+{name} is already installed	{name} sudah terpasang
+{name} will be moved to the Trash.	{name} akan dipindahkan ke Tempat Sampah.
+{task} done	{task} selesai
+{task} failed: {e}	{task} gagal: {e}
+{task} on the GPU	{task} di GPU
+{task} preview of the visible area · drag to compare · Before | After	Pratinjau {task} untuk area yang terlihat · seret untuk membandingkan · Sebelum | Sesudah
+Remove Object	Hapus Objek
+LaMa — best quality, slower	LaMa — kualitas terbaik, lebih lambat
+MI-GAN — fast	MI-GAN — cepat
+ONNX export by Carve on Hugging Face; its origin isn't verified.	Ekspor ONNX oleh Carve di Hugging Face; asal-usulnya tidak terverifikasi.
+the selection is empty	seleksinya kosong
+No images in {name}	Tidak ada gambar di {name}
+Can't open {name}: not a supported image	Tidak dapat membuka {name}: bukan gambar yang didukung
+Save Copy	Simpan Salinan
+Copy Path	Salin Jalur
+Show in File Manager	Tampilkan di Pengelola Berkas
+Rename…	Ganti Nama…
+First Image	Gambar Pertama
+Last Image	Gambar Terakhir
+Copied the path	Jalur disalin
+Rename Image	Ganti Nama Gambar
+Rename	Ganti Nama
+That isn't a valid file name	Itu bukan nama berkas yang valid
+{name} already exists	{name} sudah ada
+File changed on disk	Berkas berubah di disk
+{name} changed on disk. Reloading it discards your edits.	{name} berubah di disk. Memuat ulang akan membuang suntingan Anda.
+Reload	Muat Ulang
+Keep Edits	Pertahankan Suntingan
+Pixel grid	Kisi piksel
+Shows the edges of the pixels when zoomed far in.	Menampilkan tepi piksel saat diperbesar jauh.
+Click a pixel to copy its colour · Esc to stop	Klik piksel untuk menyalin warnanya · Esc untuk berhenti
+Copied {color}	Disalin: {color}
+Copy Color	Salin Warna
+this file is damaged or cut short	berkas ini rusak atau terpotong
+HEIC and AVIF files need libheif, which isn't installed	Berkas HEIC dan AVIF memerlukan libheif, yang belum terpasang
+this file needs a libheif decoder plugin, which isn't installed	berkas ini memerlukan plugin dekoder libheif, yang belum terpasang
+this file needs Microsoft's HEIF Image Extensions and HEVC or AV1 Video Extensions	berkas ini memerlukan HEIF Image Extensions dari Microsoft serta HEVC atau AV1 Video Extensions
+Pages	Halaman
+Next Page	Halaman Berikutnya
+Previous Page	Halaman Sebelumnya
+{format}, {count} pages	{format}, {count} halaman
+page {n} of {count}	halaman {n} dari {count}
+Colour management	Manajemen warna
+Converts images with a colour profile to sRGB, so wide-gamut photos look right on an sRGB monitor. Turn it off for a wide-gamut monitor.	Mengonversi gambar yang memiliki profil warna ke sRGB, agar foto gamut lebar tampak benar di monitor sRGB. Matikan untuk monitor gamut lebar.
+this RAW file has no embedded preview	berkas RAW ini tidak memiliki pratinjau tertanam
+{format} (embedded preview)	{format} (pratinjau tertanam)
+EXIF isn't read from this kind of RAW file yet	EXIF belum dibaca dari jenis berkas RAW ini
+A RAW file's metadata is shown, not edited.	Metadata berkas RAW hanya ditampilkan, tidak disunting.
+A WebP file's metadata is shown, not edited.	Metadata berkas WebP hanya ditampilkan, tidak disunting.
+EXIF is shown for JPEG, PNG, WebP, TIFF and RAW files	EXIF ditampilkan untuk berkas JPEG, PNG, WebP, TIFF, dan RAW
+the copy must be a .{ext} file	salinannya harus berupa berkas .{ext}
+the written file didn't check out: the image changed	berkas yang ditulis tidak lolos pemeriksaan: gambarnya berubah
+Copy File	Salin Berkas
+Copied the file	Berkas disalin
+Couldn't copy the file: {e}	Tidak dapat menyalin berkas: {e}
+Straighten…	Luruskan…
+Straighten	Luruskan
+Greyscale	Skala Abu-abu
+Invert Colors	Balikkan Warna
+Remove Red Eye	Hapus Mata Merah
+Pixelate Selection	Pikselkan Seleksi
+Select the eyes first, then choose this.	Pilih mata terlebih dahulu, lalu pilih ini.
+Hides faces. For text, a solid shape is safer: pixelation can sometimes be undone.	Menyembunyikan wajah. Untuk teks, bentuk padat lebih aman: pikselasi terkadang bisa dibalikkan.
+Red eye removed	Mata merah dihapus
+Pixelated	Dipikselkan
+Turn until the lines run straight · Enter to apply · Esc to cancel	Putar sampai garis-garisnya lurus · Enter untuk menerapkan · Esc untuk membatalkan
+Recognize Text	Kenali Teks
+PP-OCRv5 Latin — European languages	PP-OCRv5 Latin — bahasa-bahasa Eropa
+PP-OCRv5 — Chinese, Japanese and English	PP-OCRv5 — Tionghoa, Jepang, dan Inggris
+Converted to ONNX by Satoru Nakamura (University of Tokyo) from PaddlePaddle's published models.	Dikonversi ke ONNX oleh Satoru Nakamura (Universitas Tokyo) dari model yang diterbitkan PaddlePaddle.
+the model's output doesn't match its character list	keluaran model tidak sesuai dengan daftar karakternya
+Read QR Code	Baca Kode QR
+No QR code found	Tidak ditemukan kode QR
+No text found	Tidak ditemukan teks
+QR Code	Kode QR
+Text in Image	Teks dalam Gambar
+Couldn't read the text: {e}	Tidak dapat membaca teks: {e}
+Reading QR codes…	Membaca kode QR…
+Recognizing text…	Mengenali teks…
+Reads the selection, or the whole image. Straighten tilted text first, and select small text in a large image so it's read at full size.	Membaca seleksi, atau seluruh gambar. Luruskan teks yang miring terlebih dahulu, dan pilih teks kecil di gambar besar agar dibaca dalam ukuran penuh.
+Reads the selection, or the whole image. Shows what the code says; links are never opened.	Membaca seleksi, atau seluruh gambar. Menampilkan isi kode; tautan tidak pernah dibuka.
+Keyboard Shortcuts	Pintasan Keyboard
+Press keys… (Esc to cancel)	Tekan tombol… (Esc untuk membatalkan)
+Change	Ubah
+Remove	Hapus
+Reset All Shortcuts	Atur Ulang Semua Pintasan
+{keys} is already used by {action}	{keys} sudah dipakai oleh {action}
+Copy, Cut, Paste, Enter, Esc and Delete	Salin, Potong Keluar, Tempel, Enter, Esc, dan Delete
+Change Keyboard Shortcuts…	Ubah Pintasan Keyboard…
+Theme	Tema
+Follow system	Ikuti sistem
+Dark	Gelap
+Light	Terang
+High contrast	Kontras tinggi
+bigger than 64 KiB	lebih dari 64 KiB
+invalid value	nilai tidak valid
+line	baris
+Your own themes go in the themes folder next to the AI models. Choosing a theme again reloads its file.	Tema Anda sendiri disimpan di folder tema di samping model AI. Memilih tema lagi akan memuat ulang berkasnya.
+Couldn't load the theme, so the base theme is used: {e}	Tidak dapat memuat tema, jadi tema dasar yang dipakai: {e}
+Open themes folder	Buka folder tema
+Group Duplicates in Folder…	Kelompokkan Duplikat di Folder…
+Group Duplicates in Folder	Kelompokkan Duplikat di Folder
+Compares the images in this folder (not its subfolders) and moves each group of look-alikes into a folder of its own. Nothing is deleted, and Ctrl+Z moves them back. Rotated copies and heavy crops aren't found.	Membandingkan gambar di folder ini (bukan subfoldernya) dan memindahkan tiap kelompok gambar yang mirip ke foldernya sendiri. Tidak ada yang dihapus, dan Ctrl+Z memindahkannya kembali. Salinan yang diputar dan potongan besar tidak ditemukan.
+Comparing images: {done} of {total}	Membandingkan gambar: {done} dari {total}
+How different each image is from its closest look-alike:	Seberapa berbeda tiap gambar dari gambar yang paling mirip dengannya:
+Largest difference	Perbedaan terbesar
+{meaning} · suggested: {n}	{meaning} · disarankan: {n}
+Identical pixels only	Hanya piksel identik
+Resized or recompressed copies	Salinan yang diubah ukurannya atau dikompresi ulang
+Small edits, crops and bursts	Suntingan kecil, potongan, dan foto beruntun
+Merely similar scenes too	Juga adegan yang sekadar mirip
+Groups: {groups} · Images to move: {moving} · Staying: {staying}	Kelompok: {groups} · Gambar yang dipindah: {moving} · Tetap: {staying}
+Not compared: {n}	Tidak dibandingkan: {n}
+Not compared	Tidak dibandingkan
+{name} · difference: {d}	{name} · perbedaan: {d}
+Move	Pindahkan
+Images moved: {n} · Folders: {f}	Gambar dipindahkan: {n} · Folder: {f}
+Stopped: {e}	Dihentikan: {e}
+Images moved back: {n}	Gambar dikembalikan: {n}
+{name}: changed since it was compared	{name}: berubah sejak dibandingkan
+{name}: already in the folder	{name}: sudah ada di folder
+{name}: its old name is taken	{name}: nama lamanya sudah dipakai
+the file is gone	berkasnya sudah tidak ada
+About {s} s left	Sekitar {s} dtk lagi
+About {m} min left	Sekitar {m} mnt lagi
+Smallest group	Kelompok terkecil
+Groups with fewer images stay where they are.	Kelompok dengan gambar yang lebih sedikit tetap di tempatnya.
+Resize Optimally	Ubah Ukuran Optimal
+Shrinks the image to the size its detail needs, measured on its sharpest part. Never enlarges; Ctrl+Z undoes it.	Mengecilkan gambar ke ukuran yang dibutuhkan detailnya, diukur pada bagian tertajamnya. Tidak pernah memperbesar; Ctrl+Z membatalkannya.
+Already at its optimal size	Sudah berada di ukuran optimal
+Resized to {w} × {h} px	Diubah ukurannya ke {w} × {h} px
+The image changed while {task} ran; run it again	Gambar berubah saat {task} berjalan; jalankan lagi
+lightview hit an internal error	lightview mengalami galat internal

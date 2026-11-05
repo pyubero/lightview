@@ -1,0 +1,426 @@
+AI Models	MI-modellek
+AI Models…	MI-modellek…
+AI runtime (ONNX Runtime)	MI-futtatókörnyezet (ONNX Runtime)
+Accept and Continue	Elfogadás és folytatás
+Accept and Download	Elfogadás és letöltés
+Accessibility	Akadálymentesség
+Actual Size	Tényleges méret
+Add model file…	Modellfájl hozzáadása…
+Added {name}	Hozzáadva: {name}
+Adjust Color	Színek beállítása
+Adjust Color…	Színek beállítása…
+Adjust Curves	Görbék beállítása
+Adjust Curves…	Görbék beállítása…
+All channels together: overall brightness	Minden csatorna együtt: teljes fényerő
+Animation	Animáció
+Applies the next time lightview starts	A lightview következő indításakor lép érvénybe
+Apply sigmoid (the model outputs logits)	Szigmoid alkalmazása (a modell logitokat ad ki)
+Apply to Selection	Alkalmazás a kijelölésre
+Apply to Whole Image{size} (about {estimate})	Alkalmazás a teljes képre{size} (kb. {estimate})
+Arrow	Nyíl
+Artist	Alkotó
+Auto Levels	Automatikus szintek
+Blur Background	Háttér elmosása
+Blur Background…	Háttér elmosása…
+BSRGAN 4× — upscales and sharpens, may invent detail	BSRGAN 4× — nagyít és élesít, részleteket találhat ki
+Background colour	Háttérszín
+BiRefNet lite — best quality, slow	BiRefNet lite — legjobb minőség, lassú
+Bicubic	Bikubikus
+Bilinear	Bilineáris
+Blue: how much blue each pixel has	Kék: mennyi kék van az egyes képpontokban
+Camera	Fényképezőgép
+Camera make	Gép gyártója
+Camera model	Gép típusa
+Can't open this image:\n{e}	Ez a kép nem nyitható meg:\n{e}
+Cancel	Mégse
+Cancelled	Megszakítva
+Check for updates	Frissítések keresése
+Close	Bezárás
+Click to add a point, drag to move it, right-click to remove it	Kattintással pontot ad hozzá, húzással mozgatja, jobb kattintással eltávolítja
+Color space	Színtér
+Colour	Szín
+Colour profile	Színprofil
+Continue	Folytatás
+Contrast	Kontraszt
+Converted to ONNX by Heliosoph LLC from the authors' published weights.	ONNX-re alakította a Heliosoph LLC a szerzők által közzétett súlyokból.
+Copied {w} × {h} px	Másolva: {w} × {h} px
+Copy	Másolás
+Copyright	Szerzői jog
+Couldn't add the model: {e}	Nem sikerült hozzáadni a modellt: {e}
+Couldn't delete the image: {e}	Nem sikerült törölni a képet: {e}
+Couldn't download {file}: {e}	Nem sikerült letölteni: {file}: {e}
+Couldn't install the AI runtime: {e}	Nem sikerült telepíteni az MI-futtatókörnyezetet: {e}
+Couldn't process the image: {e}	Nem sikerült feldolgozni a képet: {e}
+Couldn't read {file}: {e}	Nem sikerült beolvasni: {file}: {e}
+Couldn't restore the image: {e}	Nem sikerült visszaállítani a képet: {e}
+Couldn't save {name}: {e}	Nem sikerült menteni: {name}: {e}
+Couldn't select the object: {e}	Nem sikerült kijelölni az objektumot: {e}
+Crop	Körbevágás
+Cut	Kivágás
+DarkIR brightens dark and night photos and removes their noise and blur. On a well-lit photo it overexposes.	A DarkIR kivilágosítja a sötét és éjszakai fotókat, és eltávolítja róluk a zajt és az elmosódást. Jól megvilágított fotót túlexponál.
+DarkIR — dark and night photos, same size	DarkIR — sötét és éjszakai fotók, azonos méret
+Date modified	Módosítás dátuma
+Date taken	Készítés dátuma
+Default window size	Alapértelmezett ablakméret
+Delete image?	Törli a képet?
+Delete Image…	Kép törlése…
+Delete Selection	Kijelölés törlése
+Denoise	Zajcsökkentés
+Denoise and Enhance run about 10× faster on a GTX 1050	A Zajcsökkentés és a Javítás kb. 10× gyorsabban fut egy GTX 1050-en
+Describe the image for people who can't see it	Írja le a képet azoknak, akik nem látják
+Description	Leírás
+Deselect	Kijelölés megszüntetése
+Detect size	Méret felismerése
+Dimensions	Méretek
+Discard	Elvetés
+Discard edits?	Elveti a módosításokat?
+Distance: {d} px · ΔX: {dx} px · ΔY: {dy} px	Távolság: {d} px · ΔX: {dx} px · ΔY: {dy} px
+Done	Kész
+Download	Letöltés
+Download AI Runtime…	MI-futtatókörnyezet letöltése…
+Download GPU Support	GPU-támogatás letöltése
+Downloaded from Microsoft (ONNX Runtime) and NVIDIA (CUDA libraries, via their official PyPI packages).	Letöltve a Microsofttól (ONNX Runtime) és az NVIDIA-tól (CUDA-könyvtárak, a hivatalos PyPI-csomagjaikon keresztül).
+Downloaded from Microsoft's official PyPI package (onnxruntime-ep-webgpu).	Letöltve a Microsoft hivatalos PyPI-csomagjából (onnxruntime-ep-webgpu).
+Downloaded {file}	Letöltve: {file}
+Downloading GPU support ({mb} MB)…	GPU-támogatás letöltése ({mb} MB)…
+Downloading the AI runtime…	MI-futtatókörnyezet letöltése…
+Downloading…	Letöltés…
+Drag a box around one object; its outline becomes the selection. Holes inside it stay selected.	Húzzon keretet egy objektum köré; a körvonala lesz a kijelölés. A belsejében lévő lyukak kijelölve maradnak.
+Drag to measure in image pixels · Esc to stop	Húzással mér képpontokban · Esc a befejezéshez
+Drag to select · Enter to crop · Esc to cancel	Húzással kijelöl · Enter a körbevágáshoz · Esc a megszakításhoz
+Drag the corners onto a rectangle · Enter to apply · Esc to cancel	Húzza a sarkokat egy téglalapra · Enter az alkalmazáshoz · Esc a megszakításhoz
+Drawings, text and pasted images will be merged into the image and can't be edited afterwards. Ctrl+Z undoes it.	A rajzok, a szöveg és a beillesztett képek beolvadnak a képbe, és utána nem szerkeszthetők. A Ctrl+Z visszavonja.
+Edit	Szerkesztés
+Edit the image description	A kép leírásának szerkesztése
+Ellipse	Ellipszis
+Elliptical Selection	Ellipszis kijelölés
+Embedded (unnamed)	Beágyazott (névtelen)
+Enhance Image	Kép javítása
+Enhance Image uses generative AI. To make the image look better it may invent or alter fine details, such as textures, text or faces, that weren't in the original.	A Kép javítása generatív MI-t használ. Hogy a kép jobban nézzen ki, kitalálhat vagy megváltoztathat finom részleteket, például textúrákat, szöveget vagy arcokat, amelyek az eredetiben nem voltak.
+Enter Full Screen	Teljes képernyő
+Exposure	Expozíció
+File	Fájl
+File name	Fájlnév
+File size	Fájlméret
+Fill	Kitöltés
+Fills the background with the background colour from Settings.	A hátteret a Beállításokban megadott háttérszínnel tölti ki.
+Fit to Window	Ablakhoz igazítás
+Flip Horizontally	Vízszintes tükrözés
+Flip Vertically	Függőleges tükrözés
+Folder	Mappa
+Font size	Betűméret
+For a faithful clean-up, use Denoise instead.	Hű tisztításhoz inkább a Zajcsökkentést használja.
+Format	Formátum
+GPU (AMD, Intel and others, experimental)	GPU (AMD, Intel és mások, kísérleti)
+GPU (NVIDIA)	GPU (NVIDIA)
+GPU image scaling	Képméretezés GPU-val
+GPU support	GPU-támogatás
+GPU support installed: restart lightview to use it	GPU-támogatás telepítve: a használatához indítsa újra a lightview-t
+General	Általános
+Green: how much green each pixel has	Zöld: mennyi zöld van az egyes képpontokban
+Height	Magasság
+Hide Drawing Toolbar	Rajzeszköztár elrejtése
+Hide Image Information	Képinformációk elrejtése
+Highlight	Kiemelő
+Hue: the color itself, such as red or blue	Színárnyalat: maga a szín, például piros vagy kék
+IS-Net anime — illustrations	IS-Net anime — illusztrációk
+IS-Net — general, clean edges	IS-Net — általános, tiszta szélek
+Image	Kép
+Image description	Kép leírása
+Images	Képek
+Input size	Bemeneti méret
+Installed the AI runtime	MI-futtatókörnyezet telepítve
+Interpolation	Interpoláció
+It also makes the image {k}× bigger ({pixels}× the pixels), which takes a while for a big photo.	A képet ráadásul {k}× nagyobbra is növeli ({pixels}× annyi képpont), ami egy nagy fotónál eltart egy ideig.
+It's no longer in the Trash	Már nincs a Kukában
+Keep aspect ratio	Méretarány megtartása
+Language	Nyelv
+Lasso	Lasszó
+Lens	Objektív
+Licence ({step} of {count}) — {title}	Licenc ({step} / {count}) — {title}
+Licence — {title}	Licenc — {title}
+Lightness: from black, through color, to white	Világosság: a feketétől a színen át a fehérig
+Line	Vonal
+Local AI	Helyi MI
+Location	Hely
+Magnifier	Nagyító
+Make lightview my default image viewer	A lightview legyen az alapértelmezett képnézegetőm
+Make lightview the default image viewer	A lightview legyen az alapértelmezett képnézegető
+Mean (R, G, B)	Átlag (R, G, B)
+Measure	Mérés
+Merge drawings into the image?	Beolvasztja a rajzokat a képbe?
+MobileSAM — finds the object in a box	MobileSAM — megtalálja az objektumot a keretben
+Model	Modell
+Name	Név
+Nearest	Legközelebbi
+Next Frame	Következő képkocka
+Next Image	Következő kép
+no graphics card with Vulkan or Direct3D 12 was found	nem található Vulkant vagy Direct3D 12-t támogató videokártya
+No location in this file	Ebben a fájlban nincs helyadat
+No model installed yet.	Még nincs telepített modell.
+No object found in the box	Nem található objektum a keretben
+No recent files	Nincsenek legutóbbi fájlok
+None (sRGB assumed)	Nincs (sRGB feltételezve)
+Nothing to paste: {e}	Nincs mit beilleszteni: {e}
+OK	OK
+ONNX export (half precision) by FuryTMP on Hugging Face; its origin isn't verified.	ONNX-export (félpontosság) a FuryTMP-től a Hugging Face-en; eredete nem ellenőrzött.
+ONNX export by Acly on Hugging Face, from the authors' weights; downloaded from Heliosoph LLC's copy.	ONNX-export az Acly-tól a Hugging Face-en, a szerzők súlyaiból; a Heliosoph LLC másolatából letöltve.
+ONNX model	ONNX-modell
+Only add models from sources you trust: they run with your permissions.	Csak megbízható forrásból adjon hozzá modellt: az Ön jogosultságaival futnak.
+Open Recent	Legutóbbiak megnyitása
+Open in Google Maps	Megnyitás a Google Térképben
+Open models folder	Modellmappa megnyitása
+Open project page	Projektoldal megnyitása
+Open…	Megnyitás…
+Other tags ({count})	Egyéb címkék ({count})
+Output	Kimenet
+Paste	Beillesztés
+Pause Animation	Animáció szüneteltetése
+Percentage	Százalék
+Correct Perspective	Perspektíva javítása
+Play Animation	Animáció lejátszása
+Please read and accept the licence before downloading.	Letöltés előtt olvassa el és fogadja el a licencet.
+Preprocessing: {file}	Előfeldolgozás: {file}
+Previous Frame	Előző képkocka
+Previous Image	Előző kép
+Read the input size from the model	Bemeneti méret kiolvasása a modellből
+Real-ESRGAN 4× half precision	Real-ESRGAN 4× félpontosság
+Real-ESRGAN 4× — upscales, smooth, may invent detail	Real-ESRGAN 4× — nagyít, sima, részleteket találhat ki
+Real-ESRGAN and DarkIR can't be downloaded here. Convert them yourself with lightview-models, then copy the .onnx files into the models folder:	A Real-ESRGAN és a DarkIR itt nem tölthető le. Alakítsa át őket maga a lightview-models segítségével, majd másolja a .onnx fájlokat a modellmappába:
+Real-ESRGAN general 4× half precision	Real-ESRGAN general 4× félpontosság
+Real-ESRGAN general 4× — fast, softer	Real-ESRGAN general 4× — gyors, lágyabb
+Rectangle	Téglalap
+Rectangular Selection	Téglalap kijelölés
+Red: how much red each pixel has	Piros: mennyi piros van az egyes képpontokban
+Redo	Mégis
+Remove Background	Háttér eltávolítása
+Remove Background and Crop	Háttér eltávolítása és körbevágás
+Remove location from the copy	Hely eltávolítása a másolatból
+Replace Background	Háttér cseréje
+Reset	Visszaállítás
+Reset Color Adjustments	Színbeállítások visszaállítása
+Reset to default	Alapértelmezés visszaállítása
+Resize	Átméretezés
+Resize…	Átméretezés…
+Resolution	Felbontás
+Restart lightview to start using the GPU.	A GPU használatához indítsa újra a lightview-t.
+Revert	Visszaállítás az eredetire
+Rotate Left	Forgatás balra
+Rotate Right	Forgatás jobbra
+Rounded Rectangle	Lekerekített téglalap
+Run the AI tools on any graphics card with Vulkan or Direct3D 12 ({mb} MB download, WebGPU). A weak built-in graphics chip can be slower than the CPU.	Az MI-eszközök futtatása bármely Vulkant vagy Direct3D 12-t támogató videokártyán ({mb} MB letöltés, WebGPU). Egy gyenge beépített grafikus chip lassabb lehet a processzornál.
+Run the AI tools on the graphics card ({mb} MB download, NVIDIA's CUDA libraries).	Az MI-eszközök futtatása a videokártyán ({mb} MB letöltés, az NVIDIA CUDA-könyvtárai).
+Running {file}…	Futtatás: {file}…
+SCUNet σ15 — light noise	SCUNet σ15 — enyhe zaj
+SCUNet σ25 — moderate noise	SCUNet σ25 — közepes zaj
+SCUNet σ50 — heavy noise	SCUNet σ50 — erős zaj
+SCUNet — noise and JPEG artifacts (recommended)	SCUNet — zaj és JPEG-hibák (ajánlott)
+Saturation	Telítettség
+Saturation: from grey to vivid color	Telítettség: a szürkétől az élénk színig
+Save As…	Mentés másként…
+Save copy…	Másolat mentése…
+Saved in JPEG files	JPEG-fájlokba mentve
+Saved {name}	Mentve: {name}
+Saves a copy of the file with this metadata (without other edits). Camera maker notes are removed.	A fájl másolatát menti ezekkel a metaadatokkal (egyéb módosítások nélkül). A gyártói megjegyzések törlődnek.
+Select	Kijelölés
+Select All	Összes kijelölése
+Select Object	Objektum kijelölése
+Select Object (AI)	Objektum kijelölése (MI)
+Selecting the object…	Objektum kijelölése…
+Settings	Beállítások
+Settings…	Beállítások…
+Shapes	Alakzatok
+Show Drawing Toolbar	Rajzeszköztár megjelenítése
+Show Image Information	Képinformációk megjelenítése
+Silueta — small and fast	Silueta — kicsi és gyors
+Size read from the model when it runs; the usual normalisation.	A méretet futáskor a modellből olvassa ki; szokásos normalizálás.
+Sketch	Vázlat
+Smoother zooming and panning. Uses more GPU memory and makes switching images a little slower.	Simább nagyítás és mozgatás. Több GPU-memóriát használ, és a képváltás kissé lassabb.
+Sort order	Rendezés
+Std (R, G, B)	Szórás (R, G, B)
+Strength	Erősség
+Stroke	Körvonal
+SwinIR σ25 — moderate noise, very slow	SwinIR σ25 — közepes zaj, nagyon lassú
+Text	Szöveg
+Text colour	Szövegszín
+The AI runtime isn't installed yet: Local AI > Download AI Runtime…	Az MI-futtatókörnyezet még nincs telepítve: Helyi MI > MI-futtatókörnyezet letöltése…
+The GPU couldn't be used, so the CPU is: {e}	A GPU nem használható, ezért a processzor fut: {e}
+The corners must form a shape with no crossing sides	A sarkoknak egymást nem keresztező oldalú alakzatot kell alkotniuk
+the model's mask decoder is missing	hiányzik a modell maszkdekódere
+Thickness	Vastagság
+Tint	Színezet
+Tools	Eszközök
+Undo	Visszavonás
+Use YYYY:MM:DD HH:MM:SS	Formátum: YYYY:MM:DD HH:MM:SS
+Use the GPU	GPU használata
+Used by Remove Background and Remove Background and Crop.	A Háttér eltávolítása és a Háttér eltávolítása és körbevágás használja.
+Uses Bilinear while GPU scaling is on	GPU-s méretezés közben bilineárist használ
+U²-Net people — portraits	U²-Net emberek — portrék
+U²-Net small — fastest	U²-Net kicsi — leggyorsabb
+U²-Net — general	U²-Net — általános
+Value: from black to full color	Érték: a feketétől a teljes színig
+View	Nézet
+Welcome to lightview	Üdvözli a lightview
+Width	Szélesség
+Your edits to {name} haven't been saved.	A(z) {name} módosításai nincsenek mentve.
+Zoom	Nagyítási szint
+Zoom In	Nagyítás
+Zoom Out	Kicsinyítés
+a GPU library was missing from the download	egy GPU-könyvtár hiányzott a letöltésből
+about {time} left	kb. {time} van hátra
+can't save as .{ext}: use .jpg, .png, .webp, .bmp, .tif or .gif	nem menthető .{ext} formátumban: használjon .jpg, .png, .webp, .bmp, .tif vagy .gif kiterjesztést
+choose a new name: the original is never modified	válasszon új nevet: az eredeti soha nem módosul
+compressed SVG files aren't supported	a tömörített SVG-fájlok nem támogatottak
+couldn't read this file's EXIF safely	a fájl EXIF-adatai nem olvashatók be biztonságosan
+edited: {w} × {h}	szerkesztve: {w} × {h}
+lightview is now the default image viewer	a lightview mostantól az alapértelmezett képnézegető
+no data folder	nincs adatmappa
+no frames	nincsenek képkockák
+no subject found	nem található fő objektum
+pick an .onnx file	válasszon egy .onnx fájlt
+the download didn't match its checksum	a letöltés nem egyezik az ellenőrzőösszegével
+the model has no image input	a modellnek nincs képbemenete
+the model's output changed size between tiles	a modell kimenetének mérete csempénként változott
+the model's output doesn't match its input size	a modell kimenete nem egyezik a bemeneti méretével
+the model's output isn't a whole multiple of its input	a modell kimenete nem egész többszöröse a bemenetének
+the written file didn't check out: the location wasn't removed	a megírt fájl nem ment át az ellenőrzésen: a hely nem lett eltávolítva
+the written file didn't check out: {e}	a megírt fájl nem ment át az ellenőrzésen: {e}
+the written file didn't check out: {label} wasn't saved	a megírt fájl nem ment át az ellenőrzésen: {label} nem lett mentve
+this file crashed its decoder	ez a fájl összeomlasztotta a dekóderét
+this file's EXIF couldn't be processed	a fájl EXIF-adatai nem dolgozhatók fel
+this image is too large to open	ez a kép túl nagy a megnyitáshoz
+this isn't a regular file	ez nem szabályos fájl
+{format}, {count} frames	{format}, képkockák: {count}
+{name} is already installed	{name} már telepítve van
+{name} will be moved to the Trash.	{name} a Kukába kerül.
+{task} done	{task}: kész
+{task} failed: {e}	{task}: hiba: {e}
+{task} on the GPU	{task} a GPU-n
+{task} preview of the visible area · drag to compare · Before | After	{task}: a látható terület előnézete · húzással összehasonlít · Előtte | Utána
+Remove Object	Objektum eltávolítása
+LaMa — best quality, slower	LaMa — legjobb minőség, lassabb
+MI-GAN — fast	MI-GAN — gyors
+ONNX export by Carve on Hugging Face; its origin isn't verified.	ONNX-export a Carve-tól a Hugging Face-en; eredete nem ellenőrzött.
+the selection is empty	a kijelölés üres
+No images in {name}	Nincsenek képek itt: {name}
+Can't open {name}: not a supported image	{name} nem nyitható meg: nem támogatott kép
+Save Copy	Másolat mentése
+Copy Path	Útvonal másolása
+Show in File Manager	Megjelenítés a fájlkezelőben
+Rename…	Átnevezés…
+First Image	Első kép
+Last Image	Utolsó kép
+Copied the path	Útvonal másolva
+Rename Image	Kép átnevezése
+Rename	Átnevezés
+That isn't a valid file name	Ez nem érvényes fájlnév
+{name} already exists	{name} már létezik
+File changed on disk	A fájl megváltozott a lemezen
+{name} changed on disk. Reloading it discards your edits.	{name} megváltozott a lemezen. Az újratöltés elveti a módosításait.
+Reload	Újratöltés
+Keep Edits	Módosítások megtartása
+Pixel grid	Képpontrács
+Shows the edges of the pixels when zoomed far in.	Erős nagyításnál mutatja a képpontok szélét.
+Click a pixel to copy its colour · Esc to stop	Kattintson egy képpontra a színe másolásához · Esc a befejezéshez
+Copied {color}	Másolva: {color}
+Copy Color	Szín másolása
+this file is damaged or cut short	a fájl sérült vagy csonka
+HEIC and AVIF files need libheif, which isn't installed	A HEIC- és AVIF-fájlokhoz libheif kell, amely nincs telepítve
+this file needs a libheif decoder plugin, which isn't installed	a fájlhoz libheif-dekóderbővítmény kell, amely nincs telepítve
+this file needs Microsoft's HEIF Image Extensions and HEVC or AV1 Video Extensions	a fájlhoz a Microsoft HEIF Image Extensions és a HEVC vagy AV1 Video Extensions kell
+Pages	Oldalak
+Next Page	Következő oldal
+Previous Page	Előző oldal
+{format}, {count} pages	{format}, oldalak: {count}
+page {n} of {count}	{n}. oldal / {count}
+Colour management	Színkezelés
+Converts images with a colour profile to sRGB, so wide-gamut photos look right on an sRGB monitor. Turn it off for a wide-gamut monitor.	A színprofillal rendelkező képeket sRGB-re alakítja, így a széles színterű fotók helyesen jelennek meg sRGB-monitoron. Széles színterű monitorhoz kapcsolja ki.
+this RAW file has no embedded preview	ennek a RAW-fájlnak nincs beágyazott előnézete
+{format} (embedded preview)	{format} (beágyazott előnézet)
+EXIF isn't read from this kind of RAW file yet	Az ilyen RAW-fájlokból még nem olvassa be az EXIF-et
+A RAW file's metadata is shown, not edited.	A RAW-fájl metaadatai csak megjelennek, nem szerkeszthetők.
+A WebP file's metadata is shown, not edited.	A WebP-fájl metaadatai csak megjelennek, nem szerkeszthetők.
+EXIF is shown for JPEG, PNG, WebP, TIFF and RAW files	Az EXIF JPEG-, PNG-, WebP-, TIFF- és RAW-fájloknál jelenik meg
+the copy must be a .{ext} file	a másolatnak .{ext} fájlnak kell lennie
+the written file didn't check out: the image changed	a megírt fájl nem ment át az ellenőrzésen: a kép megváltozott
+Copy File	Fájl másolása
+Copied the file	Fájl másolva
+Couldn't copy the file: {e}	Nem sikerült másolni a fájlt: {e}
+Straighten…	Kiegyenesítés…
+Straighten	Kiegyenesítés
+Greyscale	Szürkeárnyalatos
+Invert Colors	Színek invertálása
+Remove Red Eye	Vörösszem-eltávolítás
+Pixelate Selection	Kijelölés pixelezése
+Select the eyes first, then choose this.	Előbb jelölje ki a szemeket, majd válassza ezt.
+Hides faces. For text, a solid shape is safer: pixelation can sometimes be undone.	Elrejti az arcokat. Szöveghez egy kitöltött alakzat biztonságosabb: a pixelezés néha visszafordítható.
+Red eye removed	Vörös szem eltávolítva
+Pixelated	Pixelezve
+Turn until the lines run straight · Enter to apply · Esc to cancel	Forgassa, amíg a vonalak egyenesek nem lesznek · Enter az alkalmazáshoz · Esc a megszakításhoz
+Recognize Text	Szövegfelismerés
+PP-OCRv5 Latin — European languages	PP-OCRv5 Latin — európai nyelvek
+PP-OCRv5 — Chinese, Japanese and English	PP-OCRv5 — kínai, japán és angol
+Converted to ONNX by Satoru Nakamura (University of Tokyo) from PaddlePaddle's published models.	ONNX-re alakította Satoru Nakamura (Tokiói Egyetem) a PaddlePaddle által közzétett modellekből.
+the model's output doesn't match its character list	a modell kimenete nem egyezik a karakterlistájával
+Read QR Code	QR-kód olvasása
+No QR code found	Nem található QR-kód
+No text found	Nem található szöveg
+QR Code	QR-kód
+Text in Image	Szöveg a képen
+Couldn't read the text: {e}	Nem sikerült beolvasni a szöveget: {e}
+Reading QR codes…	QR-kódok olvasása…
+Recognizing text…	Szöveg felismerése…
+Reads the selection, or the whole image. Straighten tilted text first, and select small text in a large image so it's read at full size.	A kijelölést vagy a teljes képet olvassa be. Előbb egyenesítse ki a ferde szöveget, és nagy képen jelölje ki a kis szöveget, hogy teljes méretben olvassa.
+Reads the selection, or the whole image. Shows what the code says; links are never opened.	A kijelölést vagy a teljes képet olvassa be. Megmutatja, mit tartalmaz a kód; a hivatkozásokat soha nem nyitja meg.
+Keyboard Shortcuts	Billentyűparancsok
+Press keys… (Esc to cancel)	Nyomja le a billentyűket… (Esc a megszakításhoz)
+Change	Módosítás
+Remove	Eltávolítás
+Reset All Shortcuts	Minden billentyűparancs visszaállítása
+{keys} is already used by {action}	{keys} már foglalt: {action}
+Copy, Cut, Paste, Enter, Esc and Delete	Másolás, Kivágás, Beillesztés, Enter, Esc és Delete
+Change Keyboard Shortcuts…	Billentyűparancsok módosítása…
+Theme	Téma
+Follow system	Rendszer szerint
+Dark	Sötét
+Light	Világos
+High contrast	Nagy kontraszt
+bigger than 64 KiB	nagyobb, mint 64 KiB
+invalid value	érvénytelen érték
+line	sor
+Your own themes go in the themes folder next to the AI models. Choosing a theme again reloads its file.	A saját témák az MI-modellek melletti témamappába kerülnek. Egy téma újbóli kiválasztása újratölti a fájlját.
+Couldn't load the theme, so the base theme is used: {e}	Nem sikerült betölteni a témát, ezért az alaptéma látható: {e}
+Open themes folder	Témamappa megnyitása
+Group Duplicates in Folder…	Ismétlődők csoportosítása a mappában…
+Group Duplicates in Folder	Ismétlődők csoportosítása a mappában
+Compares the images in this folder (not its subfolders) and moves each group of look-alikes into a folder of its own. Nothing is deleted, and Ctrl+Z moves them back. Rotated copies and heavy crops aren't found.	Összehasonlítja a mappa képeit (az almappákét nem), és a hasonló képek minden csoportját saját mappába helyezi át. Semmi sem törlődik, a Ctrl+Z visszahelyezi őket. Az elforgatott másolatokat és az erősen körbevágottakat nem találja meg.
+Comparing images: {done} of {total}	Képek összehasonlítása: {done} / {total}
+How different each image is from its closest look-alike:	Mennyire tér el az egyes kép a leghasonlóbbtól:
+Largest difference	Legnagyobb eltérés
+{meaning} · suggested: {n}	{meaning} · javasolt: {n}
+Identical pixels only	Csak azonos képpontok
+Resized or recompressed copies	Átméretezett vagy újratömörített másolatok
+Small edits, crops and bursts	Kis módosítások, körbevágások és sorozatfelvételek
+Merely similar scenes too	Csak hasonló jelenetek is
+Groups: {groups} · Images to move: {moving} · Staying: {staying}	Csoportok: {groups} · Áthelyezendő képek: {moving} · Marad: {staying}
+Not compared: {n}	Nem összehasonlítva: {n}
+Not compared	Nem összehasonlítva
+{name} · difference: {d}	{name} · eltérés: {d}
+Move	Áthelyezés
+Images moved: {n} · Folders: {f}	Áthelyezett képek: {n} · Mappák: {f}
+Stopped: {e}	Leállítva: {e}
+Images moved back: {n}	Visszahelyezett képek: {n}
+{name}: changed since it was compared	{name}: az összehasonlítás óta megváltozott
+{name}: already in the folder	{name}: már a mappában van
+{name}: its old name is taken	{name}: a régi neve foglalt
+the file is gone	a fájl már nem létezik
+About {s} s left	Kb. {s} mp van hátra
+About {m} min left	Kb. {m} perc van hátra
+Smallest group	Legkisebb csoport
+Groups with fewer images stay where they are.	A kevesebb képből álló csoportok a helyükön maradnak.
+Resize Optimally	Optimális méret
+Shrinks the image to the size its detail needs, measured on its sharpest part. Never enlarges; Ctrl+Z undoes it.	A képet a részletei által igényelt méretre kicsinyíti, a legélesebb részén mérve. Soha nem nagyít; a Ctrl+Z visszavonja.
+Already at its optimal size	Már optimális méretű
+Resized to {w} × {h} px	Átméretezve: {w} × {h} px
+The image changed while {task} ran; run it again	A kép megváltozott, miközben a(z) {task} futott; futtassa újra
+lightview hit an internal error	a lightview belső hibába ütközött

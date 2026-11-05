@@ -1,0 +1,426 @@
+AI Models	Tekoälymallit
+AI Models…	Tekoälymallit…
+AI runtime (ONNX Runtime)	Tekoälyn ajoympäristö (ONNX Runtime)
+Accept and Continue	Hyväksy ja jatka
+Accept and Download	Hyväksy ja lataa
+Accessibility	Saavutettavuus
+Actual Size	Todellinen koko
+Add model file…	Lisää mallitiedosto…
+Added {name}	Lisätty: {name}
+Adjust Color	Säädä värejä
+Adjust Color…	Säädä värejä…
+Adjust Curves	Säädä käyriä
+Adjust Curves…	Säädä käyriä…
+All channels together: overall brightness	Kaikki kanavat yhdessä: kokonaiskirkkaus
+Animation	Animaatio
+Applies the next time lightview starts	Tulee voimaan, kun lightview käynnistetään seuraavan kerran
+Apply sigmoid (the model outputs logits)	Käytä sigmoidia (malli antaa logitteja)
+Apply to Selection	Käytä valintaan
+Apply to Whole Image{size} (about {estimate})	Käytä koko kuvaan{size} (noin {estimate})
+Arrow	Nuoli
+Artist	Tekijä
+Auto Levels	Automaattiset tasot
+Blur Background	Sumenna tausta
+Blur Background…	Sumenna tausta…
+BSRGAN 4× — upscales and sharpens, may invent detail	BSRGAN 4× — suurentaa ja terävöittää, voi keksiä yksityiskohtia
+Background colour	Taustaväri
+BiRefNet lite — best quality, slow	BiRefNet lite — paras laatu, hidas
+Bicubic	Bikuubinen
+Bilinear	Bilineaarinen
+Blue: how much blue each pixel has	Sininen: kuinka paljon sinistä kussakin pikselissä on
+Camera	Kamera
+Camera make	Kameran valmistaja
+Camera model	Kameran malli
+Can't open this image:\n{e}	Kuvaa ei voi avata:\n{e}
+Cancel	Peruuta
+Cancelled	Peruttu
+Check for updates	Tarkista päivitykset
+Close	Sulje
+Click to add a point, drag to move it, right-click to remove it	Lisää piste napsauttamalla, siirrä vetämällä, poista napsauttamalla hiiren oikealla
+Color space	Väriavaruus
+Colour	Väri
+Colour profile	Väriprofiili
+Continue	Jatka
+Contrast	Kontrasti
+Converted to ONNX by Heliosoph LLC from the authors' published weights.	Heliosoph LLC muunsi ONNX-muotoon tekijöiden julkaisemista painoista.
+Copied {w} × {h} px	Kopioitu {w} × {h} px
+Copy	Kopioi
+Copyright	Tekijänoikeus
+Couldn't add the model: {e}	Mallia ei voitu lisätä: {e}
+Couldn't delete the image: {e}	Kuvaa ei voitu poistaa: {e}
+Couldn't download {file}: {e}	Tiedostoa {file} ei voitu ladata: {e}
+Couldn't install the AI runtime: {e}	Tekoälyn ajoympäristöä ei voitu asentaa: {e}
+Couldn't process the image: {e}	Kuvaa ei voitu käsitellä: {e}
+Couldn't read {file}: {e}	Tiedostoa {file} ei voitu lukea: {e}
+Couldn't restore the image: {e}	Kuvaa ei voitu palauttaa: {e}
+Couldn't save {name}: {e}	Tiedostoa {name} ei voitu tallentaa: {e}
+Couldn't select the object: {e}	Kohdetta ei voitu valita: {e}
+Crop	Rajaa
+Cut	Leikkaa
+DarkIR brightens dark and night photos and removes their noise and blur. On a well-lit photo it overexposes.	DarkIR kirkastaa tummia kuvia ja yökuvia sekä poistaa niistä kohinan ja epätarkkuuden. Hyvin valaistun kuvan se ylivalottaa.
+DarkIR — dark and night photos, same size	DarkIR — tummat kuvat ja yökuvat, sama koko
+Date modified	Muokkauspäivä
+Date taken	Kuvauspäivä
+Default window size	Ikkunan oletuskoko
+Delete image?	Poistetaanko kuva?
+Delete Image…	Poista kuva…
+Delete Selection	Poista valinta
+Denoise	Poista kohina
+Denoise and Enhance run about 10× faster on a GTX 1050	Poista kohina ja Paranna toimivat noin 10× nopeammin GTX 1050:llä
+Describe the image for people who can't see it	Kuvaile kuva niille, jotka eivät näe sitä
+Description	Kuvaus
+Deselect	Poista valinta
+Detect size	Tunnista koko
+Dimensions	Mitat
+Discard	Hylkää
+Discard edits?	Hylätäänkö muokkaukset?
+Distance: {d} px · ΔX: {dx} px · ΔY: {dy} px	Etäisyys: {d} px · ΔX: {dx} px · ΔY: {dy} px
+Done	Valmis
+Download	Lataa
+Download AI Runtime…	Lataa tekoälyn ajoympäristö…
+Download GPU Support	Lataa GPU-tuki
+Downloaded from Microsoft (ONNX Runtime) and NVIDIA (CUDA libraries, via their official PyPI packages).	Ladattu Microsoftilta (ONNX Runtime) ja NVIDIAlta (CUDA-kirjastot niiden virallisten PyPI-pakettien kautta).
+Downloaded from Microsoft's official PyPI package (onnxruntime-ep-webgpu).	Ladattu Microsoftin virallisesta PyPI-paketista (onnxruntime-ep-webgpu).
+Downloaded {file}	Ladattu: {file}
+Downloading GPU support ({mb} MB)…	Ladataan GPU-tukea ({mb} Mt)…
+Downloading the AI runtime…	Ladataan tekoälyn ajoympäristöä…
+Downloading…	Ladataan…
+Drag a box around one object; its outline becomes the selection. Holes inside it stay selected.	Vedä laatikko yhden kohteen ympärille; sen ääriviivasta tulee valinta. Sisällä olevat aukot pysyvät valittuina.
+Drag to measure in image pixels · Esc to stop	Mittaa kuvan pikseleinä vetämällä · Esc lopettaa
+Drag to select · Enter to crop · Esc to cancel	Valitse vetämällä · Enter rajaa · Esc peruuttaa
+Drag the corners onto a rectangle · Enter to apply · Esc to cancel	Vedä kulmat suorakulmion kulmiin · Enter käyttää · Esc peruuttaa
+Drawings, text and pasted images will be merged into the image and can't be edited afterwards. Ctrl+Z undoes it.	Piirrokset, teksti ja liitetyt kuvat yhdistetään kuvaan, eikä niitä voi muokata jälkeenpäin. Ctrl+Z kumoaa sen.
+Edit	Muokkaa
+Edit the image description	Muokkaa kuvan kuvausta
+Ellipse	Ellipsi
+Elliptical Selection	Ellipsivalinta
+Embedded (unnamed)	Upotettu (nimetön)
+Enhance Image	Paranna kuvaa
+Enhance Image uses generative AI. To make the image look better it may invent or alter fine details, such as textures, text or faces, that weren't in the original.	Paranna kuvaa käyttää generatiivista tekoälyä. Jotta kuva näyttäisi paremmalta, se voi keksiä tai muuttaa hienoja yksityiskohtia, kuten pintakuvioita, tekstiä tai kasvoja, joita alkuperäisessä ei ollut.
+Enter Full Screen	Koko näyttö
+Exposure	Valotus
+File	Tiedosto
+File name	Tiedostonimi
+File size	Tiedostokoko
+Fill	Täyttö
+Fills the background with the background colour from Settings.	Täyttää taustan Asetusten taustavärillä.
+Fit to Window	Sovita ikkunaan
+Flip Horizontally	Käännä vaakasuunnassa
+Flip Vertically	Käännä pystysuunnassa
+Folder	Kansio
+Font size	Fonttikoko
+For a faithful clean-up, use Denoise instead.	Uskollista puhdistusta varten käytä mieluummin Poista kohina -toimintoa.
+Format	Muoto
+GPU (AMD, Intel and others, experimental)	GPU (AMD, Intel ja muut, kokeellinen)
+GPU (NVIDIA)	GPU (NVIDIA)
+GPU image scaling	Kuvan skaalaus GPU:lla
+GPU support	GPU-tuki
+GPU support installed: restart lightview to use it	GPU-tuki asennettu: käynnistä lightview uudelleen ottaaksesi sen käyttöön
+General	Yleiset
+Green: how much green each pixel has	Vihreä: kuinka paljon vihreää kussakin pikselissä on
+Height	Korkeus
+Hide Drawing Toolbar	Piilota piirtotyökalurivi
+Hide Image Information	Piilota kuvan tiedot
+Highlight	Korostuskynä
+Hue: the color itself, such as red or blue	Sävy: itse väri, kuten punainen tai sininen
+IS-Net anime — illustrations	IS-Net anime — piirroskuvat
+IS-Net — general, clean edges	IS-Net — yleinen, siistit reunat
+Image	Kuva
+Image description	Kuvan kuvaus
+Images	Kuvat
+Input size	Syötteen koko
+Installed the AI runtime	Tekoälyn ajoympäristö asennettu
+Interpolation	Interpolointi
+It also makes the image {k}× bigger ({pixels}× the pixels), which takes a while for a big photo.	Se myös suurentaa kuvaa {k}× ({pixels}× pikseleitä), mikä vie aikaa suurelle valokuvalle.
+It's no longer in the Trash	Se ei ole enää roskakorissa
+Keep aspect ratio	Säilytä kuvasuhde
+Language	Kieli
+Lasso	Lasso
+Lens	Objektiivi
+Licence ({step} of {count}) — {title}	Lisenssi ({step}/{count}) — {title}
+Licence — {title}	Lisenssi — {title}
+Lightness: from black, through color, to white	Vaaleus: mustasta värin kautta valkoiseen
+Line	Viiva
+Local AI	Paikallinen tekoäly
+Location	Sijainti
+Magnifier	Suurennuslasi
+Make lightview my default image viewer	Tee lightviewsta oletuskuvankatseluohjelmani
+Make lightview the default image viewer	Tee lightviewsta oletuskuvankatseluohjelma
+Mean (R, G, B)	Keskiarvo (R, G, B)
+Measure	Mittaa
+Merge drawings into the image?	Yhdistetäänkö piirrokset kuvaan?
+MobileSAM — finds the object in a box	MobileSAM — löytää kohteen laatikosta
+Model	Malli
+Name	Nimi
+Nearest	Lähin
+Next Frame	Seuraava ruutu
+Next Image	Seuraava kuva
+no graphics card with Vulkan or Direct3D 12 was found	Vulkania tai Direct3D 12:ta tukevaa näytönohjainta ei löytynyt
+No location in this file	Tiedostossa ei ole sijaintia
+No model installed yet.	Malleja ei ole vielä asennettu.
+No object found in the box	Laatikosta ei löytynyt kohdetta
+No recent files	Ei viimeaikaisia tiedostoja
+None (sRGB assumed)	Ei mitään (oletetaan sRGB)
+Nothing to paste: {e}	Ei mitään liitettävää: {e}
+OK	OK
+ONNX export (half precision) by FuryTMP on Hugging Face; its origin isn't verified.	ONNX-vienti (puolitarkkuus), FuryTMP Hugging Facessa; alkuperää ei ole varmistettu.
+ONNX export by Acly on Hugging Face, from the authors' weights; downloaded from Heliosoph LLC's copy.	ONNX-vienti, Acly Hugging Facessa, tekijöiden painoista; ladattu Heliosoph LLC:n kopiosta.
+ONNX model	ONNX-malli
+Only add models from sources you trust: they run with your permissions.	Lisää malleja vain luotettavista lähteistä: ne toimivat sinun oikeuksillasi.
+Open Recent	Avaa viimeaikainen
+Open in Google Maps	Avaa Google Mapsissa
+Open models folder	Avaa mallikansio
+Open project page	Avaa projektin sivu
+Open…	Avaa…
+Other tags ({count})	Muut tunnisteet ({count})
+Output	Tuloste
+Paste	Liitä
+Pause Animation	Keskeytä animaatio
+Percentage	Prosentti
+Correct Perspective	Korjaa perspektiivi
+Play Animation	Toista animaatio
+Please read and accept the licence before downloading.	Lue ja hyväksy lisenssi ennen lataamista.
+Preprocessing: {file}	Esikäsittely: {file}
+Previous Frame	Edellinen ruutu
+Previous Image	Edellinen kuva
+Read the input size from the model	Lue syötteen koko mallista
+Real-ESRGAN 4× half precision	Real-ESRGAN 4× puolitarkkuus
+Real-ESRGAN 4× — upscales, smooth, may invent detail	Real-ESRGAN 4× — suurentaa, pehmeä, voi keksiä yksityiskohtia
+Real-ESRGAN and DarkIR can't be downloaded here. Convert them yourself with lightview-models, then copy the .onnx files into the models folder:	Real-ESRGANia ja DarkIR:ää ei voi ladata täältä. Muunna ne itse lightview-modelsilla ja kopioi .onnx-tiedostot mallikansioon:
+Real-ESRGAN general 4× half precision	Real-ESRGAN general 4× puolitarkkuus
+Real-ESRGAN general 4× — fast, softer	Real-ESRGAN general 4× — nopea, pehmeämpi
+Rectangle	Suorakulmio
+Rectangular Selection	Suorakulmiovalinta
+Red: how much red each pixel has	Punainen: kuinka paljon punaista kussakin pikselissä on
+Redo	Tee uudelleen
+Remove Background	Poista tausta
+Remove Background and Crop	Poista tausta ja rajaa
+Remove location from the copy	Poista sijainti kopiosta
+Replace Background	Korvaa tausta
+Reset	Palauta
+Reset Color Adjustments	Palauta värisäädöt
+Reset to default	Palauta oletus
+Resize	Muuta kokoa
+Resize…	Muuta kokoa…
+Resolution	Tarkkuus
+Restart lightview to start using the GPU.	Käynnistä lightview uudelleen, jotta GPU otetaan käyttöön.
+Revert	Palauta alkuperäinen
+Rotate Left	Kierrä vasemmalle
+Rotate Right	Kierrä oikealle
+Rounded Rectangle	Pyöristetty suorakulmio
+Run the AI tools on any graphics card with Vulkan or Direct3D 12 ({mb} MB download, WebGPU). A weak built-in graphics chip can be slower than the CPU.	Aja tekoälytyökalut millä tahansa Vulkania tai Direct3D 12:ta tukevalla näytönohjaimella ({mb} Mt:n lataus, WebGPU). Heikko integroitu grafiikkapiiri voi olla suoritinta hitaampi.
+Run the AI tools on the graphics card ({mb} MB download, NVIDIA's CUDA libraries).	Aja tekoälytyökalut näytönohjaimella ({mb} Mt:n lataus, NVIDIAn CUDA-kirjastot).
+Running {file}…	Ajetaan {file}…
+SCUNet σ15 — light noise	SCUNet σ15 — lievä kohina
+SCUNet σ25 — moderate noise	SCUNet σ25 — kohtalainen kohina
+SCUNet σ50 — heavy noise	SCUNet σ50 — voimakas kohina
+SCUNet — noise and JPEG artifacts (recommended)	SCUNet — kohina ja JPEG-virheet (suositus)
+Saturation	Kylläisyys
+Saturation: from grey to vivid color	Kylläisyys: harmaasta kirkkaaseen väriin
+Save As…	Tallenna nimellä…
+Save copy…	Tallenna kopio…
+Saved in JPEG files	Tallennetaan JPEG-tiedostoihin
+Saved {name}	Tallennettu: {name}
+Saves a copy of the file with this metadata (without other edits). Camera maker notes are removed.	Tallentaa tiedostosta kopion näillä metatiedoilla (ilman muita muokkauksia). Kameravalmistajan merkinnät poistetaan.
+Select	Valitse
+Select All	Valitse kaikki
+Select Object	Valitse kohde
+Select Object (AI)	Valitse kohde (tekoäly)
+Selecting the object…	Valitaan kohdetta…
+Settings	Asetukset
+Settings…	Asetukset…
+Shapes	Muodot
+Show Drawing Toolbar	Näytä piirtotyökalurivi
+Show Image Information	Näytä kuvan tiedot
+Silueta — small and fast	Silueta — pieni ja nopea
+Size read from the model when it runs; the usual normalisation.	Koko luetaan mallista ajon aikana; tavallinen normalisointi.
+Sketch	Luonnos
+Smoother zooming and panning. Uses more GPU memory and makes switching images a little slower.	Pehmeämpi zoomaus ja panorointi. Käyttää enemmän GPU-muistia ja hidastaa kuvien vaihtamista hieman.
+Sort order	Lajittelujärjestys
+Std (R, G, B)	Keskihajonta (R, G, B)
+Strength	Voimakkuus
+Stroke	Reunaviiva
+SwinIR σ25 — moderate noise, very slow	SwinIR σ25 — kohtalainen kohina, hyvin hidas
+Text	Teksti
+Text colour	Tekstin väri
+The AI runtime isn't installed yet: Local AI > Download AI Runtime…	Tekoälyn ajoympäristöä ei ole vielä asennettu: Paikallinen tekoäly > Lataa tekoälyn ajoympäristö…
+The GPU couldn't be used, so the CPU is: {e}	GPU:ta ei voitu käyttää, joten käytetään suoritinta: {e}
+The corners must form a shape with no crossing sides	Kulmien on muodostettava kuvio, jonka sivut eivät risteä
+the model's mask decoder is missing	mallin maskidekooderi puuttuu
+Thickness	Paksuus
+Tint	Sävytys
+Tools	Työkalut
+Undo	Kumoa
+Use YYYY:MM:DD HH:MM:SS	Käytä muotoa YYYY:MM:DD HH:MM:SS
+Use the GPU	Käytä GPU:ta
+Used by Remove Background and Remove Background and Crop.	Käytössä toiminnoissa Poista tausta sekä Poista tausta ja rajaa.
+Uses Bilinear while GPU scaling is on	Käyttää bilineaarista, kun GPU-skaalaus on päällä
+U²-Net people — portraits	U²-Net ihmiset — muotokuvat
+U²-Net small — fastest	U²-Net pieni — nopein
+U²-Net — general	U²-Net — yleinen
+Value: from black to full color	Arvo: mustasta täyteen väriin
+View	Näytä
+Welcome to lightview	Tervetuloa lightviewiin
+Width	Leveys
+Your edits to {name} haven't been saved.	Muokkauksiasi kohteeseen {name} ei ole tallennettu.
+Zoom	Zoomaus
+Zoom In	Lähennä
+Zoom Out	Loitonna
+a GPU library was missing from the download	latauksesta puuttui GPU-kirjasto
+about {time} left	noin {time} jäljellä
+can't save as .{ext}: use .jpg, .png, .webp, .bmp, .tif or .gif	ei voi tallentaa muotoon .{ext}: käytä muotoa .jpg, .png, .webp, .bmp, .tif tai .gif
+choose a new name: the original is never modified	valitse uusi nimi: alkuperäistä ei koskaan muuteta
+compressed SVG files aren't supported	pakattuja SVG-tiedostoja ei tueta
+couldn't read this file's EXIF safely	tiedoston EXIF-tietoja ei voitu lukea turvallisesti
+edited: {w} × {h}	muokattu: {w} × {h}
+lightview is now the default image viewer	lightview on nyt oletuskuvankatseluohjelma
+no data folder	ei datakansiota
+no frames	ei ruutuja
+no subject found	kohdetta ei löytynyt
+pick an .onnx file	valitse .onnx-tiedosto
+the download didn't match its checksum	lataus ei vastannut tarkistussummaansa
+the model has no image input	mallilla ei ole kuvasyötettä
+the model's output changed size between tiles	mallin tulosteen koko vaihteli ruutujen välillä
+the model's output doesn't match its input size	mallin tuloste ei vastaa sen syötteen kokoa
+the model's output isn't a whole multiple of its input	mallin tuloste ei ole syötteensä kokonaislukumonikerta
+the written file didn't check out: the location wasn't removed	kirjoitettu tiedosto ei läpäissyt tarkistusta: sijaintia ei poistettu
+the written file didn't check out: {e}	kirjoitettu tiedosto ei läpäissyt tarkistusta: {e}
+the written file didn't check out: {label} wasn't saved	kirjoitettu tiedosto ei läpäissyt tarkistusta: {label} ei tallentunut
+this file crashed its decoder	tämä tiedosto kaatoi dekooderinsa
+this file's EXIF couldn't be processed	tiedoston EXIF-tietoja ei voitu käsitellä
+this image is too large to open	kuva on liian suuri avattavaksi
+this isn't a regular file	tämä ei ole tavallinen tiedosto
+{format}, {count} frames	{format}, ruutuja: {count}
+{name} is already installed	{name} on jo asennettu
+{name} will be moved to the Trash.	{name} siirretään roskakoriin.
+{task} done	{task}: valmis
+{task} failed: {e}	{task}: epäonnistui: {e}
+{task} on the GPU	{task} GPU:lla
+{task} preview of the visible area · drag to compare · Before | After	{task}: näkyvän alueen esikatselu · vertaa vetämällä · Ennen | Jälkeen
+Remove Object	Poista kohde
+LaMa — best quality, slower	LaMa — paras laatu, hitaampi
+MI-GAN — fast	MI-GAN — nopea
+ONNX export by Carve on Hugging Face; its origin isn't verified.	ONNX-vienti, Carve Hugging Facessa; alkuperää ei ole varmistettu.
+the selection is empty	valinta on tyhjä
+No images in {name}	Kansiossa {name} ei ole kuvia
+Can't open {name}: not a supported image	Tiedostoa {name} ei voi avata: kuvaa ei tueta
+Save Copy	Tallenna kopio
+Copy Path	Kopioi polku
+Show in File Manager	Näytä tiedostonhallinnassa
+Rename…	Nimeä uudelleen…
+First Image	Ensimmäinen kuva
+Last Image	Viimeinen kuva
+Copied the path	Polku kopioitu
+Rename Image	Nimeä kuva uudelleen
+Rename	Nimeä uudelleen
+That isn't a valid file name	Tämä ei ole kelvollinen tiedostonimi
+{name} already exists	{name} on jo olemassa
+File changed on disk	Tiedosto muuttui levyllä
+{name} changed on disk. Reloading it discards your edits.	{name} muuttui levyllä. Uudelleenlataus hylkää muokkauksesi.
+Reload	Lataa uudelleen
+Keep Edits	Säilytä muokkaukset
+Pixel grid	Pikseliruudukko
+Shows the edges of the pixels when zoomed far in.	Näyttää pikselien reunat, kun kuvaa on lähennetty paljon.
+Click a pixel to copy its colour · Esc to stop	Kopioi pikselin väri napsauttamalla · Esc lopettaa
+Copied {color}	Kopioitu: {color}
+Copy Color	Kopioi väri
+this file is damaged or cut short	tiedosto on vioittunut tai katkennut
+HEIC and AVIF files need libheif, which isn't installed	HEIC- ja AVIF-tiedostot vaativat libheifin, jota ei ole asennettu
+this file needs a libheif decoder plugin, which isn't installed	tiedosto vaatii libheifin dekooderilaajennuksen, jota ei ole asennettu
+this file needs Microsoft's HEIF Image Extensions and HEVC or AV1 Video Extensions	tiedosto vaatii Microsoftin HEIF Image Extensions -laajennuksen ja HEVC tai AV1 Video Extensions -laajennuksen
+Pages	Sivut
+Next Page	Seuraava sivu
+Previous Page	Edellinen sivu
+{format}, {count} pages	{format}, sivuja: {count}
+page {n} of {count}	sivu {n}/{count}
+Colour management	Värinhallinta
+Converts images with a colour profile to sRGB, so wide-gamut photos look right on an sRGB monitor. Turn it off for a wide-gamut monitor.	Muuntaa väriprofiilin sisältävät kuvat sRGB:ksi, jotta laajan väriavaruuden kuvat näyttävät oikeilta sRGB-näytöllä. Poista käytöstä laajan väriavaruuden näytöllä.
+this RAW file has no embedded preview	tässä RAW-tiedostossa ei ole upotettua esikatselua
+{format} (embedded preview)	{format} (upotettu esikatselu)
+EXIF isn't read from this kind of RAW file yet	EXIF-tietoja ei vielä lueta tämäntyyppisistä RAW-tiedostoista
+A RAW file's metadata is shown, not edited.	RAW-tiedoston metatiedot näytetään, mutta niitä ei muokata.
+A WebP file's metadata is shown, not edited.	WebP-tiedoston metatiedot näytetään, mutta niitä ei muokata.
+EXIF is shown for JPEG, PNG, WebP, TIFF and RAW files	EXIF näytetään JPEG-, PNG-, WebP-, TIFF- ja RAW-tiedostoille
+the copy must be a .{ext} file	kopion on oltava .{ext}-tiedosto
+the written file didn't check out: the image changed	kirjoitettu tiedosto ei läpäissyt tarkistusta: kuva muuttui
+Copy File	Kopioi tiedosto
+Copied the file	Tiedosto kopioitu
+Couldn't copy the file: {e}	Tiedostoa ei voitu kopioida: {e}
+Straighten…	Suorista…
+Straighten	Suorista
+Greyscale	Harmaasävy
+Invert Colors	Käänteiset värit
+Remove Red Eye	Poista punasilmäisyys
+Pixelate Selection	Pikselöi valinta
+Select the eyes first, then choose this.	Valitse ensin silmät ja sitten tämä.
+Hides faces. For text, a solid shape is safer: pixelation can sometimes be undone.	Piilottaa kasvot. Tekstille kiinteä muoto on turvallisempi: pikselöinnin voi joskus purkaa.
+Red eye removed	Punasilmäisyys poistettu
+Pixelated	Pikselöity
+Turn until the lines run straight · Enter to apply · Esc to cancel	Kierrä, kunnes viivat ovat suoria · Enter käyttää · Esc peruuttaa
+Recognize Text	Tunnista teksti
+PP-OCRv5 Latin — European languages	PP-OCRv5 Latin — eurooppalaiset kielet
+PP-OCRv5 — Chinese, Japanese and English	PP-OCRv5 — kiina, japani ja englanti
+Converted to ONNX by Satoru Nakamura (University of Tokyo) from PaddlePaddle's published models.	Satoru Nakamura (Tokion yliopisto) muunsi ONNX-muotoon PaddlePaddlen julkaisemista malleista.
+the model's output doesn't match its character list	mallin tuloste ei vastaa sen merkkiluetteloa
+Read QR Code	Lue QR-koodi
+No QR code found	QR-koodia ei löytynyt
+No text found	Tekstiä ei löytynyt
+QR Code	QR-koodi
+Text in Image	Teksti kuvassa
+Couldn't read the text: {e}	Tekstiä ei voitu lukea: {e}
+Reading QR codes…	Luetaan QR-koodeja…
+Recognizing text…	Tunnistetaan tekstiä…
+Reads the selection, or the whole image. Straighten tilted text first, and select small text in a large image so it's read at full size.	Lukee valinnan tai koko kuvan. Suorista vino teksti ensin ja valitse pieni teksti suuresta kuvasta, jotta se luetaan täysikokoisena.
+Reads the selection, or the whole image. Shows what the code says; links are never opened.	Lukee valinnan tai koko kuvan. Näyttää, mitä koodi sisältää; linkkejä ei koskaan avata.
+Keyboard Shortcuts	Pikanäppäimet
+Press keys… (Esc to cancel)	Paina näppäimiä… (Esc peruuttaa)
+Change	Muuta
+Remove	Poista
+Reset All Shortcuts	Palauta kaikki pikanäppäimet
+{keys} is already used by {action}	{keys} on jo käytössä: {action}
+Copy, Cut, Paste, Enter, Esc and Delete	Kopioi, Leikkaa, Liitä, Enter, Esc ja Delete
+Change Keyboard Shortcuts…	Muuta pikanäppäimiä…
+Theme	Teema
+Follow system	Järjestelmän mukaan
+Dark	Tumma
+Light	Vaalea
+High contrast	Suuri kontrasti
+bigger than 64 KiB	yli 64 KiB
+invalid value	virheellinen arvo
+line	rivi
+Your own themes go in the themes folder next to the AI models. Choosing a theme again reloads its file.	Omat teemasi kuuluvat teemakansioon tekoälymallien viereen. Teeman valitseminen uudelleen lataa sen tiedoston uudelleen.
+Couldn't load the theme, so the base theme is used: {e}	Teemaa ei voitu ladata, joten käytetään perusteemaa: {e}
+Open themes folder	Avaa teemakansio
+Group Duplicates in Folder…	Ryhmittele kansion kaksoiskappaleet…
+Group Duplicates in Folder	Ryhmittele kansion kaksoiskappaleet
+Compares the images in this folder (not its subfolders) and moves each group of look-alikes into a folder of its own. Nothing is deleted, and Ctrl+Z moves them back. Rotated copies and heavy crops aren't found.	Vertaa tämän kansion kuvia (ei alikansioiden) ja siirtää jokaisen samannäköisten kuvien ryhmän omaan kansioonsa. Mitään ei poisteta, ja Ctrl+Z siirtää ne takaisin. Kierrettyjä kopioita ja voimakkaita rajauksia ei löydetä.
+Comparing images: {done} of {total}	Verrataan kuvia: {done}/{total}
+How different each image is from its closest look-alike:	Kuinka paljon kukin kuva eroaa samannäköisimmästään:
+Largest difference	Suurin ero
+{meaning} · suggested: {n}	{meaning} · ehdotus: {n}
+Identical pixels only	Vain identtiset pikselit
+Resized or recompressed copies	Koon muutetut tai uudelleen pakatut kopiot
+Small edits, crops and bursts	Pienet muokkaukset, rajaukset ja sarjakuvaukset
+Merely similar scenes too	Myös pelkästään samankaltaiset näkymät
+Groups: {groups} · Images to move: {moving} · Staying: {staying}	Ryhmät: {groups} · Siirrettävät kuvat: {moving} · Jäävät: {staying}
+Not compared: {n}	Ei verrattu: {n}
+Not compared	Ei verrattu
+{name} · difference: {d}	{name} · ero: {d}
+Move	Siirrä
+Images moved: {n} · Folders: {f}	Siirretyt kuvat: {n} · Kansiot: {f}
+Stopped: {e}	Pysäytetty: {e}
+Images moved back: {n}	Takaisin siirretyt kuvat: {n}
+{name}: changed since it was compared	{name}: muuttunut vertailun jälkeen
+{name}: already in the folder	{name}: on jo kansiossa
+{name}: its old name is taken	{name}: sen vanha nimi on varattu
+the file is gone	tiedostoa ei ole enää
+About {s} s left	Noin {s} s jäljellä
+About {m} min left	Noin {m} min jäljellä
+Smallest group	Pienin ryhmä
+Groups with fewer images stay where they are.	Ryhmät, joissa on vähemmän kuvia, jäävät paikoilleen.
+Resize Optimally	Optimaalinen koko
+Shrinks the image to the size its detail needs, measured on its sharpest part. Never enlarges; Ctrl+Z undoes it.	Pienentää kuvan kokoon, jonka sen yksityiskohdat tarvitsevat, mitattuna sen terävimmästä kohdasta. Ei koskaan suurenna; Ctrl+Z kumoaa sen.
+Already at its optimal size	On jo optimaalisen kokoinen
+Resized to {w} × {h} px	Koko muutettu: {w} × {h} px
+The image changed while {task} ran; run it again	Kuva muuttui, kun {task} oli käynnissä; aja uudelleen
+lightview hit an internal error	lightview kohtasi sisäisen virheen

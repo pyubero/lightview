@@ -1,0 +1,426 @@
+AI Models	Modele AI
+AI Models…	Modele AI…
+AI runtime (ONNX Runtime)	Mediu de rulare AI (ONNX Runtime)
+Accept and Continue	Acceptă și continuă
+Accept and Download	Acceptă și descarcă
+Accessibility	Accesibilitate
+Actual Size	Dimensiune reală
+Add model file…	Adaugă fișier de model…
+Added {name}	Adăugat: {name}
+Adjust Color	Ajustare culori
+Adjust Color…	Ajustare culori…
+Adjust Curves	Ajustare curbe
+Adjust Curves…	Ajustare curbe…
+All channels together: overall brightness	Toate canalele împreună: luminozitatea generală
+Animation	Animație
+Applies the next time lightview starts	Se aplică la următoarea pornire a lightview
+Apply sigmoid (the model outputs logits)	Aplică sigmoid (modelul produce logiți)
+Apply to Selection	Aplică pe selecție
+Apply to Whole Image{size} (about {estimate})	Aplică pe toată imaginea{size} (aproximativ {estimate})
+Arrow	Săgeată
+Artist	Artist
+Auto Levels	Niveluri automate
+Blur Background	Estompează fundalul
+Blur Background…	Estompează fundalul…
+BSRGAN 4× — upscales and sharpens, may invent detail	BSRGAN 4× — mărește și accentuează, poate inventa detalii
+Background colour	Culoarea fundalului
+BiRefNet lite — best quality, slow	BiRefNet lite — cea mai bună calitate, lent
+Bicubic	Bicubică
+Bilinear	Biliniară
+Blue: how much blue each pixel has	Albastru: cât albastru are fiecare pixel
+Camera	Aparat foto
+Camera make	Producătorul aparatului
+Camera model	Modelul aparatului
+Can't open this image:\n{e}	Imaginea nu poate fi deschisă:\n{e}
+Cancel	Anulează
+Cancelled	Anulat
+Check for updates	Caută actualizări
+Close	Închide
+Click to add a point, drag to move it, right-click to remove it	Clic pentru a adăuga un punct, trageți pentru a-l muta, clic dreapta pentru a-l elimina
+Color space	Spațiu de culoare
+Colour	Culoare
+Colour profile	Profil de culoare
+Continue	Continuă
+Contrast	Contrast
+Converted to ONNX by Heliosoph LLC from the authors' published weights.	Convertit în ONNX de Heliosoph LLC din ponderile publicate de autori.
+Copied {w} × {h} px	Copiat {w} × {h} px
+Copy	Copiază
+Copyright	Drepturi de autor
+Couldn't add the model: {e}	Modelul nu a putut fi adăugat: {e}
+Couldn't delete the image: {e}	Imaginea nu a putut fi ștearsă: {e}
+Couldn't download {file}: {e}	{file} nu a putut fi descărcat: {e}
+Couldn't install the AI runtime: {e}	Mediul de rulare AI nu a putut fi instalat: {e}
+Couldn't process the image: {e}	Imaginea nu a putut fi procesată: {e}
+Couldn't read {file}: {e}	{file} nu a putut fi citit: {e}
+Couldn't restore the image: {e}	Imaginea nu a putut fi restaurată: {e}
+Couldn't save {name}: {e}	{name} nu a putut fi salvat: {e}
+Couldn't select the object: {e}	Obiectul nu a putut fi selectat: {e}
+Crop	Decupează
+Cut	Taie
+DarkIR brightens dark and night photos and removes their noise and blur. On a well-lit photo it overexposes.	DarkIR luminează fotografiile întunecate și de noapte și elimină zgomotul și neclaritatea. O fotografie bine luminată devine supraexpusă.
+DarkIR — dark and night photos, same size	DarkIR — fotografii întunecate și de noapte, aceeași dimensiune
+Date modified	Data modificării
+Date taken	Data fotografierii
+Default window size	Dimensiunea implicită a ferestrei
+Delete image?	Ștergeți imaginea?
+Delete Image…	Șterge imaginea…
+Delete Selection	Șterge selecția
+Denoise	Reducere zgomot
+Denoise and Enhance run about 10× faster on a GTX 1050	Reducerea zgomotului și Îmbunătățirea rulează de aproximativ 10× mai repede pe un GTX 1050
+Describe the image for people who can't see it	Descrieți imaginea pentru cei care nu o pot vedea
+Description	Descriere
+Deselect	Deselectează
+Detect size	Detectează dimensiunea
+Dimensions	Dimensiuni
+Discard	Renunță
+Discard edits?	Renunțați la modificări?
+Distance: {d} px · ΔX: {dx} px · ΔY: {dy} px	Distanță: {d} px · ΔX: {dx} px · ΔY: {dy} px
+Done	Gata
+Download	Descarcă
+Download AI Runtime…	Descarcă mediul de rulare AI…
+Download GPU Support	Descarcă suportul GPU
+Downloaded from Microsoft (ONNX Runtime) and NVIDIA (CUDA libraries, via their official PyPI packages).	Descărcat de la Microsoft (ONNX Runtime) și NVIDIA (biblioteci CUDA, prin pachetele lor oficiale PyPI).
+Downloaded from Microsoft's official PyPI package (onnxruntime-ep-webgpu).	Descărcat din pachetul PyPI oficial al Microsoft (onnxruntime-ep-webgpu).
+Downloaded {file}	Descărcat: {file}
+Downloading GPU support ({mb} MB)…	Se descarcă suportul GPU ({mb} MB)…
+Downloading the AI runtime…	Se descarcă mediul de rulare AI…
+Downloading…	Se descarcă…
+Drag a box around one object; its outline becomes the selection. Holes inside it stay selected.	Trageți un chenar în jurul unui obiect; conturul lui devine selecția. Golurile din interior rămân selectate.
+Drag to measure in image pixels · Esc to stop	Trageți pentru a măsura în pixeli de imagine · Esc pentru oprire
+Drag to select · Enter to crop · Esc to cancel	Trageți pentru a selecta · Enter pentru decupare · Esc pentru anulare
+Drag the corners onto a rectangle · Enter to apply · Esc to cancel	Trageți colțurile pe un dreptunghi · Enter pentru aplicare · Esc pentru anulare
+Drawings, text and pasted images will be merged into the image and can't be edited afterwards. Ctrl+Z undoes it.	Desenele, textul și imaginile lipite vor fi îmbinate în imagine și nu mai pot fi editate. Ctrl+Z anulează.
+Edit	Editare
+Edit the image description	Editează descrierea imaginii
+Ellipse	Elipsă
+Elliptical Selection	Selecție eliptică
+Embedded (unnamed)	Încorporat (fără nume)
+Enhance Image	Îmbunătățește imaginea
+Enhance Image uses generative AI. To make the image look better it may invent or alter fine details, such as textures, text or faces, that weren't in the original.	Îmbunătățește imaginea folosește AI generativ. Pentru ca imaginea să arate mai bine, poate inventa sau modifica detalii fine, cum ar fi texturi, text sau fețe, care nu existau în original.
+Enter Full Screen	Ecran complet
+Exposure	Expunere
+File	Fișier
+File name	Nume fișier
+File size	Dimensiune fișier
+Fill	Umplere
+Fills the background with the background colour from Settings.	Umple fundalul cu culoarea de fundal din Setări.
+Fit to Window	Potrivește în fereastră
+Flip Horizontally	Răsturnare orizontală
+Flip Vertically	Răsturnare verticală
+Folder	Dosar
+Font size	Dimensiunea fontului
+For a faithful clean-up, use Denoise instead.	Pentru o curățare fidelă, folosiți Reducere zgomot.
+Format	Format
+GPU (AMD, Intel and others, experimental)	GPU (AMD, Intel și altele, experimental)
+GPU (NVIDIA)	GPU (NVIDIA)
+GPU image scaling	Scalarea imaginii cu GPU
+GPU support	Suport GPU
+GPU support installed: restart lightview to use it	Suport GPU instalat: reporniți lightview pentru a-l folosi
+General	General
+Green: how much green each pixel has	Verde: cât verde are fiecare pixel
+Height	Înălțime
+Hide Drawing Toolbar	Ascunde bara de desen
+Hide Image Information	Ascunde informațiile imaginii
+Highlight	Marker
+Hue: the color itself, such as red or blue	Nuanță: culoarea propriu-zisă, de exemplu roșu sau albastru
+IS-Net anime — illustrations	IS-Net anime — ilustrații
+IS-Net — general, clean edges	IS-Net — general, margini curate
+Image	Imagine
+Image description	Descrierea imaginii
+Images	Imagini
+Input size	Dimensiune de intrare
+Installed the AI runtime	Mediul de rulare AI a fost instalat
+Interpolation	Interpolare
+It also makes the image {k}× bigger ({pixels}× the pixels), which takes a while for a big photo.	De asemenea, mărește imaginea de {k}× ({pixels}× pixelii), ceea ce durează pentru o fotografie mare.
+It's no longer in the Trash	Nu mai este în Coșul de gunoi
+Keep aspect ratio	Păstrează raportul de aspect
+Language	Limbă
+Lasso	Lasou
+Lens	Obiectiv
+Licence ({step} of {count}) — {title}	Licență ({step} din {count}) — {title}
+Licence — {title}	Licență — {title}
+Lightness: from black, through color, to white	Luminozitate: de la negru, prin culoare, la alb
+Line	Linie
+Local AI	AI local
+Location	Locație
+Magnifier	Lupă
+Make lightview my default image viewer	Fă din lightview vizualizatorul meu implicit de imagini
+Make lightview the default image viewer	Fă din lightview vizualizatorul implicit de imagini
+Mean (R, G, B)	Medie (R, G, B)
+Measure	Măsoară
+Merge drawings into the image?	Îmbinați desenele în imagine?
+MobileSAM — finds the object in a box	MobileSAM — găsește obiectul dintr-un chenar
+Model	Model
+Name	Nume
+Nearest	Cel mai apropiat
+Next Frame	Cadrul următor
+Next Image	Imaginea următoare
+no graphics card with Vulkan or Direct3D 12 was found	nu s-a găsit nicio placă grafică cu Vulkan sau Direct3D 12
+No location in this file	Nicio locație în acest fișier
+No model installed yet.	Niciun model instalat încă.
+No object found in the box	Niciun obiect găsit în chenar
+No recent files	Niciun fișier recent
+None (sRGB assumed)	Niciunul (se presupune sRGB)
+Nothing to paste: {e}	Nimic de lipit: {e}
+OK	OK
+ONNX export (half precision) by FuryTMP on Hugging Face; its origin isn't verified.	Export ONNX (jumătate de precizie) de FuryTMP pe Hugging Face; originea nu este verificată.
+ONNX export by Acly on Hugging Face, from the authors' weights; downloaded from Heliosoph LLC's copy.	Export ONNX de Acly pe Hugging Face, din ponderile autorilor; descărcat din copia Heliosoph LLC.
+ONNX model	Model ONNX
+Only add models from sources you trust: they run with your permissions.	Adăugați doar modele din surse de încredere: rulează cu permisiunile dumneavoastră.
+Open Recent	Deschide recente
+Open in Google Maps	Deschide în Google Maps
+Open models folder	Deschide dosarul modelelor
+Open project page	Deschide pagina proiectului
+Open…	Deschide…
+Other tags ({count})	Alte etichete ({count})
+Output	Ieșire
+Paste	Lipește
+Pause Animation	Pauză animație
+Percentage	Procent
+Correct Perspective	Corectează perspectiva
+Play Animation	Redă animația
+Please read and accept the licence before downloading.	Citiți și acceptați licența înainte de descărcare.
+Preprocessing: {file}	Preprocesare: {file}
+Previous Frame	Cadrul anterior
+Previous Image	Imaginea anterioară
+Read the input size from the model	Citește dimensiunea de intrare din model
+Real-ESRGAN 4× half precision	Real-ESRGAN 4× jumătate de precizie
+Real-ESRGAN 4× — upscales, smooth, may invent detail	Real-ESRGAN 4× — mărește, neted, poate inventa detalii
+Real-ESRGAN and DarkIR can't be downloaded here. Convert them yourself with lightview-models, then copy the .onnx files into the models folder:	Real-ESRGAN și DarkIR nu pot fi descărcate aici. Convertiți-le singuri cu lightview-models, apoi copiați fișierele .onnx în dosarul modelelor:
+Real-ESRGAN general 4× half precision	Real-ESRGAN general 4× jumătate de precizie
+Real-ESRGAN general 4× — fast, softer	Real-ESRGAN general 4× — rapid, mai moale
+Rectangle	Dreptunghi
+Rectangular Selection	Selecție dreptunghiulară
+Red: how much red each pixel has	Roșu: cât roșu are fiecare pixel
+Redo	Refă
+Remove Background	Elimină fundalul
+Remove Background and Crop	Elimină fundalul și decupează
+Remove location from the copy	Elimină locația din copie
+Replace Background	Înlocuiește fundalul
+Reset	Resetează
+Reset Color Adjustments	Resetează ajustările de culoare
+Reset to default	Revino la implicit
+Resize	Redimensionare
+Resize…	Redimensionare…
+Resolution	Rezoluție
+Restart lightview to start using the GPU.	Reporniți lightview pentru a începe să folosiți GPU-ul.
+Revert	Revenire
+Rotate Left	Rotește la stânga
+Rotate Right	Rotește la dreapta
+Rounded Rectangle	Dreptunghi rotunjit
+Run the AI tools on any graphics card with Vulkan or Direct3D 12 ({mb} MB download, WebGPU). A weak built-in graphics chip can be slower than the CPU.	Rulează instrumentele AI pe orice placă grafică cu Vulkan sau Direct3D 12 (descărcare de {mb} MB, WebGPU). Un cip grafic integrat slab poate fi mai lent decât procesorul.
+Run the AI tools on the graphics card ({mb} MB download, NVIDIA's CUDA libraries).	Rulează instrumentele AI pe placa grafică (descărcare de {mb} MB, bibliotecile CUDA de la NVIDIA).
+Running {file}…	Se rulează {file}…
+SCUNet σ15 — light noise	SCUNet σ15 — zgomot slab
+SCUNet σ25 — moderate noise	SCUNet σ25 — zgomot moderat
+SCUNet σ50 — heavy noise	SCUNet σ50 — zgomot puternic
+SCUNet — noise and JPEG artifacts (recommended)	SCUNet — zgomot și artefacte JPEG (recomandat)
+Saturation	Saturație
+Saturation: from grey to vivid color	Saturație: de la gri la culoare vie
+Save As…	Salvează ca…
+Save copy…	Salvează o copie…
+Saved in JPEG files	Salvat în fișierele JPEG
+Saved {name}	Salvat: {name}
+Saves a copy of the file with this metadata (without other edits). Camera maker notes are removed.	Salvează o copie a fișierului cu aceste metadate (fără alte modificări). Notele producătorului aparatului sunt eliminate.
+Select	Selectează
+Select All	Selectează tot
+Select Object	Selectează obiectul
+Select Object (AI)	Selectează obiectul (AI)
+Selecting the object…	Se selectează obiectul…
+Settings	Setări
+Settings…	Setări…
+Shapes	Forme
+Show Drawing Toolbar	Arată bara de desen
+Show Image Information	Arată informațiile imaginii
+Silueta — small and fast	Silueta — mic și rapid
+Size read from the model when it runs; the usual normalisation.	Dimensiune citită din model la rulare; normalizarea obișnuită.
+Sketch	Schiță
+Smoother zooming and panning. Uses more GPU memory and makes switching images a little slower.	Mărire și deplasare mai fluide. Folosește mai multă memorie GPU și face trecerea între imagini puțin mai lentă.
+Sort order	Ordine de sortare
+Std (R, G, B)	Abatere std. (R, G, B)
+Strength	Intensitate
+Stroke	Contur
+SwinIR σ25 — moderate noise, very slow	SwinIR σ25 — zgomot moderat, foarte lent
+Text	Text
+Text colour	Culoarea textului
+The AI runtime isn't installed yet: Local AI > Download AI Runtime…	Mediul de rulare AI nu este instalat încă: AI local > Descarcă mediul de rulare AI…
+The GPU couldn't be used, so the CPU is: {e}	GPU-ul nu a putut fi folosit, așa că se folosește procesorul: {e}
+The corners must form a shape with no crossing sides	Colțurile trebuie să formeze o figură fără laturi care se intersectează
+the model's mask decoder is missing	lipsește decodorul de mască al modelului
+Thickness	Grosime
+Tint	Tentă
+Tools	Instrumente
+Undo	Anulează acțiunea
+Use YYYY:MM:DD HH:MM:SS	Folosiți YYYY:MM:DD HH:MM:SS
+Use the GPU	Folosește GPU-ul
+Used by Remove Background and Remove Background and Crop.	Folosit de Elimină fundalul și Elimină fundalul și decupează.
+Uses Bilinear while GPU scaling is on	Folosește Biliniară cât timp scalarea cu GPU este activă
+U²-Net people — portraits	U²-Net persoane — portrete
+U²-Net small — fastest	U²-Net mic — cel mai rapid
+U²-Net — general	U²-Net — general
+Value: from black to full color	Valoare: de la negru la culoare plină
+View	Vizualizare
+Welcome to lightview	Bun venit în lightview
+Width	Lățime
+Your edits to {name} haven't been saved.	Modificările aduse lui {name} nu au fost salvate.
+Zoom	Mărire
+Zoom In	Mărește
+Zoom Out	Micșorează
+a GPU library was missing from the download	o bibliotecă GPU lipsea din descărcare
+about {time} left	mai sunt aproximativ {time}
+can't save as .{ext}: use .jpg, .png, .webp, .bmp, .tif or .gif	nu se poate salva ca .{ext}: folosiți .jpg, .png, .webp, .bmp, .tif sau .gif
+choose a new name: the original is never modified	alegeți un nume nou: originalul nu este modificat niciodată
+compressed SVG files aren't supported	fișierele SVG comprimate nu sunt acceptate
+couldn't read this file's EXIF safely	EXIF-ul acestui fișier nu a putut fi citit în siguranță
+edited: {w} × {h}	editat: {w} × {h}
+lightview is now the default image viewer	lightview este acum vizualizatorul implicit de imagini
+no data folder	niciun dosar de date
+no frames	niciun cadru
+no subject found	niciun subiect găsit
+pick an .onnx file	alegeți un fișier .onnx
+the download didn't match its checksum	descărcarea nu corespunde sumei de control
+the model has no image input	modelul nu are intrare de imagine
+the model's output changed size between tiles	ieșirea modelului și-a schimbat dimensiunea între blocuri
+the model's output doesn't match its input size	ieșirea modelului nu corespunde dimensiunii de intrare
+the model's output isn't a whole multiple of its input	ieșirea modelului nu este un multiplu întreg al intrării
+the written file didn't check out: the location wasn't removed	fișierul scris nu a trecut verificarea: locația nu a fost eliminată
+the written file didn't check out: {e}	fișierul scris nu a trecut verificarea: {e}
+the written file didn't check out: {label} wasn't saved	fișierul scris nu a trecut verificarea: {label} nu a fost salvat
+this file crashed its decoder	acest fișier a blocat decodorul
+this file's EXIF couldn't be processed	EXIF-ul acestui fișier nu a putut fi procesat
+this image is too large to open	această imagine este prea mare pentru a fi deschisă
+this isn't a regular file	acesta nu este un fișier obișnuit
+{format}, {count} frames	{format}, cadre: {count}
+{name} is already installed	{name} este deja instalat
+{name} will be moved to the Trash.	{name} va fi mutat în Coșul de gunoi.
+{task} done	{task}: gata
+{task} failed: {e}	{task}: eșuat: {e}
+{task} on the GPU	{task} pe GPU
+{task} preview of the visible area · drag to compare · Before | After	{task}: previzualizarea zonei vizibile · trageți pentru a compara · Înainte | După
+Remove Object	Elimină obiectul
+LaMa — best quality, slower	LaMa — cea mai bună calitate, mai lent
+MI-GAN — fast	MI-GAN — rapid
+ONNX export by Carve on Hugging Face; its origin isn't verified.	Export ONNX de Carve pe Hugging Face; originea nu este verificată.
+the selection is empty	selecția este goală
+No images in {name}	Nicio imagine în {name}
+Can't open {name}: not a supported image	{name} nu poate fi deschis: nu este o imagine acceptată
+Save Copy	Salvează o copie
+Copy Path	Copiază calea
+Show in File Manager	Arată în managerul de fișiere
+Rename…	Redenumește…
+First Image	Prima imagine
+Last Image	Ultima imagine
+Copied the path	Calea a fost copiată
+Rename Image	Redenumește imaginea
+Rename	Redenumește
+That isn't a valid file name	Acesta nu este un nume de fișier valid
+{name} already exists	{name} există deja
+File changed on disk	Fișierul s-a schimbat pe disc
+{name} changed on disk. Reloading it discards your edits.	{name} s-a schimbat pe disc. Reîncărcarea renunță la modificările dumneavoastră.
+Reload	Reîncarcă
+Keep Edits	Păstrează modificările
+Pixel grid	Grilă de pixeli
+Shows the edges of the pixels when zoomed far in.	Arată marginile pixelilor la o mărire puternică.
+Click a pixel to copy its colour · Esc to stop	Clic pe un pixel pentru a-i copia culoarea · Esc pentru oprire
+Copied {color}	Copiat: {color}
+Copy Color	Copiază culoarea
+this file is damaged or cut short	acest fișier este deteriorat sau trunchiat
+HEIC and AVIF files need libheif, which isn't installed	Fișierele HEIC și AVIF necesită libheif, care nu este instalat
+this file needs a libheif decoder plugin, which isn't installed	acest fișier necesită un modul de decodare libheif, care nu este instalat
+this file needs Microsoft's HEIF Image Extensions and HEVC or AV1 Video Extensions	acest fișier necesită HEIF Image Extensions de la Microsoft și HEVC sau AV1 Video Extensions
+Pages	Pagini
+Next Page	Pagina următoare
+Previous Page	Pagina anterioară
+{format}, {count} pages	{format}, pagini: {count}
+page {n} of {count}	pagina {n} din {count}
+Colour management	Gestionarea culorilor
+Converts images with a colour profile to sRGB, so wide-gamut photos look right on an sRGB monitor. Turn it off for a wide-gamut monitor.	Convertește imaginile cu profil de culoare în sRGB, ca fotografiile cu gamă largă să arate corect pe un monitor sRGB. Dezactivați pentru un monitor cu gamă largă.
+this RAW file has no embedded preview	acest fișier RAW nu are previzualizare încorporată
+{format} (embedded preview)	{format} (previzualizare încorporată)
+EXIF isn't read from this kind of RAW file yet	EXIF nu este încă citit din acest tip de fișier RAW
+A RAW file's metadata is shown, not edited.	Metadatele unui fișier RAW sunt afișate, nu editate.
+A WebP file's metadata is shown, not edited.	Metadatele unui fișier WebP sunt afișate, nu editate.
+EXIF is shown for JPEG, PNG, WebP, TIFF and RAW files	EXIF este afișat pentru fișierele JPEG, PNG, WebP, TIFF și RAW
+the copy must be a .{ext} file	copia trebuie să fie un fișier .{ext}
+the written file didn't check out: the image changed	fișierul scris nu a trecut verificarea: imaginea s-a schimbat
+Copy File	Copiază fișierul
+Copied the file	Fișierul a fost copiat
+Couldn't copy the file: {e}	Fișierul nu a putut fi copiat: {e}
+Straighten…	Îndreaptă…
+Straighten	Îndreaptă
+Greyscale	Tonuri de gri
+Invert Colors	Inversează culorile
+Remove Red Eye	Elimină ochii roșii
+Pixelate Selection	Pixelează selecția
+Select the eyes first, then choose this.	Selectați mai întâi ochii, apoi alegeți aceasta.
+Hides faces. For text, a solid shape is safer: pixelation can sometimes be undone.	Ascunde fețele. Pentru text, o formă plină este mai sigură: pixelarea poate fi uneori inversată.
+Red eye removed	Ochi roșii eliminați
+Pixelated	Pixelat
+Turn until the lines run straight · Enter to apply · Esc to cancel	Rotiți până când liniile sunt drepte · Enter pentru aplicare · Esc pentru anulare
+Recognize Text	Recunoaște textul
+PP-OCRv5 Latin — European languages	PP-OCRv5 Latin — limbi europene
+PP-OCRv5 — Chinese, Japanese and English	PP-OCRv5 — chineză, japoneză și engleză
+Converted to ONNX by Satoru Nakamura (University of Tokyo) from PaddlePaddle's published models.	Convertit în ONNX de Satoru Nakamura (Universitatea din Tokyo) din modelele publicate de PaddlePaddle.
+the model's output doesn't match its character list	ieșirea modelului nu corespunde listei sale de caractere
+Read QR Code	Citește codul QR
+No QR code found	Niciun cod QR găsit
+No text found	Niciun text găsit
+QR Code	Cod QR
+Text in Image	Text în imagine
+Couldn't read the text: {e}	Textul nu a putut fi citit: {e}
+Reading QR codes…	Se citesc codurile QR…
+Recognizing text…	Se recunoaște textul…
+Reads the selection, or the whole image. Straighten tilted text first, and select small text in a large image so it's read at full size.	Citește selecția sau întreaga imagine. Îndreptați mai întâi textul înclinat și selectați textul mic dintr-o imagine mare, ca să fie citit la dimensiune completă.
+Reads the selection, or the whole image. Shows what the code says; links are never opened.	Citește selecția sau întreaga imagine. Arată ce conține codul; linkurile nu sunt deschise niciodată.
+Keyboard Shortcuts	Comenzi rapide de la tastatură
+Press keys… (Esc to cancel)	Apăsați tastele… (Esc pentru anulare)
+Change	Schimbă
+Remove	Elimină
+Reset All Shortcuts	Resetează toate comenzile rapide
+{keys} is already used by {action}	{keys} este deja folosit de {action}
+Copy, Cut, Paste, Enter, Esc and Delete	Copiază, Taie, Lipește, Enter, Esc și Delete
+Change Keyboard Shortcuts…	Schimbă comenzile rapide…
+Theme	Temă
+Follow system	Urmează sistemul
+Dark	Întunecată
+Light	Luminoasă
+High contrast	Contrast ridicat
+bigger than 64 KiB	mai mare de 64 KiB
+invalid value	valoare nevalidă
+line	linie
+Your own themes go in the themes folder next to the AI models. Choosing a theme again reloads its file.	Temele proprii se pun în dosarul de teme de lângă modelele AI. Alegerea din nou a unei teme îi reîncarcă fișierul.
+Couldn't load the theme, so the base theme is used: {e}	Tema nu a putut fi încărcată, așa că se folosește tema de bază: {e}
+Open themes folder	Deschide dosarul temelor
+Group Duplicates in Folder…	Grupează duplicatele din dosar…
+Group Duplicates in Folder	Grupează duplicatele din dosar
+Compares the images in this folder (not its subfolders) and moves each group of look-alikes into a folder of its own. Nothing is deleted, and Ctrl+Z moves them back. Rotated copies and heavy crops aren't found.	Compară imaginile din acest dosar (nu și din subdosare) și mută fiecare grup de imagini asemănătoare într-un dosar propriu. Nimic nu este șters, iar Ctrl+Z le mută înapoi. Copiile rotite și decupările mari nu sunt găsite.
+Comparing images: {done} of {total}	Se compară imaginile: {done} din {total}
+How different each image is from its closest look-alike:	Cât de diferită este fiecare imagine de cea mai asemănătoare:
+Largest difference	Cea mai mare diferență
+{meaning} · suggested: {n}	{meaning} · sugerat: {n}
+Identical pixels only	Doar pixeli identici
+Resized or recompressed copies	Copii redimensionate sau recomprimate
+Small edits, crops and bursts	Modificări mici, decupări și rafale
+Merely similar scenes too	Și scene doar asemănătoare
+Groups: {groups} · Images to move: {moving} · Staying: {staying}	Grupuri: {groups} · Imagini de mutat: {moving} · Rămân: {staying}
+Not compared: {n}	Necomparate: {n}
+Not compared	Necomparat
+{name} · difference: {d}	{name} · diferență: {d}
+Move	Mută
+Images moved: {n} · Folders: {f}	Imagini mutate: {n} · Dosare: {f}
+Stopped: {e}	Oprit: {e}
+Images moved back: {n}	Imagini mutate înapoi: {n}
+{name}: changed since it was compared	{name}: s-a schimbat de la comparare
+{name}: already in the folder	{name}: este deja în dosar
+{name}: its old name is taken	{name}: vechiul nume este ocupat
+the file is gone	fișierul nu mai există
+About {s} s left	Mai sunt aproximativ {s} s
+About {m} min left	Mai sunt aproximativ {m} min
+Smallest group	Cel mai mic grup
+Groups with fewer images stay where they are.	Grupurile cu mai puține imagini rămân pe loc.
+Resize Optimally	Dimensiune optimă
+Shrinks the image to the size its detail needs, measured on its sharpest part. Never enlarges; Ctrl+Z undoes it.	Micșorează imaginea la dimensiunea de care au nevoie detaliile ei, măsurată pe partea cea mai clară. Nu mărește niciodată; Ctrl+Z anulează.
+Already at its optimal size	Are deja dimensiunea optimă
+Resized to {w} × {h} px	Redimensionat la {w} × {h} px
+The image changed while {task} ran; run it again	Imaginea s-a schimbat în timp ce rula {task}; rulați din nou
+lightview hit an internal error	lightview a întâmpinat o eroare internă

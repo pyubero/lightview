@@ -1,0 +1,426 @@
+AI Models	Μοντέλα ΤΝ
+AI Models…	Μοντέλα ΤΝ…
+AI runtime (ONNX Runtime)	Περιβάλλον εκτέλεσης ΤΝ (ONNX Runtime)
+Accept and Continue	Αποδοχή και συνέχεια
+Accept and Download	Αποδοχή και λήψη
+Accessibility	Προσβασιμότητα
+Actual Size	Πραγματικό μέγεθος
+Add model file…	Προσθήκη αρχείου μοντέλου…
+Added {name}	Προστέθηκε: {name}
+Adjust Color	Ρύθμιση χρωμάτων
+Adjust Color…	Ρύθμιση χρωμάτων…
+Adjust Curves	Ρύθμιση καμπυλών
+Adjust Curves…	Ρύθμιση καμπυλών…
+All channels together: overall brightness	Όλα τα κανάλια μαζί: συνολική φωτεινότητα
+Animation	Κίνηση
+Applies the next time lightview starts	Ισχύει από την επόμενη εκκίνηση του lightview
+Apply sigmoid (the model outputs logits)	Εφαρμογή σιγμοειδούς (το μοντέλο δίνει logits)
+Apply to Selection	Εφαρμογή στην επιλογή
+Apply to Whole Image{size} (about {estimate})	Εφαρμογή σε όλη την εικόνα{size} (περίπου {estimate})
+Arrow	Βέλος
+Artist	Δημιουργός
+Auto Levels	Αυτόματα επίπεδα
+Blur Background	Θόλωμα φόντου
+Blur Background…	Θόλωμα φόντου…
+BSRGAN 4× — upscales and sharpens, may invent detail	BSRGAN 4× — μεγεθύνει και οξύνει, μπορεί να επινοήσει λεπτομέρειες
+Background colour	Χρώμα φόντου
+BiRefNet lite — best quality, slow	BiRefNet lite — καλύτερη ποιότητα, αργό
+Bicubic	Δικυβική
+Bilinear	Διγραμμική
+Blue: how much blue each pixel has	Μπλε: πόσο μπλε έχει κάθε εικονοστοιχείο
+Camera	Φωτογραφική μηχανή
+Camera make	Κατασκευαστής μηχανής
+Camera model	Μοντέλο μηχανής
+Can't open this image:\n{e}	Δεν είναι δυνατό το άνοιγμα της εικόνας:\n{e}
+Cancel	Ακύρωση
+Cancelled	Ακυρώθηκε
+Check for updates	Έλεγχος για ενημερώσεις
+Close	Κλείσιμο
+Click to add a point, drag to move it, right-click to remove it	Κλικ για προσθήκη σημείου, σύρετε για μετακίνηση, δεξί κλικ για αφαίρεση
+Color space	Χρωματικός χώρος
+Colour	Χρώμα
+Colour profile	Χρωματικό προφίλ
+Continue	Συνέχεια
+Contrast	Αντίθεση
+Converted to ONNX by Heliosoph LLC from the authors' published weights.	Μετατράπηκε σε ONNX από την Heliosoph LLC από τα βάρη που δημοσίευσαν οι δημιουργοί.
+Copied {w} × {h} px	Αντιγράφηκαν {w} × {h} px
+Copy	Αντιγραφή
+Copyright	Πνευματικά δικαιώματα
+Couldn't add the model: {e}	Δεν ήταν δυνατή η προσθήκη του μοντέλου: {e}
+Couldn't delete the image: {e}	Δεν ήταν δυνατή η διαγραφή της εικόνας: {e}
+Couldn't download {file}: {e}	Δεν ήταν δυνατή η λήψη του {file}: {e}
+Couldn't install the AI runtime: {e}	Δεν ήταν δυνατή η εγκατάσταση του περιβάλλοντος εκτέλεσης ΤΝ: {e}
+Couldn't process the image: {e}	Δεν ήταν δυνατή η επεξεργασία της εικόνας: {e}
+Couldn't read {file}: {e}	Δεν ήταν δυνατή η ανάγνωση του {file}: {e}
+Couldn't restore the image: {e}	Δεν ήταν δυνατή η επαναφορά της εικόνας: {e}
+Couldn't save {name}: {e}	Δεν ήταν δυνατή η αποθήκευση του {name}: {e}
+Couldn't select the object: {e}	Δεν ήταν δυνατή η επιλογή του αντικειμένου: {e}
+Crop	Περικοπή
+Cut	Αποκοπή
+DarkIR brightens dark and night photos and removes their noise and blur. On a well-lit photo it overexposes.	Το DarkIR φωτίζει σκοτεινές και νυχτερινές φωτογραφίες και αφαιρεί τον θόρυβο και το θάμπωμα. Σε καλά φωτισμένη φωτογραφία προκαλεί υπερέκθεση.
+DarkIR — dark and night photos, same size	DarkIR — σκοτεινές και νυχτερινές φωτογραφίες, ίδιο μέγεθος
+Date modified	Ημερομηνία τροποποίησης
+Date taken	Ημερομηνία λήψης
+Default window size	Προεπιλεγμένο μέγεθος παραθύρου
+Delete image?	Διαγραφή εικόνας;
+Delete Image…	Διαγραφή εικόνας…
+Delete Selection	Διαγραφή επιλογής
+Denoise	Αποθορυβοποίηση
+Denoise and Enhance run about 10× faster on a GTX 1050	Η Αποθορυβοποίηση και η Βελτίωση τρέχουν περίπου 10× ταχύτερα σε GTX 1050
+Describe the image for people who can't see it	Περιγράψτε την εικόνα για όσους δεν μπορούν να τη δουν
+Description	Περιγραφή
+Deselect	Αποεπιλογή
+Detect size	Εντοπισμός μεγέθους
+Dimensions	Διαστάσεις
+Discard	Απόρριψη
+Discard edits?	Απόρριψη αλλαγών;
+Distance: {d} px · ΔX: {dx} px · ΔY: {dy} px	Απόσταση: {d} px · ΔX: {dx} px · ΔY: {dy} px
+Done	Τέλος
+Download	Λήψη
+Download AI Runtime…	Λήψη περιβάλλοντος εκτέλεσης ΤΝ…
+Download GPU Support	Λήψη υποστήριξης GPU
+Downloaded from Microsoft (ONNX Runtime) and NVIDIA (CUDA libraries, via their official PyPI packages).	Λήψη από τη Microsoft (ONNX Runtime) και την NVIDIA (βιβλιοθήκες CUDA, μέσω των επίσημων πακέτων PyPI τους).
+Downloaded from Microsoft's official PyPI package (onnxruntime-ep-webgpu).	Λήψη από το επίσημο πακέτο PyPI της Microsoft (onnxruntime-ep-webgpu).
+Downloaded {file}	Λήφθηκε: {file}
+Downloading GPU support ({mb} MB)…	Λήψη υποστήριξης GPU ({mb} MB)…
+Downloading the AI runtime…	Λήψη του περιβάλλοντος εκτέλεσης ΤΝ…
+Downloading…	Λήψη…
+Drag a box around one object; its outline becomes the selection. Holes inside it stay selected.	Σύρετε ένα πλαίσιο γύρω από ένα αντικείμενο· το περίγραμμά του γίνεται η επιλογή. Τα κενά στο εσωτερικό μένουν επιλεγμένα.
+Drag to measure in image pixels · Esc to stop	Σύρετε για μέτρηση σε εικονοστοιχεία εικόνας · Esc για τέλος
+Drag to select · Enter to crop · Esc to cancel	Σύρετε για επιλογή · Enter για περικοπή · Esc για ακύρωση
+Drag the corners onto a rectangle · Enter to apply · Esc to cancel	Σύρετε τις γωνίες πάνω σε ένα ορθογώνιο · Enter για εφαρμογή · Esc για ακύρωση
+Drawings, text and pasted images will be merged into the image and can't be edited afterwards. Ctrl+Z undoes it.	Τα σχέδια, το κείμενο και οι επικολλημένες εικόνες θα συγχωνευτούν στην εικόνα και δεν θα μπορούν να επεξεργαστούν μετά. Το Ctrl+Z το αναιρεί.
+Edit	Επεξεργασία
+Edit the image description	Επεξεργασία περιγραφής εικόνας
+Ellipse	Έλλειψη
+Elliptical Selection	Ελλειπτική επιλογή
+Embedded (unnamed)	Ενσωματωμένο (χωρίς όνομα)
+Enhance Image	Βελτίωση εικόνας
+Enhance Image uses generative AI. To make the image look better it may invent or alter fine details, such as textures, text or faces, that weren't in the original.	Η Βελτίωση εικόνας χρησιμοποιεί παραγωγική ΤΝ. Για να φαίνεται καλύτερη η εικόνα, μπορεί να επινοήσει ή να αλλάξει λεπτές λεπτομέρειες, όπως υφές, κείμενο ή πρόσωπα, που δεν υπήρχαν στο πρωτότυπο.
+Enter Full Screen	Πλήρης οθόνη
+Exposure	Έκθεση
+File	Αρχείο
+File name	Όνομα αρχείου
+File size	Μέγεθος αρχείου
+Fill	Γέμισμα
+Fills the background with the background colour from Settings.	Γεμίζει το φόντο με το χρώμα φόντου από τις Ρυθμίσεις.
+Fit to Window	Προσαρμογή στο παράθυρο
+Flip Horizontally	Οριζόντια αναστροφή
+Flip Vertically	Κατακόρυφη αναστροφή
+Folder	Φάκελος
+Font size	Μέγεθος γραμματοσειράς
+For a faithful clean-up, use Denoise instead.	Για πιστό καθάρισμα, χρησιμοποιήστε την Αποθορυβοποίηση.
+Format	Μορφή
+GPU (AMD, Intel and others, experimental)	GPU (AMD, Intel και άλλες, πειραματικό)
+GPU (NVIDIA)	GPU (NVIDIA)
+GPU image scaling	Κλιμάκωση εικόνας με GPU
+GPU support	Υποστήριξη GPU
+GPU support installed: restart lightview to use it	Η υποστήριξη GPU εγκαταστάθηκε: επανεκκινήστε το lightview για να τη χρησιμοποιήσετε
+General	Γενικά
+Green: how much green each pixel has	Πράσινο: πόσο πράσινο έχει κάθε εικονοστοιχείο
+Height	Ύψος
+Hide Drawing Toolbar	Απόκρυψη γραμμής σχεδίασης
+Hide Image Information	Απόκρυψη πληροφοριών εικόνας
+Highlight	Μαρκαδόρος
+Hue: the color itself, such as red or blue	Απόχρωση: το ίδιο το χρώμα, π.χ. κόκκινο ή μπλε
+IS-Net anime — illustrations	IS-Net anime — εικονογραφήσεις
+IS-Net — general, clean edges	IS-Net — γενικό, καθαρές άκρες
+Image	Εικόνα
+Image description	Περιγραφή εικόνας
+Images	Εικόνες
+Input size	Μέγεθος εισόδου
+Installed the AI runtime	Το περιβάλλον εκτέλεσης ΤΝ εγκαταστάθηκε
+Interpolation	Παρεμβολή
+It also makes the image {k}× bigger ({pixels}× the pixels), which takes a while for a big photo.	Επίσης μεγαλώνει την εικόνα {k}× ({pixels}× τα εικονοστοιχεία), κάτι που παίρνει χρόνο για μεγάλη φωτογραφία.
+It's no longer in the Trash	Δεν βρίσκεται πια στον Κάδο απορριμμάτων
+Keep aspect ratio	Διατήρηση αναλογιών
+Language	Γλώσσα
+Lasso	Λάσο
+Lens	Φακός
+Licence ({step} of {count}) — {title}	Άδεια ({step} από {count}) — {title}
+Licence — {title}	Άδεια — {title}
+Lightness: from black, through color, to white	Φωτεινότητα: από μαύρο, μέσω χρώματος, σε λευκό
+Line	Γραμμή
+Local AI	Τοπική ΤΝ
+Location	Τοποθεσία
+Magnifier	Μεγεθυντικός φακός
+Make lightview my default image viewer	Ορισμός του lightview ως προεπιλεγμένου προγράμματος προβολής εικόνων μου
+Make lightview the default image viewer	Ορισμός του lightview ως προεπιλεγμένου προγράμματος προβολής εικόνων
+Mean (R, G, B)	Μέσος όρος (R, G, B)
+Measure	Μέτρηση
+Merge drawings into the image?	Συγχώνευση σχεδίων στην εικόνα;
+MobileSAM — finds the object in a box	MobileSAM — βρίσκει το αντικείμενο μέσα σε πλαίσιο
+Model	Μοντέλο
+Name	Όνομα
+Nearest	Πλησιέστερο
+Next Frame	Επόμενο καρέ
+Next Image	Επόμενη εικόνα
+no graphics card with Vulkan or Direct3D 12 was found	δεν βρέθηκε κάρτα γραφικών με Vulkan ή Direct3D 12
+No location in this file	Δεν υπάρχει τοποθεσία σε αυτό το αρχείο
+No model installed yet.	Δεν έχει εγκατασταθεί ακόμη μοντέλο.
+No object found in the box	Δεν βρέθηκε αντικείμενο στο πλαίσιο
+No recent files	Δεν υπάρχουν πρόσφατα αρχεία
+None (sRGB assumed)	Κανένα (θεωρείται sRGB)
+Nothing to paste: {e}	Τίποτα για επικόλληση: {e}
+OK	OK
+ONNX export (half precision) by FuryTMP on Hugging Face; its origin isn't verified.	Εξαγωγή ONNX (μισή ακρίβεια) από τον FuryTMP στο Hugging Face· η προέλευσή της δεν έχει επαληθευτεί.
+ONNX export by Acly on Hugging Face, from the authors' weights; downloaded from Heliosoph LLC's copy.	Εξαγωγή ONNX από τον Acly στο Hugging Face, από τα βάρη των δημιουργών· λήψη από το αντίγραφο της Heliosoph LLC.
+ONNX model	Μοντέλο ONNX
+Only add models from sources you trust: they run with your permissions.	Προσθέτετε μόνο μοντέλα από πηγές που εμπιστεύεστε: εκτελούνται με τα δικαιώματά σας.
+Open Recent	Άνοιγμα πρόσφατου
+Open in Google Maps	Άνοιγμα στους Χάρτες Google
+Open models folder	Άνοιγμα φακέλου μοντέλων
+Open project page	Άνοιγμα σελίδας έργου
+Open…	Άνοιγμα…
+Other tags ({count})	Άλλες ετικέτες ({count})
+Output	Έξοδος
+Paste	Επικόλληση
+Pause Animation	Παύση κίνησης
+Percentage	Ποσοστό
+Correct Perspective	Διόρθωση προοπτικής
+Play Animation	Αναπαραγωγή κίνησης
+Please read and accept the licence before downloading.	Διαβάστε και αποδεχτείτε την άδεια πριν από τη λήψη.
+Preprocessing: {file}	Προεπεξεργασία: {file}
+Previous Frame	Προηγούμενο καρέ
+Previous Image	Προηγούμενη εικόνα
+Read the input size from the model	Ανάγνωση μεγέθους εισόδου από το μοντέλο
+Real-ESRGAN 4× half precision	Real-ESRGAN 4× μισή ακρίβεια
+Real-ESRGAN 4× — upscales, smooth, may invent detail	Real-ESRGAN 4× — μεγεθύνει, ομαλό, μπορεί να επινοήσει λεπτομέρειες
+Real-ESRGAN and DarkIR can't be downloaded here. Convert them yourself with lightview-models, then copy the .onnx files into the models folder:	Τα Real-ESRGAN και DarkIR δεν μπορούν να ληφθούν εδώ. Μετατρέψτε τα μόνοι σας με το lightview-models και αντιγράψτε τα αρχεία .onnx στον φάκελο μοντέλων:
+Real-ESRGAN general 4× half precision	Real-ESRGAN general 4× μισή ακρίβεια
+Real-ESRGAN general 4× — fast, softer	Real-ESRGAN general 4× — γρήγορο, πιο απαλό
+Rectangle	Ορθογώνιο
+Rectangular Selection	Ορθογώνια επιλογή
+Red: how much red each pixel has	Κόκκινο: πόσο κόκκινο έχει κάθε εικονοστοιχείο
+Redo	Επανάληψη
+Remove Background	Αφαίρεση φόντου
+Remove Background and Crop	Αφαίρεση φόντου και περικοπή
+Remove location from the copy	Αφαίρεση τοποθεσίας από το αντίγραφο
+Replace Background	Αντικατάσταση φόντου
+Reset	Επαναφορά
+Reset Color Adjustments	Επαναφορά ρυθμίσεων χρώματος
+Reset to default	Επαναφορά προεπιλογής
+Resize	Αλλαγή μεγέθους
+Resize…	Αλλαγή μεγέθους…
+Resolution	Ανάλυση
+Restart lightview to start using the GPU.	Επανεκκινήστε το lightview για να αρχίσετε να χρησιμοποιείτε την GPU.
+Revert	Επαναφορά αρχικού
+Rotate Left	Περιστροφή αριστερά
+Rotate Right	Περιστροφή δεξιά
+Rounded Rectangle	Στρογγυλεμένο ορθογώνιο
+Run the AI tools on any graphics card with Vulkan or Direct3D 12 ({mb} MB download, WebGPU). A weak built-in graphics chip can be slower than the CPU.	Εκτέλεση των εργαλείων ΤΝ σε οποιαδήποτε κάρτα γραφικών με Vulkan ή Direct3D 12 (λήψη {mb} MB, WebGPU). Ένα αδύναμο ενσωματωμένο τσιπ γραφικών μπορεί να είναι πιο αργό από τον επεξεργαστή.
+Run the AI tools on the graphics card ({mb} MB download, NVIDIA's CUDA libraries).	Εκτέλεση των εργαλείων ΤΝ στην κάρτα γραφικών (λήψη {mb} MB, βιβλιοθήκες CUDA της NVIDIA).
+Running {file}…	Εκτέλεση {file}…
+SCUNet σ15 — light noise	SCUNet σ15 — ελαφρύς θόρυβος
+SCUNet σ25 — moderate noise	SCUNet σ25 — μέτριος θόρυβος
+SCUNet σ50 — heavy noise	SCUNet σ50 — έντονος θόρυβος
+SCUNet — noise and JPEG artifacts (recommended)	SCUNet — θόρυβος και τεχνουργήματα JPEG (συνιστάται)
+Saturation	Κορεσμός
+Saturation: from grey to vivid color	Κορεσμός: από γκρι σε έντονο χρώμα
+Save As…	Αποθήκευση ως…
+Save copy…	Αποθήκευση αντιγράφου…
+Saved in JPEG files	Αποθηκεύεται σε αρχεία JPEG
+Saved {name}	Αποθηκεύτηκε: {name}
+Saves a copy of the file with this metadata (without other edits). Camera maker notes are removed.	Αποθηκεύει αντίγραφο του αρχείου με αυτά τα μεταδεδομένα (χωρίς άλλες αλλαγές). Οι σημειώσεις του κατασκευαστή αφαιρούνται.
+Select	Επιλογή
+Select All	Επιλογή όλων
+Select Object	Επιλογή αντικειμένου
+Select Object (AI)	Επιλογή αντικειμένου (ΤΝ)
+Selecting the object…	Επιλογή του αντικειμένου…
+Settings	Ρυθμίσεις
+Settings…	Ρυθμίσεις…
+Shapes	Σχήματα
+Show Drawing Toolbar	Εμφάνιση γραμμής σχεδίασης
+Show Image Information	Εμφάνιση πληροφοριών εικόνας
+Silueta — small and fast	Silueta — μικρό και γρήγορο
+Size read from the model when it runs; the usual normalisation.	Το μέγεθος διαβάζεται από το μοντέλο κατά την εκτέλεση· η συνήθης κανονικοποίηση.
+Sketch	Σκίτσο
+Smoother zooming and panning. Uses more GPU memory and makes switching images a little slower.	Ομαλότερη μεγέθυνση και μετακίνηση. Χρησιμοποιεί περισσότερη μνήμη GPU και κάνει την εναλλαγή εικόνων λίγο πιο αργή.
+Sort order	Σειρά ταξινόμησης
+Std (R, G, B)	Τυπ. απόκλιση (R, G, B)
+Strength	Ένταση
+Stroke	Περίγραμμα
+SwinIR σ25 — moderate noise, very slow	SwinIR σ25 — μέτριος θόρυβος, πολύ αργό
+Text	Κείμενο
+Text colour	Χρώμα κειμένου
+The AI runtime isn't installed yet: Local AI > Download AI Runtime…	Το περιβάλλον εκτέλεσης ΤΝ δεν έχει εγκατασταθεί ακόμη: Τοπική ΤΝ > Λήψη περιβάλλοντος εκτέλεσης ΤΝ…
+The GPU couldn't be used, so the CPU is: {e}	Η GPU δεν μπορούσε να χρησιμοποιηθεί, οπότε χρησιμοποιείται ο επεξεργαστής: {e}
+The corners must form a shape with no crossing sides	Οι γωνίες πρέπει να σχηματίζουν σχήμα χωρίς πλευρές που τέμνονται
+the model's mask decoder is missing	λείπει ο αποκωδικοποιητής μάσκας του μοντέλου
+Thickness	Πάχος
+Tint	Χροιά
+Tools	Εργαλεία
+Undo	Αναίρεση
+Use YYYY:MM:DD HH:MM:SS	Χρησιμοποιήστε YYYY:MM:DD HH:MM:SS
+Use the GPU	Χρήση της GPU
+Used by Remove Background and Remove Background and Crop.	Χρησιμοποιείται από την Αφαίρεση φόντου και την Αφαίρεση φόντου και περικοπή.
+Uses Bilinear while GPU scaling is on	Χρησιμοποιεί Διγραμμική όσο η κλιμάκωση με GPU είναι ενεργή
+U²-Net people — portraits	U²-Net άνθρωποι — πορτρέτα
+U²-Net small — fastest	U²-Net μικρό — ταχύτερο
+U²-Net — general	U²-Net — γενικό
+Value: from black to full color	Τιμή: από μαύρο σε πλήρες χρώμα
+View	Προβολή
+Welcome to lightview	Καλώς ήρθατε στο lightview
+Width	Πλάτος
+Your edits to {name} haven't been saved.	Οι αλλαγές σας στο {name} δεν έχουν αποθηκευτεί.
+Zoom	Ζουμ
+Zoom In	Μεγέθυνση
+Zoom Out	Σμίκρυνση
+a GPU library was missing from the download	έλειπε μια βιβλιοθήκη GPU από τη λήψη
+about {time} left	απομένουν περίπου {time}
+can't save as .{ext}: use .jpg, .png, .webp, .bmp, .tif or .gif	δεν είναι δυνατή η αποθήκευση ως .{ext}: χρησιμοποιήστε .jpg, .png, .webp, .bmp, .tif ή .gif
+choose a new name: the original is never modified	επιλέξτε νέο όνομα: το πρωτότυπο δεν τροποποιείται ποτέ
+compressed SVG files aren't supported	τα συμπιεσμένα αρχεία SVG δεν υποστηρίζονται
+couldn't read this file's EXIF safely	δεν ήταν δυνατή η ασφαλής ανάγνωση του EXIF αυτού του αρχείου
+edited: {w} × {h}	επεξεργασμένο: {w} × {h}
+lightview is now the default image viewer	το lightview είναι πλέον το προεπιλεγμένο πρόγραμμα προβολής εικόνων
+no data folder	δεν υπάρχει φάκελος δεδομένων
+no frames	δεν υπάρχουν καρέ
+no subject found	δεν βρέθηκε κύριο αντικείμενο
+pick an .onnx file	επιλέξτε ένα αρχείο .onnx
+the download didn't match its checksum	η λήψη δεν ταιριάζει με το άθροισμα ελέγχου της
+the model has no image input	το μοντέλο δεν έχει είσοδο εικόνας
+the model's output changed size between tiles	η έξοδος του μοντέλου άλλαξε μέγεθος μεταξύ πλακιδίων
+the model's output doesn't match its input size	η έξοδος του μοντέλου δεν ταιριάζει με το μέγεθος εισόδου
+the model's output isn't a whole multiple of its input	η έξοδος του μοντέλου δεν είναι ακέραιο πολλαπλάσιο της εισόδου
+the written file didn't check out: the location wasn't removed	το αρχείο που γράφτηκε απέτυχε στον έλεγχο: η τοποθεσία δεν αφαιρέθηκε
+the written file didn't check out: {e}	το αρχείο που γράφτηκε απέτυχε στον έλεγχο: {e}
+the written file didn't check out: {label} wasn't saved	το αρχείο που γράφτηκε απέτυχε στον έλεγχο: το {label} δεν αποθηκεύτηκε
+this file crashed its decoder	αυτό το αρχείο προκάλεσε κατάρρευση του αποκωδικοποιητή του
+this file's EXIF couldn't be processed	το EXIF αυτού του αρχείου δεν ήταν δυνατό να επεξεργαστεί
+this image is too large to open	αυτή η εικόνα είναι πολύ μεγάλη για να ανοίξει
+this isn't a regular file	αυτό δεν είναι κανονικό αρχείο
+{format}, {count} frames	{format}, καρέ: {count}
+{name} is already installed	Το {name} είναι ήδη εγκατεστημένο
+{name} will be moved to the Trash.	Το {name} θα μετακινηθεί στον Κάδο απορριμμάτων.
+{task} done	{task}: ολοκληρώθηκε
+{task} failed: {e}	{task}: απέτυχε: {e}
+{task} on the GPU	{task} στην GPU
+{task} preview of the visible area · drag to compare · Before | After	{task}: προεπισκόπηση της ορατής περιοχής · σύρετε για σύγκριση · Πριν | Μετά
+Remove Object	Αφαίρεση αντικειμένου
+LaMa — best quality, slower	LaMa — καλύτερη ποιότητα, πιο αργό
+MI-GAN — fast	MI-GAN — γρήγορο
+ONNX export by Carve on Hugging Face; its origin isn't verified.	Εξαγωγή ONNX από τον Carve στο Hugging Face· η προέλευσή της δεν έχει επαληθευτεί.
+the selection is empty	η επιλογή είναι κενή
+No images in {name}	Δεν υπάρχουν εικόνες στο {name}
+Can't open {name}: not a supported image	Δεν είναι δυνατό το άνοιγμα του {name}: δεν είναι υποστηριζόμενη εικόνα
+Save Copy	Αποθήκευση αντιγράφου
+Copy Path	Αντιγραφή διαδρομής
+Show in File Manager	Εμφάνιση στη διαχείριση αρχείων
+Rename…	Μετονομασία…
+First Image	Πρώτη εικόνα
+Last Image	Τελευταία εικόνα
+Copied the path	Η διαδρομή αντιγράφηκε
+Rename Image	Μετονομασία εικόνας
+Rename	Μετονομασία
+That isn't a valid file name	Αυτό δεν είναι έγκυρο όνομα αρχείου
+{name} already exists	Το {name} υπάρχει ήδη
+File changed on disk	Το αρχείο άλλαξε στον δίσκο
+{name} changed on disk. Reloading it discards your edits.	Το {name} άλλαξε στον δίσκο. Η επαναφόρτωση απορρίπτει τις αλλαγές σας.
+Reload	Επαναφόρτωση
+Keep Edits	Διατήρηση αλλαγών
+Pixel grid	Πλέγμα εικονοστοιχείων
+Shows the edges of the pixels when zoomed far in.	Δείχνει τα όρια των εικονοστοιχείων σε μεγάλη μεγέθυνση.
+Click a pixel to copy its colour · Esc to stop	Κλικ σε ένα εικονοστοιχείο για αντιγραφή του χρώματός του · Esc για τέλος
+Copied {color}	Αντιγράφηκε: {color}
+Copy Color	Αντιγραφή χρώματος
+this file is damaged or cut short	αυτό το αρχείο είναι κατεστραμμένο ή ελλιπές
+HEIC and AVIF files need libheif, which isn't installed	Τα αρχεία HEIC και AVIF χρειάζονται το libheif, που δεν είναι εγκατεστημένο
+this file needs a libheif decoder plugin, which isn't installed	αυτό το αρχείο χρειάζεται πρόσθετο αποκωδικοποίησης libheif, που δεν είναι εγκατεστημένο
+this file needs Microsoft's HEIF Image Extensions and HEVC or AV1 Video Extensions	αυτό το αρχείο χρειάζεται τα HEIF Image Extensions της Microsoft και τα HEVC ή AV1 Video Extensions
+Pages	Σελίδες
+Next Page	Επόμενη σελίδα
+Previous Page	Προηγούμενη σελίδα
+{format}, {count} pages	{format}, σελίδες: {count}
+page {n} of {count}	σελίδα {n} από {count}
+Colour management	Διαχείριση χρωμάτων
+Converts images with a colour profile to sRGB, so wide-gamut photos look right on an sRGB monitor. Turn it off for a wide-gamut monitor.	Μετατρέπει εικόνες με χρωματικό προφίλ σε sRGB, ώστε οι φωτογραφίες ευρείας γκάμας να φαίνονται σωστά σε οθόνη sRGB. Απενεργοποιήστε τη για οθόνη ευρείας γκάμας.
+this RAW file has no embedded preview	αυτό το αρχείο RAW δεν έχει ενσωματωμένη προεπισκόπηση
+{format} (embedded preview)	{format} (ενσωματωμένη προεπισκόπηση)
+EXIF isn't read from this kind of RAW file yet	Το EXIF δεν διαβάζεται ακόμη από αυτό το είδος αρχείου RAW
+A RAW file's metadata is shown, not edited.	Τα μεταδεδομένα αρχείου RAW εμφανίζονται, δεν επεξεργάζονται.
+A WebP file's metadata is shown, not edited.	Τα μεταδεδομένα αρχείου WebP εμφανίζονται, δεν επεξεργάζονται.
+EXIF is shown for JPEG, PNG, WebP, TIFF and RAW files	Το EXIF εμφανίζεται για αρχεία JPEG, PNG, WebP, TIFF και RAW
+the copy must be a .{ext} file	το αντίγραφο πρέπει να είναι αρχείο .{ext}
+the written file didn't check out: the image changed	το αρχείο που γράφτηκε απέτυχε στον έλεγχο: η εικόνα άλλαξε
+Copy File	Αντιγραφή αρχείου
+Copied the file	Το αρχείο αντιγράφηκε
+Couldn't copy the file: {e}	Δεν ήταν δυνατή η αντιγραφή του αρχείου: {e}
+Straighten…	Ίσιωμα…
+Straighten	Ίσιωμα
+Greyscale	Κλίμακα του γκρι
+Invert Colors	Αντιστροφή χρωμάτων
+Remove Red Eye	Αφαίρεση κόκκινων ματιών
+Pixelate Selection	Εικονοστοιχειοποίηση επιλογής
+Select the eyes first, then choose this.	Επιλέξτε πρώτα τα μάτια και μετά αυτό.
+Hides faces. For text, a solid shape is safer: pixelation can sometimes be undone.	Κρύβει πρόσωπα. Για κείμενο, ένα συμπαγές σχήμα είναι ασφαλέστερο: η εικονοστοιχειοποίηση μερικές φορές αναιρείται.
+Red eye removed	Τα κόκκινα μάτια αφαιρέθηκαν
+Pixelated	Εικονοστοιχειοποιήθηκε
+Turn until the lines run straight · Enter to apply · Esc to cancel	Περιστρέψτε μέχρι οι γραμμές να γίνουν ίσιες · Enter για εφαρμογή · Esc για ακύρωση
+Recognize Text	Αναγνώριση κειμένου
+PP-OCRv5 Latin — European languages	PP-OCRv5 Latin — ευρωπαϊκές γλώσσες
+PP-OCRv5 — Chinese, Japanese and English	PP-OCRv5 — κινεζικά, ιαπωνικά και αγγλικά
+Converted to ONNX by Satoru Nakamura (University of Tokyo) from PaddlePaddle's published models.	Μετατράπηκε σε ONNX από τον Satoru Nakamura (Πανεπιστήμιο του Τόκιο) από τα μοντέλα που δημοσίευσε η PaddlePaddle.
+the model's output doesn't match its character list	η έξοδος του μοντέλου δεν ταιριάζει με τη λίστα χαρακτήρων του
+Read QR Code	Ανάγνωση κωδικού QR
+No QR code found	Δεν βρέθηκε κωδικός QR
+No text found	Δεν βρέθηκε κείμενο
+QR Code	Κωδικός QR
+Text in Image	Κείμενο στην εικόνα
+Couldn't read the text: {e}	Δεν ήταν δυνατή η ανάγνωση του κειμένου: {e}
+Reading QR codes…	Ανάγνωση κωδικών QR…
+Recognizing text…	Αναγνώριση κειμένου…
+Reads the selection, or the whole image. Straighten tilted text first, and select small text in a large image so it's read at full size.	Διαβάζει την επιλογή ή ολόκληρη την εικόνα. Ισιώστε πρώτα το κεκλιμένο κείμενο και επιλέξτε μικρό κείμενο σε μεγάλη εικόνα ώστε να διαβαστεί σε πλήρες μέγεθος.
+Reads the selection, or the whole image. Shows what the code says; links are never opened.	Διαβάζει την επιλογή ή ολόκληρη την εικόνα. Δείχνει τι λέει ο κωδικός· οι σύνδεσμοι δεν ανοίγουν ποτέ.
+Keyboard Shortcuts	Συντομεύσεις πληκτρολογίου
+Press keys… (Esc to cancel)	Πατήστε πλήκτρα… (Esc για ακύρωση)
+Change	Αλλαγή
+Remove	Αφαίρεση
+Reset All Shortcuts	Επαναφορά όλων των συντομεύσεων
+{keys} is already used by {action}	Το {keys} χρησιμοποιείται ήδη από: {action}
+Copy, Cut, Paste, Enter, Esc and Delete	Αντιγραφή, Αποκοπή, Επικόλληση, Enter, Esc και Delete
+Change Keyboard Shortcuts…	Αλλαγή συντομεύσεων πληκτρολογίου…
+Theme	Θέμα
+Follow system	Όπως το σύστημα
+Dark	Σκούρο
+Light	Φωτεινό
+High contrast	Υψηλή αντίθεση
+bigger than 64 KiB	μεγαλύτερο από 64 KiB
+invalid value	μη έγκυρη τιμή
+line	γραμμή
+Your own themes go in the themes folder next to the AI models. Choosing a theme again reloads its file.	Τα δικά σας θέματα μπαίνουν στον φάκελο θεμάτων δίπλα στα μοντέλα ΤΝ. Αν επιλέξετε ξανά ένα θέμα, το αρχείο του φορτώνεται ξανά.
+Couldn't load the theme, so the base theme is used: {e}	Δεν ήταν δυνατή η φόρτωση του θέματος, οπότε χρησιμοποιείται το βασικό θέμα: {e}
+Open themes folder	Άνοιγμα φακέλου θεμάτων
+Group Duplicates in Folder…	Ομαδοποίηση διπλότυπων στον φάκελο…
+Group Duplicates in Folder	Ομαδοποίηση διπλότυπων στον φάκελο
+Compares the images in this folder (not its subfolders) and moves each group of look-alikes into a folder of its own. Nothing is deleted, and Ctrl+Z moves them back. Rotated copies and heavy crops aren't found.	Συγκρίνει τις εικόνες σε αυτόν τον φάκελο (όχι στους υποφακέλους) και μετακινεί κάθε ομάδα παρόμοιων εικόνων σε δικό της φάκελο. Τίποτα δεν διαγράφεται και το Ctrl+Z τις επαναφέρει. Δεν εντοπίζονται περιστραμμένα αντίγραφα και μεγάλες περικοπές.
+Comparing images: {done} of {total}	Σύγκριση εικόνων: {done} από {total}
+How different each image is from its closest look-alike:	Πόσο διαφέρει κάθε εικόνα από την πιο παρόμοιά της:
+Largest difference	Μέγιστη διαφορά
+{meaning} · suggested: {n}	{meaning} · προτείνεται: {n}
+Identical pixels only	Μόνο πανομοιότυπα εικονοστοιχεία
+Resized or recompressed copies	Αντίγραφα με αλλαγμένο μέγεθος ή νέα συμπίεση
+Small edits, crops and bursts	Μικρές αλλαγές, περικοπές και ριπές
+Merely similar scenes too	Και απλώς παρόμοιες σκηνές
+Groups: {groups} · Images to move: {moving} · Staying: {staying}	Ομάδες: {groups} · Εικόνες προς μετακίνηση: {moving} · Μένουν: {staying}
+Not compared: {n}	Χωρίς σύγκριση: {n}
+Not compared	Χωρίς σύγκριση
+{name} · difference: {d}	{name} · διαφορά: {d}
+Move	Μετακίνηση
+Images moved: {n} · Folders: {f}	Εικόνες που μετακινήθηκαν: {n} · Φάκελοι: {f}
+Stopped: {e}	Διακόπηκε: {e}
+Images moved back: {n}	Εικόνες που επανήλθαν: {n}
+{name}: changed since it was compared	{name}: άλλαξε μετά τη σύγκριση
+{name}: already in the folder	{name}: βρίσκεται ήδη στον φάκελο
+{name}: its old name is taken	{name}: το παλιό του όνομα χρησιμοποιείται
+the file is gone	το αρχείο δεν υπάρχει πια
+About {s} s left	Απομένουν περίπου {s} δευτ.
+About {m} min left	Απομένουν περίπου {m} λεπτ.
+Smallest group	Μικρότερη ομάδα
+Groups with fewer images stay where they are.	Οι ομάδες με λιγότερες εικόνες μένουν στη θέση τους.
+Resize Optimally	Βέλτιστο μέγεθος
+Shrinks the image to the size its detail needs, measured on its sharpest part. Never enlarges; Ctrl+Z undoes it.	Σμικρύνει την εικόνα στο μέγεθος που χρειάζονται οι λεπτομέρειές της, μετρημένο στο πιο ευκρινές σημείο της. Δεν μεγεθύνει ποτέ· το Ctrl+Z το αναιρεί.
+Already at its optimal size	Έχει ήδη το βέλτιστο μέγεθος
+Resized to {w} × {h} px	Αλλαγή μεγέθους σε {w} × {h} px
+The image changed while {task} ran; run it again	Η εικόνα άλλαξε όσο εκτελούνταν: {task}· εκτελέστε το ξανά
+lightview hit an internal error	Το lightview αντιμετώπισε εσωτερικό σφάλμα

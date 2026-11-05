@@ -141,8 +141,9 @@ The models, how to install them and the tips for text recognition are in the REA
 
 ## Languages, shortcuts and accessibility
 
-- **Fifteen languages:** English, Spanish, French, German, Italian, Portuguese, Polish, Dutch,
-  Russian, Japanese, Chinese (Simplified and Traditional), Korean, Ukrainian and Turkish. lightview
+- **Twenty-five languages:** English, Spanish, French, German, Italian, Portuguese, Polish, Dutch,
+  Russian, Japanese, Chinese (Simplified and Traditional), Korean, Ukrainian, Turkish, Indonesian,
+  Vietnamese, Czech, Swedish, Hungarian, Romanian, Greek, Danish, Finnish and Norwegian (Bokmål). lightview
   starts in your system's language. The texts from Polish onwards are machine translations:
   corrections are welcome ([`TRANSLATING.md`](TRANSLATING.md)).
 - **Chinese, Japanese and Korean** are drawn with your system's CJK font (on Linux the one
