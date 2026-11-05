@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.5.0 (2026-11-05)
+
+- Image → Resize Optimally shrinks the image to the size its detail actually needs, measured on its sharpest part, so a blurry or upscaled photo stops wasting pixels. It never enlarges, running it again changes nothing, and Ctrl+Z undoes it.
+- Nineteen more languages, 28 in all: Japanese, Chinese (Simplified and Traditional), Korean, Ukrainian, Turkish, Indonesian, Vietnamese, Czech, Swedish, Hungarian, Romanian, Greek, Danish, Finnish, Norwegian (Bokmål), Catalan (also for Valencian), Basque and Galician. These are machine translations, so corrections are welcome: see `docs/TRANSLATING.md`. Chinese, Japanese and Korean use your system's CJK font, such as Noto Sans CJK (`fonts-noto-cjk`).
+- Adjust Color and Adjust Curves now also apply to the results of Enhance, Denoise, Remove Object, Remove Red Eye and Pixelate Selection; before, a colour change made after them showed nothing and saved nothing.
+- The whole-image time shown in the Denoise/Enhance preview is now close to the real time.
+- An AI result that arrives after you've changed the edits, or moved to another image, is dropped with a message instead of being pasted in the wrong place.
+- A crash inside an AI tool or a save now reports an error instead of leaving the tool disabled or an empty copy behind.
+- EXIF copies of PNG files keep their XMP metadata, as JPEG copies do.
+
 ## 0.4.0 (2026-11-03)
 
 - Tools → Group Duplicates in Folder… compares every image in the folder and moves each group of look-alikes, the first one included, into a new folder named after the group's first image. A histogram shows how close the images are and suggests a threshold; a Smallest group slider leaves groups under that size where they are, so you can move only the big bursts; the groups update as you move the sliders, before anything moves. A burst of shots stays in one group. Nothing is deleted or stored on disk, the viewer stays in the folder, and Ctrl+Z moves everything back. Subfolders aren't looked at, and rotated copies and heavy crops aren't found.
