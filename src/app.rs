@@ -319,19 +319,11 @@ impl App {
                     Ok((mut img, _)) => {
                         if let Some(sel) = &run.selection {
                             clip_to(&mut img, sel, region.min);
+                            self.apply_patch(img, region);
+                        } else {
+                            // The whole image (an upscaler's maybe bigger): it becomes the source, so colour still applies.
+                            self.edit(|d| d.replace_with(img));
                         }
-                        let style = Style::for_image(region.size());
-                        let scale = (img.width() as f32 / region.width()).round().max(1.0);
-                        self.edit(|d| {
-                            if scale > 1.0 {
-                                // An upscaler ran on the whole image: the image becomes that many times bigger.
-                                let size = d.size_vec() * scale;
-                                d.resize(size.x as u32, size.y as u32);
-                                d.elements.push(Element::pasted(Arc::new(img), Pos2::ZERO, size, style));
-                            } else {
-                                d.elements.push(Element::pasted(Arc::new(img), region.min, region.size(), style));
-                            }
-                        });
                         // The filled area should be seen, not outlined.
                         if run.task == crate::ai::Task::Inpaint {
                             self.shown.selection = None;
@@ -878,10 +870,23 @@ impl App {
         };
         f(&mut patch);
         clip_to(&mut patch, &sel, region.min);
-        let style = Style::for_image(region.size());
-        self.edit(|d| d.elements.push(Element::pasted(Arc::new(patch), region.min, region.size(), style)));
+        self.apply_patch(patch, region);
         self.shown.selection = None;
         self.set_status(done);
+    }
+
+    /// Puts `patch` (cut from the rendered image, so with its colour) over `region`. On a still
+    /// image everything is then flattened into the source, so later colour changes reach the patch too.
+    // shortcut: animations keep it as a pasted element, which later colour changes skip; flatten each frame if that's missed.
+    fn apply_patch(&mut self, patch: image::RgbaImage, region: Rect) {
+        let still = self.current().and_then(|p| self.cache.get(p)).filter(|l| l.frames.len() == 1).cloned();
+        let style = Style::for_image(region.size());
+        self.edit(|d| {
+            d.elements.push(Element::pasted(Arc::new(patch), region.min, region.size(), style));
+            if let Some(img) = still.and_then(|l| edit::render(&l.frames[0], d).ok()) {
+                d.replace_with(img.into_rgba8());
+            }
+        });
     }
 
     /// Adds a clipboard image (straight RGBA) as a movable element, centred and fitted inside the image.

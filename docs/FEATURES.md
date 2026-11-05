@@ -89,7 +89,9 @@ Circle, point out or note something without a second app. Open the drawing toolb
 - A magnifier lens that enlarges part of the image.
 - A measuring tool showing distance, ΔX and ΔY in image pixels.
 - Colour, thickness, fill and font size for each element. Elements stay editable until you save,
-  and what you see is what gets saved, at the image's own resolution.
+  and what you see is what gets saved, at the image's own resolution. Remove Red Eye, Pixelate
+  Selection and the Local AI tools that change pixels merge markup and colour changes into the
+  image, so later colour changes reach their result too; Ctrl+Z undoes that.
 
 ## Files and safe deleting
 

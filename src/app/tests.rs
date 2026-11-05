@@ -182,7 +182,9 @@ fn removing_an_object_pastes_the_fill_once_and_clears_the_selection() {
     let fill = image::RgbaImage::from_pixel(1, 1, image::Rgba([1, 2, 3, 255]));
     app.handle(Msg::Restored(2, path, region, true, Ok((fill, 0.0))));
     assert!(app.shown.selection.is_none() && app.restoring.is_none());
-    assert_eq!(app.doc().map(|d| d.elements.len()), Some(1));
+    let doc = app.doc().unwrap();
+    assert!(doc.elements.is_empty(), "flattened into the source, so colour reaches it");
+    assert_eq!(doc.base.unwrap().0.pixels[..3], [1, 2, 3]);
 }
 
 #[test]
@@ -451,15 +453,18 @@ fn pixelate_and_red_eye_patch_the_selection_and_undo() {
         app.shown.selection = Some(crate::markup::Selection::Ellipse(Rect::from_min_size(Pos2::new(5.0, 4.0), Vec2::new(20.0, 16.0))));
         app.run_actions(&[action.clone()], &ctx, false);
         let doc = app.doc().unwrap();
-        assert_eq!(doc.elements.len(), 1, "one patch");
-        assert_eq!(doc.elements[0].points, [Pos2::new(5.0, 4.0), Pos2::new(25.0, 20.0)]);
+        let base = doc.base.clone().expect("flattened into the source, so colour reaches the patch");
+        let px = |f: &Frame, x: usize, y: usize| f.pixels[(y * 40 + x) * 3..][..3].to_vec();
+        let original = &app.cache[app.current().unwrap()].frames[0];
+        assert_eq!(px(&base.0, 0, 0), px(original, 0, 0), "outside the selection stays");
+        assert_ne!((5..25).flat_map(|x| (4..20).map(move |y| (x, y))).filter(|&(x, y)| px(&base.0, x, y) != px(original, x, y)).count(), 0, "inside is patched");
         assert!(app.shown.selection.is_none(), "the result is shown, not outlined");
         app.run_actions(&[Action::Undo], &ctx, false);
-        assert!(app.doc().unwrap().elements.is_empty());
+        assert!(app.doc().unwrap().base.is_none());
     }
     // Nothing to patch without a selection.
     app.run_actions(&[Action::Pixelate], &ctx, false);
-    assert!(app.doc().unwrap().elements.is_empty());
+    assert!(app.doc().unwrap().base.is_none());
 }
 
 #[test]

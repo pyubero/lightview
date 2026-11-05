@@ -251,6 +251,16 @@ impl Doc {
         Ok(())
     }
 
+    /// Makes `img` (the edited image after an AI tool ran on all of it) the new source, so
+    /// later colour changes reach it. Its colour and markup are in its pixels already, so they're reset.
+    pub fn replace_with(&mut self, img: image::RgbaImage) {
+        let alpha = img.pixels().any(|p| p[3] != 255);
+        let (w, h) = img.dimensions();
+        let pixels = if alpha { img.into_raw() } else { drop_alpha(&img).into_raw() };
+        let frame = Frame { w, h, pixels, alpha, delay: std::time::Duration::ZERO };
+        *self = Doc { dpi: self.dpi, base: Some(Base(Arc::new(frame))), ..Doc::new(w, h) };
+    }
+
     /// ΔX, ΔY and the distance from `a` to `b` (output px), in the original image's pixels
     /// but along the axes as shown.
     pub fn measure(&self, a: Pos2, b: Pos2) -> [f32; 3] {
@@ -820,18 +830,16 @@ mod tests {
     }
 
     #[test]
-    fn upscaled_result_covers_the_bigger_image() {
-        // What applying a 2× Enhance does: the doc grows, and the result covers it at full size.
-        use crate::markup::Style;
-        use std::sync::Arc;
-        let mut doc = Doc::new(6, 5);
-        doc.resize(12, 10);
+    fn upscaled_result_becomes_the_source() {
+        // What applying a 2× Enhance does: the result is the whole image, and colour still reaches it.
+        let mut doc = Doc { adjust: Adjust { exposure: 1.0, ..Adjust::default() }, ..Doc::new(6, 5) };
         let result = image::RgbaImage::from_fn(12, 10, |x, y| image::Rgba([(x * 20) as u8, (y * 20) as u8, 7, 255]));
-        doc.elements.push(Element::pasted(Arc::new(result.clone()), Pos2::ZERO, Vec2::new(12.0, 10.0), Style::for_image(Vec2::new(12.0, 10.0))));
+        doc.replace_with(result.clone());
         let out = render(&frame(), &doc).unwrap().to_rgba8();
-        assert_eq!(out.dimensions(), (12, 10));
-        let worst = out.as_raw().iter().zip(result.as_raw()).map(|(a, b)| a.abs_diff(*b)).max().unwrap();
-        assert!(worst <= 1, "{worst}");
+        assert_eq!(out, result, "the old exposure is in the result already");
+        doc.adjust.invert = true;
+        let inverted = render(&frame(), &doc).unwrap().to_rgba8();
+        assert_eq!(inverted.get_pixel(3, 2).0, [195, 215, 248, 255]);
     }
 
     #[test]
