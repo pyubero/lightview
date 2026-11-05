@@ -86,6 +86,17 @@ fn tiles_upscale() {
 }
 
 #[test]
+fn cost_counts_tiles() {
+    // Preview: one 256 px tile in 1 s. Whole 1000×1000 with 512 px tiles overlapping by 64: 3×3.
+    let cost = Cost { spent: 1.0, secs_per_px: 1.0 / (256.0 * 256.0), fixed: None, cap: 512 };
+    assert_eq!(cost.secs(1000, 1000), 9.0 * 4.0);
+    assert_eq!(tile_starts(1000, 512, 64), [0, 244, 488]);
+    // A fixed-size model keeps its tile.
+    let fixed = Cost { spent: 1.0, secs_per_px: 1.0 / (128.0 * 128.0), fixed: Some(128), cap: 512 };
+    assert_eq!(fixed.secs(128, 128), 1.0);
+}
+
+#[test]
 fn tiles_report_progress_and_cancel() {
     let img = gradient(100, 100);
     let seen = std::cell::RefCell::new(Vec::new());
@@ -346,12 +357,34 @@ fn restore_photo() {
     let path = PathBuf::from(std::env::var("LIGHTVIEW_AI").unwrap());
     let img = image::open(&path).unwrap().into_rgba8();
     let t = std::time::Instant::now();
-    let out = restore(&std::env::var("LIGHTVIEW_AI_MODEL").unwrap(), &img, &|_| {}, &AtomicBool::new(false)).unwrap();
+    let out = restore(&std::env::var("LIGHTVIEW_AI_MODEL").unwrap(), &img, &|_| {}, &AtomicBool::new(false)).unwrap().0;
     let ms = t.elapsed().as_secs_f64() * 1000.0;
     eprintln!("restored {}×{} in {ms:.0} ms ({:.0} ms/MP)", img.width(), img.height(), ms / (img.width() * img.height()) as f64 * 1e6);
     let out_path = std::env::temp_dir().join(format!("{}-restored.png", path.file_stem().unwrap().to_string_lossy()));
     out.save(&out_path).unwrap();
     eprintln!("wrote {}", out_path.display());
+}
+
+/// Whether the compare bar's estimate holds: `LIGHTVIEW_AI=photo.jpg LIGHTVIEW_AI_MODEL=<file>
+/// cargo test --release restore_estimate -- --ignored --nocapture`. Runs the centre 256 px
+/// patch as the preview does, then the whole image, and prints the estimate against the truth.
+#[test]
+#[ignore]
+fn restore_estimate() {
+    let img = image::open(std::env::var("LIGHTVIEW_AI").unwrap()).unwrap().into_rgba8();
+    let file = std::env::var("LIGHTVIEW_AI_MODEL").unwrap();
+    let (w, h) = (img.width(), img.height());
+    let (pw, ph) = (w.min(256), h.min(256));
+    let patch = image::imageops::crop_imm(&img, (w - pw) / 2, (h - ph) / 2, pw, ph).to_image();
+    let t = std::time::Instant::now();
+    let (out, cost) = restore(&file, &patch, &|_| {}, &AtomicBool::new(false)).unwrap();
+    let preview = t.elapsed().as_secs_f64();
+    let old = preview / (out.width() * out.height()) as f64 * (w * h) as f64 * 1.4;
+    let new = preview - cost.spent + cost.secs(w as usize, h as usize);
+    let t = std::time::Instant::now();
+    restore(&file, &img, &|_| {}, &AtomicBool::new(false)).unwrap();
+    let actual = t.elapsed().as_secs_f64();
+    eprintln!("{w}×{h} on_gpu {}: preview {preview:.1} s (model {:.1} s), old estimate {old:.0} s, new {new:.0} s, actual {actual:.0} s", on_gpu(), cost.spent);
 }
 
 /// Installs the GPU support the way the menu does (~1.5 GB): `cargo test install_gpu -- --ignored`.
@@ -374,7 +407,7 @@ fn gpu_restore() {
     for gpu in [true, false] {
         set_use_gpu(gpu);
         let t = std::time::Instant::now();
-        let out = restore(&file, &img, &|_| {}, &AtomicBool::new(false)).unwrap();
+        let out = restore(&file, &img, &|_| {}, &AtomicBool::new(false)).unwrap().0;
         eprintln!("use_gpu {gpu}: on_gpu {} in {:.0} ms, error {:?}", on_gpu(), t.elapsed().as_secs_f64() * 1000.0, gpu_error());
         assert_eq!(on_gpu(), gpu);
         results.push(out);
@@ -411,7 +444,7 @@ fn webgpu_restore() {
     for gpu in [true, false] {
         set_use_gpu(gpu);
         let t = std::time::Instant::now();
-        let out = restore(&file, &img, &|_| {}, &AtomicBool::new(false)).unwrap();
+        let out = restore(&file, &img, &|_| {}, &AtomicBool::new(false)).unwrap().0;
         eprintln!("use_gpu {gpu}: on_gpu {} in {:.0} ms, error {:?}", on_gpu(), t.elapsed().as_secs_f64() * 1000.0, gpu_error().map(|e| short_error(&e)));
         results.push(out);
     }

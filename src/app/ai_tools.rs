@@ -42,7 +42,8 @@ pub(super) struct Compare {
     pub(super) texture: TextureHandle,
     /// Where the before/after line is, 0–1 across the region.
     pub(super) split: f32,
-    pub(super) ms_per_mp: f64,
+    /// About how many seconds the whole image would take.
+    pub(super) estimate: f64,
     /// How many times bigger the model makes the image (an upscaler), else 1.
     pub(super) scale: u32,
 }
@@ -164,9 +165,10 @@ impl App {
                 let img = img.into_rgba8();
                 let part = image::imageops::crop_imm(&img, region.min.x as u32, region.min.y as u32, region.width() as u32, region.height() as u32).to_image();
                 let progress = |p: f32| notify.send(Msg::Progress(id, p));
-                let out = crate::ai::restore(&file, &part, &progress, &cancel)?;
-                let mp = (out.width() * out.height()) as f64 / 1e6;
-                Ok((out, started.elapsed().as_secs_f64() * 1000.0 / mp))
+                let (out, cost) = crate::ai::restore(&file, &part, &progress, &cancel)?;
+                // Rendering the edits and loading the model happen once, whatever the size.
+                let setup = started.elapsed().as_secs_f64() - cost.spent;
+                Ok((out, setup + cost.secs(img.width() as usize, img.height() as usize)))
             }));
             notify.send(Msg::Restored(id, path, region, whole, result));
         });
@@ -226,9 +228,7 @@ impl App {
     pub(super) fn compare_bar(&mut self, ctx: &egui::Context, viewport: Rect) {
         let Some(c) = &self.shown.compare else { return };
         let Some(doc) = self.doc() else { return };
-        let mp = doc.size_vec().x as f64 * doc.size_vec().y as f64 / 1e6;
-        // shortcut: overlapping tiles do ~1.3–1.4× the image's pixels on a 12 MP photo; count the tiles if estimates are off.
-        let estimate = format_duration(c.ms_per_mp * mp * 1.4 / 1000.0);
+        let estimate = format_duration(c.estimate);
         // A bigger patch doesn't fit back into the image, so upscalers only do the whole image.
         let selection = self.shown.selection.clone().filter(|s| !s.is_empty() && c.scale == 1);
         let result = if c.scale > 1 { format!(", {} × {} px", doc.size[0] * c.scale, doc.size[1] * c.scale) } else { String::new() };

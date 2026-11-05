@@ -54,28 +54,80 @@ pub fn on_gpu() -> bool {
 }
 
 /// Denoise / Enhance: runs an image-to-image model over `img` in overlapping tiles.
-/// `progress` gets 0–1 after each tile; setting `cancel` stops it between tiles.
-pub fn restore(file: &str, img: &RgbaImage, progress: &dyn Fn(f32), cancel: &AtomicBool) -> Result<RgbaImage, String> {
+/// `progress` gets 0–1 after each tile; setting `cancel` stops it between tiles. Also returns
+/// what the tiles cost, to estimate a bigger run.
+pub fn restore(file: &str, img: &RgbaImage, progress: &dyn Fn(f32), cancel: &AtomicBool) -> Result<(RgbaImage, Cost), String> {
     let mut session = session(file)?;
     // A model exported with a fixed size only takes tiles of that size.
     let fixed = session.inputs().first().and_then(|i| i.dtype().tensor_shape()).and_then(|shape| match shape.iter().copied().collect::<Vec<i64>>().as_slice() {
         [.., h, w] if h == w && (1..=MAX_INPUT_SIDE).contains(h) => Some(*h as usize),
         _ => None,
     });
-    // Big tiles: per pixel they cost the same. A smaller image gets a tile just big enough
-    // (a multiple of 64, which these models accept), so the preview isn't padded out.
-    // Each catalog model says how big (`Known::max_tile`); 512 for others.
+    // Big tiles: per pixel they cost the same. Each catalog model says how big
+    // (`Known::max_tile`); 512 for others.
     let name = Path::new(file).file_name().and_then(|n| n.to_str()).unwrap_or(file);
     let cap = known(name).map_or(512, |k| k.max_tile as usize);
-    let long = img.width().max(img.height()) as usize;
-    let tile = fixed.unwrap_or(long.div_ceil(64).max(1) * 64).min(fixed.unwrap_or(cap));
-    let run = |input: Vec<f32>, t: usize| -> Result<Vec<f32>, String> {
+    let (w, h) = (img.width() as usize, img.height() as usize);
+    let tile = restore_tile(fixed, cap, w.max(h));
+    let mut times = Vec::new();
+    let mut run = |input: Vec<f32>, t: usize| -> Result<Vec<f32>, String> {
+        let started = std::time::Instant::now();
         let tensor = ort::value::Tensor::from_array(([1usize, 3, t, t], input)).map_err(|e| e.to_string())?;
         let outputs = session.run(ort::inputs![tensor]).map_err(|e| e.to_string())?;
         let (_, out) = outputs[0].try_extract_tensor::<f32>().map_err(|e| e.to_string())?;
+        times.push(started.elapsed().as_secs_f64());
         Ok(out.to_vec())
     };
-    tiled(img, tile, tile / 8, run, progress, cancel)
+    let started = std::time::Instant::now();
+    // A GPU's first run sets itself up (seconds, several tiles' worth). A one-tile run (the
+    // preview) can't tell that from the work, so it runs a throwaway tile first.
+    if w.max(h) <= tile && on_gpu() {
+        run(vec![0.0; 3 * tile * tile], tile)?;
+    }
+    let out = tiled(img, tile, tile / 8, &mut run, progress, cancel)?;
+    let spent = started.elapsed().as_secs_f64();
+    // The first run's extra time over the others' mean: once per process, so not counted.
+    let warm = match &times[..] {
+        [first, rest @ ..] if !rest.is_empty() => (first - rest.iter().sum::<f64>() / rest.len() as f64).max(0.0),
+        _ => 0.0,
+    };
+    let secs_per_px = (spent - warm) / (times.len() * tile * tile) as f64;
+    Ok((out, Cost { spent, secs_per_px, fixed, cap }))
+}
+
+/// What a `restore` run took, to estimate a bigger one: a time per tile pixel (input px, so an
+/// upscaler's scale doesn't count) and how it picks tiles.
+pub struct Cost {
+    /// Seconds in the tiles, without loading the model.
+    pub spent: f64,
+    pub(super) secs_per_px: f64,
+    pub(super) fixed: Option<usize>,
+    pub(super) cap: usize,
+}
+
+impl Cost {
+    /// About how many seconds the tiles of a `w`×`h` image would take.
+    pub fn secs(&self, w: usize, h: usize) -> f64 {
+        let tile = restore_tile(self.fixed, self.cap, w.max(h));
+        let px = tile_starts(w, tile, tile / 8).len() * tile_starts(h, tile, tile / 8).len() * tile * tile;
+        self.secs_per_px * px as f64
+    }
+}
+
+/// The tile side for a `long`-px image: a model's fixed size, else just big enough (a multiple
+/// of 64, which these models accept) up to `cap`, so a preview isn't padded out.
+pub(super) fn restore_tile(fixed: Option<usize>, cap: usize, long: usize) -> usize {
+    fixed.unwrap_or(long.div_ceil(64).max(1) * 64).min(fixed.unwrap_or(cap))
+}
+
+/// Where tiles of side `tile` start along `len` px: as few as cover it with at least `overlap`
+/// between neighbours, spread evenly.
+pub(super) fn tile_starts(len: usize, tile: usize, overlap: usize) -> Vec<usize> {
+    if len <= tile {
+        return vec![0];
+    }
+    let n = (len - overlap).div_ceil(tile - overlap);
+    (0..n).map(|i| i * (len - tile) / (n - 1)).collect()
 }
 
 /// Runs `run` (RGB planes in 0–1, `tile`×`tile`) over `img` in tiles overlapping by `overlap`.
@@ -85,14 +137,6 @@ pub fn restore(file: &str, img: &RgbaImage, progress: &dyn Fn(f32), cancel: &Ato
 /// result of a 12 MP photo is already 770 MB. Alpha comes from `img`, scaled up bilinearly.
 pub(super) fn tiled(img: &RgbaImage, tile: usize, overlap: usize, mut run: impl FnMut(Vec<f32>, usize) -> Result<Vec<f32>, String>, progress: &dyn Fn(f32), cancel: &AtomicBool) -> Result<RgbaImage, String> {
     let (w, h) = (img.width() as usize, img.height() as usize);
-    let starts = |len: usize| -> Vec<usize> {
-        if len <= tile {
-            return vec![0];
-        }
-        // As few tiles as cover `len` with at least `overlap` between neighbours, spread evenly.
-        let n = (len - overlap).div_ceil(tile - overlap);
-        (0..n).map(|i| i * (len - tile) / (n - 1)).collect()
-    };
     // The part of the image each tile writes: up to the middle of its overlaps.
     let owned = |starts: &[usize], len: usize| -> Vec<(usize, usize)> {
         (0..starts.len())
@@ -103,7 +147,7 @@ pub(super) fn tiled(img: &RgbaImage, tile: usize, overlap: usize, mut run: impl 
             })
             .collect()
     };
-    let (xs, ys) = (starts(w), starts(h));
+    let (xs, ys) = (tile_starts(w, tile, overlap), tile_starts(h, tile, overlap));
     let (ox, oy) = (owned(&xs, w), owned(&ys, h));
     let plane = tile * tile;
     let mut out: Option<(usize, RgbaImage)> = None;

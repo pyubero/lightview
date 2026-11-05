@@ -310,11 +310,11 @@ impl App {
                 match result {
                     // Its coordinates are those of the edits it started from.
                     Ok(_) if self.current() != Some(&path) || self.doc().as_ref() != Some(&run.doc) => self.set_status(stale(run.task)),
-                    Ok((img, ms_per_mp)) if !whole => {
+                    Ok((img, estimate)) if !whole => {
                         let image = egui::ColorImage::from_rgba_unmultiplied([img.width() as usize, img.height() as usize], img.as_raw());
                         let texture = self.notify.ctx.get().map(|ctx| ctx.load_texture("restored", image, TextureOptions::LINEAR));
                         let scale = (img.width() as f32 / region.width()).round().max(1.0) as u32;
-                        self.shown.compare = texture.map(|texture| Compare { task: run.task, region, texture, split: 0.5, ms_per_mp, scale });
+                        self.shown.compare = texture.map(|texture| Compare { task: run.task, region, texture, split: 0.5, estimate, scale });
                     }
                     Ok((mut img, _)) => {
                         if let Some(sel) = &run.selection {

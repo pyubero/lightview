@@ -285,7 +285,7 @@ fn a_right_press_during_a_left_drawing_leaves_it_alone() {
 fn right_drag_pans_the_before_after_preview() {
     let (mut app, start) = app_zoomed_in();
     let texture = egui::Context::default().load_texture("t", egui::ColorImage::example(), TextureOptions::LINEAR);
-    app.shown.compare = Some(Compare { task: crate::ai::Task::Denoise, region: Rect::from_min_size(Pos2::ZERO, Vec2::splat(10.0)), texture, split: 0.5, ms_per_mp: 0.0, scale: 1 });
+    app.shown.compare = Some(Compare { task: crate::ai::Task::Denoise, region: Rect::from_min_size(Pos2::ZERO, Vec2::splat(10.0)), texture, split: 0.5, estimate: 0.0, scale: 1 });
     feed(&mut app, drag_events(RIGHT));
     assert_ne!(app.view, start);
     assert_eq!(app.shown.compare.as_ref().map(|c| c.split), Some(0.5));
