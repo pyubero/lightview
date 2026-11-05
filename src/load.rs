@@ -69,7 +69,8 @@ pub enum Msg {
     Saved(PathBuf, Result<(), String>, Option<(PathBuf, Doc)>),
     /// Background removal finished for this image: the cut-out, and the subject's bounds
     /// when cropping to it.
-    Cutout(PathBuf, Result<(image::RgbaImage, Option<egui::Rect>, crate::ai::Backdrop), String>),
+    /// Also the edits it rendered: the result only fits those.
+    Cutout(PathBuf, Doc, Result<(image::RgbaImage, Option<egui::Rect>, crate::ai::Backdrop), String>),
     Status(String),
     /// Denoise / Enhance run `id`: how far it is (0–1).
     Progress(u64, f32),
@@ -168,7 +169,12 @@ impl Loader {
 /// Runs `f`, which reads an untrusted file. A panic in a decoder becomes an error; on a worker it
 /// would lose the thread and leave its path marked busy for good.
 pub fn catching<T>(f: impl FnOnce() -> Result<T, String>) -> Result<T, String> {
-    catch_unwind(AssertUnwindSafe(f)).unwrap_or_else(|_| Err(tr("this file crashed its decoder").into()))
+    catching_as(tr("this file crashed its decoder"), f)
+}
+
+/// `catching`, with `why` as the error: for a thread whose reply the UI waits for.
+pub fn catching_as<T>(why: &'static str, f: impl FnOnce() -> Result<T, String>) -> Result<T, String> {
+    catch_unwind(AssertUnwindSafe(f)).unwrap_or_else(|_| Err(why.into()))
 }
 
 /// A small decode of `path` for comparing images: JPEGs at 1/8 when libjpeg-turbo is there, the
@@ -190,12 +196,10 @@ pub fn relist(path: &Path, sort: SortOrder, notify: &Notify) {
     std::thread::spawn(move || notify.send(Msg::Folder(list_folder(&path, sort))));
 }
 
-/// Decodes a file. For JPEGs, `on_preview` first gets the EXIF thumbnail (if any), then,
-/// when libjpeg-turbo is installed, a reduced-size decode just big enough for `target`.
-/// `preview_only` returns the reduced-size JPEG decode (and a TIFF's first page) as the image.
-fn load(path: &Path, target: [u32; 2], color_managed: bool, preview_only: bool, on_preview: impl Fn(Frame) + Sync) -> Result<Loaded, String> {
-    // The folder's neighbours get here unopened, and any of them may be a FIFO, which would block
-    // this worker for ever, or a link to a device that never ends.
+/// Reads a whole image file, refusing what isn't a regular file or is over 1 GiB. The folder's
+/// neighbours get here unopened, and any of them may be a FIFO, which would block for ever, or a
+/// link to a device that never ends.
+pub fn read_file(path: &Path) -> Result<Vec<u8>, String> {
     let meta = std::fs::metadata(path).map_err(|e| e.to_string())?;
     if !meta.is_file() {
         return Err(tr("this isn't a regular file").into());
@@ -203,7 +207,14 @@ fn load(path: &Path, target: [u32; 2], color_managed: bool, preview_only: bool, 
     if meta.len() > MAX_FILE_BYTES {
         return Err(tr("this image is too large to open").into());
     }
-    let all = std::fs::read(path).map_err(|e| e.to_string())?;
+    std::fs::read(path).map_err(|e| e.to_string())
+}
+
+/// Decodes a file. For JPEGs, `on_preview` first gets the EXIF thumbnail (if any), then,
+/// when libjpeg-turbo is installed, a reduced-size decode just big enough for `target`.
+/// `preview_only` returns the reduced-size JPEG decode (and a TIFF's first page) as the image.
+fn load(path: &Path, target: [u32; 2], color_managed: bool, preview_only: bool, on_preview: impl Fn(Frame) + Sync) -> Result<Loaded, String> {
+    let all = read_file(path)?;
     let file_size = all.len() as u64;
     // A RAW file is shown by its JPEG preview, which goes through the usual path from here.
     let (bytes, raw_orientation): (&[u8], _) = if raw::is_raw(path) {
@@ -915,6 +926,8 @@ mod tests {
     fn panics_become_errors() {
         let result: Result<(), String> = catching(|| panic!("a decoder bug"));
         assert!(result.is_err());
+        let result: Result<(), String> = catching_as("why", || panic!("a bug"));
+        assert_eq!(result.err().as_deref(), Some("why"));
     }
 }
 

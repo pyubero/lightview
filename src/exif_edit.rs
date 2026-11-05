@@ -256,7 +256,7 @@ fn location(m: &Metadata) -> Option<(f64, f64)> {
 
 /// Reads `path` for the inspector: a file with a `kind`, or a RAW file.
 pub fn read(path: &Path) -> Result<Dialog, String> {
-    read_bytes(path, &std::fs::read(path).map_err(|e| e.to_string())?)
+    read_bytes(path, &crate::load::read_file(path)?)
 }
 
 /// `read`, for a file already in memory.
@@ -307,6 +307,30 @@ fn png_chunks(png: &[u8]) -> Vec<(usize, [u8; 4], &[u8])> {
         at += 12 + len;
     }
     chunks
+}
+
+/// Takes a PNG's XMP text chunks out, whole: little_exif rewrites the XMP on every PNG write with
+/// quick-xml, whose attribute check takes time quadratic in one tag's attributes (RUSTSEC-2026-0194).
+fn take_png_xmp(png: &mut Vec<u8>) -> Vec<u8> {
+    const KINDS: [&[u8; 4]; 3] = [b"tEXt", b"zTXt", b"iTXt"];
+    let found: Vec<(usize, usize)> = png_chunks(png)
+        .into_iter()
+        .filter(|(_, kind, data)| KINDS.contains(&kind) && data.starts_with(b"XML:com.adobe.xmp\0"))
+        .map(|(at, _, data)| (at, at + 12 + data.len()))
+        .collect();
+    let taken = found.iter().flat_map(|&(start, end)| png[start..end].iter().copied()).collect();
+    for (start, end) in found.into_iter().rev() {
+        png.drain(start..end);
+    }
+    taken
+}
+
+/// Puts the chunks `take_png_xmp` took back, right after IHDR.
+fn put_back_png_xmp(png: &mut Vec<u8>, chunks: Vec<u8>) {
+    if !chunks.is_empty() {
+        let at = png_chunks(png).first().map_or(8, |(at, _, data)| at + 12 + data.len());
+        png.splice(at..at, chunks);
+    }
 }
 
 /// Drops `iTXt` XMP that names GPS, or is compressed and so can't be checked.
@@ -386,7 +410,9 @@ fn apply(jpeg: &mut Vec<u8>, kind: FileExtension, original: &Values, values: &Va
             m.remove_tag_by_hex_group(0x02BC, ExifTagGroup::GENERIC);
         }
     }
+    let xmp = if matches!(kind, FileExtension::PNG { .. }) { take_png_xmp(jpeg) } else { Vec::new() };
     guarded(|| m.write_to_vec(jpeg, kind))?;
+    put_back_png_xmp(jpeg, xmp);
     if matches!(kind, FileExtension::PNG { .. }) {
         standard_png_exif(jpeg, &m)?;
     }
@@ -840,8 +866,8 @@ mod tests {
         assert_eq!(frames(&written), 2);
     }
 
-    /// little_exif also takes the `exif:` properties out of a PNG's XMP on every write, so the
-    /// location there goes whether or not it's asked; the rest of the XMP stays.
+    /// A PNG's XMP is kept as it was (little_exif never sees it), except that one naming a
+    /// location goes when that's asked.
     #[test]
     fn png_xmp_naming_a_location_goes() {
         let chunk = |kind: &[u8], data: &[u8]| {
@@ -877,8 +903,13 @@ mod tests {
         let has = |png: &[u8], text: &[u8]| png.windows(text.len()).any(|w| w == text);
         let gps = with_xmp(r#"<rdf:Description exif:GPSLatitude="40,25N"/>"#, 0);
         assert!(!has(&edit_copy(&dir, "gps.png", &gps, true).1, b"GPSLatitude"));
-        assert!(!has(&edit_copy(&dir, "gps.png", &gps, false).1, b"GPSLatitude"));
-        assert!(has(&edit_copy(&dir, "title.png", &with_xmp("<dc:title>Walk</dc:title>", 0), true).1, b"Walk"));
+        assert!(has(&edit_copy(&dir, "gps.png", &gps, false).1, b"GPSLatitude"));
+        // Byte for byte, even with a tag little_exif's XML parser would take seconds over.
+        let title = format!("<dc:title{}>Walk</dc:title>", (0..20_000).map(|i| format!(" a{i}=''")).collect::<String>());
+        let titled = with_xmp(&title, 0);
+        let start = titled.windows(4).position(|w| w == b"iTXt").unwrap() - 4;
+        let xmp_chunk = &titled[start..start + 12 + u32::from_be_bytes(titled[start..start + 4].try_into().unwrap()) as usize];
+        assert!(edit_copy(&dir, "title.png", &titled, true).1.windows(xmp_chunk.len()).any(|w| w == xmp_chunk));
         // Compressed XMP can't be checked, so it goes too.
         let packed = with_xmp("<dc:title>Packed</dc:title>", 1);
         assert!(has(&packed, b"Packed"));

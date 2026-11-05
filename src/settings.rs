@@ -4,7 +4,6 @@ use eframe::egui;
 use fast_image_resize::{FilterType, ResizeAlg};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::process::Command;
 
 /// Key in eframe's storage (`~/.local/share/lightview/app.ron`).
 pub const KEY: &str = "settings";
@@ -182,12 +181,12 @@ pub fn desktop_installed() -> bool {
 }
 
 pub fn is_default() -> bool {
-    Command::new("xdg-mime").args(["query", "default", "image/jpeg"]).output().is_ok_and(|o| String::from_utf8_lossy(&o.stdout).trim() == DESKTOP_FILE)
+    crate::platform::command("xdg-mime").args(["query", "default", "image/jpeg"]).output().is_ok_and(|o| String::from_utf8_lossy(&o.stdout).trim() == DESKTOP_FILE)
 }
 
 /// Sets lightview as this user's default for the formats `install.sh` also claims.
 pub fn make_default() -> Result<(), String> {
-    crate::ai::run(Command::new("xdg-mime").args(["default", DESKTOP_FILE]).args(MIME_TYPES))
+    crate::ai::run(crate::platform::command("xdg-mime").args(["default", DESKTOP_FILE]).args(MIME_TYPES))
 }
 
 /// The Settings dialog body.

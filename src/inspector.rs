@@ -23,7 +23,7 @@ impl Inspector {
         let jpeg = path.extension().and_then(|e| e.to_str()).is_some_and(|e| e.eq_ignore_ascii_case("jpg") || e.eq_ignore_ascii_case("jpeg"));
         let raw = crate::raw::is_raw(path);
         // Read once: RAW files run to tens of megabytes, and this is the UI thread.
-        let all = if raw { std::fs::read(path).ok() } else { None };
+        let all = if raw { crate::load::read_file(path).ok() } else { None };
         // A RAW file's colours are its preview's.
         let icc = if raw {
             all.as_deref().and_then(crate::raw::embedded_jpeg).and_then(|preview| {

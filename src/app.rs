@@ -284,8 +284,8 @@ impl App {
             .collect()
     }
 
-    /// What to decode: the window, without what's cached. Native decoders only get the image on
-    /// screen: see `heif`.
+    /// What to decode: the window, without what's cached. Native decoders aren't run on
+    /// neighbours: see `heif`.
     fn to_decode(&self) -> Vec<PathBuf> {
         let current = self.current();
         self.window().into_iter().filter(|p| !self.cache.contains_key(p) && (Some(p) == current || !crate::heif::is_native(p))).collect()
@@ -308,7 +308,8 @@ impl App {
             Msg::Restored(id, path, region, whole, result) => {
                 let Some(run) = self.restoring.take_if(|r| r.id == id) else { return };
                 match result {
-                    Ok(_) if self.current() != Some(&path) => {}
+                    // Its coordinates are those of the edits it started from.
+                    Ok(_) if self.current() != Some(&path) || self.doc().as_ref() != Some(&run.doc) => self.set_status(stale(run.task)),
                     Ok((img, ms_per_mp)) if !whole => {
                         let image = egui::ColorImage::from_rgba_unmultiplied([img.width() as usize, img.height() as usize], img.as_raw());
                         let texture = self.notify.ctx.get().map(|ctx| ctx.load_texture("restored", image, TextureOptions::LINEAR));
@@ -377,8 +378,8 @@ impl App {
                     Err(e) => self.set_status(trf("Couldn't read the text: {e}", &[("e", &e)])),
                 }
             }
-            Msg::Cutout(path, result) => match result {
-                Ok((img, object, backdrop)) if self.current() == Some(&path) => {
+            Msg::Cutout(path, started, result) => match result {
+                Ok((img, object, backdrop)) if self.current() == Some(&path) && self.doc().as_ref() == Some(&started) => {
                     let Some(doc) = self.doc() else { return };
                     let bounds = doc.bounds();
                     let style = *self.shown.style.get_or_insert_with(|| Style::for_image(doc.size_vec()));
@@ -405,7 +406,7 @@ impl App {
                     });
                     self.set_status(tr("Done"));
                 }
-                Ok(_) => {}
+                Ok(_) => self.set_status(stale(crate::ai::Task::Background)),
                 Err(e) => self.set_status(trf("Couldn't process the image: {e}", &[("e", &e)])),
             },
             Msg::Open(path) => self.confirm(Pending::Open(path)),
@@ -689,7 +690,7 @@ impl App {
         std::thread::spawn(move || {
             let (dest, result) = match save::reserve_copy(&source) {
                 Ok(dest) => {
-                    let result = save::save(&frame, &doc, &source, &dest, keep_icc);
+                    let result = load::catching_as(crashed(), || save::save(&frame, &doc, &source, &dest, keep_icc));
                     if result.is_err() {
                         let _ = std::fs::remove_file(&dest);
                     }
@@ -712,7 +713,7 @@ impl App {
         // The system dialog asks before replacing an existing file.
         std::thread::spawn(move || {
             if let Some(dest) = dialog.save_file() {
-                let result = save::save(&frame, &doc, &source, &dest, keep_icc);
+                let result = load::catching_as(crashed(), || save::save(&frame, &doc, &source, &dest, keep_icc));
                 notify.send(Msg::Saved(dest, result, Some((source, doc))));
             }
         });
@@ -740,7 +741,7 @@ impl App {
         let notify = self.notify.clone();
         std::thread::spawn(move || {
             if let Some(dest) = file_dialog.save_file() {
-                let result = exif_edit::write_copy(&source, &dest, &original, &values, remove_gps);
+                let result = load::catching_as(crashed(), || exif_edit::write_copy(&source, &dest, &original, &values, remove_gps));
                 notify.send(Msg::Saved(dest, result, None));
             }
         });
@@ -999,6 +1000,16 @@ impl eframe::App for App {
             self.title = title;
         }
     }
+}
+
+/// What a background job's thread reports when it panicked, instead of no reply at all.
+fn crashed() -> &'static str {
+    tr("lightview hit an internal error")
+}
+
+/// The status for an AI result that no longer fits: another image is shown, or the edits changed.
+fn stale(task: crate::ai::Task) -> String {
+    trf("The image changed while {task} ran; run it again", &[("task", &task.title())])
 }
 
 /// Makes `img`, whose top-left corner is at `origin`, transparent outside `sel`.

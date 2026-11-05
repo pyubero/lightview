@@ -422,3 +422,5 @@ Resize Optimally	Optimal skalieren
 Shrinks the image to the size its detail needs, measured on its sharpest part. Never enlarges; Ctrl+Z undoes it.	Verkleinert das Bild auf die Größe, die seine Details brauchen, gemessen am schärfsten Teil. Vergrößert nie; Strg+Z macht es rückgängig.
 Already at its optimal size	Hat bereits die optimale Größe
 Resized to {w} × {h} px	Skaliert auf {w} × {h} px
+The image changed while {task} ran; run it again	Das Bild hat sich geändert, während {task} lief; bitte erneut ausführen
+lightview hit an internal error	lightview hat einen internen Fehler festgestellt

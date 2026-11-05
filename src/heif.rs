@@ -1,6 +1,7 @@
 //! HEIC and AVIF, decoded by the system: libheif on Linux, loaded at run time like libjpeg-turbo,
-//! and Windows' own codecs (WIC) there. Both are native code, so they only ever get the image on
-//! screen: `load` goes by extension and `App` leaves these files out of decoding ahead.
+//! and Windows' own codecs (WIC) there. Both are native code, so they only get files the user
+//! picked: the image on screen (`load` goes by extension and `App` leaves these files out of
+//! decoding ahead) and every image in a folder they run Group Duplicates on.
 use crate::i18n::tr;
 use crate::load::MAX_CANVAS_BYTES;
 use image::{DynamicImage, RgbaImage};

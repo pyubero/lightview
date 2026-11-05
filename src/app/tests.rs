@@ -155,7 +155,7 @@ fn only_the_edits_written_count_as_saved() {
 #[test]
 fn a_cancelled_restore_leaves_the_next_run_alone() {
     let (mut app, path) = app_with_image();
-    app.restoring = Some(Restoring { id: 2, task: crate::ai::Task::Denoise, progress: 0.0, started: Instant::now(), cancel: Arc::default(), selection: None });
+    app.restoring = Some(Restoring { id: 2, task: crate::ai::Task::Denoise, progress: 0.0, started: Instant::now(), cancel: Arc::default(), selection: None, doc: app.doc().unwrap() });
     app.handle(Msg::Progress(1, 0.5));
     app.handle(Msg::Restored(1, path.clone(), Rect::ZERO, false, Err("cancelled".into())));
     assert_eq!(app.restoring.as_ref().map(|r| r.progress), Some(0.0));
@@ -171,7 +171,8 @@ fn removing_an_object_pastes_the_fill_once_and_clears_the_selection() {
     let (mut app, path) = app_with_image();
     let region = Rect::from_min_size(Pos2::ZERO, Vec2::new(1.0, 1.0));
     let sel = Selection::Rect(region);
-    let run = |id, sel| Restoring { id, task: crate::ai::Task::Inpaint, progress: 0.0, started: Instant::now(), cancel: Arc::default(), selection: Some(sel) };
+    let started = app.doc().unwrap();
+    let run = |id, sel| Restoring { id, task: crate::ai::Task::Inpaint, progress: 0.0, started: Instant::now(), cancel: Arc::default(), selection: Some(sel), doc: started.clone() };
     // A failure keeps the selection for another try.
     app.shown.selection = Some(sel.clone());
     app.restoring = Some(run(1, sel.clone()));
@@ -182,6 +183,22 @@ fn removing_an_object_pastes_the_fill_once_and_clears_the_selection() {
     app.handle(Msg::Restored(2, path, region, true, Ok((fill, 0.0))));
     assert!(app.shown.selection.is_none() && app.restoring.is_none());
     assert_eq!(app.doc().map(|d| d.elements.len()), Some(1));
+}
+
+#[test]
+fn ai_results_for_edits_that_changed_since_are_dropped() {
+    use crate::ai::Backdrop;
+    let (mut app, path) = app_with_image();
+    let ctx = egui::Context::default();
+    let started = app.doc().unwrap();
+    app.run_actions(&[Action::RotateLeft], &ctx, false);
+    let rotated = app.doc().unwrap();
+    let region = Rect::from_min_size(Pos2::ZERO, Vec2::new(1.0, 1.0));
+    app.restoring = Some(Restoring { id: 1, task: crate::ai::Task::Inpaint, progress: 0.0, started: Instant::now(), cancel: Arc::default(), selection: None, doc: started.clone() });
+    app.handle(Msg::Restored(1, path.clone(), region, true, Ok((image::RgbaImage::new(1, 1), 0.0))));
+    assert!(app.restoring.is_none() && app.status.is_some());
+    app.handle(Msg::Cutout(path, started, Ok((image::RgbaImage::new(2, 1), None, Backdrop::Colour))));
+    assert_eq!(app.doc(), Some(rotated), "neither result was pasted");
 }
 
 /// A big image at 1:1, panned by nothing yet.
@@ -452,7 +469,7 @@ fn background_results_cover_then_paste_the_subject_in_one_step() {
     app.settings.background = [10, 20, 30];
     let ctx = egui::Context::default();
     let subject = || image::RgbaImage::new(2, 1);
-    app.handle(Msg::Cutout(path.clone(), Ok((subject(), None, Backdrop::Colour))));
+    app.handle(Msg::Cutout(path.clone(), app.doc().unwrap(), Ok((subject(), None, Backdrop::Colour))));
     let doc = app.doc().unwrap();
     assert_eq!(doc.elements.len(), 2);
     assert_eq!(doc.elements[0].style.color, Color32::from_rgb(10, 20, 30), "an opaque fill in the background colour");
@@ -468,7 +485,10 @@ fn blur_background_previews_until_done_or_cancel() {
     let ctx = egui::Context::default();
     // A sharp edge, so blurring changes pixels.
     let small = image::RgbaImage::from_fn(200, 4, |x, _| image::Rgba(if x < 100 { [0, 0, 0, 255] } else { [255; 4] }));
-    let blur = |app: &mut App| app.handle(Msg::Cutout(path.clone(), Ok((image::RgbaImage::new(2, 1), None, Backdrop::Blur(small.clone())))));
+    let blur = |app: &mut App| {
+        let doc = app.doc().unwrap();
+        app.handle(Msg::Cutout(path.clone(), doc, Ok((image::RgbaImage::new(2, 1), None, Backdrop::Blur(small.clone())))))
+    };
     let backdrop = |app: &App| app.doc().unwrap().elements[0].image.as_ref().unwrap().0.as_raw().clone();
     blur(&mut app);
     assert!(app.shown.blurring.is_some() && app.shown.undo.is_empty(), "a preview, not an edit yet");
@@ -1105,7 +1125,7 @@ fn the_rename_dialog_replaces_the_name_keeps_the_extension_and_shows_refusals() 
 #[test]
 fn f2_is_refused_while_an_ai_job_needs_the_path() {
     let (mut app, _) = app_with_image();
-    app.restoring = Some(Restoring { id: 1, task: crate::ai::Task::Denoise, progress: 0.0, started: Instant::now(), cancel: Arc::default(), selection: None });
+    app.restoring = Some(Restoring { id: 1, task: crate::ai::Task::Denoise, progress: 0.0, started: Instant::now(), cancel: Arc::default(), selection: None, doc: app.doc().unwrap() });
     app.run_actions(&[Action::Rename], &egui::Context::default(), false);
     assert!(app.renaming.is_none());
     app.restoring = None;

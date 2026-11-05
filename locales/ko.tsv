@@ -422,3 +422,5 @@ Resize Optimally	최적 크기로 줄이기
 Shrinks the image to the size its detail needs, measured on its sharpest part. Never enlarges; Ctrl+Z undoes it.	디테일에 필요한 크기로 이미지를 줄입니다. 가장 선명한 부분에서 측정하며 확대하지는 않습니다. Ctrl+Z로 되돌릴 수 있습니다.
 Already at its optimal size	이미 최적 크기입니다
 Resized to {w} × {h} px	{w} × {h} px로 크기 조정함
+The image changed while {task} ran; run it again	{task} 실행 중에 이미지가 바뀌었습니다. 다시 실행하세요
+lightview hit an internal error	lightview에서 내부 오류가 발생했습니다

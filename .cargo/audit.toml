@@ -1,5 +1,6 @@
-# little_exif 0.6.23 (the latest) pins quick-xml 0.37. It only uses it to clean XMP in PNG files, and
-# lightview only ever calls little_exif with FileExtension::JPEG, so no file reaches this parser.
-# Remove these once little_exif moves to quick-xml 0.41 or newer.
+# little_exif 0.6.23 (the latest) pins quick-xml 0.37. It only uses it to take `exif:` properties out
+# of a PNG's XMP when writing, through `attributes()` (0194, quadratic time; 0195 is NsReader, unused).
+# exif_edit::apply takes a PNG's XMP chunks out before little_exif writes and puts them back after,
+# so no file's XML reaches the parser. Remove these once little_exif moves to quick-xml 0.41 or newer.
 [advisories]
 ignore = ["RUSTSEC-2026-0194", "RUSTSEC-2026-0195"]

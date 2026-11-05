@@ -422,3 +422,5 @@ Resize Optimally	Optimaal formaat
 Shrinks the image to the size its detail needs, measured on its sharpest part. Never enlarges; Ctrl+Z undoes it.	Verkleint de afbeelding tot het formaat dat de details nodig hebben, gemeten op het scherpste deel. Vergroot nooit; Ctrl+Z maakt het ongedaan.
 Already at its optimal size	Heeft al het optimale formaat
 Resized to {w} × {h} px	Formaat gewijzigd naar {w} × {h} px
+The image changed while {task} ran; run it again	De afbeelding is gewijzigd terwijl {task} liep; voer het opnieuw uit
+lightview hit an internal error	lightview stuitte op een interne fout

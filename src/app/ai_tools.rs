@@ -1,7 +1,7 @@
-use super::App;
+use super::{App, crashed};
 use crate::edit::{self, Doc};
 use crate::i18n::{tr, trf};
-use crate::load::Msg;
+use crate::load::{Msg, catching_as};
 use crate::markup::Selection;
 use eframe::egui::{self, Pos2, Rect, TextureHandle, Vec2};
 use std::sync::Arc;
@@ -18,6 +18,8 @@ pub(super) struct Restoring {
     pub(super) cancel: Arc<AtomicBool>,
     /// Applying to a selection: its outline, to mask the result with.
     pub(super) selection: Option<Selection>,
+    /// The edits the run rendered: the result only fits those.
+    pub(super) doc: Doc,
 }
 
 /// Blur Background's open panel.
@@ -65,7 +67,7 @@ impl App {
         self.set_status(trf("Running {file}…", &[("file", &file)]));
         let notify = self.notify.clone();
         std::thread::spawn(move || {
-            let result = edit::render(&l.frames[0], &doc).and_then(|img| {
+            let result = catching_as(crashed(), || edit::render(&l.frames[0], &doc).and_then(|img| {
                 let img = img.into_rgba8();
                 let pre = match preset {
                     Some(p) => p,
@@ -84,8 +86,8 @@ impl App {
                     }
                 };
                 Ok((crate::ai::cutout(&img, &mask), object, backdrop))
-            });
-            notify.send(Msg::Cutout(path, result));
+            }));
+            notify.send(Msg::Cutout(path, doc, result));
         });
     }
 
@@ -104,7 +106,7 @@ impl App {
         self.set_status(if qr { tr("Reading QR codes…") } else { tr("Recognizing text…") });
         let notify = self.notify.clone();
         std::thread::spawn(move || {
-            let result = edit::render(&l.frames[0], &doc).and_then(|img| {
+            let result = catching_as(crashed(), || edit::render(&l.frames[0], &doc).and_then(|img| {
                 let mut img = img.into_rgba8();
                 if let Some(r) = region {
                     img = image::imageops::crop_imm(&img, r.min.x as u32, r.min.y as u32, r.width() as u32, r.height() as u32).to_image();
@@ -113,7 +115,7 @@ impl App {
                     Some(file) => crate::ai::read_text(&file, &img),
                     None => Ok(crate::ai::read_qr(&img).join("\n")),
                 }
-            });
+            }));
             notify.send(Msg::TextFound(qr, result));
         });
     }
@@ -128,7 +130,7 @@ impl App {
         self.set_status(tr("Selecting the object…"));
         let notify = self.notify.clone();
         std::thread::spawn(move || {
-            let result = edit::render(&l.frames[0], &doc).and_then(|img| crate::ai::select(&file, &img.into_rgba8(), rect));
+            let result = catching_as(crashed(), || edit::render(&l.frames[0], &doc).and_then(|img| crate::ai::select(&file, &img.into_rgba8(), rect)));
             notify.send(Msg::Selected(path, rect, result));
         });
     }
@@ -154,18 +156,18 @@ impl App {
         let cancel = Arc::new(AtomicBool::new(false));
         self.restore_runs += 1;
         let id = self.restore_runs;
-        self.restoring = Some(Restoring { id, task, progress: 0.0, started: Instant::now(), cancel: cancel.clone(), selection });
+        self.restoring = Some(Restoring { id, task, progress: 0.0, started: Instant::now(), cancel: cancel.clone(), selection, doc: doc.clone() });
         let notify = self.notify.clone();
         std::thread::spawn(move || {
             let started = Instant::now();
-            let result = edit::render(&l.frames[0], &doc).and_then(|img| {
+            let result = catching_as(crashed(), || edit::render(&l.frames[0], &doc).and_then(|img| {
                 let img = img.into_rgba8();
                 let part = image::imageops::crop_imm(&img, region.min.x as u32, region.min.y as u32, region.width() as u32, region.height() as u32).to_image();
                 let progress = |p: f32| notify.send(Msg::Progress(id, p));
                 let out = crate::ai::restore(&file, &part, &progress, &cancel)?;
                 let mp = (out.width() * out.height()) as f64 / 1e6;
                 Ok((out, started.elapsed().as_secs_f64() * 1000.0 / mp))
-            });
+            }));
             notify.send(Msg::Restored(id, path, region, whole, result));
         });
     }
@@ -183,15 +185,15 @@ impl App {
         let cancel = Arc::new(AtomicBool::new(false));
         self.restore_runs += 1;
         let id = self.restore_runs;
-        self.restoring = Some(Restoring { id, task, progress: 0.0, started: Instant::now(), cancel: cancel.clone(), selection: Some(sel.clone()) });
+        self.restoring = Some(Restoring { id, task, progress: 0.0, started: Instant::now(), cancel: cancel.clone(), selection: Some(sel.clone()), doc: doc.clone() });
         let notify = self.notify.clone();
         std::thread::spawn(move || {
             let (w, h) = (region.width() as u32, region.height() as u32);
-            let result = edit::render(&l.frames[0], &doc).and_then(|img| {
+            let result = catching_as(crashed(), || edit::render(&l.frames[0], &doc).and_then(|img| {
                 let img = img.into_rgba8();
                 let hole = crate::markup::polygon_mask(&sel.outline(), None, region.min, 1.0, w, h).and_then(|m| image::GrayImage::from_raw(w, h, m.data().to_vec())).ok_or(tr("the selection is empty"))?;
                 Ok((crate::ai::inpaint(&file, &img, region, &hole, &cancel)?, 0.0))
-            });
+            }));
             notify.send(Msg::Restored(id, path, region, true, result));
         });
     }

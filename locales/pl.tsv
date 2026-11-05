@@ -422,3 +422,5 @@ Resize Optimally	Optymalny rozmiar
 Shrinks the image to the size its detail needs, measured on its sharpest part. Never enlarges; Ctrl+Z undoes it.	Zmniejsza obraz do rozmiaru, jakiego wymagają jego szczegóły, mierzonego w najostrzejszej części. Nigdy nie powiększa; Ctrl+Z cofa.
 Already at its optimal size	Ma już optymalny rozmiar
 Resized to {w} × {h} px	Zmieniono rozmiar na {w} × {h} px
+The image changed while {task} ran; run it again	Obraz zmienił się podczas działania {task}; uruchom ponownie
+lightview hit an internal error	lightview napotkał błąd wewnętrzny

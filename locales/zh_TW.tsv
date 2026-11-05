@@ -422,3 +422,5 @@ Resize Optimally	最佳化尺寸
 Shrinks the image to the size its detail needs, measured on its sharpest part. Never enlarges; Ctrl+Z undoes it.	將影像縮小到其細節所需的尺寸,依最清晰的部分測量。永不放大;按 Ctrl+Z 可復原。
 Already at its optimal size	已是最佳尺寸
 Resized to {w} × {h} px	已調整為 {w} × {h} px
+The image changed while {task} ran; run it again	執行 {task} 時影像已變更，請重新執行
+lightview hit an internal error	lightview 發生內部錯誤

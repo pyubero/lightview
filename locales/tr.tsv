@@ -422,3 +422,5 @@ Resize Optimally	En Uygun Boyuta Getir
 Shrinks the image to the size its detail needs, measured on its sharpest part. Never enlarges; Ctrl+Z undoes it.	Görüntüyü, en keskin bölümünde ölçülen ayrıntısının gerektirdiği boyuta küçültür. Asla büyütmez; Ctrl+Z geri alır.
 Already at its optimal size	Zaten en uygun boyutta
 Resized to {w} × {h} px	{w} × {h} px olarak yeniden boyutlandırıldı
+The image changed while {task} ran; run it again	{task} çalışırken görüntü değişti; yeniden çalıştırın
+lightview hit an internal error	lightview dahili bir hatayla karşılaştı
