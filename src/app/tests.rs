@@ -440,7 +440,7 @@ fn file_copy() {
 #[ignore]
 fn file_paste() {
     let files = arboard::Clipboard::new().unwrap().get().file_list().unwrap();
-    assert_eq!(files, [copied_file().canonicalize().unwrap()]);
+    assert_eq!(files, [crate::files::canonicalize(&copied_file()).unwrap()]);
 }
 
 #[test]
@@ -780,7 +780,7 @@ fn temp_folder(name: &str, files: &[&str]) -> PathBuf {
     for file in files {
         std::fs::write(dir.join(file), b"").unwrap();
     }
-    std::fs::canonicalize(dir).unwrap()
+    crate::files::canonicalize(&dir).unwrap()
 }
 
 /// One frame of `ui` with `input`, with the new events it took.

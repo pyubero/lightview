@@ -44,12 +44,31 @@ pub fn watch(notify: Notify, interval: Duration) -> Arc<Mutex<Option<PathBuf>>> 
     slot
 }
 
+/// `fs::canonicalize` without Windows' `\\?\` prefix: it showed in Copy Path, Info and Open Recent,
+/// and file dialogs and Explorer don't take it. Every path compared with an open image comes from here.
+pub fn canonicalize(path: &Path) -> std::io::Result<PathBuf> {
+    std::fs::canonicalize(path).map(simplify)
+}
+
+/// `path` without a `\\?\` prefix, kept when the path is too long to work without it.
+pub fn simplify(path: PathBuf) -> PathBuf {
+    let Some(text) = path.to_str() else { return path };
+    let plain = match text.strip_prefix(r"\\?\UNC\") {
+        Some(share) => format!(r"\\{share}"),
+        None => match text.strip_prefix(r"\\?\") {
+            Some(rest) if rest.as_bytes().get(1) == Some(&b':') => rest.to_string(),
+            _ => return path,
+        },
+    };
+    if plain.len() < 260 { PathBuf::from(plain) } else { path }
+}
+
 /// Whether a Trash item is `path`. When Windows hides known extensions, `item.name` has none,
 /// but `item.id` (like `$RAB12CD.jpg`) keeps it.
 fn is_trashed_copy(item: &trash::TrashItem, path: &Path) -> bool {
     let same_name = Some(item.name.as_os_str()) == path.file_name() || (Some(item.name.as_os_str()) == path.file_stem() && Path::new(&item.id).extension() == path.extension());
-    // Compared canonically: on Windows `path` starts with `\\?\`, the Trash's paths don't.
-    same_name && item.original_parent.canonicalize().is_ok_and(|p| Some(p.as_path()) == path.parent())
+    // Compared canonically, as `path` is: the Trash may spell the folder differently.
+    same_name && canonicalize(&item.original_parent).is_ok_and(|p| Some(p.as_path()) == path.parent())
 }
 
 /// Puts a file back from the Trash, to the place it was deleted from.
@@ -207,7 +226,7 @@ mod tests {
 
     #[test]
     fn finds_trashed_file_with_hidden_extension() {
-        let dir = std::fs::canonicalize(std::env::temp_dir()).unwrap();
+        let dir = canonicalize(&std::env::temp_dir()).unwrap();
         let path = dir.join("photo.jpg");
         let item = |name: &str, id: &str| trash::TrashItem { id: id.into(), name: name.into(), original_parent: dir.clone(), time_deleted: 0 };
         assert!(is_trashed_copy(&item("photo.jpg", "/trash/info/photo.jpg.trashinfo"), &path));
@@ -223,13 +242,24 @@ mod tests {
     fn trash_round_trip() {
         let path = std::env::temp_dir().join(format!("lightview-trash-{}.txt", std::process::id()));
         std::fs::write(&path, "image").unwrap();
-        let path = std::fs::canonicalize(&path).unwrap();
+        let path = canonicalize(&path).unwrap();
         trash::delete(&path).unwrap();
         assert!(!path.exists());
         restore_trashed(&path).unwrap();
         assert_eq!(std::fs::read_to_string(&path).unwrap(), "image");
         std::fs::remove_file(&path).unwrap();
         assert!(restore_trashed(&path).is_err());
+    }
+
+    #[test]
+    fn canonical_paths_have_no_verbatim_prefix() {
+        assert_eq!(simplify(PathBuf::from(r"\\?\D:\Fotos\DSC ñ 1.jpg")), PathBuf::from(r"D:\Fotos\DSC ñ 1.jpg"));
+        assert_eq!(simplify(PathBuf::from(r"\\?\UNC\server\share\a.jpg")), PathBuf::from(r"\\server\share\a.jpg"));
+        let long = format!(r"\\?\D:\{}.jpg", "a".repeat(300));
+        assert_eq!(simplify(PathBuf::from(&long)), PathBuf::from(&long), "too long without it");
+        assert_eq!(simplify(PathBuf::from("/home/a.jpg")), PathBuf::from("/home/a.jpg"));
+        let dir = canonicalize(&std::env::temp_dir()).unwrap();
+        assert!(!dir.to_string_lossy().starts_with(r"\\?\"), "{dir:?}");
     }
 
     #[test]
