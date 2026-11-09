@@ -82,14 +82,16 @@ pub fn restore_trashed(path: &Path) -> Result<(), String> {
 }
 
 /// Renames the file `path` to `name` in the same folder. Never replaces another file.
-// shortcut: changing only the case on a case-insensitive file system counts as "already exists"; handle it if it's reported.
 pub fn rename(path: &Path, name: &str) -> Result<PathBuf, String> {
     if name.is_empty() || name == "." || name == ".." || name.contains(['/', '\\']) {
         return Err(tr("That isn't a valid file name").into());
     }
     let new = path.with_file_name(name);
+    // A new case on a case-insensitive file system (Windows) finds the file itself, which canonicalises
+    // to the same path; another file, even a hard link, doesn't.
+    let same_file = new.file_name() != path.file_name() && canonicalize(&new).ok() == canonicalize(path).ok();
     // `fs::rename` would silently replace it. This also sees a link to nowhere.
-    if new.symlink_metadata().is_ok() {
+    if new.symlink_metadata().is_ok() && !same_file {
         return Err(trf("{name} already exists", &[("name", &name)]));
     }
     std::fs::rename(path, &new).map_err(|e| e.to_string())?;
@@ -221,6 +223,11 @@ mod tests {
         assert!(a.exists());
         assert_eq!(rename(&a, "c d.png").unwrap(), dir.join("c d.png"));
         assert!(!a.exists() && dir.join("c d.png").exists());
+        // Only the case: the same file on Windows, so not "already exists".
+        assert_eq!(rename(&dir.join("c d.png"), "C D.png").unwrap(), dir.join("C D.png"));
+        let names: Vec<_> = std::fs::read_dir(&dir).unwrap().map(|e| e.unwrap().file_name()).collect();
+        assert!(names.iter().any(|n| n == "C D.png") && !names.iter().any(|n| n == "c d.png"), "{names:?}");
+        assert_eq!(std::fs::read(dir.join("C D.png")).unwrap(), b"a");
         std::fs::remove_dir_all(dir).unwrap();
     }
 
