@@ -236,7 +236,7 @@ impl App {
         settings::apply_font_size(&cc.egui_ctx, settings.font_size);
         crate::theme::seed_folder();
         let (canvas, theme_error) = crate::theme::apply(&cc.egui_ctx, &settings.theme);
-        let mut recent: Vec<PathBuf> = cc.storage.and_then(|s| s.get_string("recent")).unwrap_or_default().lines().map(PathBuf::from).collect();
+        let mut recent: Vec<PathBuf> = cc.storage.and_then(|s| s.get_string("recent")).unwrap_or_default().lines().map(|p| files::simplify(PathBuf::from(p))).collect();
         let show_toolbar = cc.storage.and_then(|s| s.get_string("toolbar")).is_some_and(|v| v == "shown");
         if let Some(path) = &start {
             push_recent(&mut recent, path);
@@ -461,7 +461,7 @@ impl App {
                     Ok(()) => trf("Saved {name}", &[("name", &name)]),
                     Err(e) => trf("Couldn't save {name}: {e}", &[("name", &name), ("e", &e)]),
                 });
-                let (Ok(()), Ok(path), Some(current)) = (result, std::fs::canonicalize(&path), self.current().cloned()) else { return };
+                let (Ok(()), Ok(path), Some(current)) = (result, files::canonicalize(&path), self.current().cloned()) else { return };
                 if path == current {
                     // Overwrote the image on screen: show the saved version.
                     self.own_stamp = files::stamp(&path);
@@ -575,7 +575,7 @@ impl App {
     fn open(&mut self, path: PathBuf) {
         self.cache.clear();
         self.reset_shown();
-        match std::fs::canonicalize(&path) {
+        match files::canonicalize(&path) {
             Ok(path) => {
                 push_recent(&mut self.recent, &path);
                 load::start(&path, self.settings.sort, &self.loader, &self.notify);

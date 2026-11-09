@@ -43,7 +43,7 @@ fn main() -> eframe::Result {
             _ => path = Some(arg),
         }
     }
-    let path = path.map(|p| std::fs::canonicalize(&p).unwrap_or_else(|e| {
+    let path = path.map(|p| files::canonicalize(p.as_ref()).unwrap_or_else(|e| {
         eprintln!("lightview: {}: {e}", p.display());
         std::process::exit(1);
     }));
