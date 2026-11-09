@@ -3,6 +3,8 @@
 Everything lightview can do, by area. [`MENUS.md`](MENUS.md) lists every menu item and its
 keyboard shortcut.
 
+This list is complete as of 1.0: no new features are planned, only bug fixes and translations.
+
 ## Viewing
 
 - **Opens quickly.** A small preview appears first (the photo's embedded thumbnail, then a

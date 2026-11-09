@@ -1,5 +1,7 @@
 # Translating lightview
 
+lightview is feature-complete, so translations are, with bug fixes, the contributions it most needs.
+
 Each language is one file in `locales/`, named by its language code (`es.tsv`, `pl.tsv`…). Every line
 is the English text, a tab, and the translation:
 

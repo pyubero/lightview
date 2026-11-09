@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.0 (2026-11-09)
+
+- lightview is complete: every main feature it was meant to have is implemented and tested. No new features are planned; future releases fix bugs and correct or add translations.
+- Windows builds are no longer experimental.
+
 ## 0.5.0 (2026-11-05)
 
 - Image → Resize Optimally shrinks the image to the size its detail actually needs, measured on its sharpest part, so a blurry or upscaled photo stops wasting pixels. It never enlarges, running it again changes nothing, and Ctrl+Z undoes it.
