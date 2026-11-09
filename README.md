@@ -9,12 +9,18 @@
 
 # lightview
 
-A fast, not-so-minimal image viewer for Linux, with experimental Windows builds, written in Rust.
+A fast, not-so-minimal image viewer for Linux and Windows, written in Rust.
 It opens quickly, moves through a folder without waiting, and keeps your originals safe: edits are
 only ever written to a file when you choose to save. It collects nothing: no telemetry, no account,
 and it never goes online on its own.
 
 ![lightview showing a photo of snowy mountains](screenshots/screenshot-general.jpg)
+
+## Status
+
+lightview 1.0 is **complete**: every main feature it was meant to have is implemented and tested,
+on Linux and Windows. No new features are planned. Future releases fix bugs and correct or add
+translations ([Contributing](#contributing)).
 
 ## Main features
 
@@ -52,7 +58,7 @@ Enhance Image previews the visible area first. Drag the divider to compare befor
 ## Installation
 
 lightview runs on Linux, on both Wayland and X11. It has been developed and tested on Kubuntu with
-KDE Plasma. Windows builds are experimental.
+KDE Plasma, and tested on Windows 11.
 
 ### Ubuntu, Kubuntu, Mint, Pop!_OS, Debian 12 or newer (64-bit Intel/AMD)
 
@@ -63,9 +69,10 @@ KDE Plasma. Windows builds are experimental.
 
 To uninstall, remove lightview in your software centre, or run `sudo apt remove lightview`.
 
-### Windows (experimental, 64-bit)
+### Windows (64-bit)
 
-Download the `.msi` file from the [Releases](../../releases) page and run it.
+Download the `.msi` file from the [Releases](../../releases) page and run it. The installer isn't
+signed, so Windows may warn about it first: choose More info → Run anyway.
 
 ### From source (any other distribution)
 
@@ -203,12 +210,25 @@ lightview --bench photo.jpg     # the same, quitting after the first full image
 | Document | Contents |
 |---|---|
 | [`FEATURES.md`](docs/FEATURES.md) | Every feature, and the supported formats |
-| [`PROJECT_BRIEF.md`](docs/PROJECT_BRIEF.md) | Goals, scope, performance targets and early milestones |
-| [`ROADMAP-v2.md`](docs/ROADMAP-v2.md) | Editing, markup, the AI tools and the Windows port |
-| [`ROADMAP-v3.md`](docs/ROADMAP-v3.md) | Closing the gaps with other viewers: formats, colour, basics, reach |
-| [`ROADMAP-v4.md`](docs/ROADMAP-v4.md) | More local AI, Group Duplicates in Folder, and the code rework |
+| [`PROJECT_BRIEF.md`](docs/PROJECT_BRIEF.md) | Goals, scope, performance targets and early milestones (planning history, closed) |
+| [`ROADMAP-v2.md`](docs/ROADMAP-v2.md) | Editing, markup, the AI tools and the Windows port (planning history, closed) |
+| [`ROADMAP-v3.md`](docs/ROADMAP-v3.md) | Closing the gaps with other viewers: formats, colour, basics, reach (planning history, closed) |
+| [`ROADMAP-v4.md`](docs/ROADMAP-v4.md) | More local AI, Group Duplicates in Folder, and the code rework (planning history, closed) |
 | [`MENUS.md`](docs/MENUS.md) | Every menu item and shortcut |
 | [`TRANSLATING.md`](docs/TRANSLATING.md) | How to correct a translation or add a language |
+
+## Contributing
+
+lightview is feature-complete, so what helps most now is:
+
+- **Bug reports.** Open an issue with the steps to reproduce it, the file type and your system
+  (Linux distribution and desktop, or Windows version). Bug fixes are welcome as pull requests.
+- **Translations.** Most languages are machine translations, so corrections are very welcome, and
+  so are new languages: see [`TRANSLATING.md`](docs/TRANSLATING.md).
+
+**Feature requests** are read and considered, but **no new features are planned**, so most won't be
+implemented. Please open an issue to discuss an idea before writing code for it: a pull request
+that adds a feature may be declined, however well it's made.
 
 ## Licence
 

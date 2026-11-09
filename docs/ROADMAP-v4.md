@@ -1,5 +1,7 @@
 # lightview — Roadmap v4
 
+*Closed with 1.0 (2026-11-09): no further features are planned; items still marked “Open” or “Perhaps” here are not planned.*
+
 *Status: started 2026-11-02. Milestone 32 (more local AI), 35 (Group Duplicates in Folder) and the code rework are done, released in 0.4.0; what's left of each is listed under "Not implemented". `ROADMAP-v3.md`'s aim, principles and non-goals still apply.*
 
 ## 32. More local AI (L)

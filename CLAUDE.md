@@ -1,7 +1,8 @@
 ## The project
 *(Fill or update after asking the user's permission. Contains the project's background, motivation, goal(s) and approach. Keep entries short, one line each.)*
 
-- lightview: a fast image viewer for Linux (Windows builds experimental), written in Rust, meant to be the user's default image app.
+- lightview: a fast image viewer for Linux and Windows, written in Rust, meant to be the user's default image app.
+- Status: complete at 1.0 (2026-11-09); only bug fixes and translations from here, feature suggestions considered but not promised.
 - Motivation: an image viewer that opens instantly and feels snappy, with no bloat.
 - Goals: window on screen in under 200 ms (P1a); first image as fast as decoding allows, preview first (P1b); instant next/prev. The original 100 ms target was missed (M1).
 - Scope: a viewer with an extended toolset (edits always saved to a copy, markup, local AI, Group Duplicates), not a gallery manager or a Photoshop rival.
@@ -142,6 +143,7 @@ Format: `YYYY-MM-DD — decision — reason`
 - 2026-11-03 — Resize Optimally (user's choices): an Image menu action that resizes to the intrinsic size as one undo step (not an inspector row or a Resize-dialog suggestion), wired like Auto Levels (`App::optimal_size` → `self.edit`, on the UI thread, ≈ 0.2 s at 24 MP with the round trips split over threads), core in `resize_optimally.rs`; estimate = Lanczos round trips at 20 widths (w−1…w/8), p99 of the luma difference, two-line knee (narrow side ≥ 1.25× steeper, else native), iterated to a fixed point so it's idempotent, on the most detailed 1024 px tile — thresholds drift every run and intrinsic size is local; the experiment's findings are summarised in the module's doc comment.
 - 2026-11-05 — ten more languages (user's choice): Indonesian, Vietnamese, Czech, Swedish, Hungarian, Romanian, Greek, Danish, Finnish, Norwegian Bokmål (`nb`, also picked for `no`/`nn` locales), machine-translated; only scripts Roboto draws, so no RTL or shaping scripts (Arabic, Hebrew, Hindi, Thai). Then Spain's co-official Catalan (`ca`, also Valencian), Basque, Galician; Occitan and Asturian left out.
 - 2026-11-09 — Windows releases stay unsigned for now (user's choice), although Smart App Control blocks them; apply to SignPath Foundation (free OSS signing via GitHub Actions: exe, `turbojpeg.dll`, `.msi`) once usage builds up — Azure Trusted Signing and commercial certificates cost money for no gain here.
+- 2026-11-09 — 1.0 declares lightview feature-complete and Windows supported (user's choice); only bug fixes and translations follow, suggestions considered but not promised; roadmaps closed, their open items not planned.
 
 ## Self-Update Rule
 Before finishing your turn:

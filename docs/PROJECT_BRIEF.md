@@ -2,6 +2,8 @@
 
 *Status: agreed, 2026-10-28.*
 
+*Closed with 1.0 (2026-11-09): no further features are planned; items still marked “Open” or “Perhaps” here are not planned.*
+
 ## What it is
 A simple, very fast image viewer written fully in Rust. It becomes the default image app on the user's Linux desktop. Windows comes later.
 

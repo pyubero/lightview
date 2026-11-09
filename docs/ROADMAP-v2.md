@@ -1,5 +1,7 @@
 # lightview — Roadmap v2
 
+*Closed with 1.0 (2026-11-09): no further features are planned; items still marked “Open” or “Perhaps” here are not planned.*
+
 *Status: done (2026-10-29 to 2026-10-31). Editing, markup, the inspector, the AI tools, translations and the Windows port. v1 (milestones 1–7) is in `PROJECT_BRIEF.md`; v3 continues in `ROADMAP-v3.md`.*
 
 ## Principles (still hold)
@@ -76,11 +78,11 @@ Numbering continues from v1. Menu names are given as they are now (see `MENUS.md
 ### 20. Multilingual UI ✅ (2026-10-30)
 - English text as the key (`tr`/`trf`, `locales/*.tsv`, `tr_key` in `const` tables); six languages at first, nine since 0.3.0. First launch follows the system language. Licences, OS error detail, shortcuts and format names stay English.
 
-### 21. Windows ✅, experimental (2026-10-31)
+### 21. Windows ✅ (2026-10-31; out of experimental in 1.0)
 - One code base; per-OS parts in `platform.rs` (links, folders, helper programs without console windows, PowerShell for downloads and unzipping, since a real Windows 11 PC had no `curl.exe`) and per-OS constants in `ai/`. Checksums in Rust (`sha2`).
 - `turbojpeg.dll` ships next to `lightview.exe` (loaded only from there); the exe has its icon embedded (`build.rs`).
 - GitHub Actions builds the `.deb` and the `.msi` (WiX v5, Program Files, Start menu, file associations for Settings → Default apps).
-- Taking it out of experimental is milestone 34 in `ROADMAP-v3.md`.
+- Taken out of experimental in 1.0 (milestone 34 in `ROADMAP-v3.md`).
 
 ## Not implemented
 **Open:**

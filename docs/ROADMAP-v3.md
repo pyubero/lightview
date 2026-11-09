@@ -1,5 +1,7 @@
 # lightview — Roadmap v3
 
+*Closed with 1.0 (2026-11-09): no further features are planned; items still marked “Open” or “Perhaps” here are not planned.*
+
 *Status: proposed 2026-11-01, mostly built for 0.3.0 (2026-11-02; see `CHANGELOG.md`). Each milestone below is split into what's done and what isn't. v1 is in `PROJECT_BRIEF.md`, v2 in `ROADMAP-v2.md`, milestone 32 and later in `ROADMAP-v4.md`.*
 
 ## The aim
@@ -113,7 +115,7 @@ Numbering continues from v2. Size: **S** days, **M** a week or two, **L** severa
 - Custom shortcuts for any menu action.
 
 **Not implemented:**
-- *Open:* **Windows out of experimental:** finish retesting, sign the `.msi` (SignPath Foundation signs open-source projects for free), add winget and Scoop. The suspected `TrashItem.name` extension bug awaits a Windows retest.
+- *Done in 1.0:* **Windows out of experimental:** retested on Windows 11. *Not planned:* signing the `.msi` (SignPath Foundation signs open-source projects for free), winget and Scoop. The suspected `TrashItem.name` extension bug awaits a Windows retest.
 - *Open:* **Chinese, Japanese and Korean UI:** Roboto lacks the glyphs; eframe's `system_fonts` feature could supply them.
 - *Open, separate decision:* **macOS** needs a Mac, signing and notarisation; Preview is free there.
 - *Dropped:* Flathub (the sandbox may hide neighbouring files, and AI downloads and run-time libraries may not work inside it); rpm, AppImage and AUR.
